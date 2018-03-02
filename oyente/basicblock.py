@@ -47,12 +47,19 @@ class BasicBlock:
     def get_branch_expression(self):
         return self.branch_expression
 
-    def display(self):
+    def display(self,jumpsList):
+        lj = []
         six.print_("================")
         six.print_("start address: %d" % self.start)
         six.print_("end address: %d" % self.end)
         six.print_("end statement type: " + self.type)
-        six.print_("jump target: %d" %self.jump_target)
+
+        for el in jumpsList:
+            if (el != self.end+1) and (el!=self.falls_to):
+                lj.append(el)
+                
+        six.print_("jump target: " + " ".join(str(x) for x in lj))
+        # six.print_("jump target: %d" %self.jump_target)
         if(self.falls_to != None):
            six.print_("falls to: %d" %self.falls_to)
         for instr in self.instructions:

@@ -31,6 +31,7 @@ CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
 
+
 class Parameter:
     def __init__(self, **kwargs):
         attr_defaults = {
@@ -50,7 +51,7 @@ class Parameter:
     def copy(self):
         _kwargs = custom_deepcopy(self.__dict__)
         return Parameter(**_kwargs)
-
+    
 def initGlobalVars():
     global g_src_map
     global solver
@@ -164,6 +165,9 @@ def initGlobalVars():
     if global_params.REPORT_MODE:
         rfile = open(g_disasm_file + '.report', 'w')
 
+    global jump_addr
+    jump_addr = {}
+
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
 
@@ -217,8 +221,9 @@ def build_cfg_and_analyze():
     print_cfg()
 
 def print_cfg():
+    
     for block in vertices.values():
-        block.display()
+        block.display(edges[block.get_start_address()])
     log.debug(str(edges))
 
 
@@ -383,6 +388,7 @@ def construct_bb():
         block.set_block_type(jump_type[key])
         vertices[key] = block
         edges[key] = []
+        
 
 
 def construct_static_edges():
