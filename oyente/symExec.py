@@ -223,7 +223,8 @@ def build_cfg_and_analyze():
 def print_cfg():
     
     for block in vertices.values():
-        block.display(edges[block.get_start_address()])
+        block.compute_list_jump(edges[block.get_start_address()])
+        block.display()
     log.debug(str(edges))
 
 
