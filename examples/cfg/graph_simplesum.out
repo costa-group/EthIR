@@ -1,0 +1,213 @@
+0
+['PUSH1 0x60 ', 'PUSH1 0x40 ', 'MSTORE ', 'PUSH1 0x04 ', 'CALLDATASIZE ', 'LT ', 'PUSH1 0x3f ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x60 
+[96]
+Stack despues de la ejecucion de la instruccion PUSH1 0x40 
+[64, 96]
+Stack despues de la ejecucion de la instruccion MSTORE 
+[]
+Stack despues de la ejecucion de la instruccion PUSH1 0x04 
+[4]
+Stack despues de la ejecucion de la instruccion CALLDATASIZE 
+[Id_size, 4]
+Stack despues de la ejecucion de la instruccion LT 
+[If(ULE(4, Id_size), 0, 1)]
+Stack despues de la ejecucion de la instruccion PUSH1 0x3f 
+[63, If(ULE(4, Id_size), 0, 1)]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[]
+63
+['JUMPDEST ', 'PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0]
+Stack despues de la ejecucion de la instruccion REVERT 
+[]
+12
+['PUSH1 0x00 ', 'CALLDATALOAD ', 'PUSH29 0x0100000000000000000000000000000000000000000000000000000000 ', 'SWAP1 ', 'DIV ', 'PUSH4 0xffffffff ', 'AND ', 'DUP1 ', 'PUSH4 0x853255cc ', 'EQ ', 'PUSH1 0x44 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0]
+Stack despues de la ejecucion de la instruccion CALLDATALOAD 
+[Id_1]
+Stack despues de la ejecucion de la instruccion PUSH29 0x0100000000000000000000000000000000000000000000000000000000 
+[26959946667150639794667015087019630673637144422540572481103610249216L, Id_1]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[Id_1, 26959946667150639794667015087019630673637144422540572481103610249216L]
+Stack despues de la ejecucion de la instruccion DIV 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH4 0xffffffff 
+[4294967295, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion AND 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[Concat(0, Extract(255, 224, Id_1)), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH4 0x853255cc 
+[2234668492, Concat(0, Extract(255, 224, Id_1)), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion EQ 
+[If(Extract(255, 224, Id_1) == 2234668492, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x44 
+[68, If(Extract(255, 224, Id_1) == 2234668492, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[Concat(0, Extract(255, 224, Id_1))]
+68
+['JUMPDEST ', 'CALLVALUE ', 'ISZERO ', 'PUSH1 0x4e ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion CALLVALUE 
+[Iv, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(Iv == 0, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x4e 
+[78, If(Iv == 0, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[Concat(0, Extract(255, 224, Id_1))]
+78
+['JUMPDEST ', 'PUSH1 0x54 ', 'PUSH1 0x56 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x54 
+[84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x56 
+[86, 84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[84, Concat(0, Extract(255, 224, Id_1))]
+86
+['JUMPDEST ', 'PUSH1 0x0e ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x0e 
+[14, 84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, 14, 84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[14, 0, 14, 84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, 14, 14, 84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[14, 84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[84, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+84
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+74
+['PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion REVERT 
+[Concat(0, Extract(255, 224, Id_1))]
+63
+['JUMPDEST ', 'PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion REVERT 
+[Concat(0, Extract(255, 224, Id_1))]
+================
+start address: 0
+end address: 11
+end statement type: conditional
+jump target: 63
+falls to: 12
+PUSH1 0x60 
+PUSH1 0x40 
+MSTORE 
+PUSH1 0x04 
+CALLDATASIZE 
+LT 
+PUSH1 0x3f 
+JUMPI 
+================
+start address: 96
+end address: 96
+end statement type: terminal
+jump target: 
+STOP 
+================
+start address: 68
+end address: 73
+end statement type: conditional
+jump target: 78
+falls to: 74
+JUMPDEST 
+CALLVALUE 
+ISZERO 
+PUSH1 0x4e 
+JUMPI 
+================
+start address: 74
+end address: 77
+end statement type: terminal
+jump target: 
+PUSH1 0x00 
+DUP1 
+REVERT 
+================
+start address: 12
+end address: 62
+end statement type: conditional
+jump target: 68
+falls to: 63
+PUSH1 0x00 
+CALLDATALOAD 
+PUSH29 0x0100000000000000000000000000000000000000000000000000000000 
+SWAP1 
+DIV 
+PUSH4 0xffffffff 
+AND 
+DUP1 
+PUSH4 0x853255cc 
+EQ 
+PUSH1 0x44 
+JUMPI 
+================
+start address: 78
+end address: 83
+end statement type: unconditional
+jump target: 86
+JUMPDEST 
+PUSH1 0x54 
+PUSH1 0x56 
+JUMP 
+================
+start address: 84
+end address: 85
+end statement type: terminal
+jump target: 
+JUMPDEST 
+STOP 
+================
+start address: 86
+end address: 95
+end statement type: unconditional
+jump target: 84
+JUMPDEST 
+PUSH1 0x0e 
+PUSH1 0x00 
+DUP2 
+SWAP1 
+SSTORE 
+POP 
+JUMP 
+================
+start address: 63
+end address: 67
+end statement type: terminal
+jump target: 
+JUMPDEST 
+PUSH1 0x00 
+DUP1 
+REVERT 
