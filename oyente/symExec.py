@@ -387,7 +387,7 @@ def construct_bb():
     for key in end_ins_dict:
         end_address = end_ins_dict[key]
         block = BasicBlock(key, end_address)
-        stack_h[key] = [0,0]
+        stack_h[key] = [0,0,0]
         if key not in instructions:
             continue
         block.add_instruction(instructions[key])
@@ -596,6 +596,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
 
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
+        update_stack_heigh(block,len(stack),2)
         print "Stack despues de la ejecucion de la instruccion "+ instr
         print stack
     
