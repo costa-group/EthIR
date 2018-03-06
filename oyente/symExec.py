@@ -220,9 +220,13 @@ def build_cfg_and_analyze():
         full_sym_exec()  # jump targets are constructed on the fly
     print_cfg()
 
-def print_cfg():
+def getKey(block):
+    return block.get_start_address()
     
-    for block in vertices.values():
+def print_cfg():
+
+    vert = sorted(vertices.values(), key = getKey)
+    for block in vert:
         block.compute_list_jump(edges[block.get_start_address()])
         block.display()
     log.debug(str(edges))
