@@ -13,12 +13,14 @@ contract SmallExample{
 
   }
 
-  
-  //Analogo a nuestro main
   function enter(){
     numero = 5;
-    multiplica(3);
-    
+    multiplica(3);    
+  }
+
+  //Analogo a nuestro main
+  function (){
+    enter();
   }
 
 }
