@@ -168,6 +168,9 @@ def initGlobalVars():
     global jump_addr
     jump_addr = {}
 
+    global stack_h
+    stack_h = {}
+
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
 
@@ -219,6 +222,7 @@ def build_cfg_and_analyze():
         construct_static_edges()
         full_sym_exec()  # jump targets are constructed on the fly
     print_cfg()
+    print stack_h
 
 def getKey(block):
     return block.get_start_address()
@@ -383,6 +387,7 @@ def construct_bb():
     for key in end_ins_dict:
         end_address = end_ins_dict[key]
         block = BasicBlock(key, end_address)
+        stack_h[key] = [0,0,0]
         if key not in instructions:
             continue
         block.add_instruction(instructions[key])
@@ -527,6 +532,13 @@ def full_sym_exec():
     return sym_exec_block(params, 0, 0, 0, -1)
 
 
+def update_stack_heigh(block,h,pos):
+    l = stack_h[block]
+    if(l[pos]<h):
+        l.pop(pos)
+        l.insert(pos,h)
+        stack_h[block]=l
+
 # Symbolically executing a block from the start address
 def sym_exec_block(params, block, pre_block, depth, func_call):
     global solver
@@ -548,6 +560,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     analysis = params.analysis
     calls = params.calls
 
+    update_stack_heigh(block,len(stack),0)
     Edge = namedtuple("Edge", ["v1", "v2"]) # Factory Function for tuples is used as dictionary key
     if block < 0:
         log.debug("UNKNOWN JUMP ADDRESS. TERMINATING THIS PATH")
@@ -583,6 +596,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
 
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
+        update_stack_heigh(block,len(stack),2)
         print "Stack despues de la ejecucion de la instruccion "+ instr
         print stack
     
@@ -590,6 +604,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     visited.append(block)
     depth += 1
 
+    update_stack_heigh(block,len(stack),1)
+    
     reentrancy_all_paths.append(analysis["reentrancy_bug"])
     if analysis["money_flow"] not in money_flow_all_paths:
         global_problematic_pcs["money_concurrency_bug"].append(analysis["money_concurrency_bug"])
@@ -597,6 +613,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         path_conditions.append(path_conditions_and_vars["path_condition"])
         global_problematic_pcs["time_dependency_bug"].append(analysis["time_dependency_bug"])
         all_gs.append(copy_global_values(global_state))
+
 
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
