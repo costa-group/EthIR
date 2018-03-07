@@ -1,0 +1,1180 @@
+0
+['PUSH1 0x60 ', 'PUSH1 0x40 ', 'MSTORE ', 'PUSH1 0x04 ', 'CALLDATASIZE ', 'LT ', 'PUSH1 0x49 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x60 
+[96]
+Stack despues de la ejecucion de la instruccion PUSH1 0x40 
+[64, 96]
+Stack despues de la ejecucion de la instruccion MSTORE 
+[]
+Stack despues de la ejecucion de la instruccion PUSH1 0x04 
+[4]
+Stack despues de la ejecucion de la instruccion CALLDATASIZE 
+[Id_size, 4]
+Stack despues de la ejecucion de la instruccion LT 
+[If(ULE(4, Id_size), 0, 1)]
+Stack despues de la ejecucion de la instruccion PUSH1 0x49 
+[73, If(ULE(4, Id_size), 0, 1)]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[]
+73
+['JUMPDEST ', 'PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0]
+Stack despues de la ejecucion de la instruccion REVERT 
+[]
+12
+['PUSH1 0x00 ', 'CALLDATALOAD ', 'PUSH29 0x0100000000000000000000000000000000000000000000000000000000 ', 'SWAP1 ', 'DIV ', 'PUSH4 0xffffffff ', 'AND ', 'DUP1 ', 'PUSH4 0x49fba542 ', 'EQ ', 'PUSH1 0x4e ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0]
+Stack despues de la ejecucion de la instruccion CALLDATALOAD 
+[Id_1]
+Stack despues de la ejecucion de la instruccion PUSH29 0x0100000000000000000000000000000000000000000000000000000000 
+[26959946667150639794667015087019630673637144422540572481103610249216L, Id_1]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[Id_1, 26959946667150639794667015087019630673637144422540572481103610249216L]
+Stack despues de la ejecucion de la instruccion DIV 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH4 0xffffffff 
+[4294967295, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion AND 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[Concat(0, Extract(255, 224, Id_1)), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH4 0x49fba542 
+[1241228610, Concat(0, Extract(255, 224, Id_1)), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion EQ 
+[If(Extract(255, 224, Id_1) == 1241228610, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x4e 
+[78, If(Extract(255, 224, Id_1) == 1241228610, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[Concat(0, Extract(255, 224, Id_1))]
+78
+['JUMPDEST ', 'CALLVALUE ', 'ISZERO ', 'PUSH1 0x58 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion CALLVALUE 
+[Iv, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(Iv == 0, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x58 
+[88, If(Iv == 0, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[Concat(0, Extract(255, 224, Id_1))]
+88
+['JUMPDEST ', 'PUSH1 0x6c ', 'PUSH1 0x04 ', 'DUP1 ', 'DUP1 ', 'CALLDATALOAD ', 'SWAP1 ', 'PUSH1 0x20 ', 'ADD ', 'SWAP1 ', 'SWAP2 ', 'SWAP1 ', 'POP ', 'POP ', 'PUSH1 0x80 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x6c 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x04 
+[4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[4, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[4, 4, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion CALLDATALOAD 
+[a, 4, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[4, a, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x20 
+[32, 4, a, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[36L, a, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[a, 36L, 4, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[4, 36L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[36L, 4, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[4, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x80 
+[128, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+128
+['JUMPDEST ', 'PUSH1 0x00 ', 'DUP1 ', 'SWAP1 ', 'POP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[0, a, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 0, 0, 1), 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 0, 1, 0), 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 0, 1, 0), 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma, Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + Ia_store-1-numero, 0, Ia_store-0-suma + Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + Ia_store-1-numero, Ia_store-0-suma + Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + Ia_store-1-numero, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 0, 0, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[1L, 0, 0, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[0, 0, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[0, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[1L, a, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 1, 0, 1), 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 1, 1, 0), 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 1, 1, 0), 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + Ia_store-1-numero, Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 2*Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 2*Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 2*Ia_store-1-numero, 0, Ia_store-0-suma + 2*Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 2*Ia_store-1-numero, Ia_store-0-suma + 2*Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 2*Ia_store-1-numero, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[1L, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[1L, 1L, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 1L, 1L, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[2L, 1L, 1L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[1L, 1L, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[1L, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[2L, a, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 2, 0, 1), 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 2, 1, 0), 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 2, 1, 0), 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 2*Ia_store-1-numero, Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 3*Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 3*Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 3*Ia_store-1-numero, 0, Ia_store-0-suma + 3*Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 3*Ia_store-1-numero, Ia_store-0-suma + 3*Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 3*Ia_store-1-numero, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[2L, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[2L, 2L, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 2L, 2L, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[3L, 2L, 2L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[2L, 2L, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[2L, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[3L, a, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 3, 0, 1), 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 3, 1, 0), 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 3, 1, 0), 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 3*Ia_store-1-numero, Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 4*Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 4*Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 4*Ia_store-1-numero, 0, Ia_store-0-suma + 4*Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 4*Ia_store-1-numero, Ia_store-0-suma + 4*Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 4*Ia_store-1-numero, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[3L, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[3L, 3L, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 3L, 3L, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[4L, 3L, 3L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[3L, 3L, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[3L, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[4L, a, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 4, 0, 1), 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 4, 1, 0), 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 4, 1, 0), 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 4*Ia_store-1-numero, Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 5*Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 5*Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 5*Ia_store-1-numero, 0, Ia_store-0-suma + 5*Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 5*Ia_store-1-numero, Ia_store-0-suma + 5*Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 5*Ia_store-1-numero, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[4L, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[4L, 4L, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 4L, 4L, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[5L, 4L, 4L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[4L, 4L, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[4L, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[5L, a, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 5, 0, 1), 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 5, 1, 0), 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 5, 1, 0), 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 5*Ia_store-1-numero, Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 6*Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 6*Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 6*Ia_store-1-numero, 0, Ia_store-0-suma + 6*Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 6*Ia_store-1-numero, Ia_store-0-suma + 6*Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 6*Ia_store-1-numero, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[5L, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[5L, 5L, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 5L, 5L, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[6L, 5L, 5L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[5L, 5L, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[5L, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[6L, a, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 6, 0, 1), 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 6, 1, 0), 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 6, 1, 0), 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 6*Ia_store-1-numero, Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 7*Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 7*Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 7*Ia_store-1-numero, 0, Ia_store-0-suma + 7*Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 7*Ia_store-1-numero, Ia_store-0-suma + 7*Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 7*Ia_store-1-numero, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[6L, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[6L, 6L, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 6L, 6L, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[7L, 6L, 6L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[6L, 6L, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[6L, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[7L, a, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 7, 0, 1), 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 7, 1, 0), 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 7, 1, 0), 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 7*Ia_store-1-numero, Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 8*Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 8*Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 8*Ia_store-1-numero, 0, Ia_store-0-suma + 8*Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 8*Ia_store-1-numero, Ia_store-0-suma + 8*Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 8*Ia_store-1-numero, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[7L, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[7L, 7L, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 7L, 7L, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[8L, 7L, 7L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[7L, 7L, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[7L, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[8L, a, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 8, 0, 1), 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 8, 1, 0), 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 8, 1, 0), 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 8*Ia_store-1-numero, Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 9*Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 9*Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 9*Ia_store-1-numero, 0, Ia_store-0-suma + 9*Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 9*Ia_store-1-numero, Ia_store-0-suma + 9*Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 9*Ia_store-1-numero, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[8L, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[8L, 8L, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 8L, 8L, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[9L, 8L, 8L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[8L, 8L, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[8L, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[9L, a, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 9, 0, 1), 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 9, 1, 0), 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 9, 1, 0), 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+166
+['JUMPDEST ', 'POP ', 'POP ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[Concat(0, Extract(255, 224, Id_1))]
+108
+['JUMPDEST ', 'STOP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion STOP 
+[Concat(0, Extract(255, 224, Id_1))]
+142
+['PUSH1 0x01 ', 'SLOAD ', 'PUSH1 0x00 ', 'SLOAD ', 'ADD ', 'PUSH1 0x00 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'DUP1 ', 'DUP1 ', 'PUSH1 0x01 ', 'ADD ', 'SWAP2 ', 'POP ', 'POP ', 'PUSH1 0x86 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLOAD 
+[Ia_store-0-suma + 9*Ia_store-1-numero, Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[Ia_store-0-suma + 10*Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Ia_store-0-suma + 10*Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[Ia_store-0-suma + 10*Ia_store-1-numero, 0, Ia_store-0-suma + 10*Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, Ia_store-0-suma + 10*Ia_store-1-numero, Ia_store-0-suma + 10*Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[Ia_store-0-suma + 10*Ia_store-1-numero, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[9L, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[9L, 9L, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 9L, 9L, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ADD 
+[10L, 9L, 9L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP2 
+[9L, 9L, 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[9L, 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x86 
+[134, 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[a, 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[10L, a, 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[If(a <= 10, 0, 1), 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(a <= 10, 1, 0), 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, If(a <= 10, 1, 0), 10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[10L, a, 108, Concat(0, Extract(255, 224, Id_1))]
+84
+['PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion REVERT 
+[Concat(0, Extract(255, 224, Id_1))]
+63
+['DUP1 ', 'PUSH4 0xe97dcb62 ', 'EQ ', 'PUSH1 0x6e ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion DUP1 
+[Concat(0, Extract(255, 224, Id_1)), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH4 0xe97dcb62 
+[3917335394, Concat(0, Extract(255, 224, Id_1)), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion EQ 
+[If(Extract(255, 224, Id_1) == 3917335394, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x6e 
+[110, If(Extract(255, 224, Id_1) == 3917335394, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[Concat(0, Extract(255, 224, Id_1))]
+110
+['JUMPDEST ', 'CALLVALUE ', 'ISZERO ', 'PUSH1 0x78 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion CALLVALUE 
+[Iv, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[If(Iv == 0, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x78 
+[120, If(Iv == 0, 1, 0), Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[Concat(0, Extract(255, 224, Id_1))]
+120
+['JUMPDEST ', 'PUSH1 0x7e ', 'PUSH1 0xaa ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x7e 
+[126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xaa 
+[170, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[126, Concat(0, Extract(255, 224, Id_1))]
+170
+['JUMPDEST ', 'PUSH1 0x05 ', 'PUSH1 0x01 ', 'DUP2 ', 'SWAP1 ', 'SSTORE ', 'POP ', 'PUSH1 0xba ', 'PUSH1 0x03 ', 'PUSH1 0x80 ', 'JUMP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x05 
+[5, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x01 
+[1, 5, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[5, 1, 5, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[1, 5, 5, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SSTORE 
+[5, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xba 
+[186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x03 
+[3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x80 
+[128, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMP 
+[3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+128
+['JUMPDEST ', 'PUSH1 0x00 ', 'DUP1 ', 'SWAP1 ', 'POP ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SWAP1 
+[0, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion POP 
+[0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+134
+['JUMPDEST ', 'DUP2 ', 'DUP2 ', 'SLT ', 'ISZERO ', 'PUSH1 0xa6 ', 'JUMPI ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[3, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP2 
+[0, 3, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion SLT 
+[1, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion ISZERO 
+[0, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0xa6 
+[166, 0, 0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion JUMPI 
+[0, 3, 186, 126, Concat(0, Extract(255, 224, Id_1))]
+116
+['PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion REVERT 
+[Concat(0, Extract(255, 224, Id_1))]
+73
+['JUMPDEST ', 'PUSH1 0x00 ', 'DUP1 ', 'REVERT ']
+Stack despues de la ejecucion de la instruccion JUMPDEST 
+[Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion PUSH1 0x00 
+[0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion DUP1 
+[0, 0, Concat(0, Extract(255, 224, Id_1))]
+Stack despues de la ejecucion de la instruccion REVERT 
+[Concat(0, Extract(255, 224, Id_1))]
+================
+start address: 0
+end address: 11
+end statement type: conditional
+jump target: 73
+falls to: 12
+PUSH1 0x60 
+PUSH1 0x40 
+MSTORE 
+PUSH1 0x04 
+CALLDATASIZE 
+LT 
+PUSH1 0x49 
+JUMPI 
+================
+start address: 12
+end address: 62
+end statement type: conditional
+jump target: 78
+falls to: 63
+PUSH1 0x00 
+CALLDATALOAD 
+PUSH29 0x0100000000000000000000000000000000000000000000000000000000 
+SWAP1 
+DIV 
+PUSH4 0xffffffff 
+AND 
+DUP1 
+PUSH4 0x49fba542 
+EQ 
+PUSH1 0x4e 
+JUMPI 
+================
+start address: 63
+end address: 72
+end statement type: conditional
+jump target: 110
+falls to: 73
+DUP1 
+PUSH4 0xe97dcb62 
+EQ 
+PUSH1 0x6e 
+JUMPI 
+================
+start address: 73
+end address: 77
+end statement type: terminal
+jump target: 
+JUMPDEST 
+PUSH1 0x00 
+DUP1 
+REVERT 
+================
+start address: 78
+end address: 83
+end statement type: conditional
+jump target: 88
+falls to: 84
+JUMPDEST 
+CALLVALUE 
+ISZERO 
+PUSH1 0x58 
+JUMPI 
+================
+start address: 84
+end address: 87
+end statement type: terminal
+jump target: 
+PUSH1 0x00 
+DUP1 
+REVERT 
+================
+start address: 88
+end address: 107
+end statement type: unconditional
+jump target: 128
+JUMPDEST 
+PUSH1 0x6c 
+PUSH1 0x04 
+DUP1 
+DUP1 
+CALLDATALOAD 
+SWAP1 
+PUSH1 0x20 
+ADD 
+SWAP1 
+SWAP2 
+SWAP1 
+POP 
+POP 
+PUSH1 0x80 
+JUMP 
+================
+start address: 108
+end address: 109
+end statement type: terminal
+jump target: 
+JUMPDEST 
+STOP 
+================
+start address: 110
+end address: 115
+end statement type: conditional
+jump target: 120
+falls to: 116
+JUMPDEST 
+CALLVALUE 
+ISZERO 
+PUSH1 0x78 
+JUMPI 
+================
+start address: 116
+end address: 119
+end statement type: terminal
+jump target: 
+PUSH1 0x00 
+DUP1 
+REVERT 
+================
+start address: 120
+end address: 125
+end statement type: unconditional
+jump target: 170
+JUMPDEST 
+PUSH1 0x7e 
+PUSH1 0xaa 
+JUMP 
+================
+start address: 126
+end address: 127
+end statement type: terminal
+jump target: 
+JUMPDEST 
+STOP 
+================
+start address: 128
+end address: 133
+end statement type: falls_to
+jump target: 
+falls to: 134
+JUMPDEST 
+PUSH1 0x00 
+DUP1 
+SWAP1 
+POP 
+================
+start address: 134
+end address: 141
+end statement type: conditional
+jump target: 166
+falls to: 142
+JUMPDEST 
+DUP2 
+DUP2 
+SLT 
+ISZERO 
+PUSH1 0xa6 
+JUMPI 
+================
+start address: 142
+end address: 165
+end statement type: unconditional
+jump target: 134
+PUSH1 0x01 
+SLOAD 
+PUSH1 0x00 
+SLOAD 
+ADD 
+PUSH1 0x00 
+DUP2 
+SWAP1 
+SSTORE 
+POP 
+DUP1 
+DUP1 
+PUSH1 0x01 
+ADD 
+SWAP2 
+POP 
+POP 
+PUSH1 0x86 
+JUMP 
+================
+start address: 166
+end address: 169
+end statement type: unconditional
+jump target: 108
+JUMPDEST 
+POP 
+POP 
+JUMP 
+================
+start address: 170
+end address: 185
+end statement type: unconditional
+jump target: 128
+JUMPDEST 
+PUSH1 0x05 
+PUSH1 0x01 
+DUP2 
+SWAP1 
+SSTORE 
+POP 
+PUSH1 0xba 
+PUSH1 0x03 
+PUSH1 0x80 
+JUMP 
+================
+start address: 186
+end address: 187
+end statement type: unconditional
+jump target: 
+JUMPDEST 
+JUMP 
+================
+start address: 188
+end address: 188
+end statement type: terminal
+jump target: 
+STOP 
