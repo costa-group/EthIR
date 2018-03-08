@@ -1,0 +1,35 @@
+module SmallExample;
+
+
+interface SmallExampleI {
+  Unit multiplica(Int a);
+  Unit enter();
+}
+
+class SmallExample implements SmallExampleI {
+   
+   Int suma = 0;
+   Int numero = 0;
+       
+   Unit multiplica(Int a){
+     Int i = 0;
+     
+     while(i<a){
+     	suma = suma+numero;
+        i = i+1;
+     }
+
+   }
+
+   Unit enter(){
+     numero = 5;
+     this.multiplica(3);
+   }
+
+}
+
+{
+    SmallExampleI s = new local SmallExample();
+    s!enter();
+
+}
