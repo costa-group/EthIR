@@ -165,12 +165,18 @@ def initGlobalVars():
     if global_params.REPORT_MODE:
         rfile = open(g_disasm_file + '.report', 'w')
 
+    # Added by Pablo for Cost Analysis
+    
     global jump_addr
     jump_addr = {}
 
     global stack_h
     stack_h = {}
 
+    global calldataload_values
+    calldataload_values = {}
+
+    
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
 
@@ -223,7 +229,9 @@ def build_cfg_and_analyze():
         full_sym_exec()  # jump targets are constructed on the fly
     print_cfg()
     print stack_h
-
+    print calldataload_values
+    
+# Added or modified by Pablo Gordillo    
 def getKey(block):
     return block.get_start_address()
     
@@ -378,6 +386,7 @@ def collect_vertices(tokens):
         if key not in jump_type:
             jump_type[key] = "falls_to"
 
+#Modified by Pablo Gordillo
 
 def construct_bb():
     global vertices
@@ -387,9 +396,10 @@ def construct_bb():
     for key in end_ins_dict:
         end_address = end_ins_dict[key]
         block = BasicBlock(key, end_address)
-        stack_h[key] = [0,0,0]
         if key not in instructions:
             continue
+        stack_h[key] = [0,0,0]
+        calldataload_values[key] = []
         block.add_instruction(instructions[key])
         i = sorted_addresses.index(key) + 1
         while i < size and sorted_addresses[i] <= end_address:
@@ -399,12 +409,10 @@ def construct_bb():
         vertices[key] = block
         edges[key] = []
         
-
-
+        
 def construct_static_edges():
     add_falls_to()  # these edges are static
-
-
+    
 def add_falls_to():
     global vertices
     global edges
@@ -531,7 +539,7 @@ def full_sym_exec():
     params = Parameter(path_conditions_and_vars=path_conditions_and_vars, global_state=global_state, analysis=analysis)
     return sym_exec_block(params, 0, 0, 0, -1)
 
-
+# Added by Pablo Gordillo
 def update_stack_heigh(block,h,pos):
     l = stack_h[block]
     if(l[pos]<h):
@@ -718,7 +726,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_edges.update({current_edge: updated_count_number})
         raise Exception('Unknown Jump-Type')
 
+def updateCallDataValues(block,var_name):
+ 
+    laux = calldataload_values[block]
+    l = laux+[var_name]
+    calldataload_values[block] = l
 
+    
 # Symbolically executing an instruction
 def sym_exec_ins(params, block, instr, func_call):
     global MSIZE
@@ -1331,7 +1345,7 @@ def sym_exec_ins(params, block, instr, func_call):
             position = stack.pop(0)
             if g_src_map:
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
-                if source_code.startswith("function") and isReal(position):
+                if source_code.startswith("function") and isReal(position): 
                     idx1 = source_code.index("(") + 1
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
@@ -1349,6 +1363,8 @@ def sym_exec_ins(params, block, instr, func_call):
             else:
                 new_var = BitVec(new_var_name, 256)
                 path_conditions_and_vars[new_var_name] = new_var
+          
+            updateCallDataValues(block,new_var_name)
             stack.insert(0, new_var)
         else:
             raise ValueError('STACK underflow')
