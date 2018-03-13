@@ -8,6 +8,7 @@ class BasicBlock:
         self.jump_target = 0
         self.falls_to= None
         self.list_jumps = []
+        self.calldatavalues = []
 
     def get_start_address(self):
         return self.start
@@ -53,7 +54,8 @@ class BasicBlock:
         for el in edges:
             if (el != self.end+1) and (el!=self.falls_to):
                 self.list_jumps.append(el)
-                
+    def set_calldataload_values(self,l):
+        self.calldatavalues=l
     def display(self):
         six.print_("================")
         six.print_("start address: %d" % self.start)
@@ -63,6 +65,9 @@ class BasicBlock:
         six.print_("jump target: " + " ".join(str(x) for x in self.list_jumps))
         # six.print_("jump target: %d" %self.jump_target)
         if(self.falls_to != None):
-           six.print_("falls to: %d" %self.falls_to)
+            six.print_("falls to: %d" %self.falls_to)
         for instr in self.instructions:
-            six.print_(instr)
+            if(instr.strip(" ") == "CALLDATALOAD"):
+                six.print_(instr+"("+self.calldatavalues.pop(0)+")")
+            else:
+                six.print_(instr)
