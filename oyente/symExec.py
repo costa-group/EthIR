@@ -2409,7 +2409,7 @@ def run(disasm_file=None, source_file=None, source_map=None):
         begin = time.time()
 #        log.info("\t============ Results ===========")
         analyze()
-        rbr.evm2rbr_compiler(blocks = vertices)
+        rbr.evm2rbr_compiler(blocks_input = vertices)
         #Modified by pablo
         
         return [], 0 #detect_vulnerabilities()
