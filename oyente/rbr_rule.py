@@ -1,3 +1,11 @@
+#Pablo Gordillo
+
+'''
+RBRRule class represents the rules of the transaction system.
+Each rule contains:
+ * identifier
+
+'''
 
 class RBRRule:
     def __init__(self,blockId,typeBlock):
@@ -19,6 +27,9 @@ class RBRRule:
         return self.guard
 
     def set_guard(self, guard):
+        self.guard = guard
+
+    def add_guard(self, guard):
         self.guard.append(guard)
 
     def get_Id(self):
@@ -41,6 +52,7 @@ class RBRRule:
 
     def get_rule_name(self):
         return self.rule_name
+
 
     def write_rule(self, fd):
         pass
