@@ -24,6 +24,8 @@ from test_evm.global_test_params import (TIME_OUT, UNKNOWN_INSTRUCTION,
 from vulnerability import CallStack, TimeDependency, MoneyConcurrency, Reentrancy, AssertionFailure, ParityMultisigBug2
 import global_params
 
+import rbr
+
 log = logging.getLogger(__name__)
 
 UNSIGNED_BOUND_NUMBER = 2**256 - 1
@@ -2399,12 +2401,15 @@ def run(disasm_file=None, source_file=None, source_map=None):
     g_source_file = source_file
     g_src_map = source_map
 
-    atexit.register(closing_message)
+#    atexit.register(closing_message)
 
     if is_testing_evm():
         test()
     else:
         begin = time.time()
-        log.info("\t============ Results ===========")
+#        log.info("\t============ Results ===========")
         analyze()
-        return detect_vulnerabilities()
+        rbr.evm2rbr_compiler(blocks = vertices)
+        #Modified by pablo
+        
+        return [], 0 #detect_vulnerabilities()
