@@ -83,6 +83,8 @@ class InputHelper:
                 })
         return inputs
 
+    #Modified by Pablo Gordillo
+    #Not remove tmp files (dissasamble files)
     def rm_tmp_files(self):
         i = 0
         # if self.input_type == InputHelper.BYTECODE:
