@@ -1,12 +1,13 @@
 import math
 import sys
 
+import rbr_rule
 
 def getKey(block):
     return block.get_start_address()
 
 def compile_block(block):
-    pass
+    l_instr = block.get_instructions()
 
 
 '''
