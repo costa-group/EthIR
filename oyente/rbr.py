@@ -95,7 +95,11 @@ def get_ith_variable(index_variables, pos):
         idx = current-pos
         variable = "s("+str(idx)+")"
     else:
-        idx = pos-current-1
+        #counts first the local elements to the method. Aftter that
+        #search in the inputs arguments (simulates the rest of the
+        #stack)
+        new_pos= pos-(current+1) # to consider the 0th item
+        idx = new_pos+input_idx
         variable = "in["+str(idx)+"]"
     
 
@@ -103,62 +107,62 @@ def get_ith_variable(index_variables, pos):
 '''
 def translateOpcodes0(opcode,index_variables):
     if opcode == "ADD":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "+" + v2
     elif opcode == "MUL":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "*" + v2
     elif opcode == "SUB":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "-" + v2
     elif opcode == "DIV":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "/" + v2
     # elif opcode == "SDIV":
     #     pass
     elif opcode == "MOD":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "%" + v2
     # elif opcode == "SMOD":
     #     pass
     elif opcode == "ADDMOD":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_consume_variable(update_variables)
-        v4, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_consume_variable(updated_variables)
+        v4, updated_variables = get_new_variable(updated_variables)
         instr = v4+" = (" + v1 + "+" + v2 + ") % " + v3
     elif opcode == "MULMOD":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_consume_variable(update_variables)
-        v4, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_consume_variable(updated_variables)
+        v4, updated_variables = get_new_variable(updated_variables)
         instr = v4+" = (" + v1 + "*" + v2 + ") % " + v3
     elif opcode == "EXP":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "^" + v2
     # elif opcode == "SIGNEXTEND":
     #     pass
     elif opcode == "STOP":
         instr = ""
-        update_variables = index_variables
+        updated_variables = index_variables
 
     else:
         instr = "Error opcodes0"
-        update_variables = index_variables
+        updated_variables = index_variables
 
-    return instr, update_variables
+    return instr, updated_variables
 
 '''
 '''
@@ -187,24 +191,24 @@ def translateOpcodes10(opcode, index_variables):
         pass
     else:
         instr = "Error opcodes10"
-        update_variables = index_variables
+        updated_variables = index_variables
         
-    return instr, update_variables
+    return instr, updated_variables
 
 '''
 '''
 def translateOpcodes20(opcode, index_variables):
     if opcode == "SHA3":
-        v1, update_variables = get_consume_variable(index_variables)
-        v2, update_variables = get_consume_variable(update_variables)
-        v3, update_variables = get_new_variable(update_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = sha3( "+ v1+", "+v2+")"
 
     else:
         instr = "Error opcodes20"
-        update_variables = index_variables
+        updated_variables = index_variables
 
-    return instr, update_variables
+    return instr, updated_variables
 
 
 '''
@@ -240,7 +244,7 @@ def translateOpcodes30(opcode, index_variables):
         pass
     else:
         instr = "Error opcodes30"
-        update_variables = index_variables
+        updated_variables = index_variables
 
     return instr, index_variables
 
@@ -262,16 +266,16 @@ def translateOpcodes40(opcode, index_variables):
         pass
     else:
         instr = "Error opcodes40"
-        update_variables = index_variables
+        updated_variables = index_variables
 
-    return instr, update_variables
+    return instr, updated_variables
 
 
 '''
 '''
 def translateOpcodes50(opcode, index_variables):
     if opcode == "POP":
-        v1, update_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
         pass
@@ -305,9 +309,9 @@ def translateOpcodes50(opcode, index_variables):
         pass
     else:
         instr = "Error opcodes20"
-        update_variables = index_variables
+        updated_variables = index_variables
 
-    return instr, update_variables
+    return instr, updated_variables
 
 # def translateOpcodesA(opcode, index_variables):
 #     pass
@@ -353,29 +357,47 @@ def translateOpcodesF(opcode, index_variables):
         pass
     else:
         instr = "Error opcodesF"
-        update_variables = index_variables
+        updated_variables = index_variables
 
 '''
 '''
 def translateOpcodes60(opcode, value, index_variables):
     if opcode == "PUSH":
-        var1,update_variables = get_new_variable(index_variables)
+        v1,updated_variables = get_new_variable(index_variables)
         dec_value = int(value, 16)
         instr = var1+" = " + str(dec_value)
     else:
         instr = "Error opcodes60"
-        update_variables = index_variables
+        updated_variables = index_variables
 
-    return instr, update_variables
+    return instr, updated_variables
 
+'''
+'''
 def translateOpcodes80(opcode, value, index_variables):
     if opcode == "DUP":
-        pass
+        v1 = get_ith_variable(index_variables,value-1)
+        v2, updated_variables= get_new_variable(index_variables)
+        instr = v2+" = "+v1
     else:
         instr = "Error opcodes80"
-        update_variables = index_variables
+        updated_variables = index_variables
 
-    return instr, update_variables
+    return instr, updated_variables
+
+'''
+'''
+def translateOpcodes90(opcode, value, index_variables):
+    if opcode == "SWAP":
+        v1 = get_ith_variable(index_variables,value)
+        v2 = get_current_variable(index_variables)
+        instr1 = "s(aux) = "+v1
+        instr2 = v1+" = "+v2
+        instr3 = v2+" = s(aux)"
+    else:
+        instr = "Error opcodes80"
+
+    return [instr1,instr2,instr3], index_variables
 
 '''
 '''     
@@ -411,6 +433,14 @@ def compile_instr(evm_opcode,variables):
     return value, index_variables
 
 '''
+index_variables = (current,inputs) current goes from ith to 0
+(where ith represents the top) inputs goes from 0 to ith (where 0
+represents the top).
+
+The stack could be reconstructed as
+[s(ith)...s(0),in(x),...in(nth)]. Current points to ith and inputs to
+x
+
 '''
 def compile_block(block):
     index_variables = (-1,0) #(current, inputs)
