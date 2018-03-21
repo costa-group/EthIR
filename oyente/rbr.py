@@ -49,6 +49,11 @@ def init_globals():
                 "ASSERTFAIL", "DELEGATECALL", "BREAKPOINT", "RNGSEED", "SSIZEEXT",
                 "SLOADBYTES", "SSTOREBYTES", "SSIZE", "STATEROOT", "TXEXECGAS",
                 "CALLSTATIC", "INVALID", "SUICIDE"]
+
+    global rbr_blocks
+    rbr_blocks = {}
+    
+    
 '''
 '''    
 def getKey(block):
@@ -168,7 +173,7 @@ def translateOpcodes0(opcode,index_variables):
 '''
 def translateOpcodes10(opcode, index_variables):
     if opcode == "LT":
-        
+        pass
     elif opcode == "GT":
         pass
     # elif opcode == "SLT":
@@ -180,13 +185,24 @@ def translateOpcodes10(opcode, index_variables):
     elif opcode == "ISZERO":
         pass
     elif opcode == "AND":
-        pass
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
+        instr = v3+" = and(" + v1 + ", " + v2+")"
     elif opcode == "OR":
-        pass
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
+        instr = v3+" = or(" + v1 + ", " + v2+")"
     elif opcode == "XOR":
-        pass
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
+        instr = v3+" = xor(" + v1 + ", " + v2+")"
     elif opcode == "NOT":
-        pass
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_new_variable(updated_variables)
+        instr = v2+" = not(" + v1 + ")"
     elif opcode == "BYTE":
         pass
     else:
@@ -394,10 +410,16 @@ def translateOpcodes90(opcode, value, index_variables):
         instr1 = "s(aux) = "+v1
         instr2 = v1+" = "+v2
         instr3 = v2+" = s(aux)"
+        instr = [instr1,instr2,instr3]
     else:
-        instr = "Error opcodes80"
+        instr = "Error opcodes90"
 
-    return [instr1,instr2,instr3], index_variables
+    return instr, index_variables
+
+'''
+'''
+def is_conditional(opcode):
+    return opcode in ["LT","GT","EQ","ISZERO"]
 
 '''
 '''     
@@ -415,6 +437,8 @@ def get_oposite_guard(guard):
     elif guard == "ISZERO":
         oposite = "notzero"
 
+    else:
+        oposite = None
     return oposite
 
 
@@ -451,18 +475,20 @@ def compile_block(block):
         instr, index_variables = compile_instr(evm_instr,index_variables)
         rule.add_instr(instr)
 
-    
+    return rule
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
 '''
 def evm2rbr_compiler(blocks_input = None):
-    print opcodes.opcodes.keys()
+    global rbr_blocks
+    
     init_globals()
     if blocks_input :
         blocks = sorted(blocks_input.values(), key = getKey)
         for block in blocks:
-            compile_block(block)
+            rule = compile_block(block)
+            rbr_blocks[block.get_start_address]=rule
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 
