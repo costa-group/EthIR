@@ -50,6 +50,8 @@ def init_globals():
                 "SLOADBYTES", "SSTOREBYTES", "SSIZE", "STATEROOT", "TXEXECGAS",
                 "CALLSTATIC", "INVALID", "SUICIDE"]
 
+    global current_local_var
+    current_local_var = 0
     global rbr_blocks
     rbr_blocks = {}
     
@@ -107,7 +109,22 @@ def get_ith_variable(index_variables, pos):
         idx = new_pos+input_idx
         variable = "in["+str(idx)+"]"
     
+'''
 
+'''
+def get_local_variable(address):
+    global current_local_var
+    try:
+        idx = local_variables[address]
+        var = "l("+idx+")"
+    except KeyError:
+        local_variables[address] = current_local_var
+        var = "l("+current_local_var+")"
+        current_local_var+=1
+    finally:
+        return var
+        
+        
 '''
 '''
 def translateOpcodes0(opcode,index_variables):
