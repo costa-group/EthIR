@@ -289,7 +289,7 @@ def translateOpcodes40(opcode, index_variables):
 
 '''
 '''
-def translateOpcodes50(opcode, index_variables):
+def translateOpcodes50(opcode, value, index_variables):
     if opcode == "POP":
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
@@ -300,7 +300,8 @@ def translateOpcodes50(opcode, index_variables):
     elif opcode == "MSTORE8":
         pass
     elif opcode == "SLOAD":
-        pass
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = "+"f("+value+")"
     elif opcode == "SSTORE":
         pass
     elif opcode == "JUMP":
