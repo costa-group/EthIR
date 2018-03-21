@@ -3,9 +3,8 @@ import sys
 import rbr_rule
 import opcodes
 
-
-
-
+'''
+'''
 def init_globals():
     
     global opcodes0
@@ -50,10 +49,13 @@ def init_globals():
                 "ASSERTFAIL", "DELEGATECALL", "BREAKPOINT", "RNGSEED", "SSIZEEXT",
                 "SLOADBYTES", "SSTOREBYTES", "SSIZE", "STATEROOT", "TXEXECGAS",
                 "CALLSTATIC", "INVALID", "SUICIDE"]
-    
+'''
+'''    
 def getKey(block):
     return block.get_start_address()
 
+'''
+'''
 def get_consume_variable(index_variables):
     current = index_variables[0]
     input_idx = index_variables[1]
@@ -65,13 +67,39 @@ def get_consume_variable(index_variables):
         input_idx = input_idx+1
     return  variable, (current, input_idx)
 
+'''
+'''
 def get_new_variable(index_variables):
     new_current = index_variables[0]+1
     return "s("+str(new_current)+")", (new_current, index_variables[1])
+
+
+'''
+'''
+def get_current_variable(index_variables):
+    current = index_variables[0]
+    input_idx = index_variables[1]
+    if current>=0:
+        variable = "s("+str(current)+")"
+    else: #We have to take one of the inputs
+        variable = "in["+str(input_idx)+"]"
+    return variable
+
+'''
+pos start at 0
+'''
+def get_ith_variable(index_variables, pos):
+    current = index_variables[0]
+    input_idx = index_variables[1]
+    if (current>=pos):
+        idx = current-pos
+        variable = "s("+str(idx)+")"
+    else:
+        idx = pos-current-1
+        variable = "in["+str(idx)+"]"
     
 
 '''
-
 '''
 def translateOpcodes0(opcode,index_variables):
     if opcode == "ADD":
@@ -126,7 +154,247 @@ def translateOpcodes0(opcode,index_variables):
         instr = ""
         update_variables = index_variables
 
+    else:
+        instr = "Error opcodes0"
+        update_variables = index_variables
+
     return instr, update_variables
+
+'''
+'''
+def translateOpcodes10(opcode, index_variables):
+    if opcode == "LT":
+        
+    elif opcode == "GT":
+        pass
+    # elif opcode == "SLT":
+    #     pass
+    # elif opcode == "SGT":
+    #     pass
+    elif opcode == "EQ":
+        pass
+    elif opcode == "ISZERO":
+        pass
+    elif opcode == "AND":
+        pass
+    elif opcode == "OR":
+        pass
+    elif opcode == "XOR":
+        pass
+    elif opcode == "NOT":
+        pass
+    elif opcode == "BYTE":
+        pass
+    else:
+        instr = "Error opcodes10"
+        update_variables = index_variables
+        
+    return instr, update_variables
+
+'''
+'''
+def translateOpcodes20(opcode, index_variables):
+    if opcode == "SHA3":
+        v1, update_variables = get_consume_variable(index_variables)
+        v2, update_variables = get_consume_variable(update_variables)
+        v3, update_variables = get_new_variable(update_variables)
+        instr = v3+" = sha3( "+ v1+", "+v2+")"
+
+    else:
+        instr = "Error opcodes20"
+        update_variables = index_variables
+
+    return instr, update_variables
+
+
+'''
+'''
+def translateOpcodes30(opcode, index_variables):
+    if opcode == "ADDRESS":
+        pass
+    elif opcode == "BALANCE":
+        pass
+    elif opcode == "ORIGIN":
+        pass
+    elif opcode == "CALLER":
+        pass
+    elif opcode == "CALLVALUE":
+        pass
+    elif opcode == "CALLDATALOAD":
+        pass
+    elif opcode == "CALLDATASIZE":
+        pass
+    elif opcode == "CALLDATACOPY":
+        pass
+    elif opcode == "CODESIZE":
+        pass
+    elif opcode == "CODECOPY":
+        pass
+    elif opcode == "GASPRICE":
+        pass
+    elif opcode == "EXTCODESIZE":
+        pass
+    elif opcode == "EXTCODECOPY":
+        pass
+    elif opcode == "MCOPY":
+        pass
+    else:
+        instr = "Error opcodes30"
+        update_variables = index_variables
+
+    return instr, index_variables
+
+
+'''
+'''
+def translateOpcodes40(opcode, index_variables):
+    if opcode == "BLOCKHASH":
+        pass
+    elif opcode == "COINBASE":
+        pass
+    elif opcode == "TIMESTAMP":
+        pass
+    elif opcode == "NUMBER":
+        pass
+    elif opcode == "DIFFICULTY":
+        pass
+    elif opcode == "GASLIMIT":
+        pass
+    else:
+        instr = "Error opcodes40"
+        update_variables = index_variables
+
+    return instr, update_variables
+
+
+'''
+'''
+def translateOpcodes50(opcode, index_variables):
+    if opcode == "POP":
+        v1, update_variables = get_consume_variable(index_variables)
+        instr=""
+    elif opcode == "MLOAD":
+        pass
+    elif opcode == "MSTORE":
+        pass
+    elif opcode == "MSTORE8":
+        pass
+    elif opcode == "SLOAD":
+        pass
+    elif opcode == "SSTORE":
+        pass
+    elif opcode == "JUMP":
+        pass
+    elif opcode == "JUMPI":
+        pass
+    elif opcode == "PC":
+        pass
+    elif opcode == "MSIZE":
+        pass
+    elif opcode == "GAS":
+        pass
+    elif opcode == "JUMPDEST":
+        pass
+    elif opcode == "SLOADEXT":
+        pass
+    elif opcode == "SSTOREEXT":
+        pass
+    elif opcode == "SLOADBYTESEXT":
+        pass
+    elif opcode == "SSTOREBYTESEXT":
+        pass
+    else:
+        instr = "Error opcodes20"
+        update_variables = index_variables
+
+    return instr, update_variables
+
+# def translateOpcodesA(opcode, index_variables):
+#     pass
+
+'''
+'''
+def translateOpcodesF(opcode, index_variables):
+    if opcode == "CREATE":
+        pass
+    elif opcode == "CALL":
+        pass
+    elif opcode == "CALLCODE":
+        pass
+    elif opcode == "RETURN":
+        pass
+    elif opcode == "REVERT":
+        pass
+    elif opcode == "ASSERTFAIL":
+        pass
+    elif opcode == "DELEGATECALL":
+        pass
+    elif opcode == "BREAKPOINT":
+        pass
+    elif opcode == "RNGSEED":
+        pass
+    elif opcode == "SSIZEEXT":
+        pass
+    elif opcode == "SLOADBYTES":
+        pass
+    elif opcode == "SSTOREBYTES":
+        pass
+    elif opcode == "SSIZE":
+        pass
+    elif opcode == "STATEROOT":
+        pass
+    elif opcode == "TXEXECGAS":
+        pass
+    elif opcpde == "CALLSTATIC":
+        pass
+    elif opcode == "INVALID":
+        pass
+    elif opcode == "SUICIDE":
+        pass
+    else:
+        instr = "Error opcodesF"
+        update_variables = index_variables
+
+'''
+'''
+def translateOpcodes60(opcode, value, index_variables):
+    if opcode == "PUSH":
+        var1,update_variables = get_new_variable(index_variables)
+        dec_value = int(value, 16)
+        instr = var1+" = " + str(dec_value)
+    else:
+        instr = "Error opcodes60"
+        update_variables = index_variables
+
+    return instr, update_variables
+
+def translateOpcodes80(opcode, value, index_variables):
+    if opcode == "DUP":
+        pass
+    else:
+        instr = "Error opcodes80"
+        update_variables = index_variables
+
+    return instr, update_variables
+
+'''
+'''     
+def get_oposite_guard(guard):
+    if guard == "LT":
+        oposite = "geq"
+    elif guard == "GT":
+        oposite = "leq"
+    # elif guard == "SLT":
+    #     pass
+    # elif guard == "SGT":
+    #     pass
+    elif guard == "EQ":
+        oposite = "neq"
+    elif guard == "ISZERO":
+        oposite = "notzero"
+
+    return oposite
+
 
 '''
 Current is used to create the new local stack variables.
@@ -142,6 +410,8 @@ def compile_instr(evm_opcode,variables):
         index_variables = variables
     return value, index_variables
 
+'''
+'''
 def compile_block(block):
     index_variables = (-1,0) #(current, inputs)
     block_id = block.get_start_address()
