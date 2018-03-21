@@ -311,16 +311,25 @@ def translateOpcodes50(opcode, value, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
-        pass
+        l_var = get_local_variable(int(value))
+        _ , updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+ " = " + l_var
     elif opcode == "MSTORE":
-        pass
+        _ , updated_variables = get_consume_variable(index_variables)
+        v1 , updated_variables = get_consume_variable(updated_variables)
+        l_var = get_local_variable(int(value))
+        instr = l_var + " = "+ v1
     elif opcode == "MSTORE8":
         pass
     elif opcode == "SLOAD":
+        _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = "+"f("+value+")"
+        instr = v1+" = "+"f("+str(value)+")"
     elif opcode == "SSTORE":
-        pass
+        _ , updated_variables = get_consume_variable(index_variables)
+        v1 , updated_variables = get_consume_variable(updated_variables)
+        instr = "f("+str(value)+") = "+v1
     elif opcode == "JUMP":
         pass
     elif opcode == "JUMPI":
