@@ -8,8 +8,14 @@ class BasicBlock:
         self.jump_target = 0
         self.falls_to= None
         self.list_jumps = []
+        self.ls_values = {} #load and store values. It is needed for rbr representation
+        self.ls_values["mload"] = []
+        self.ls_values["mstore"] = []
+        self.ls_values["sload"] = []
+        self.ls_values["sstore"] = []
+        self.ls_values_computed = False
         self.calldatavalues = []
-
+        
     def get_start_address(self):
         return self.start
 
@@ -54,8 +60,27 @@ class BasicBlock:
         for el in edges:
             if (el != self.end+1) and (el!=self.falls_to):
                 self.list_jumps.append(el)
+
     def set_calldataload_values(self,l):
         self.calldatavalues=l
+
+    def get_load_store_values(self):
+        return self.ls_values
+
+    def get_load_store_values(self, ls_type):
+        return self.ls_values[ls_type]
+
+    def add_ls_value(self,ls_type,val):
+        laux = self.ls_values[ls_type]
+        l = laux+[val]
+        self.ls_values[ls_type] = l
+
+    def get_ls_values_computed(self):
+        return self.ls_values_computed
+
+    def act_ls_values(self):
+        self.ls_values_computed = True
+        
     def display(self):
         six.print_("================")
         six.print_("start address: %d" % self.start)

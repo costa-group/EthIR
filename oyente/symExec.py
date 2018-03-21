@@ -633,6 +633,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         all_gs.append(copy_global_values(global_state))
 
 
+    #Added by Pablo Gordillo    
+    vertices[block].act_ls_values()
+
+
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
         global total_no_of_paths
@@ -1576,6 +1580,10 @@ def sym_exec_ins(params, block, instr, func_call):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             address = stack.pop(0)
+
+            #Added by Pablo Gordillo
+            vertices[block].add_ls_value("mload",address)
+            
             current_miu_i = global_state["miu_i"]
             if isAllReal(address, current_miu_i) and address in mem:
                 if six.PY2:
@@ -1616,6 +1624,10 @@ def sym_exec_ins(params, block, instr, func_call):
             global_state["pc"] = global_state["pc"] + 1
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
+
+            #Added by Pablo Gordillo
+            vertices[block].add_ls_value("mstore",stored_address)
+
             current_miu_i = global_state["miu_i"]
             if isReal(stored_address):
                 # preparing data for hashing later
@@ -1686,6 +1698,10 @@ def sym_exec_ins(params, block, instr, func_call):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             position = stack.pop(0)
+            
+            #Added by Pablo Gordillo
+            vertices[block].add_ls_value("sload",position)
+
             if isReal(position) and position in global_state["Ia"]:
                 value = global_state["Ia"][position]
                 stack.insert(0, value)
@@ -1731,6 +1747,10 @@ def sym_exec_ins(params, block, instr, func_call):
             global_state["pc"] = global_state["pc"] + 1
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
+            
+            #Added by Pablo Gordillo
+            vertices[block].add_ls_value("sstore",stored_address)
+
             if isReal(stored_address):
                 # note that the stored_value could be unknown
                 global_state["Ia"][stored_address] = stored_value
