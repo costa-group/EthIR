@@ -249,6 +249,7 @@ def update_block_info():
 def print_cfg():
     vert = sorted(vertices.values(), key = getKey)
     for block in vert:
+        block.update_instr()
        # block.compute_list_jump(edges[block.get_start_address()])
         block.display()
     log.debug(str(edges))

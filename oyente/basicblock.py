@@ -80,7 +80,30 @@ class BasicBlock:
 
     def act_ls_values(self):
         self.ls_values_computed = True
+
+
+    def update_instr(self):
+        new_instructions = []
+
+        for instr in self.instructions:
+            instr = instr.strip(" ")
+            if(instr == "CALLDATALOAD"):
+                new_instr = instr + " " +  str(self.calldatavalues.pop(0))
+            elif instr == "MLOAD":
+                new_instr = instr + " " + str(self.ls_values["mload"].pop(0))
+            elif instr == "MSTORE":
+                new_instr = instr + " " + str(self.ls_values["mstore"].pop(0))
+            elif instr == "SLOAD":
+                new_instr = instr + " " + str(self.ls_values["sload"].pop(0))
+            elif instr == "SSTORE":
+                new_instr = instr + " " + str(self.ls_values["sstore"].pop(0))
+            else:
+                new_instr = instr
+
+            new_instructions.append(new_instr)
         
+        self.instructions = new_instructions
+    
     def display(self):
         six.print_("================")
         six.print_("start address: %d" % self.start)
@@ -92,7 +115,7 @@ class BasicBlock:
         if(self.falls_to != None):
             six.print_("falls to: %d" %self.falls_to)
         for instr in self.instructions:
-            if(instr.strip(" ") == "CALLDATALOAD"):
-                six.print_(instr+"("+self.calldatavalues.pop(0)+")")
-            else:
-                six.print_(instr)
+            # if(instr.strip(" ") == "CALLDATALOAD"):
+            #     six.print_(instr+"("+self.calldatavalues.pop(0)+")")
+            # else:
+            six.print_(instr)
