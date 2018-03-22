@@ -1,7 +1,8 @@
-import math
-import sys
+#Pablo Gordillo
+
 import rbr_rule
 import opcodes
+
 
 '''
 '''
@@ -61,24 +62,26 @@ def init_globals():
 def getKey(block):
     return block.get_start_address()
 
+
 '''
 '''
 def get_consume_variable(index_variables):
     current = index_variables[0]
     input_idx = index_variables[1]
-    if current>=0:
-        variable = "s("+str(current)+")"
+    if current >= 0 :
+        variable = "s(" + str(current) + ")"
         current = current-1
     else:
-        variable ="in["+str(input_idx)+"]"
+        variable ="in[" + str(input_idx) + "]"
         input_idx = input_idx+1
     return  variable, (current, input_idx)
+
 
 '''
 '''
 def get_new_variable(index_variables):
-    new_current = index_variables[0]+1
-    return "s("+str(new_current)+")", (new_current, index_variables[1])
+    new_current = index_variables[0] + 1
+    return "s(" + str(new_current) + ")", (new_current, index_variables[1])
 
 
 '''
@@ -86,11 +89,12 @@ def get_new_variable(index_variables):
 def get_current_variable(index_variables):
     current = index_variables[0]
     input_idx = index_variables[1]
-    if current>=0:
-        variable = "s("+str(current)+")"
+    if current >= 0 :
+        variable = "s(" + str(current) + ")"
     else: #We have to take one of the inputs
-        variable = "in["+str(input_idx)+"]"
+        variable = "in[" + str(input_idx) + "]"
     return variable
+
 
 '''
 pos start at 0
@@ -98,29 +102,29 @@ pos start at 0
 def get_ith_variable(index_variables, pos):
     current = index_variables[0]
     input_idx = index_variables[1]
-    if (current>=pos):
+    if (current >= pos):
         idx = current-pos
-        variable = "s("+str(idx)+")"
+        variable = "s(" + str(idx) + ")"
     else:
         #counts first the local elements to the method. Aftter that
         #search in the inputs arguments (simulates the rest of the
         #stack)
-        new_pos= pos-(current+1) # to consider the 0th item
-        idx = new_pos+input_idx
-        variable = "in["+str(idx)+"]"
-    
-'''
+        new_pos= pos - (current + 1) # to consider the 0th item
+        idx = new_pos + input_idx
+        variable = "in[" + str(idx) + "]"
 
+        
+'''
 '''
 def get_local_variable(address):
     global current_local_var
     try:
         idx = local_variables[address]
-        var = "l("+idx+")"
+        var = "l(" + idx + ")"
     except KeyError:
         local_variables[address] = current_local_var
-        var = "l("+current_local_var+")"
-        current_local_var+=1
+        var = "l(" + current_local_var + ")"
+        current_local_var += 1
     finally:
         return var
         
@@ -186,6 +190,7 @@ def translateOpcodes0(opcode,index_variables):
 
     return instr, updated_variables
 
+
 '''
 '''
 def translateOpcodes10(opcode, index_variables):
@@ -227,6 +232,7 @@ def translateOpcodes10(opcode, index_variables):
         updated_variables = index_variables
         
     return instr, updated_variables
+
 
 '''
 '''
@@ -320,16 +326,16 @@ def translateOpcodes50(opcode, value, index_variables):
         v1 , updated_variables = get_consume_variable(updated_variables)
         l_var = get_local_variable(int(value))
         instr = l_var + " = "+ v1
-    elif opcode == "MSTORE8":
-        pass
+    # elif opcode == "MSTORE8":
+    #     pass
     elif opcode == "SLOAD":
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = "+"f("+str(value)+")"
+        instr = v1+" = " + "f(" + str(value) + ")"
     elif opcode == "SSTORE":
         _ , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
-        instr = "f("+str(value)+") = "+v1
+        instr = "f(" + str(value) + ") = " + v1
     # elif opcode == "JUMP":
     #     pass
     # elif opcode == "JUMPI":
@@ -358,6 +364,7 @@ def translateOpcodes50(opcode, value, index_variables):
 
 # def translateOpcodesA(opcode, index_variables):
 #     pass
+
 
 '''
 '''
@@ -402,6 +409,7 @@ def translateOpcodesF(opcode, index_variables):
         instr = "Error opcodesF"
         updated_variables = index_variables
 
+        
 '''
 '''
 def translateOpcodes60(opcode, value, index_variables):
@@ -414,6 +422,7 @@ def translateOpcodes60(opcode, value, index_variables):
         updated_variables = index_variables
 
     return instr, updated_variables
+
 
 '''
 '''
@@ -428,25 +437,28 @@ def translateOpcodes80(opcode, value, index_variables):
 
     return instr, updated_variables
 
+
 '''
 '''
 def translateOpcodes90(opcode, value, index_variables):
     if opcode == "SWAP":
         v1 = get_ith_variable(index_variables,value)
         v2 = get_current_variable(index_variables)
-        instr1 = "s(aux) = "+v1
-        instr2 = v1+" = "+v2
-        instr3 = v2+" = s(aux)"
+        instr1 = "s(aux) = " + v1
+        instr2 = v1 + " = " + v2
+        instr3 = v2 + " = s(aux)"
         instr = [instr1,instr2,instr3]
     else:
         instr = "Error opcodes90"
 
     return instr, index_variables
 
+
 '''
 '''
 def is_conditional(opcode):
     return opcode in ["LT","GT","EQ","ISZERO"]
+
 
 '''
 '''     
@@ -477,31 +489,32 @@ def compile_instr(evm_opcode,variables):
     opcode_name = opcode[0]
     opcode_rest = opcode[1]
     if opcode_name in opcodes0:
-        value, index_variables = translateOpcodes0(opcode_name,variables)
+        value, index_variables = translateOpcodes0(opcode_name, variables)
     elif opcode_name in opcodes10:
-        value, index_variables = translateOpcodes10(opcode_name,variables)
+        value, index_variables = translateOpcodes10(opcode_name, variables)
     elif opcode_name in opcodes20:
-        value, index_variables = translateOpcodes20(opcode_name,variables)
+        value, index_variables = translateOpcodes20(opcode_name, variables)
     # elif opcode_name in opcodes30:
     #     value, index_variables = translateOpcodes30(opcode_name,variables)
     # elif opcode_name in opcodes40:
     #     value, index_variables = translateOpcodes40(opcode_name,variables)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name,opcode_rest,variables)
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
     elif opcode_name[:4] in opcodes60:
-        value, index_variables = translateOpcodes60(opcode_name,opcode_rest,variables)
+        value, index_variables = translateOpcodes60(opcode_name, opcode_rest, variables)
     elif opcode_name[:3] in opcodes80:
-        value, index_variables = translateOpcodes80(opcode_name,opcode_rest,variables)
+        value, index_variables = translateOpcodes80(opcode_name, opcode_rest, variables)
     elif opcode_name[:4] in opcodes90:
-        value, index_variables = translateOpcodes90(opcode_name,opcode_rest,variables)
+        value, index_variables = translateOpcodes90(opcode_name, opcode_rest, variables)
     elif opcode_name in opcodesA:
-        value, index_variables = translateOpcodesA(opcode_name,variables)
+        value, index_variables = translateOpcodesA(opcode_name, variables)
     # elif opcode_name in opcodesF:
     #     value, index_variables = translateOpcodesF(opcode_name,variables)
     else:
         value = "Error. No opcode matchs"
         index_variables = variables
     return value, index_variables
+
 
 '''
 index_variables = (current,inputs) current goes from ith to 0
@@ -516,13 +529,15 @@ x
 def compile_block(block):
     index_variables = (-1,0) #(current, inputs)
     block_id = block.get_start_address()
-    rule = rbr_rule.RBRRule(block_id,"block")
+    rule = rbr_rule.RBRRule(block_id, "block")
     l_instr = block.get_instructions()
     for evm_instr in l_instr:
-        instr, index_variables = compile_instr(evm_instr,index_variables)
+        instr, index_variables = compile_instr(evm_instr, index_variables)
         rule.add_instr(instr)
 
     return rule
+
+
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
