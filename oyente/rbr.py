@@ -12,14 +12,14 @@ def init_globals():
                 "SMOD", "ADDMOD", "MULMOD", "EXP", "SIGNEXTEND"]
 
     global opcodes10
-    opcode10 = ["LT", "GT", "SLT", "SGT", "EQ", "ISZERO", "AND", "OR",
+    opcodes10 = ["LT", "GT", "SLT", "SGT", "EQ", "ISZERO", "AND", "OR",
                 "XOR", "NOT", "BYTE"]
 
     global opcodes20
-    opcode20 = ["SHA3"]
+    opcodes20 = ["SHA3"]
 
     global opcodes30
-    opcode30 = ["ADDRESS", "BALANCE", "ORIGIN", "CALLER", "CALLVALUE",
+    opcodes30 = ["ADDRESS", "BALANCE", "ORIGIN", "CALLER", "CALLVALUE",
                 "CALLDATALOAD", "CALLDATASIZE", "CALLDATACOPY", "CODESIZE",
                 "CODECOPY", "GASPRICE", "EXTCODESIZE", "EXTCODECOPY", "MCOPY"]
 
@@ -189,19 +189,19 @@ def translateOpcodes0(opcode,index_variables):
 '''
 '''
 def translateOpcodes10(opcode, index_variables):
-    if opcode == "LT":
-        pass
-    elif opcode == "GT":
-        pass
+    # if opcode == "LT":
+    #     pass
+    # elif opcode == "GT":
+    #     pass
     # elif opcode == "SLT":
     #     pass
     # elif opcode == "SGT":
     #     pass
-    elif opcode == "EQ":
-        pass
-    elif opcode == "ISZERO":
-        pass
-    elif opcode == "AND":
+    # elif opcode == "EQ":
+    #     pass
+    # elif opcode == "ISZERO":
+    #     pass
+    if opcode == "AND":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
@@ -220,8 +220,8 @@ def translateOpcodes10(opcode, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_new_variable(updated_variables)
         instr = v2+" = not(" + v1 + ")"
-    elif opcode == "BYTE":
-        pass
+    # elif opcode == "BYTE":
+    #     pass
     else:
         instr = "Error opcodes10"
         updated_variables = index_variables
@@ -330,26 +330,26 @@ def translateOpcodes50(opcode, value, index_variables):
         _ , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         instr = "f("+str(value)+") = "+v1
-    elif opcode == "JUMP":
-        pass
-    elif opcode == "JUMPI":
-        pass
-    elif opcode == "PC":
-        pass
-    elif opcode == "MSIZE":
-        pass
-    elif opcode == "GAS":
-        pass
-    elif opcode == "JUMPDEST":
-        pass
-    elif opcode == "SLOADEXT":
-        pass
-    elif opcode == "SSTOREEXT":
-        pass
-    elif opcode == "SLOADBYTESEXT":
-        pass
-    elif opcode == "SSTOREBYTESEXT":
-        pass
+    # elif opcode == "JUMP":
+    #     pass
+    # elif opcode == "JUMPI":
+    #     pass
+    # elif opcode == "PC":
+    #     pass
+    # elif opcode == "MSIZE":
+    #     pass
+    # elif opcode == "GAS":
+    #     pass
+    # elif opcode == "JUMPDEST":
+    #     pass
+    # elif opcode == "SLOADEXT":
+    #     pass
+    # elif opcode == "SSTOREEXT":
+    #     pass
+    # elif opcode == "SLOADBYTESEXT":
+    #     pass
+    # elif opcode == "SSTOREBYTESEXT":
+    #     pass
     else:
         instr = "Error opcodes20"
         updated_variables = index_variables
@@ -478,8 +478,28 @@ def compile_instr(evm_opcode,variables):
     opcode_rest = opcode[1]
     if opcode_name in opcodes0:
         value, index_variables = translateOpcodes0(opcode_name,variables)
+    elif opcode_name in opcodes10:
+        value, index_variables = translateOpcodes10(opcode_name,variables)
+    elif opcode_name in opcodes20:
+        value, index_variables = translateOpcodes20(opcode_name,variables)
+    # elif opcode_name in opcodes30:
+    #     value, index_variables = translateOpcodes30(opcode_name,variables)
+    # elif opcode_name in opcodes40:
+    #     value, index_variables = translateOpcodes40(opcode_name,variables)
+    elif opcode_name in opcodes50:
+        value, index_variables = translateOpcodes50(opcode_name,opcode_rest,variables)
+    elif opcode_name[:4] in opcodes60:
+        value, index_variables = translateOpcodes60(opcode_name,opcode_rest,variables)
+    elif opcode_name[:3] in opcodes80:
+        value, index_variables = translateOpcodes80(opcode_name,opcode_rest,variables)
+    elif opcode_name[:4] in opcodes90:
+        value, index_variables = translateOpcodes90(opcode_name,opcode_rest,variables)
+    elif opcode_name in opcodesA:
+        value, index_variables = translateOpcodesA(opcode_name,variables)
+    # elif opcode_name in opcodesF:
+    #     value, index_variables = translateOpcodesF(opcode_name,variables)
     else:
-        value = ""
+        value = "Error. No opcode matchs"
         index_variables = variables
     return value, index_variables
 
@@ -513,9 +533,14 @@ def evm2rbr_compiler(blocks_input = None):
     init_globals()
     if blocks_input :
         blocks = sorted(blocks_input.values(), key = getKey)
+        
         for block in blocks:
+            block.display()
             rule = compile_block(block)
+            
             rbr_blocks[block.get_start_address]=rule
+        for rule in rbr_blocks.values():
+            rule.display()
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 
