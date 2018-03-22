@@ -58,7 +58,7 @@ class RBRRule:
         pass
     
     def display(self):
-        print self.rule_name+"("+arg_input+", "+ arg_global+", "+ arg_output +")=>"
+        print self.rule_name+"("+str(self.arg_input)+", "+ str(self.arg_global)+", "+ str(self.arg_output) +")=>"
 
         if self.guard != [] :
             print "\t"+self.guard
