@@ -355,8 +355,9 @@ def translateOpcodes50(opcode, value, index_variables):
     #     pass
     # elif opcode == "GAS":
     #     pass
-    # elif opcode == "JUMPDEST":
-    #     pass
+    elif opcode == "JUMPDEST":
+        instr = ""
+        updated_variables = index_variables
     # elif opcode == "SLOADEXT":
     #     pass
     # elif opcode == "SSTOREEXT":
