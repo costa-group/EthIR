@@ -53,6 +53,10 @@ def init_globals():
 
     global current_local_var
     current_local_var = 0
+
+    global local_variables
+    local_variables = {}
+    
     global rbr_blocks
     rbr_blocks = {}
     
@@ -113,20 +117,25 @@ def get_ith_variable(index_variables, pos):
         idx = new_pos + input_idx
         variable = "in[" + str(idx) + "]"
 
+    return variable
+
         
 '''
 '''
 def get_local_variable(address):
     global current_local_var
+    global local_variables
+    
     try:
         idx = local_variables[address]
-        var = "l(" + idx + ")"
+        var = "l(" + str(idx) + ")"
+        return var
     except KeyError:
         local_variables[address] = current_local_var
-        var = "l(" + current_local_var + ")"
+        var = "l(" + str(current_local_var) + ")"
         current_local_var += 1
-    finally:
         return var
+
         
         
 '''
@@ -181,11 +190,11 @@ def translateOpcodes0(opcode,index_variables):
     # elif opcode == "SIGNEXTEND":
     #     pass
     elif opcode == "STOP":
-        instr = ""
+        instr = "skip"
         updated_variables = index_variables
 
     else:
-        instr = "Error opcodes0"
+        instr = "Error opcodes0: "+opcode
         updated_variables = index_variables
 
     return instr, updated_variables
@@ -228,7 +237,7 @@ def translateOpcodes10(opcode, index_variables):
     # elif opcode == "BYTE":
     #     pass
     else:
-        instr = "Error opcodes10"
+        instr = "Error opcodes10: "+ opcode
         updated_variables = index_variables
         
     return instr, updated_variables
@@ -244,7 +253,7 @@ def translateOpcodes20(opcode, index_variables):
         instr = v3+" = sha3( "+ v1+", "+v2+")"
 
     else:
-        instr = "Error opcodes20"
+        instr = "Error opcodes20: "+opcode
         updated_variables = index_variables
 
     return instr, updated_variables
@@ -282,7 +291,7 @@ def translateOpcodes30(opcode, index_variables):
     elif opcode == "MCOPY":
         pass
     else:
-        instr = "Error opcodes30"
+        instr = "Error opcodes30: "+opcode
         updated_variables = index_variables
 
     return instr, index_variables
@@ -304,7 +313,7 @@ def translateOpcodes40(opcode, index_variables):
     elif opcode == "GASLIMIT":
         pass
     else:
-        instr = "Error opcodes40"
+        instr = "Error opcodes40: "+opcode
         updated_variables = index_variables
 
     return instr, updated_variables
@@ -357,7 +366,7 @@ def translateOpcodes50(opcode, value, index_variables):
     # elif opcode == "SSTOREBYTESEXT":
     #     pass
     else:
-        instr = "Error opcodes20"
+        instr = "Error opcodes50: "+ opcode
         updated_variables = index_variables
 
     return instr, updated_variables
@@ -406,33 +415,36 @@ def translateOpcodesF(opcode, index_variables):
     elif opcode == "SUICIDE":
         pass
     else:
-        instr = "Error opcodesF"
+        instr = "Error opcodesF: "+opcode
         updated_variables = index_variables
 
         
 '''
+value is string
 '''
 def translateOpcodes60(opcode, value, index_variables):
+    
     if opcode == "PUSH":
         v1,updated_variables = get_new_variable(index_variables)
         dec_value = int(value, 16)
-        instr = var1+" = " + str(dec_value)
+        instr = v1+" = " + str(dec_value)
     else:
-        instr = "Error opcodes60"
+        instr = "Error opcodes60: "+opcode
         updated_variables = index_variables
 
     return instr, updated_variables
 
 
 '''
+value is string
 '''
 def translateOpcodes80(opcode, value, index_variables):
     if opcode == "DUP":
-        v1 = get_ith_variable(index_variables,value-1)
+        v1 = get_ith_variable(index_variables,int(value)-1)
         v2, updated_variables= get_new_variable(index_variables)
         instr = v2+" = "+v1
     else:
-        instr = "Error opcodes80"
+        instr = "Error opcodes80: "+opcode
         updated_variables = index_variables
 
     return instr, updated_variables
@@ -442,14 +454,14 @@ def translateOpcodes80(opcode, value, index_variables):
 '''
 def translateOpcodes90(opcode, value, index_variables):
     if opcode == "SWAP":
-        v1 = get_ith_variable(index_variables,value)
+        v1 = get_ith_variable(index_variables,int(value))
         v2 = get_current_variable(index_variables)
         instr1 = "s(aux) = " + v1
         instr2 = v1 + " = " + v2
         instr3 = v2 + " = s(aux)"
         instr = [instr1,instr2,instr3]
     else:
-        instr = "Error opcodes90"
+        instr = "Error opcodes90: "+opcode
 
     return instr, index_variables
 
@@ -487,7 +499,11 @@ Current is used to create the new local stack variables.
 def compile_instr(evm_opcode,variables):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
-    opcode_rest = opcode[1]
+    opcode_rest = ""
+
+    if len(opcode) > 1:
+        opcode_rest = opcode[1]
+
     if opcode_name in opcodes0:
         value, index_variables = translateOpcodes0(opcode_name, variables)
     elif opcode_name in opcodes10:
@@ -501,11 +517,11 @@ def compile_instr(evm_opcode,variables):
     elif opcode_name in opcodes50:
         value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
     elif opcode_name[:4] in opcodes60:
-        value, index_variables = translateOpcodes60(opcode_name, opcode_rest, variables)
+        value, index_variables = translateOpcodes60(opcode_name[:4], opcode_rest, variables)
     elif opcode_name[:3] in opcodes80:
-        value, index_variables = translateOpcodes80(opcode_name, opcode_rest, variables)
+        value, index_variables = translateOpcodes80(opcode_name[:3], opcode_name[3:], variables)
     elif opcode_name[:4] in opcodes90:
-        value, index_variables = translateOpcodes90(opcode_name, opcode_rest, variables)
+        value, index_variables = translateOpcodes90(opcode_name[:4], opcode_name[4:], variables)
     elif opcode_name in opcodesA:
         value, index_variables = translateOpcodesA(opcode_name, variables)
     # elif opcode_name in opcodesF:
@@ -533,7 +549,11 @@ def compile_block(block):
     l_instr = block.get_instructions()
     for evm_instr in l_instr:
         instr, index_variables = compile_instr(evm_instr, index_variables)
-        rule.add_instr(instr)
+        if type(instr) == type([]):
+            for ins in instr:
+                rule.add_instr(ins)
+        else:
+            rule.add_instr(instr)
 
     return rule
 
@@ -550,7 +570,6 @@ def evm2rbr_compiler(blocks_input = None):
         blocks = sorted(blocks_input.values(), key = getKey)
         
         for block in blocks:
-            block.display()
             rule = compile_block(block)
             
             rbr_blocks[block.get_start_address]=rule
