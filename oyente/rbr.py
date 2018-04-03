@@ -69,6 +69,12 @@ def getKey(block):
 
 '''
 '''
+def orderRBR(rbr):
+    return rbr.get_Id()
+
+
+'''
+'''
 def get_consume_variable(index_variables):
     current = index_variables[0]
     input_idx = index_variables[1]
@@ -574,7 +580,9 @@ def evm2rbr_compiler(blocks_input = None):
             rule = compile_block(block)
             
             rbr_blocks[block.get_start_address]=rule
-        for rule in rbr_blocks.values():
+
+        rbr = sorted(rbr_blocks.values(), key = orderRBR)
+        for rule in rbr:
             rule.display()
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
