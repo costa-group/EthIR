@@ -610,25 +610,32 @@ def process_falls_to_blocks():
 
 
 def create_jumpCall(block_id,l_instr,variables,jump_target,falls_to):
-    stack_variables = get_stack_variables(variables)
-    input_variables = get_input_variables(variables,heigh-len(stack_variables))
-    p_vars = "["+", ".join(stack_variables+input_variables)+"]"
-    instr = "call(jump"+str(block_id)+"("+p_vars+", globals, []))"
+    consumido = 0
+    old_variables = variables
     
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
+    if(l_instr[0] == "ISZERO"): consumido +=1
+    else: consumido+=2
+    
     for elem in l_instr[1:]:
         if elem == "ISZERO":
             guard = get_opposite_guard(guard)
+            consumido+=1
         elif elem[:4] == "PUSH":
             _, index_variables = get_consume_variable(index_variables)
+            consumido-=1
         elif elem == "JUMPI":
             _, index_variables = get_consume_variable(index_variables)
             _, index_variables = get_consume_variable(index_variables)
+            consumido+=2
         else:
             guard = "Error while creating the jump"
 
     create_jumpBlock(guard,index_variables,jump_target,falls_to)
-    instr = "call(jump"+block_id+
+    stack_variables = get_stack_variables(old_variables)
+    input_variables = get_input_variables(old_variables,consumido-len(stack_variables))
+    p_vars = "["+", ".join(stack_variables+input_variables)+"]"
+    instr = "call(jump"+str(block_id)+"("+p_vars+", globals, []))"
 
     
 def create_jumpBlock(guard,index_variables,jump_target,falls_to):
