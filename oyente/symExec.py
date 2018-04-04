@@ -244,7 +244,7 @@ def update_block_info():
     for block in vert:
         block.compute_list_jump(edges[block.get_start_address()])
         block.set_calldataload_values(calldataload_values[block.get_start_address()])
-
+        block.set_stack_info(stack_h[block.get_start_address()])
 #Added by Pablo Gordillo    
 def print_cfg():
     vert = sorted(vertices.values(), key = getKey)
