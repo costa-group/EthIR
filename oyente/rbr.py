@@ -226,18 +226,29 @@ def translateOpcodes0(opcode,index_variables):
 '''
 '''
 def translateOpcodes10(opcode, index_variables):
-    # if opcode == "LT":
-    #     pass
-    # elif opcode == "GT":
-    #     pass
+    if opcode == "LT":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        _ , updated_variables = get_new_variable(updated_variables)
+        instr = "lt(" + v1 + ", "+v2+")"
+    elif opcode == "GT":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        _ , updated_variables = get_new_variable(updated_variables)
+        instr = "gt(" + v1 + ", "+v2+")"
     # elif opcode == "SLT":
     #     pass
     # elif opcode == "SGT":
     #     pass
-    # elif opcode == "EQ":
-    #     pass
-    # elif opcode == "ISZERO":
-    #     pass
+    elif opcode == "EQ":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        _ , updated_variables = get_new_variable(updated_variables)
+        instr = "eq(" + v1 + ", "+v2+")"
+    elif opcode == "ISZERO":
+        v1, updated_variables = get_consume_variable(index_variables)
+        _ , updated_variables = get_new_variable(updated_variables)
+        instr = "isZero(" + v1 +")"
     if opcode == "AND":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
@@ -514,26 +525,45 @@ def translateOpcodes90(opcode, value, index_variables):
 def is_conditional(opcode):
     return opcode in ["LT","GT","EQ","ISZERO"]
 
+'''
+'''
+def get_guard(opcode):
+    if opcode == "LT":
+        guard = "lt"
+    elif opcode == "GT":
+        guard = "gt"
+    # elif opcode == "SLT":
+    #     pass
+    # elif opcode == "SGT":
+    #     pass
+    elif opcode == "EQ":
+        guard = "eq"
+    elif opcode == "ISZERO":
+        guard = "isZero"
+
+    else:
+        guard = None
+    return guard
 
 '''
 '''     
-def get_oposite_guard(guard):
-    if guard == "LT":
-        oposite = "geq"
-    elif guard == "GT":
-        oposite = "leq"
+def get_opposite_guard(guard):
+    if guard == "lt":
+        opposite = "geq"
+    elif guard == "gt":
+        opposite = "leq"
     # elif guard == "SLT":
     #     pass
     # elif guard == "SGT":
     #     pass
-    elif guard == "EQ":
-        oposite = "neq"
-    elif guard == "ISZERO":
-        oposite = "notzero"
+    elif guard == "eq":
+        opposite = "neq"
+    elif guard == "isZero":
+        opposite = "notZero"
 
     else:
-        oposite = None
-    return oposite
+        opposite = None
+    return opposite
 
 
 '''
@@ -575,6 +605,35 @@ def compile_instr(evm_opcode,variables,list_jumps,stack_info):
     return value, index_variables
 
 
+def process_falls_to_blocks():
+    pass
+
+
+def create_jumpCall(block_id,l_instr,variables,jump_target,falls_to):
+    stack_variables = get_stack_variables(variables)
+    input_variables = get_input_variables(variables,heigh-len(stack_variables))
+    p_vars = "["+", ".join(stack_variables+input_variables)+"]"
+    instr = "call(jump"+str(block_id)+"("+p_vars+", globals, []))"
+    
+    guard, index_variables = translateOpcodes10(l_instr[0], variables)
+    for elem in l_instr[1:]:
+        if elem == "ISZERO":
+            guard = get_opposite_guard(guard)
+        elif elem[:4] == "PUSH":
+            _, index_variables = get_consume_variable(index_variables)
+        elif elem == "JUMPI":
+            _, index_variables = get_consume_variable(index_variables)
+            _, index_variables = get_consume_variable(index_variables)
+        else:
+            guard = "Error while creating the jump"
+
+    create_jumpBlock(guard,index_variables,jump_target,falls_to)
+    instr = "call(jump"+block_id+
+
+    
+def create_jumpBlock(guard,index_variables,jump_target,falls_to):
+    pass
+
 '''
 index_variables = (current,inputs) current goes from ith to 0
 (where ith represents the top) inputs goes from 0 to ith (where 0
@@ -586,19 +645,23 @@ x
 
 '''
 def compile_block(block):
+    global rbr_blocks
+    
+    cont = 0
+    finish = False
     index_variables = (-1,0) #(current, inputs)
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
     l_instr = block.get_instructions()
-    for evm_instr in l_instr:
-        instr, index_variables = compile_instr(evm_instr,
+    while cont< len(l_instr) and not(finish):
+        instr, index_variables = compile_instr(l_instr[cont],
                                                index_variables,block.get_list_jumps(),block.get_stack_info())
         if type(instr) == type([]):
             for ins in instr:
                 rule.add_instr(ins)
         else:
             rule.add_instr(instr)
-
+        cont+=1
     return rule
 
 
