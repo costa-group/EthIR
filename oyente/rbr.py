@@ -267,7 +267,7 @@ def translateOpcodes20(opcode, index_variables):
 
 '''
 '''
-def translateOpcodes30(opcode, index_variables):
+def translateOpcodes30(opcode, value, index_variables):
     if opcode == "ADDRESS":
         pass
     elif opcode == "BALANCE":
@@ -275,23 +275,32 @@ def translateOpcodes30(opcode, index_variables):
     elif opcode == "ORIGIN":
         pass
     elif opcode == "CALLER":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = caller"
     elif opcode == "CALLVALUE":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = callvalue"
     elif opcode == "CALLDATALOAD":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = "+value
     elif opcode == "CALLDATASIZE":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = calldatasize"
     elif opcode == "CALLDATACOPY":
         pass
     elif opcode == "CODESIZE":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = callvalue"
     elif opcode == "CODECOPY":
         pass
     elif opcode == "GASPRICE":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = gas_price"
     elif opcode == "EXTCODESIZE":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = extcodesize"
     elif opcode == "EXTCODECOPY":
         pass
     elif opcode == "MCOPY":
@@ -300,7 +309,7 @@ def translateOpcodes30(opcode, index_variables):
         instr = "Error opcodes30: "+opcode
         updated_variables = index_variables
 
-    return instr, index_variables
+    return instr, updated_variables
 
 
 '''
@@ -309,7 +318,8 @@ def translateOpcodes40(opcode, index_variables):
     if opcode == "BLOCKHASH":
         pass
     elif opcode == "COINBASE":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = coinbase"
     elif opcode == "TIMESTAMP":
         pass
     elif opcode == "NUMBER":
@@ -317,7 +327,8 @@ def translateOpcodes40(opcode, index_variables):
     elif opcode == "DIFFICULTY":
         pass
     elif opcode == "GASLIMIT":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = gaslimit"
     else:
         instr = "Error opcodes40: "+opcode
         updated_variables = index_variables
@@ -518,7 +529,7 @@ def compile_instr(evm_opcode,variables):
     elif opcode_name in opcodes20:
         value, index_variables = translateOpcodes20(opcode_name, variables)
     # elif opcode_name in opcodes30:
-    #     value, index_variables = translateOpcodes30(opcode_name,variables)
+    #     value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables)
     # elif opcode_name in opcodes40:
     #     value, index_variables = translateOpcodes40(opcode_name,variables)
     elif opcode_name in opcodes50:
