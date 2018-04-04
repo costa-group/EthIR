@@ -7,6 +7,7 @@ class BasicBlock:
         self.instructions = []  # each instruction is a string
         self.jump_target = 0
         self.falls_to= None
+
         self.list_jumps = []
         self.ls_values = {} #load and store values. It is needed for rbr representation
         self.ls_values["mload"] = []
@@ -15,7 +16,9 @@ class BasicBlock:
         self.ls_values["sstore"] = []
         self.ls_values_computed = False
         self.calldatavalues = []
-        
+
+        self.stack_info = []
+
     def get_start_address(self):
         return self.start
 
@@ -56,6 +59,9 @@ class BasicBlock:
         return self.branch_expression
 
     #Added by Pablo Gordillo
+    def get_list_jumps(self):
+        return self.list_jumps
+
     def compute_list_jump(self,edges):
         for el in edges:
             if (el != self.end+1) and (el!=self.falls_to):
@@ -103,7 +109,13 @@ class BasicBlock:
             new_instructions.append(new_instr)
         
         self.instructions = new_instructions
-    
+
+    def get_stack_info(self):
+        return self.stack_info
+
+    def set_stack_info(self,stack_info):
+        self.stack_info = stack_info
+        
     def display(self):
         six.print_("================")
         six.print_("start address: %d" % self.start)
