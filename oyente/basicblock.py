@@ -15,7 +15,6 @@ class BasicBlock:
         self.ls_values["sstore"] = []
         self.ls_values_computed = False
         self.calldatavalues = []
-        self.guard = ""
         
     def get_start_address(self):
         return self.start
@@ -82,12 +81,6 @@ class BasicBlock:
     def act_ls_values(self):
         self.ls_values_computed = True
 
-    #To reflect that an unconditional jump can continue in different blocks depending on the state of the stack
-    def get_guard(self):
-        return self.guard
-    
-    def set_guard(self,guard):
-        self.guard = guard
         
     def update_instr(self):
         new_instructions = []
