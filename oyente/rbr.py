@@ -105,6 +105,23 @@ def get_current_variable(index_variables):
         variable = "in[" + str(input_idx) + "]"
     return variable
 
+'''
+If current == -1 range is empty and the function return an empty list.
+'''
+def get_stack_variables(index_variables):
+    current = index_variables[0]
+    s_vars = []
+    for i in range(current,-1,-1):
+        s_vars.append("s("+str(i)+")")
+
+    return s_vars
+
+def get_input_variables(index_variables,top):
+    current = index_variables[1]
+    in_vars = []
+    for i in range(current,current+top):
+        in_vars.append("in["+str(i)+"]")
+    return in_vars
 
 '''
 pos start at 0
@@ -338,7 +355,7 @@ def translateOpcodes40(opcode, index_variables):
 
 '''
 '''
-def translateOpcodes50(opcode, value, index_variables):
+def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
     if opcode == "POP":
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
@@ -362,8 +379,16 @@ def translateOpcodes50(opcode, value, index_variables):
         _ , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         instr = "f(" + str(value) + ") = " + v1
-    # elif opcode == "JUMP":
-    #     pass
+    elif opcode == "JUMP":
+        if (len(list_jumps)>1):
+            pass
+        
+        else:
+            _ , updated_variables = get_consume_variable(index_variables)
+            stack_variables = get_stack_variables(updated_variables)
+            input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
+            p_vars = "["+", ".join(stack_variables+input_variables)+"]"
+            instr = "call(block"+str(list_jumps[0])+"("+p_vars+", globals, []))"
     # elif opcode == "JUMPI":
     #     pass
     # elif opcode == "PC":
@@ -514,7 +539,7 @@ def get_oposite_guard(guard):
 '''
 Current is used to create the new local stack variables.
 '''
-def compile_instr(evm_opcode,variables):
+def compile_instr(evm_opcode,variables,list_jumps,stack_info):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -528,12 +553,12 @@ def compile_instr(evm_opcode,variables):
         value, index_variables = translateOpcodes10(opcode_name, variables)
     elif opcode_name in opcodes20:
         value, index_variables = translateOpcodes20(opcode_name, variables)
-    # elif opcode_name in opcodes30:
-    #     value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables)
+    elif opcode_name in opcodes30:
+        value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables)
     # elif opcode_name in opcodes40:
     #     value, index_variables = translateOpcodes40(opcode_name,variables)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,list_jumps,stack_info[1])
     elif opcode_name[:4] in opcodes60:
         value, index_variables = translateOpcodes60(opcode_name[:4], opcode_rest, variables)
     elif opcode_name[:3] in opcodes80:
@@ -566,7 +591,8 @@ def compile_block(block):
     rule = rbr_rule.RBRRule(block_id, "block")
     l_instr = block.get_instructions()
     for evm_instr in l_instr:
-        instr, index_variables = compile_instr(evm_instr, index_variables)
+        instr, index_variables = compile_instr(evm_instr,
+                                               index_variables,block.get_list_jumps(),block.get_stack_info())
         if type(instr) == type([]):
             for ins in instr:
                 rule.add_instr(ins)
