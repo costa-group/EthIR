@@ -548,18 +548,18 @@ def get_guard(opcode):
 '''
 '''     
 def get_opposite_guard(guard):
-    if guard == "lt":
-        opposite = "geq"
-    elif guard == "gt":
-        opposite = "leq"
+    if guard[:2] == "lt":
+        opposite = "geq"+guard[2:]
+    elif guard[:2] == "gt":
+        opposite = "leq"+guard[2:]
     # elif guard == "SLT":
     #     pass
     # elif guard == "SGT":
     #     pass
-    elif guard == "eq":
-        opposite = "neq"
-    elif guard == "isZero":
-        opposite = "notZero"
+    elif guard[:2] == "eq":
+        opposite = "neq"+guard[2:]
+    elif guard[:5] == "isZero":
+        opposite = "notZero"+guard[5:]
 
     else:
         opposite = None
