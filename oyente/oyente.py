@@ -63,6 +63,19 @@ def has_dependencies_installed():
 
     return True
 
+#Added by Pablo Gordillo
+'''
+We believe that source is a dissasembly evm file
+'''
+def analyze_disasm_bytecode():
+    global args
+    
+    result, exit_code = symExec.run(args.source)
+    if global_params.WEB:
+        six.print_(json.dumps(result))
+        
+    return exit_code
+
 def analyze_bytecode():
     global args
 
@@ -149,7 +162,8 @@ def main():
     parser.add_argument( "-gb",  "--globalblockchain",       help="Integrate with the global ethereum blockchain", action="store_true")
     parser.add_argument( "-gtc", "--generate-test-cases",    help="Generate test cases each branch of symbolic execution tree", action="store_true")
     parser.add_argument( "-sjo",  "--standard-json-output",  help="Support Standard JSON output", action="store_true")
-
+    #Added by Pablo Gordillo
+    parser.add_argument( "-disasm", "--disassembly",           help="Consider a dissasembly evm file directly", action="store_true")           
     args = parser.parse_args()
 
     if args.root_path:
@@ -201,6 +215,10 @@ def main():
             f.write(code)
 
     exit_code = 0
+
+    #Added by Pablo Gordillo
+    if args.disassembly:
+        exit_code = analyze_disasm_bytecode()
     if args.bytecode:
         exit_code = analyze_bytecode()
     elif args.standard_json:
