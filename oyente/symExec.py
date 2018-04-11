@@ -207,7 +207,7 @@ def change_format():
             lineParts[-1] = lineParts[-1].strip('\n')
             try: # adding arrow if last is a number
                 lastInt = lineParts[-1]
-                if(int(lastInt, 16) or int(lastInt, 16) == 0) and len(lineParts) > 2:
+                if(int(lastInt, 16) or int(lastInt, 16) == 0) and len(lineParts) > 2 and (not ("=>" in lineParts)):
                     lineParts[-1] = "=>"
                     lineParts.append(lastInt)
             except Exception:
