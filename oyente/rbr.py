@@ -142,7 +142,6 @@ def get_ith_variable(index_variables, pos):
 
     return variable
 
-        
 '''
 '''
 def get_local_variable(address):
@@ -159,8 +158,7 @@ def get_local_variable(address):
         current_local_var += 1
         return var
 
-        
-        
+               
 '''
 '''
 def translateOpcodes0(opcode,index_variables):
@@ -237,10 +235,11 @@ def translateOpcodes10(opcode, index_variables):
         v2, updated_variables = get_consume_variable(updated_variables)
         v3 , updated_variables = get_new_variable(updated_variables)
         instr = "gt(" + v1 + ", "+v2+")"
-        # elif opcode == "SLT":
-        #     pass
-        # elif opcode == "SGT":
-        #     pass
+
+    # elif opcode == "SLT":
+    #     pass
+    # elif opcode == "SGT":
+    #     pass
 
     elif opcode == "EQ":
         v1, updated_variables = get_consume_variable(index_variables)
@@ -402,6 +401,7 @@ def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
         
         else:
             _ , updated_variables = get_consume_variable(index_variables)
+
             stack_variables = get_stack_variables(updated_variables)
             input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
             if (len(stack_variables)!=0 or len(input_variables)!=0):
@@ -620,7 +620,7 @@ def compile_instr(evm_opcode,variables,list_jumps,stack_info):
 def process_falls_to_blocks(index_variables, falls_to, heigh):
     stack_variables = get_stack_variables(index_variables)
     input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
-    p_vars = ", ".join(stack_variables+input_variables)
+    p_vars = ",".join(stack_variables+input_variables)
     instr = "call(block"+str(falls_to)+"("+p_vars+", globals, []))"
     return instr
 
@@ -650,8 +650,6 @@ def create_jump(block_id,l_instr,variables,jump_target,falls_to,heigh):
 '''
 def create_jumpBlock(block_id,l_instr,variables,jump_target,falls_to,heigh):
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
-    print "INICIO"
-    print index_variables
     for elem in l_instr[1:]:
         if elem == "ISZERO":
             guard = get_opposite_guard(guard)
