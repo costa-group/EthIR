@@ -14,7 +14,7 @@ class RBRRule:
         if typeBlock == "block":
             self.rule_name = "block"+str(blockId)
         else:
-            self.rule_name = "jumpFrom"+str(blockId)
+            self.rule_name = "jump"+str(blockId)
 
         self.arg_input = []
         self.arg_global = []
