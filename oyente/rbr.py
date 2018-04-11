@@ -82,7 +82,7 @@ def get_consume_variable(index_variables):
         variable = "s(" + str(current) + ")"
         current = current-1
     else:
-        variable ="in[" + str(input_idx) + "]"
+        variable ="in(" + str(input_idx) + ")"
         input_idx = input_idx+1
     return  variable, (current, input_idx)
 
@@ -102,7 +102,7 @@ def get_current_variable(index_variables):
     if current >= 0 :
         variable = "s(" + str(current) + ")"
     else: #We have to take one of the inputs
-        variable = "in[" + str(input_idx) + "]"
+        variable = "in(" + str(input_idx) + ")"
     return variable
 
 '''
@@ -120,7 +120,7 @@ def get_input_variables(index_variables,top):
     current = index_variables[1]
     in_vars = []
     for i in range(current,current+top):
-        in_vars.append("in["+str(i)+"]")
+        in_vars.append("in("+str(i)+")")
     return in_vars
 
 '''
@@ -138,7 +138,7 @@ def get_ith_variable(index_variables, pos):
         #stack)
         new_pos= pos - (current + 1) # to consider the 0th item
         idx = new_pos + input_idx
-        variable = "in[" + str(idx) + "]"
+        variable = "in(" + str(idx) + ")"
 
     return variable
 
@@ -389,13 +389,13 @@ def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
     # elif opcode == "MSTORE8":
     #     pass
     elif opcode == "SLOAD":
-        _ , updated_variables = get_consume_variable(index_variables)
+        v0 , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = " + "f(" + str(value) + ")"
+        instr = v1+" = " + "f(" + v0 + ")"
     elif opcode == "SSTORE":
-        _ , updated_variables = get_consume_variable(index_variables)
+        v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
-        instr = "f(" + str(value) + ") = " + v1
+        instr = "f(" + v0 + ") = " + v1
     elif opcode == "JUMP":
         if (len(list_jumps)>1):
             print "HOLA"
@@ -404,8 +404,12 @@ def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
             _ , updated_variables = get_consume_variable(index_variables)
             stack_variables = get_stack_variables(updated_variables)
             input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
-            p_vars = "["+", ".join(stack_variables+input_variables)+"]"
-            instr = "call(block"+str(list_jumps[0])+"("+p_vars+", globals, []))"
+            if (len(stack_variables)!=0 or len(input_variables)!=0):
+                p_vars = ",".join(stack_variables+input_variables)+","
+            else:
+                p_vars = ""
+                
+            instr = "call(block"+str(list_jumps[0])+"("+p_vars+"globals, []))"
     # elif opcode == "JUMPI":
     #     pass
     # elif opcode == "PC":
@@ -632,8 +636,13 @@ def create_jump(block_id,l_instr,variables,jump_target,falls_to,heigh):
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
     input_variables = get_input_variables(variables,heigh-len(stack_variables)+consume)
-    p_vars = ", ".join(stack_variables+input_variables)
-    instr = "call(jump"+str(block_id)+"("+p_vars+", globals, []))"
+
+    if (len(stack_variables)!=0 or len(input_variables)!=0):
+        p_vars = ",".join(stack_variables+input_variables)+","
+    else:
+        p_vars = ""
+        
+    instr = "call(jump"+str(block_id)+"("+p_vars+"globals,[]))"
     
     return rule1, rule2, instr
 
@@ -654,21 +663,22 @@ def create_jumpBlock(block_id,l_instr,variables,jump_target,falls_to,heigh):
         else:
             guard = "Error while creating the jump"
 
-    print "VARIABLES"
-    print index_variables
     stack_variables = get_stack_variables(index_variables)
     input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
-    p_vars = ", ".join(stack_variables+input_variables)
+    if (len(stack_variables)!=0 or len(input_variables)!=0):
+        p_vars = ", ".join(stack_variables+input_variables)+","
+    else:
+        p_vars = ""
             
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
-    instr = "call(block"+str(jump_target)+"("+p_vars+", globals, []))"
+    instr = "call(block"+str(jump_target)+"("+p_vars+"globals,[]))"
     rule1.add_instr(instr)
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
-    instr = "call(block"+str(falls_to)+"("+p_vars+", globals, []))"
+    instr = "call(block"+str(falls_to)+"("+p_vars+"globals,[]))"
     rule2.add_instr(instr)
     
     return rule1, rule2
