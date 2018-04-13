@@ -395,21 +395,21 @@ def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         instr = "f(" + v0 + ") = " + v1
-    elif opcode == "JUMP":
-        if (len(list_jumps)>1):
-            print "HOLA"
+    # elif opcode == "JUMP":
+    #     if (len(list_jumps)>1):
+    #         print "HOLA"
         
-        else:
-            _ , updated_variables = get_consume_variable(index_variables)
+    #     else:
+    #         _ , updated_variables = get_consume_variable(index_variables)
 
-            stack_variables = get_stack_variables(updated_variables)
-            input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
-            if (len(stack_variables)!=0 or len(input_variables)!=0):
-                p_vars = ",".join(stack_variables+input_variables)+","
-            else:
-                p_vars = ""
+    #         stack_variables = get_stack_variables(updated_variables)
+    #         input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
+    #         if (len(stack_variables)!=0 or len(input_variables)!=0):
+    #             p_vars = ",".join(stack_variables+input_variables)+","
+    #         else:
+    #             p_vars = ""
                 
-            instr = "call(block"+str(list_jumps[0])+"("+p_vars+"globals, []))"
+    #         instr = "call(block"+str(list_jumps[0])+"("+p_vars+"globals, []))"
     # elif opcode == "JUMPI":
     #     pass
     # elif opcode == "PC":
@@ -624,15 +624,64 @@ def process_falls_to_blocks(index_variables, falls_to, heigh):
     instr = "call(block"+str(falls_to)+"("+p_vars+", globals, []))"
     return instr
 
+'''
+'''
+def create_uncond_jump(block_id,variables,jumps,heigh):
+    if (len(jumps)>1):
+        rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps,heigh)
+        stack_variables = get_stack_variables(variables)
+        input_variables = get_input_variables(variables,heigh-len(stack_variables)+1)
+
+        head = "jump"+str(block_id)
+        
+    else:
+        _ , updated_variables = get_consume_variable(variables)
+        
+        stack_variables = get_stack_variables(updated_variables)
+        input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
+        head = "block"+str(jumps[0])
+        rule1 = rule2 = None
+        
+    if (len(stack_variables)!=0 or len(input_variables)!=0):
+        p_vars = ",".join(stack_variables+input_variables)+","
+    else:
+        p_vars = ""
+            
+    instr = "call("+ head +"("+p_vars+"globals, []))"
+    return rule1,rule2,instr
+            
+def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
+    v1, index_variables = get_consume_variable(variables)
+    guard = "eq("+ v1 + ","+ str(jumps[0])+")"
+
+    stack_variables = get_stack_variables(index_variables)
+    input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
+    if (len(stack_variables)!=0 or len(input_variables)!=0):
+        p_vars = ", ".join(stack_variables+input_variables)+","
+    else:
+        p_vars = ""
+
+    rule1 = rbr_rule.RBRRule(block_id,"jump")
+    rule1.set_guard(guard)
+    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,[]))"
+    rule1.add_instr(instr)
+
+    rule2 = rbr_rule.RBRRule(block_id,"jump")
+    guard = get_opposite_guard(guard)
+    rule2.set_guard(guard)
+    instr = "call(block"+str(jumps[1])+"("+p_vars+"globals,[]))"
+    rule2.add_instr(instr)
+    
+    return rule1, rule2
 
 '''
 Ponemos en consume el numero de las variables que se consumen depende de si la
 condicion es un iszero o una normal
 
 '''
-def create_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
+def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
     
-    rule1, rule2 = create_jumpBlock(block_id,l_instr,(-1,0),jumps,falls_to,heigh)
+    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,(-1,0),jumps,falls_to,heigh)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
     input_variables = get_input_variables(variables,heigh-len(stack_variables)+consume)
@@ -648,7 +697,7 @@ def create_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
 
 '''
 '''
-def create_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
+def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
@@ -703,13 +752,20 @@ def compile_block(block):
     l_instr = block.get_instructions()
     while not(finish) and cont< len(l_instr):
         if is_conditional(l_instr[cont]):
-            rule1,rule2, instr = create_jump(block.get_start_address(), l_instr[cont:],
+            rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
                         block.get_falls_to(),
                         block.get_stack_info()[1])
             rule.add_instr(instr)
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
+        elif l_instr[cont] == "JUMP":
+            rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps(),block.get_stack_info()[1])
+            if rule1:
+                rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
+                
+            rule.add_instr(instr)
+            
         else:
             instr, index_variables = compile_instr(l_instr[cont],
                                                    index_variables,block.get_list_jumps(),block.get_stack_info())
