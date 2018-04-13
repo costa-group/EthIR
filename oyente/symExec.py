@@ -2022,7 +2022,8 @@ def sym_exec_ins(params, block, instr, func_call):
         # TODO: Need to handle miu_i
         if len(stack) > 1:
             global_state["pc"] = global_state["pc"] + 1
-            stack.pop(0)
+            mem_pos = stack.pop(0)
+            vertices[block].set_ret_val(mem_pos)
             stack.pop(0)
             # TODO
             pass

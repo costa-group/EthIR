@@ -16,8 +16,8 @@ class BasicBlock:
         self.ls_values["sstore"] = []
         self.ls_values_computed = False
         self.calldatavalues = []
-
         self.stack_info = []
+        self.ret_val = -1
 
     def get_start_address(self):
         return self.start
@@ -87,6 +87,12 @@ class BasicBlock:
     def act_ls_values(self):
         self.ls_values_computed = True
 
+
+    def get_ret_val(self):
+        return self.ret_val
+
+    def set_ret_val(self, val):
+        self.ret_val = val
         
     def update_instr(self):
         new_instructions = []
@@ -103,6 +109,8 @@ class BasicBlock:
                 new_instr = instr + " " + str(self.ls_values["sload"].pop(0))
             elif instr == "SSTORE":
                 new_instr = instr + " " + str(self.ls_values["sstore"].pop(0))
+            elif instr == "RETURN":
+                new_instr = instr + " " + str(self.ret_val)
             else:
                 new_instr = instr
 
