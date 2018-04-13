@@ -5,6 +5,11 @@ import opcodes
 
 
 '''
+It initialize the globals variables. 
+List opcodeX contains the evm bytecodes from set X.
+current_local_var has the max index of the local variables created.
+local_variables is a mapping address->local_variable.
+rbr_blocks is a mapping rbr_id->list of rbr rules (jumps contains 2 rules per rbr_id).
 '''
 def init_globals():
     
@@ -62,18 +67,24 @@ def init_globals():
     
     
 '''
+It returns the start address of the block received.
+
 '''    
 def getKey(block):
     return block.get_start_address()
 
 
 '''
+It returns the id of a rbr_rule.
 '''
 def orderRBR(rbr):
-    return rbr.get_Id()
+    return rbr[0].get_Id()
 
 
 '''
+It is used when a bytecode consume stack variables. It returns the
+current stack variable (the top most one) and update the variable index.
+index_variables is a tuple (current_stack_variable,current_input_variable).
 '''
 def get_consume_variable(index_variables):
     current = index_variables[0]
@@ -88,6 +99,8 @@ def get_consume_variable(index_variables):
 
 
 '''
+It returns a fresh stack variable and updates the variables'
+index.
 '''
 def get_new_variable(index_variables):
     new_current = index_variables[0] + 1
@@ -95,6 +108,11 @@ def get_new_variable(index_variables):
 
 
 '''
+It returns the variable corresponding to the top stack
+variable. It checks the value of index_variables to know if it is one
+of those created inside a block (current >= 0) or if it is one received
+as a parameter (current==-1).
+
 '''
 def get_current_variable(index_variables):
     current = index_variables[0]
@@ -106,7 +124,11 @@ def get_current_variable(index_variables):
     return variable
 
 '''
-If current == -1 range is empty and the function return an empty list.
+It returns a list that contains all the "alive" stack variables.
+It goes from current to 0. 
+If current == -1 range is empty and the
+function return an empty list.  s_vars: list of strings.
+
 '''
 def get_stack_variables(index_variables):
     current = index_variables[0]
@@ -116,6 +138,15 @@ def get_stack_variables(index_variables):
 
     return s_vars
 
+
+'''
+It returns a list that contains all the "alive" input variables
+(those that have not been consumed). 
+It goes from current to current+top.
+If top == 0 range is empty
+and the function return an empty list.
+in_vars: list of strings.
+'''
 def get_input_variables(index_variables,top):
     current = index_variables[1]
     in_vars = []
@@ -124,7 +155,8 @@ def get_input_variables(index_variables,top):
     return in_vars
 
 '''
-pos start at 0
+It returns the ith variable.
+It can be a fresh stack variable or an input variable.
 '''
 def get_ith_variable(index_variables, pos):
     current = index_variables[0]
@@ -143,6 +175,9 @@ def get_ith_variable(index_variables, pos):
     return variable
 
 '''
+It returns the local variable bound to argument address.  If it
+does not exist, the method creates and store it in the dictionary
+local_variables.
 '''
 def get_local_variable(address):
     global current_local_var
@@ -160,6 +195,10 @@ def get_local_variable(address):
 
                
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
 '''
 def translateOpcodes0(opcode,index_variables):
     if opcode == "ADD":
@@ -222,6 +261,11 @@ def translateOpcodes0(opcode,index_variables):
 
 
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
+Signed operations are not considered (SLT, SGT)
 '''
 def translateOpcodes10(opcode, index_variables):
     if opcode == "LT":
@@ -283,6 +327,10 @@ def translateOpcodes10(opcode, index_variables):
 
 
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
 '''
 def translateOpcodes20(opcode, index_variables):
     if opcode == "SHA3":
@@ -299,6 +347,10 @@ def translateOpcodes20(opcode, index_variables):
 
 
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
 '''
 def translateOpcodes30(opcode, value, index_variables):
     if opcode == "ADDRESS":
@@ -346,6 +398,10 @@ def translateOpcodes30(opcode, value, index_variables):
 
 
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
 '''
 def translateOpcodes40(opcode, index_variables):
     if opcode == "BLOCKHASH":
@@ -370,6 +426,10 @@ def translateOpcodes40(opcode, index_variables):
 
 
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
 '''
 def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
     if opcode == "POP":
@@ -396,28 +456,16 @@ def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
         v1 , updated_variables = get_consume_variable(updated_variables)
         instr = "f(" + v0 + ") = " + v1
     # elif opcode == "JUMP":
-    #     if (len(list_jumps)>1):
-    #         print "HOLA"
-        
-    #     else:
-    #         _ , updated_variables = get_consume_variable(index_variables)
-
-    #         stack_variables = get_stack_variables(updated_variables)
-    #         input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
-    #         if (len(stack_variables)!=0 or len(input_variables)!=0):
-    #             p_vars = ",".join(stack_variables+input_variables)+","
-    #         else:
-    #             p_vars = ""
-                
-    #         instr = "call(block"+str(list_jumps[0])+"("+p_vars+"globals, []))"
+    #     pass
     # elif opcode == "JUMPI":
     #     pass
     # elif opcode == "PC":
     #     pass
     # elif opcode == "MSIZE":
     #     pass
-    # elif opcode == "GAS":
-    #     pass
+    elif opcode == "GAS":
+        instr = "gas"
+        updated_variables = index_variables
     elif opcode == "JUMPDEST":
         instr = ""
         updated_variables = index_variables
@@ -484,13 +532,17 @@ def translateOpcodesF(opcode, index_variables):
 
         
 '''
-value is string
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
+value is string that contains the number tpushed to the stack.
 '''
 def translateOpcodes60(opcode, value, index_variables):
     
     if opcode == "PUSH":
         v1,updated_variables = get_new_variable(index_variables)
-        dec_value = int(value, 16)
+        dec_value = int(value, 16) #convert hex to dec
         instr = v1+" = " + str(dec_value)
     else:
         instr = "Error opcodes60: "+opcode
@@ -500,6 +552,13 @@ def translateOpcodes60(opcode, value, index_variables):
 
 
 '''
+It simulates the execution of dup bytecode.
+It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
+It duplicates what is sotred in the stack at pos value (when
+value == 1, it duplicates the top of the stack) 
 value is string
 '''
 def translateOpcodes80(opcode, value, index_variables):
@@ -515,6 +574,10 @@ def translateOpcodes80(opcode, value, index_variables):
 
 
 '''
+It simulates the execution of swap bytecode.
+It consumes or generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated.
 '''
 def translateOpcodes90(opcode, value, index_variables):
     if opcode == "SWAP":
@@ -530,32 +593,12 @@ def translateOpcodes90(opcode, value, index_variables):
     return instr, index_variables
 
 
-'''
-'''
 def is_conditional(opcode):
     return opcode in ["LT","GT","EQ","ISZERO"]
 
-'''
-'''
-def get_guard(opcode):
-    if opcode == "LT":
-        guard = "lt"
-    elif opcode == "GT":
-        guard = "gt"
-    # elif opcode == "SLT":
-    #     pass
-    # elif opcode == "SGT":
-    #     pass
-    elif opcode == "EQ":
-        guard = "eq"
-    elif opcode == "ISZERO":
-        guard = "isZero"
-
-    else:
-        guard = None
-    return guard
 
 '''
+It returns the opposite guard of the one given as parameter.
 '''     
 def get_opposite_guard(guard):
     if guard[:2] == "lt":
@@ -577,7 +620,7 @@ def get_opposite_guard(guard):
 
 
 '''
-Current is used to create the new local stack variables.
+It translates the bytecode corresponding to evm_opcode.
 '''
 def compile_instr(evm_opcode,variables,list_jumps,stack_info):
     opcode = evm_opcode.split(" ")
@@ -614,9 +657,10 @@ def compile_instr(evm_opcode,variables,list_jumps,stack_info):
         index_variables = variables
     return value, index_variables
 
-'''
-'''
 
+'''
+It creates the call to next block when the type of the current one is falls_to.
+'''
 def process_falls_to_blocks(index_variables, falls_to, heigh):
     stack_variables = get_stack_variables(index_variables)
     input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
@@ -625,6 +669,9 @@ def process_falls_to_blocks(index_variables, falls_to, heigh):
     return instr
 
 '''
+It translates the jump instruction.
+If the len(jumps)==1, it corresponds to a uncondtional jump.
+Otherwise we have to convert it into a conditional jump.
 '''
 def create_uncond_jump(block_id,variables,jumps,heigh):
     if (len(jumps)>1):
@@ -649,7 +696,10 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
             
     instr = "call("+ head +"("+p_vars+"globals, []))"
     return rule1,rule2,instr
-            
+
+'''
+It generates the new two jump blocks.
+'''
 def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
     v1, index_variables = get_consume_variable(variables)
     guard = "eq("+ v1 + ","+ str(jumps[0])+")"
@@ -677,7 +727,6 @@ def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
 '''
 Ponemos en consume el numero de las variables que se consumen depende de si la
 condicion es un iszero o una normal
-
 '''
 def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
     
@@ -696,6 +745,7 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
     return rule1, rule2, instr
 
 '''
+It generates the new two jump blocks.
 '''
 def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
