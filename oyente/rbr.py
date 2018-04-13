@@ -630,9 +630,9 @@ Ponemos en consume el numero de las variables que se consumen depende de si la
 condicion es un iszero o una normal
 
 '''
-def create_jump(block_id,l_instr,variables,jump_target,falls_to,heigh):
+def create_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
     
-    rule1, rule2 = create_jumpBlock(block_id,l_instr,(-1,0),jump_target,falls_to,heigh)
+    rule1, rule2 = create_jumpBlock(block_id,l_instr,(-1,0),jumps,falls_to,heigh)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
     input_variables = get_input_variables(variables,heigh-len(stack_variables)+consume)
@@ -648,7 +648,7 @@ def create_jump(block_id,l_instr,variables,jump_target,falls_to,heigh):
 
 '''
 '''
-def create_jumpBlock(block_id,l_instr,variables,jump_target,falls_to,heigh):
+def create_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
@@ -661,6 +661,7 @@ def create_jumpBlock(block_id,l_instr,variables,jump_target,falls_to,heigh):
         else:
             guard = "Error while creating the jump"
 
+    
     stack_variables = get_stack_variables(index_variables)
     input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
     if (len(stack_variables)!=0 or len(input_variables)!=0):
@@ -670,7 +671,7 @@ def create_jumpBlock(block_id,l_instr,variables,jump_target,falls_to,heigh):
             
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
-    instr = "call(block"+str(jump_target)+"("+p_vars+"globals,[]))"
+    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,[]))"
     rule1.add_instr(instr)
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
@@ -703,7 +704,7 @@ def compile_block(block):
     while not(finish) and cont< len(l_instr):
         if is_conditional(l_instr[cont]):
             rule1,rule2, instr = create_jump(block.get_start_address(), l_instr[cont:],
-                        index_variables, block.get_jump_target(),
+                        index_variables, block.get_list_jumps(),
                         block.get_falls_to(),
                         block.get_stack_info()[1])
             rule.add_instr(instr)
