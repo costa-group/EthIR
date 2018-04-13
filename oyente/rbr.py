@@ -845,7 +845,8 @@ def evm2rbr_compiler(blocks_input = None):
         
         for block in blocks:
             rule = compile_block(block)
-            
+            instr = filter(lambda x: x !="",rule.get_instructions()) #clean instructions
+            rule.set_instructions(instr)
             rbr_blocks[rule.get_rule_name()]=[rule]
 
 
@@ -854,7 +855,6 @@ def evm2rbr_compiler(blocks_input = None):
             for r in rule:
                 r.display()
 
-        print rbr
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 
