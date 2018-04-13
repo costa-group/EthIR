@@ -18,7 +18,8 @@ class RBRRule:
 
         self.arg_input = []
         self.arg_global = []
-        self.arg_output = []
+        self.arg_local = []
+        self.arg_ret = []
         self.guard=""
         self.instr=[]
         self.rbr_type = typeBlock
@@ -39,7 +40,7 @@ class RBRRule:
         self.blockId = b_id
 
     def get_instructions(self):
-        return self.instructions
+        return self.instr
 
     def set_instructions(self, instr):
         self.instr = instr
@@ -53,12 +54,11 @@ class RBRRule:
     def get_rule_name(self):
         return self.rule_name
 
-
     def write_rule(self, fd):
         pass
     
     def display(self):
-        print self.rule_name+"("+str(self.arg_input)+", "+ str(self.arg_global)+", "+ str(self.arg_output) +")=>"
+        print self.rule_name+"("+str(self.arg_input)+", "+ str(self.arg_global)+", "+ str(self.arg_ret) +")=>"
 
         if self.guard != [] :
             print "\t"+self.guard
