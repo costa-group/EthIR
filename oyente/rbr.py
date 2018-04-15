@@ -431,7 +431,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated.
 '''
-def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
+def translateOpcodes50(opcode, value, index_variables):
     if opcode == "POP":
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
@@ -489,17 +489,27 @@ def translateOpcodes50(opcode, value, index_variables,list_jumps,heigh):
 
 '''
 '''
-def translateOpcodesF(opcode, index_variables):
+def translateOpcodesF(opcode, index_variables, addr):
     if opcode == "CREATE":
         pass
     elif opcode == "CALL":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
     elif opcode == "CALLCODE":
         pass
     elif opcode == "RETURN":
-        pass
+        var = get_local_variable(addr)
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     elif opcode == "REVERT":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
     elif opcode == "ASSERTFAIL":
         pass
     elif opcode == "DELEGATECALL":
@@ -529,6 +539,8 @@ def translateOpcodesF(opcode, index_variables):
     else:
         instr = "Error opcodesF: "+opcode
         updated_variables = index_variables
+
+    return instr, updated_variables
 
         
 '''
@@ -641,7 +653,7 @@ def compile_instr(evm_opcode,variables,list_jumps,stack_info):
     # elif opcode_name in opcodes40:
     #     value, index_variables = translateOpcodes40(opcode_name,variables)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,list_jumps,stack_info[1])
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
     elif opcode_name[:4] in opcodes60:
         value, index_variables = translateOpcodes60(opcode_name[:4], opcode_rest, variables)
     elif opcode_name[:3] in opcodes80:
@@ -651,7 +663,7 @@ def compile_instr(evm_opcode,variables,list_jumps,stack_info):
     elif opcode_name in opcodesA:
         value, index_variables = translateOpcodesA(opcode_name, variables)
     # elif opcode_name in opcodesF:
-    #     value, index_variables = translateOpcodesF(opcode_name,variables)
+    #     value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest)
     else:
         value = "Error. No opcode matchs"
         index_variables = variables
