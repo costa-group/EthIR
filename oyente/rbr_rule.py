@@ -16,7 +16,7 @@ class RBRRule:
         else:
             self.rule_name = "jump"+str(blockId)
 
-        self.arg_input = []
+        self.arg_input = 0
         self.arg_global = []
         self.arg_local = []
         self.arg_ret = []
@@ -56,7 +56,30 @@ class RBRRule:
 
     def write_rule(self, fd):
         pass
-    
+
+    def get_index_invars(self):
+        return self.arg_input
+
+    def set_index_input(self,num):
+        self.arg_input = num
+
+    def built_input_vars(self):
+        in_vars = []
+        for i in xrange(0,self.arg_input):
+            var = "i("+i+")"
+            in_vars.append(var)
+        return in_vars
+
+    def get_args_local(self):
+        return self.arg_local
+
+    def set_args_local(self,ls):
+        self.arg_local = ls
+
+    def add_arg_local(self,l):
+        if l not in self.arg_local:
+            self.arg_local.append(l)
+        
     def display(self):
         print self.rule_name+"("+str(self.arg_input)+", "+ str(self.arg_global)+", "+ str(self.arg_ret) +")=>"
 
