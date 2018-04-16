@@ -615,20 +615,26 @@ def is_conditional(opcode):
 It returns the opposite guard of the one given as parameter.
 '''     
 def get_opposite_guard(guard):
-  
     if guard[:2] == "lt":
         opposite = "geq"+guard[2:]
+    elif guard[:3] == "leq":
+        opposite = "gt"+guard[3:]
     elif guard[:2] == "gt":
         opposite = "leq"+guard[2:]
+    elif guard[:3] == "geq":
+        opposite = "lt"+guard[3:]
         # elif guard == "SLT":
         #     pass
         # elif guard == "SGT":
         #     pass
     elif guard[:2] == "eq":
         opposite = "neq"+guard[2:]
+    elif guard[:3] == "neq":
+        opposite = "eq"+guard[3:]
     elif guard[:6] == "isZero":
         opposite = "notZero"+guard[6:]
-
+    elif guard[:7] == "notZero":
+        opposite = "isZero"+guard[7:]
     else:
         opposite = None
     return opposite
