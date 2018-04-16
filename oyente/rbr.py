@@ -353,13 +353,13 @@ corresponding translated instruction and the variables's index
 updated.
 '''
 def translateOpcodes30(opcode, value, index_variables):
-    if opcode == "ADDRESS":
-        pass
-    elif opcode == "BALANCE":
-        pass
-    elif opcode == "ORIGIN":
-        pass
-    elif opcode == "CALLER":
+    # if opcode == "ADDRESS":
+    #     pass
+    # elif opcode == "BALANCE":
+    #     pass
+    # elif opcode == "ORIGIN":
+    #     pass
+    if opcode == "CALLER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = caller"
     elif opcode == "CALLVALUE":
@@ -372,13 +372,13 @@ def translateOpcodes30(opcode, value, index_variables):
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
-    elif opcode == "CALLDATACOPY":
-        pass
+    # elif opcode == "CALLDATACOPY":
+    #     pass
     elif opcode == "CODESIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = callvalue"
-    elif opcode == "CODECOPY":
-        pass
+    # elif opcode == "CODECOPY":
+    #     pass
     elif opcode == "GASPRICE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gas_price"
@@ -436,14 +436,14 @@ def translateOpcodes50(opcode, value, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
-        l_var = get_local_variable(int(value))
+        l_var = get_local_variable(value)
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+ " = " + l_var
     elif opcode == "MSTORE":
         _ , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
-        l_var = get_local_variable(int(value))
+        l_var = get_local_variable(value)
         instr = l_var + " = "+ v1
     # elif opcode == "MSTORE8":
     #     pass
@@ -512,32 +512,32 @@ def translateOpcodesF(opcode, index_variables, addr):
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         instr = ""
-    elif opcode == "ASSERTFAIL":
-        pass
-    elif opcode == "DELEGATECALL":
-        pass
-    elif opcode == "BREAKPOINT":
-        pass
-    elif opcode == "RNGSEED":
-        pass
-    elif opcode == "SSIZEEXT":
-        pass
-    elif opcode == "SLOADBYTES":
-        pass
-    elif opcode == "SSTOREBYTES":
-        pass
-    elif opcode == "SSIZE":
-        pass
-    elif opcode == "STATEROOT":
-        pass
-    elif opcode == "TXEXECGAS":
-        pass
-    elif opcpde == "CALLSTATIC":
-        pass
-    elif opcode == "INVALID":
-        pass
-    elif opcode == "SUICIDE":
-        pass
+    # elif opcode == "ASSERTFAIL":
+    #     pass
+    # elif opcode == "DELEGATECALL":
+    #     pass
+    # elif opcode == "BREAKPOINT":
+    #     pass
+    # elif opcode == "RNGSEED":
+    #     pass
+    # elif opcode == "SSIZEEXT":
+    #     pass
+    # elif opcode == "SLOADBYTES":
+    #     pass
+    # elif opcode == "SSTOREBYTES":
+    #     pass
+    # elif opcode == "SSIZE":
+    #     pass
+    # elif opcode == "STATEROOT":
+    #     pass
+    # elif opcode == "TXEXECGAS":
+    #     pass
+    # elif opcode == "CALLSTATIC":
+    #     pass
+    # elif opcode == "INVALID":
+    #     pass
+    # elif opcode == "SUICIDE":
+    #     pass
     else:
         instr = "Error opcodesF: "+opcode
         updated_variables = index_variables
@@ -615,6 +615,7 @@ def is_conditional(opcode):
 It returns the opposite guard of the one given as parameter.
 '''     
 def get_opposite_guard(guard):
+  
     if guard[:2] == "lt":
         opposite = "geq"+guard[2:]
     elif guard[:2] == "gt":
