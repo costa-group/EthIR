@@ -63,10 +63,10 @@ class RBRRule:
     def set_index_input(self,num):
         self.arg_input = num
 
-    def built_input_vars(self):
+    def build_input_vars(self):
         in_vars = []
         for i in xrange(0,self.arg_input):
-            var = "i("+i+")"
+            var = "i("+str(i)+")"
             in_vars.append(var)
         return in_vars
 
@@ -89,8 +89,12 @@ class RBRRule:
     def display(self):
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
-        
-        print self.rule_name+"("+str(self.arg_input)+", "+ str(self.arg_global)+", "+ str(self.arg_ret) +")=>"
+
+        arg_input = self.build_input_vars()
+        if (arg_input == []):
+            print self.rule_name+"("+str(self.arg_global)+", "+ str(self.arg_ret) +")=>"
+        else:
+            print self.rule_name+"(" + ", ".join(arg_input) + ", " + str(self.arg_global) + ", "+ str(self.arg_ret) +")=>"
 
         if self.guard != [] :
             print "\t"+self.guard
