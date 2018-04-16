@@ -70,10 +70,10 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
     
-    result, exit_code = symExec.run(args.source)
+    result, exit_code = symExec.run(disasm_file=args.source)
     if global_params.WEB:
         six.print_(json.dumps(result))
-        
+
     return exit_code
 
 def analyze_bytecode():
@@ -219,7 +219,7 @@ def main():
     #Added by Pablo Gordillo
     if args.disassembly:
         exit_code = analyze_disasm_bytecode()
-    if args.bytecode:
+    elif args.bytecode:
         exit_code = analyze_bytecode()
     elif args.standard_json:
         exit_code = analyze_solidity(input_type='standard_json')
