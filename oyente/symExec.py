@@ -178,6 +178,9 @@ def initGlobalVars():
     global calldataload_values
     calldataload_values = {}
 
+    global visited_blocks
+    visited_blocks = []
+
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -409,7 +412,7 @@ def construct_bb():
         block = BasicBlock(key, end_address)
         if key not in instructions:
             continue
-        stack_h[key] = [0,0,0]
+        stack_h[key] = [float("inf"),float("inf")]
         calldataload_values[key] = []
         block.add_instruction(instructions[key])
         i = sorted_addresses.index(key) + 1
@@ -553,7 +556,7 @@ def full_sym_exec():
 # Added by Pablo Gordillo
 def update_stack_heigh(block,h,pos):
     l = stack_h[block]
-    if(l[pos]<h):
+    if(l[pos]>h):
         l.pop(pos)
         l.insert(pos,h)
         stack_h[block]=l
@@ -568,6 +571,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global all_gs
     global results
     global g_src_map
+    global visited_blocks
 
     visited = params.visited
     stack = params.stack
@@ -615,12 +619,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
 
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
-        update_stack_heigh(block,len(stack),2)
+#        update_stack_heigh(block,len(stack),2)
         print "Stack despues de la ejecucion de la instruccion "+ instr
         print stack
     
     # Mark that this basic block in the visited blocks
     visited.append(block)
+    visited_blocks.append(block)
     depth += 1
 
     update_stack_heigh(block,len(stack),1)
@@ -1893,56 +1898,60 @@ def sym_exec_ins(params, block, instr, func_call):
             # in the paper, it is shaky when the size of data output is
             # min of stack[6] and the | o |
 
-            if isReal(transfer_amount):
-                if transfer_amount == 0:
-                    stack.insert(0, 1)   # x = 0
-                    return
+            stack.insert(0, 1)
+            
+            # if isReal(transfer_amount):
+            #     if transfer_amount == 0:
+            #         stack.insert(0, 1)   # x = 0
+            #         return
 
-            # Let us ignore the call depth
-            balance_ia = global_state["balance"]["Ia"]
-            is_enough_fund = (transfer_amount <= balance_ia)
-            solver.push()
-            solver.add(is_enough_fund)
-
-            if check_sat(solver) == unsat:
-                # this means not enough fund, thus the execution will result in exception
-                solver.pop()
-                stack.insert(0, 0)   # x = 0
-            else:
-                # the execution is possibly okay
-                stack.insert(0, 1)   # x = 1
-                solver.pop()
-                solver.add(is_enough_fund)
-                path_conditions_and_vars["path_condition"].append(is_enough_fund)
-                last_idx = len(path_conditions_and_vars["path_condition"]) - 1
-                analysis["time_dependency_bug"][last_idx] = global_state["pc"] - 1
-                new_balance_ia = (balance_ia - transfer_amount)
-                global_state["balance"]["Ia"] = new_balance_ia
-                address_is = path_conditions_and_vars["Is"]
-                address_is = (address_is & CONSTANT_ONES_159)
-                boolean_expression = (recipient != address_is)
-                solver.push()
-                solver.add(boolean_expression)
-                if check_sat(solver) == unsat:
-                    solver.pop()
-                    new_balance_is = (global_state["balance"]["Is"] + transfer_amount)
-                    global_state["balance"]["Is"] = new_balance_is
-                else:
-                    solver.pop()
-                    if isReal(recipient):
-                        new_address_name = "concrete_address_" + str(recipient)
-                    else:
-                        new_address_name = gen.gen_arbitrary_address_var()
-                    old_balance_name = gen.gen_arbitrary_var()
-                    old_balance = BitVec(old_balance_name, 256)
-                    path_conditions_and_vars[old_balance_name] = old_balance
-                    constraint = (old_balance >= 0)
-                    solver.add(constraint)
-                    path_conditions_and_vars["path_condition"].append(constraint)
-                    new_balance = (old_balance + transfer_amount)
-                    global_state["balance"][new_address_name] = new_balance
+            # # Let us ignore the call depth
+            # balance_ia = global_state["balance"]["Ia"]
+            # is_enough_fund = (transfer_amount <= balance_ia)
+            # solver.push()
+            # solver.add(is_enough_fund)
+            
+            # if check_sat(solver) == unsat:                
+            #     # this means not enough fund, thus the execution will result in exception
+            #     solver.pop()
+            #     stack.insert(0, 0)   # x = 0
+                
+            # else:
+            #     # the execution is possibly okay
+            #     stack.insert(0, 1)   # x = 1
+            #     solver.pop()
+            #     solver.add(is_enough_fund)
+            #     path_conditions_and_vars["path_condition"].append(is_enough_fund)
+            #     last_idx = len(path_conditions_and_vars["path_condition"]) - 1
+            #     analysis["time_dependency_bug"][last_idx] = global_state["pc"] - 1
+            #     new_balance_ia = (balance_ia - transfer_amount)
+            #     global_state["balance"]["Ia"] = new_balance_ia
+            #     address_is = path_conditions_and_vars["Is"]
+            #     address_is = (address_is & CONSTANT_ONES_159)
+            #     boolean_expression = (recipient != address_is)
+            #     solver.push()
+            #     solver.add(boolean_expression)
+            #     if check_sat(solver) == unsat:
+            #         solver.pop()
+            #         new_balance_is = (global_state["balance"]["Is"] + transfer_amount)
+            #         global_state["balance"]["Is"] = new_balance_is
+            #     else:
+            #         solver.pop()
+            #         if isReal(recipient):
+            #             new_address_name = "concrete_address_" + str(recipient)
+            #         else:
+            #             new_address_name = gen.gen_arbitrary_address_var()
+            #         old_balance_name = gen.gen_arbitrary_var()
+            #         old_balance = BitVec(old_balance_name, 256)
+            #         path_conditions_and_vars[old_balance_name] = old_balance
+            #         constraint = (old_balance >= 0)
+            #         solver.add(constraint)
+            #         path_conditions_and_vars["path_condition"].append(constraint)
+            #         new_balance = (old_balance + transfer_amount)
+            #         global_state["balance"][new_address_name] = new_balance
         else:
             raise ValueError('STACK underflow')
+       
     elif opcode == "CALLCODE":
         # TODO: Need to handle miu_i
         if len(stack) > 6:
@@ -2413,12 +2422,21 @@ def analyze():
 
     run_build_cfg_and_analyze(timeout_cb=timeout_cb)
 
+def delete_uncalled():
+    global vertices
+    
+    blocks = vertices.values()
+    for b in blocks:
+        if b.get_start_address() not in visited_blocks:
+            vertices.pop(b.get_start_address())
+    
 def run(disasm_file=None, source_file=None, source_map=None):
     global g_disasm_file
     global g_source_file
     global g_src_map
     global results
-
+    global vertices
+    
     g_disasm_file = disasm_file
     g_source_file = source_file
     g_src_map = source_map
@@ -2431,6 +2449,7 @@ def run(disasm_file=None, source_file=None, source_map=None):
         begin = time.time()
 #        log.info("\t============ Results ===========")
         analyze()
+        delete_uncalled()
         rbr.evm2rbr_compiler(blocks_input = vertices)
         #Modified by pablo
         
