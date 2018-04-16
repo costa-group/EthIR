@@ -182,13 +182,13 @@ local_variables.
 def get_local_variable(address):
     global current_local_var
     global local_variables
-    
+
     try:
-        idx = local_variables[address]
+        idx = local_variables[str(address)]
         var = "l(" + str(idx) + ")"
         return var
     except KeyError:
-        local_variables[address] = current_local_var
+        local_variables[str(address)] = current_local_var
         var = "l(" + str(current_local_var) + ")"
         current_local_var += 1
         return var
@@ -500,16 +500,18 @@ def translateOpcodesF(opcode, index_variables, addr):
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     elif opcode == "CALLCODE":
         pass
     elif opcode == "RETURN":
         var = get_local_variable(addr)
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        instr = "r "+var
     elif opcode == "REVERT":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     elif opcode == "ASSERTFAIL":
         pass
     elif opcode == "DELEGATECALL":
@@ -633,8 +635,10 @@ def get_opposite_guard(guard):
 
 '''
 It translates the bytecode corresponding to evm_opcode.
+We mantain some empty instructions to insert the evm bytecodes
+They are remove when displaying
 '''
-def compile_instr(evm_opcode,variables,list_jumps,stack_info):
+def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -644,30 +648,50 @@ def compile_instr(evm_opcode,variables,list_jumps,stack_info):
 
     if opcode_name in opcodes0:
         value, index_variables = translateOpcodes0(opcode_name, variables)
+        rule.add_instr(value)
     elif opcode_name in opcodes10:
         value, index_variables = translateOpcodes10(opcode_name, variables)
+        rule.add_instr(value)
     elif opcode_name in opcodes20:
         value, index_variables = translateOpcodes20(opcode_name, variables)
+        rule.add_instr(value)
     elif opcode_name in opcodes30:
         value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables)
+        rule.add_instr(value)
     # elif opcode_name in opcodes40:
     #     value, index_variables = translateOpcodes40(opcode_name,variables)
+    #     rule.add_instr(value)
     elif opcode_name in opcodes50:
         value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
+        rule.add_instr(value)
     elif opcode_name[:4] in opcodes60:
         value, index_variables = translateOpcodes60(opcode_name[:4], opcode_rest, variables)
+        rule.add_instr(value)
     elif opcode_name[:3] in opcodes80:
         value, index_variables = translateOpcodes80(opcode_name[:3], opcode_name[3:], variables)
+        rule.add_instr(value)
     elif opcode_name[:4] in opcodes90:
         value, index_variables = translateOpcodes90(opcode_name[:4], opcode_name[4:], variables)
+
+        for ins in value: #SWAP returns a list (it is translated into 3 instructions)
+            rule.add_instr(ins)
+            
     elif opcode_name in opcodesA:
         value, index_variables = translateOpcodesA(opcode_name, variables)
-    # elif opcode_name in opcodesF:
-    #     value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest)
+        rule.add_instr(value)
+    elif opcode_name in opcodesF:
+        value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest)
+        instr = value.split()
+        if(len(instr)>1): #Return opcode
+            rule.set_ret_var(instr[1])
+            rule.add_instr("")
+        else:
+            rule.add_instr(value)
     else:
         value = "Error. No opcode matchs"
         index_variables = variables
-    return value, index_variables
+        rule.add_instr(value)
+    return index_variables
 
 
 '''
@@ -829,13 +853,8 @@ def compile_block(block):
             rule.add_instr(instr)
             
         else:
-            instr, index_variables = compile_instr(l_instr[cont],
+            index_variables = compile_instr(rule,l_instr[cont],
                                                    index_variables,block.get_list_jumps(),block.get_stack_info())
-            if type(instr) == type([]):
-                for ins in instr:
-                    rule.add_instr(ins)
-            else:
-                rule.add_instr(instr)
                 
         cont+=1
     if(block.get_block_type=="falls_to"):
@@ -857,8 +876,6 @@ def evm2rbr_compiler(blocks_input = None):
         
         for block in blocks:
             rule = compile_block(block)
-            instr = filter(lambda x: x !="",rule.get_instructions()) #clean instructions
-            rule.set_instructions(instr)
             rbr_blocks[rule.get_rule_name()]=[rule]
 
 
