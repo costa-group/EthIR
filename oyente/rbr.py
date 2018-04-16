@@ -355,11 +355,13 @@ updated.
 def translateOpcodes30(opcode, value, index_variables):
     # if opcode == "ADDRESS":
     #     pass
-    # elif opcode == "BALANCE":
-    #     pass
+    if opcode == "BALANCE":
+        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = balance"
     # elif opcode == "ORIGIN":
     #     pass
-    if opcode == "CALLER":
+    elif opcode == "CALLER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = caller"
     elif opcode == "CALLVALUE":
@@ -372,8 +374,11 @@ def translateOpcodes30(opcode, value, index_variables):
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
-    # elif opcode == "CALLDATACOPY":
-    #     pass
+    elif opcode == "CALLDATACOPY":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     elif opcode == "CODESIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = callvalue"
@@ -412,7 +417,8 @@ def translateOpcodes40(opcode, index_variables):
     elif opcode == "TIMESTAMP":
         pass
     elif opcode == "NUMBER":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = number"
     elif opcode == "DIFFICULTY":
         pass
     elif opcode == "GASLIMIT":
@@ -464,8 +470,9 @@ def translateOpcodes50(opcode, value, index_variables):
     # elif opcode == "MSIZE":
     #     pass
     elif opcode == "GAS":
-        instr = "gas"
-        updated_variables = index_variables
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = "+"gas"
+
     elif opcode == "JUMPDEST":
         instr = ""
         updated_variables = index_variables
@@ -500,7 +507,8 @@ def translateOpcodesF(opcode, index_variables, addr):
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1 +" = 1"
     elif opcode == "CALLCODE":
         pass
     elif opcode == "RETURN":
@@ -665,9 +673,9 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info):
     elif opcode_name in opcodes30:
         value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables)
         rule.add_instr(value)
-    # elif opcode_name in opcodes40:
-    #     value, index_variables = translateOpcodes40(opcode_name,variables)
-    #     rule.add_instr(value)
+    elif opcode_name in opcodes40:
+        value, index_variables = translateOpcodes40(opcode_name,variables)
+        rule.add_instr(value)
     elif opcode_name in opcodes50:
         value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
         rule.add_instr(value)
