@@ -716,7 +716,11 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
         input_variables = get_input_variables(variables,heigh-len(stack_variables)+1)
 
         head = "jump"+str(block_id)
-        
+
+        in_vars = len(stack_variables)+len(input_variables)
+        rule1.set_index_input(in_vars)
+        rule2.set_index_input(in_vars)
+
     else:
         _ , updated_variables = get_consume_variable(variables)
         
@@ -729,7 +733,8 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
         p_vars = ",".join(stack_variables+input_variables)+","
     else:
         p_vars = ""
-            
+
+        
     instr = "call("+ head +"("+p_vars+"globals, []))"
     return rule1,rule2,instr
 
@@ -746,7 +751,7 @@ def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
         p_vars = ", ".join(stack_variables+input_variables)+","
     else:
         p_vars = ""
-
+    
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
     instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,[]))"
@@ -775,7 +780,12 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
         p_vars = ",".join(stack_variables+input_variables)+","
     else:
         p_vars = ""
-        
+
+
+    in_vars = len(stack_variables)+len(input_variables)
+    rule1.set_index_input(in_vars)
+    rule2.set_index_input(in_vars)
+    
     instr = "call(jump"+str(block_id)+"("+p_vars+"globals,[]))"
     
     return rule1, rule2, instr
@@ -803,11 +813,13 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
         p_vars = ", ".join(stack_variables+input_variables)+","
     else:
         p_vars = ""
-            
+
+
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
     instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,[]))"
     rule1.add_instr(instr)
+
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
@@ -835,6 +847,7 @@ def compile_block(block):
     index_variables = (-1,0) #(current, inputs)
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
+    rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
     while not(finish) and cont< len(l_instr):
         if is_conditional(l_instr[cont]):
