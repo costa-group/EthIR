@@ -79,12 +79,21 @@ class RBRRule:
     def add_arg_local(self,l):
         if l not in self.arg_local:
             self.arg_local.append(l)
+
+    def get_ret_var(self):
+        return arg_ret
+
+    def set_ret_var(self,var):
+        self.arg_ret = var
         
     def display(self):
+        
+        new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
+        
         print self.rule_name+"("+str(self.arg_input)+", "+ str(self.arg_global)+", "+ str(self.arg_ret) +")=>"
 
         if self.guard != [] :
             print "\t"+self.guard
 
-        for instr in self.instr:
+        for instr in new_instr:
             print "\t"+instr
