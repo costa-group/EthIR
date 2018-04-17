@@ -96,7 +96,7 @@ class RBRRule:
         else:
             print self.rule_name+"(" + ", ".join(arg_input) + ", " + str(self.arg_global) + ", "+ str(self.arg_ret) +")=>"
 
-        if self.guard != [] :
+        if self.guard != "" :
             print "\t"+self.guard
 
         for instr in new_instr:
