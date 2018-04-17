@@ -64,6 +64,9 @@ def init_globals():
     
     global rbr_blocks
     rbr_blocks = {}
+
+    global stack_index
+    stack_index = {}
     
     
 '''
@@ -512,16 +515,18 @@ def translateOpcodesF(opcode, index_variables, addr):
     elif opcode == "CALLCODE":
         pass
     elif opcode == "RETURN":
-        var = get_local_variable(addr)
+        # var = get_local_variable(addr)
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        instr = "r "+var
+        # instr = "r "+var
+        instr = ""
     elif opcode == "REVERT":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         instr = ""
-    # elif opcode == "ASSERTFAIL":
-    #     pass
+    elif opcode == "ASSERTFAIL":
+        instr = ""
+        updated_variables = index_variables
     # elif opcode == "DELEGATECALL":
     #     pass
     # elif opcode == "BREAKPOINT":
@@ -728,11 +733,11 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
     if (len(jumps)>1):
         rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps,heigh)
         stack_variables = get_stack_variables(variables)
-        input_variables = get_input_variables(variables,heigh-len(stack_variables)+1)
+        #input_variables = get_input_variables(variables,heigh-len(stack_variables)+1)
 
         head = "jump"+str(block_id)
 
-        in_vars = len(stack_variables)+len(input_variables)
+        in_vars = len(stack_variables)
         rule1.set_index_input(in_vars)
         rule2.set_index_input(in_vars)
 
@@ -740,12 +745,14 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
         _ , updated_variables = get_consume_variable(variables)
         
         stack_variables = get_stack_variables(updated_variables)
-        input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
+        top = stack_index[jumps[0]][0]
+        stack_variables = stack_variables[:top]
+#        input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
         head = "block"+str(jumps[0])
         rule1 = rule2 = None
         
-    if (len(stack_variables)!=0 or len(input_variables)!=0):
-        p_vars = ",".join(stack_variables+input_variables)+","
+    if (len(stack_variables)!=0):
+        p_vars = ",".join(stack_variables)+","
     else:
         p_vars = ""
 
@@ -761,21 +768,21 @@ def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
     guard = "eq("+ v1 + ","+ str(jumps[0])+")"
 
     stack_variables = get_stack_variables(index_variables)
-    input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
-    if (len(stack_variables)!=0 or len(input_variables)!=0):
-        p_vars = ", ".join(stack_variables+input_variables)+","
+    #input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
+    if (len(stack_variables)!=0):
+        p_vars = ", ".join(stack_variables)+","
     else:
         p_vars = ""
     
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
-    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,[]))"
+    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,bc))"
     rule1.add_instr(instr)
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
-    instr = "call(block"+str(jumps[1])+"("+p_vars+"globals,[]))"
+    instr = "call(block"+str(jumps[1])+"("+p_vars+"globals,bc))"
     rule2.add_instr(instr)
     
     return rule1, rule2
@@ -786,22 +793,22 @@ condicion es un iszero o una normal
 '''
 def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
     
-    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,(-1,0),jumps,falls_to,heigh)
+    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
-    input_variables = get_input_variables(variables,heigh-len(stack_variables)+consume)
+    #input_variables = get_input_variables(variables,heigh-len(stack_variables)+consume)
 
-    if (len(stack_variables)!=0 or len(input_variables)!=0):
-        p_vars = ",".join(stack_variables+input_variables)+","
+    if (len(stack_variables)!=0):
+        p_vars = ",".join(stack_variables)+","
     else:
         p_vars = ""
 
 
-    in_vars = len(stack_variables)+len(input_variables)
+    in_vars = len(stack_variables)
     rule1.set_index_input(in_vars)
     rule2.set_index_input(in_vars)
     
-    instr = "call(jump"+str(block_id)+"("+p_vars+"globals,[]))"
+    instr = "call(jump"+str(block_id)+"("+p_vars+"globals,bc))"
     
     return rule1, rule2, instr
 
@@ -823,23 +830,23 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
 
     
     stack_variables = get_stack_variables(index_variables)
-    input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
-    if (len(stack_variables)!=0 or len(input_variables)!=0):
-        p_vars = ", ".join(stack_variables+input_variables)+","
+    #input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
+    if (len(stack_variables)!=0):
+        p_vars = ", ".join(stack_variables)+","
     else:
         p_vars = ""
 
 
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
-    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,[]))"
+    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,bc))"
     rule1.add_instr(instr)
 
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
-    instr = "call(block"+str(falls_to)+"("+p_vars+"globals,[]))"
+    instr = "call(block"+str(falls_to)+"("+p_vars+"globals,bc))"
     rule2.add_instr(instr)
     
     return rule1, rule2
@@ -859,7 +866,7 @@ def compile_block(block):
     
     cont = 0
     finish = False
-    index_variables = (-1,0) #(current, inputs)
+    index_variables = (block.get_stack_info()[0]-1,0) #(current, inputs)
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
     rule.set_index_input(block.get_stack_info()[0])
@@ -885,7 +892,7 @@ def compile_block(block):
                                                    index_variables,block.get_list_jumps(),block.get_stack_info())
                 
         cont+=1
-    if(block.get_block_type=="falls_to"):
+    if(block.get_block_type()=="falls_to"):
         instr = process_falls_to_blocks(index_variables,block.get_falls_to(),block.get_stack_info()[1])
         rule.add_instr(instr)
     return rule
@@ -895,11 +902,13 @@ def compile_block(block):
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
 '''
-def evm2rbr_compiler(blocks_input = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None):
     global rbr_blocks
+    global stack_index
     
     init_globals()
-    if blocks_input :
+    stack_index = stack_info
+    if blocks_input and stack_info:
         blocks = sorted(blocks_input.values(), key = getKey)
         
         for block in blocks:
