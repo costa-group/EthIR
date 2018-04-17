@@ -2450,7 +2450,7 @@ def run(disasm_file=None, source_file=None, source_map=None):
 #        log.info("\t============ Results ===========")
         analyze()
         delete_uncalled()
-        rbr.evm2rbr_compiler(blocks_input = vertices)
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h)
         #Modified by pablo
         
         return [], 0 #detect_vulnerabilities()
