@@ -279,7 +279,7 @@ def translateOpcodes10(opcode, index_variables):
     elif opcode == "ISZERO":
         v1, updated_variables = get_consume_variable(index_variables)
         v2 , updated_variables = get_new_variable(updated_variables)
-        instr = "isZero(" + v1 +")"
+        instr = "eq(" + v1 +", 0)"
 
     elif opcode == "AND":
             v1, updated_variables = get_consume_variable(index_variables)
@@ -626,10 +626,10 @@ def get_opposite_guard(guard):
         opposite = "neq"+guard[2:]
     elif guard[:3] == "neq":
         opposite = "eq"+guard[3:]
-    elif guard[:6] == "isZero":
-        opposite = "notZero"+guard[6:]
-    elif guard[:7] == "notZero":
-        opposite = "isZero"+guard[7:]
+    # elif guard[:6] == "isZero":
+    #     opposite = "notZero"+guard[6:]
+    # elif guard[:7] == "notZero":
+    #     opposite = "isZero"+guard[7:]
     else:
         opposite = None
     return opposite
@@ -841,7 +841,6 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
 index_variables points to the corresponding top element.
 The stack could be reconstructed as
 [s(ith)...s(0)].
-
 '''
 def compile_block(block):
     global rbr_blocks
