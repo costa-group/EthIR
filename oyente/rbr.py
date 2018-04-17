@@ -68,7 +68,17 @@ def init_globals():
     global stack_index
     stack_index = {}
     
+
+
+
+
+
+def get_stack_index(block):
+    try:
+        return stack_index[block]
     
+    except:
+        return [0,0]
 '''
 It returns the start address of the block received.
 
@@ -90,15 +100,12 @@ current stack variable (the top most one) and update the variable index.
 index_variables is a tuple (current_stack_variable,current_input_variable).
 '''
 def get_consume_variable(index_variables):
-    current = index_variables[0]
-    input_idx = index_variables[1]
+    current = index_variables
     if current >= 0 :
         variable = "s(" + str(current) + ")"
         current = current-1
-    else:
-        variable ="in(" + str(input_idx) + ")"
-        input_idx = input_idx+1
-    return  variable, (current, input_idx)
+        
+    return  variable, current
 
 
 '''
@@ -106,8 +113,8 @@ It returns a fresh stack variable and updates the variables'
 index.
 '''
 def get_new_variable(index_variables):
-    new_current = index_variables[0] + 1
-    return "s(" + str(new_current) + ")", (new_current, index_variables[1])
+    new_current = index_variables + 1
+    return "s(" + str(new_current) + ")", new_current
 
 
 '''
@@ -118,12 +125,10 @@ as a parameter (current==-1).
 
 '''
 def get_current_variable(index_variables):
-    current = index_variables[0]
-    input_idx = index_variables[1]
+    current = index_variables
     if current >= 0 :
         variable = "s(" + str(current) + ")"
-    else: #We have to take one of the inputs
-        variable = "in(" + str(input_idx) + ")"
+
     return variable
 
 '''
@@ -134,7 +139,7 @@ function return an empty list.  s_vars: list of strings.
 
 '''
 def get_stack_variables(index_variables):
-    current = index_variables[0]
+    current = index_variables
     s_vars = []
     for i in range(current,-1,-1):
         s_vars.append("s("+str(i)+")")
@@ -143,38 +148,15 @@ def get_stack_variables(index_variables):
 
 
 '''
-It returns a list that contains all the "alive" input variables
-(those that have not been consumed). 
-It goes from current to current+top.
-If top == 0 range is empty
-and the function return an empty list.
-in_vars: list of strings.
-'''
-def get_input_variables(index_variables,top):
-    current = index_variables[1]
-    in_vars = []
-    for i in range(current,current+top):
-        in_vars.append("in("+str(i)+")")
-    return in_vars
-
-'''
 It returns the ith variable.
 It can be a fresh stack variable or an input variable.
 '''
 def get_ith_variable(index_variables, pos):
-    current = index_variables[0]
-    input_idx = index_variables[1]
+    current = index_variables
     if (current >= pos):
         idx = current-pos
         variable = "s(" + str(idx) + ")"
-    else:
-        #counts first the local elements to the method. Aftter that
-        #search in the inputs arguments (simulates the rest of the
-        #stack)
-        new_pos= pos - (current + 1) # to consider the 0th item
-        idx = new_pos + input_idx
-        variable = "in(" + str(idx) + ")"
-
+        
     return variable
 
 '''
@@ -717,10 +699,10 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info):
 '''
 It creates the call to next block when the type of the current one is falls_to.
 '''
-def process_falls_to_blocks(index_variables, falls_to, heigh):
-    stack_variables = get_stack_variables(index_variables)
-    input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
-    p_vars = ",".join(stack_variables+input_variables)
+def process_falls_to_blocks(index_variables, falls_to):
+    top = get_stack_index(falls_to)[0]
+    stack_variables = get_stack_variables(index_variables)[:top]
+    p_vars = ",".join(stack_variables)
     instr = "call(block"+str(falls_to)+"("+p_vars+", globals, []))"
     return instr
 
@@ -729,12 +711,10 @@ It translates the jump instruction.
 If the len(jumps)==1, it corresponds to a uncondtional jump.
 Otherwise we have to convert it into a conditional jump.
 '''
-def create_uncond_jump(block_id,variables,jumps,heigh):
+def create_uncond_jump(block_id,variables,jumps):
     if (len(jumps)>1):
-        rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps,heigh)
+        rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps)
         stack_variables = get_stack_variables(variables)
-        #input_variables = get_input_variables(variables,heigh-len(stack_variables)+1)
-
         head = "jump"+str(block_id)
 
         in_vars = len(stack_variables)
@@ -745,9 +725,8 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
         _ , updated_variables = get_consume_variable(variables)
         
         stack_variables = get_stack_variables(updated_variables)
-        top = stack_index[jumps[0]][0]
+        top = get_stack_index(jumps[0])[0]
         stack_variables = stack_variables[:top]
-#        input_variables = get_input_variables(updated_variables,heigh-len(stack_variables))
         head = "block"+str(jumps[0])
         rule1 = rule2 = None
         
@@ -763,26 +742,30 @@ def create_uncond_jump(block_id,variables,jumps,heigh):
 '''
 It generates the new two jump blocks.
 '''
-def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
+def create_uncond_jumpBlock(block_id,variables,jumps):
     v1, index_variables = get_consume_variable(variables)
     guard = "eq("+ v1 + ","+ str(jumps[0])+")"
 
     stack_variables = get_stack_variables(index_variables)
-    #input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
+
+    top1 = get_stack_index(jumps[0])[0]
+    top2 = get_stack_index(jumps[1])[0]
+    
     if (len(stack_variables)!=0):
-        p_vars = ", ".join(stack_variables)+","
+        p1_vars = ", ".join(stack_variables[:top1])+","
+        p2_vars = ", ".join(stack_variables[:top2])+","
     else:
-        p_vars = ""
+        p1_vars = p2_vars = ""
     
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
-    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,bc))"
+    instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
     rule1.add_instr(instr)
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
-    instr = "call(block"+str(jumps[1])+"("+p_vars+"globals,bc))"
+    instr = "call(block"+str(jumps[1])+"("+p2_vars+"globals,bc))"
     rule2.add_instr(instr)
     
     return rule1, rule2
@@ -791,12 +774,11 @@ def create_uncond_jumpBlock(block_id,variables,jumps,heigh):
 Ponemos en consume el numero de las variables que se consumen depende de si la
 condicion es un iszero o una normal
 '''
-def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
+def create_cond_jump(block_id,l_instr,variables,jumps,falls_to):
     
-    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh)
+    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
-    #input_variables = get_input_variables(variables,heigh-len(stack_variables)+consume)
 
     if (len(stack_variables)!=0):
         p_vars = ",".join(stack_variables)+","
@@ -815,7 +797,7 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,heigh):
 '''
 It generates the new two jump blocks.
 '''
-def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
+def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
@@ -830,35 +812,35 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,heigh):
 
     
     stack_variables = get_stack_variables(index_variables)
-    #input_variables = get_input_variables(index_variables,heigh-len(stack_variables))
+
+    top1 = get_stack_index(jumps[0])[0]
+    top2 = get_stack_index(falls_to)[0]
+
     if (len(stack_variables)!=0):
-        p_vars = ", ".join(stack_variables)+","
+        p1_vars = ", ".join(stack_variables[:top1])+","
+        p2_vars = ", ".join(stack_variables[:top2])+","
     else:
-        p_vars = ""
+        p1_vars = p2_vars = ""
 
 
     rule1 = rbr_rule.RBRRule(block_id,"jump")
     rule1.set_guard(guard)
-    instr = "call(block"+str(jumps[0])+"("+p_vars+"globals,bc))"
+    instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
     rule1.add_instr(instr)
 
 
     rule2 = rbr_rule.RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
-    instr = "call(block"+str(falls_to)+"("+p_vars+"globals,bc))"
+    instr = "call(block"+str(falls_to)+"("+p2_vars+"globals,bc))"
     rule2.add_instr(instr)
     
     return rule1, rule2
 
 '''
-index_variables = (current,inputs) current goes from ith to 0
-(where ith represents the top) inputs goes from 0 to ith (where 0
-represents the top).
-
+index_variables points to the corresponding top element.
 The stack could be reconstructed as
-[s(ith)...s(0),in(x),...in(nth)]. Current points to ith and inputs to
-x
+[s(ith)...s(0)].
 
 '''
 def compile_block(block):
@@ -866,7 +848,7 @@ def compile_block(block):
     
     cont = 0
     finish = False
-    index_variables = (block.get_stack_info()[0]-1,0) #(current, inputs)
+    index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
     rule.set_index_input(block.get_stack_info()[0])
@@ -875,13 +857,12 @@ def compile_block(block):
         if is_conditional(l_instr[cont]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
-                        block.get_falls_to(),
-                        block.get_stack_info()[1])
+                        block.get_falls_to())
             rule.add_instr(instr)
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
         elif l_instr[cont] == "JUMP":
-            rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps(),block.get_stack_info()[1])
+            rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps())
             if rule1:
                 rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
                 
@@ -893,7 +874,7 @@ def compile_block(block):
                 
         cont+=1
     if(block.get_block_type()=="falls_to"):
-        instr = process_falls_to_blocks(index_variables,block.get_falls_to(),block.get_stack_info()[1])
+        instr = process_falls_to_blocks(index_variables,block.get_falls_to())
         rule.add_instr(instr)
     return rule
 
