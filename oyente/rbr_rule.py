@@ -65,8 +65,8 @@ class RBRRule:
 
     def build_input_vars(self):
         in_vars = []
-        for i in xrange(0,self.arg_input):
-            var = "i("+str(i)+")"
+        for i in xrange(self.arg_input-1,-1,-1):
+            var = "s("+str(i)+")"
             in_vars.append(var)
         return in_vars
 
@@ -92,7 +92,7 @@ class RBRRule:
 
         arg_input = self.build_input_vars()
         if (arg_input == []):
-            print self.rule_name+"("+str(self.arg_global)+", "+ str(self.arg_ret) +")=>"
+            print self.rule_name+"("+str(self.arg_global)+", bc"+")=>"
         else:
             print self.rule_name+"(" + ", ".join(arg_input) + ", " + str(self.arg_global) + ", "+ str(self.arg_ret) +")=>"
 
