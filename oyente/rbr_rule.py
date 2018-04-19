@@ -23,7 +23,10 @@ class RBRRule:
         self.guard=""
         self.instr=[]
         self.rbr_type = typeBlock
-
+        self.bc = ["address","balance","origin","caller","callvalue","calldataload","calldatasize","calldatacopy",
+                   "codesize","codecopy","gasprice","extcodesize","extcodecopy","mcopy","coinbase","number","difficulty",
+                   "gaslimit","gas"] #To be extended
+        
     def get_guard(self):
         return self.guard
 
