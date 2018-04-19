@@ -68,7 +68,8 @@ def init_globals():
     global stack_index
     stack_index = {}
     
-
+    global max_field
+    max_field = 0
 
 def get_stack_index(block):
     try:
@@ -133,7 +134,6 @@ It returns a list that contains all the "alive" stack variables.
 It goes from current to 0. 
 If current == -1 range is empty and the
 function return an empty list.  s_vars: list of strings.
-
 '''
 def get_stack_variables(index_variables):
     current = index_variables
@@ -175,6 +175,12 @@ def get_local_variable(address):
         current_local_var += 1
         return var
 
+
+
+def update_field_index(value):
+    global max_field
+    if max_field<value:
+        max_field = value
                
 '''
 It simulates the execution of evm bytecodes.  It consumes or
@@ -439,10 +445,12 @@ def translateOpcodes50(opcode, value, index_variables):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = " + "f(" + v0 + ")"
+        update_field_index(int(value))
     elif opcode == "SSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         instr = "f(" + v0 + ") = " + v1
+        update_field_index(int(value))
     # elif opcode == "JUMP":
     #     pass
     # elif opcode == "JUMPI":
@@ -896,6 +904,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None):
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
         for rule in rbr:# _blocks.values():
             for r in rule:
+                r.set_global_arg(max_field)
                 r.display()
 
     else :
