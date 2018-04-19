@@ -88,12 +88,20 @@ class RBRRule:
 
     def set_ret_var(self,var):
         self.arg_ret = var
-        
+
+    def build_bc_vars(self):
+        #Todo: get only those that are used in this contract
+        instr = self.bc
+        return ", ".join(instr)
+
     def display(self):
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
 
         arg_input = self.build_input_vars()
+
+        bc_input = self.build_bc_vars()
+        
         if (arg_input == []):
             print self.rule_name+"("+str(self.arg_global)+", bc"+")=>"
         else:
