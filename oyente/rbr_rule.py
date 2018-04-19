@@ -17,7 +17,7 @@ class RBRRule:
             self.rule_name = "jump"+str(blockId)
 
         self.arg_input = 0
-        self.arg_global = []
+        self.arg_global = 0
         self.arg_local = []
         self.arg_ret = []
         self.guard=""
@@ -66,13 +66,6 @@ class RBRRule:
     def set_index_input(self,num):
         self.arg_input = num
 
-    def build_input_vars(self):
-        in_vars = []
-        for i in xrange(self.arg_input-1,-1,-1):
-            var = "s("+str(i)+")"
-            in_vars.append(var)
-        return in_vars
-
     def get_args_local(self):
         return self.arg_local
 
@@ -82,6 +75,12 @@ class RBRRule:
     def add_arg_local(self,l):
         if l not in self.arg_local:
             self.arg_local.append(l)
+
+    def set_global_arg(self,val):
+        self.arg_global = val
+
+    def get_global_arg(self):
+        return self.arg_global
 
     def get_ret_var(self):
         return arg_ret
@@ -93,6 +92,20 @@ class RBRRule:
         #Todo: get only those that are used in this contract
         instr = self.bc
         return ", ".join(instr)
+
+    def build_input_vars(self):
+        in_vars = []
+        for i in xrange(self.arg_input-1,-1,-1):
+            var = "s("+str(i)+")"
+            in_vars.append(var)
+        return in_vars
+
+    def build_field_vars(self):
+        field_vars = []
+        for i in xrange(0,self.arg_global+1):
+            var = "g("+ str(i)+")"
+            field_vars.append(var)
+        return field_vars
 
     def display(self):
         
