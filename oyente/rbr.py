@@ -70,9 +70,6 @@ def init_globals():
     
 
 
-
-
-
 def get_stack_index(block):
     try:
         return stack_index[block]
