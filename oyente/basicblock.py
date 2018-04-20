@@ -18,6 +18,7 @@ class BasicBlock:
         self.calldatavalues = []
         self.stack_info = []
         self.ret_val = -1
+        self.currentId = 0
 
     def get_start_address(self):
         return self.start
@@ -93,27 +94,44 @@ class BasicBlock:
 
     def set_ret_val(self, val):
         self.ret_val = val
+
+    def _get_concrete_load_store(self,ls_type):
+        try:
+            return str(self.ls_values[ls_type].pop(0))
+        except IndexError:
+            ident = self.currentId
+            self.currentId+=1
+            return ls_type+str(self.start)+"_"+str(self.currentId)
+
+    def _get_calldatavalue(self):
+        try:
+            return str(self.calldatavalues.pop(0))
+            
+        except IndexError:
+            ident = self.currentId
+            self.currentId+=1
+            return "calldataload"+str(self.start)+"_"+str(self.currentId)
         
     def update_instr(self):
         new_instructions = []
-
+    
         for instr in self.instructions:
             instr = instr.strip(" ")
             if(instr == "CALLDATALOAD"):
                 new_instr = instr + " " +  str(self.calldatavalues.pop(0))
             elif instr == "MLOAD":
-                new_instr = instr + " " + str(self.ls_values["mload"].pop(0))
+                new_instr = instr + " " + self._get_concrete_load_store("mload")
             elif instr == "MSTORE":
-                new_instr = instr + " " + str(self.ls_values["mstore"].pop(0))
+                new_instr = instr + " " + self._get_concrete_load_store("mstore")
             elif instr == "SLOAD":
-                new_instr = instr + " " + str(self.ls_values["sload"].pop(0))
+                new_instr = instr + " " + self._get_concrete_load_store("sload")
             elif instr == "SSTORE":
-                new_instr = instr + " " + str(self.ls_values["sstore"].pop(0))
+                new_instr = instr + " " + self._get_concrete_load_store("sstore")
             elif instr == "RETURN":
                 new_instr = instr + " " + str(self.ret_val)
             else:
                 new_instr = instr
-
+                
             new_instructions.append(new_instr)
         
         self.instructions = new_instructions
@@ -129,7 +147,10 @@ class BasicBlock:
         six.print_("start address: %d" % self.start)
         six.print_("end address: %d" % self.end)
         six.print_("end statement type: " + self.type)
-                
+
+        if self.list_jumps == []:
+            self.list_jumps =[2]
+
         six.print_("jump target: " + " ".join(str(x) for x in self.list_jumps))
         # six.print_("jump target: %d" %self.jump_target)
         if(self.falls_to != None):
