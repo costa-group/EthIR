@@ -71,6 +71,9 @@ def init_globals():
     global max_field
     max_field = 0
 
+    global max_field_list
+    max_field_list = []
+
     global bc_in_use
     bc_in_use = []
 
@@ -181,14 +184,28 @@ def get_local_variable(address):
 
 def update_field_index(value):
     global max_field
-    if max_field<value:
-        max_field = value
-
+    global max_field_list
+    try:
+        value = int(value)
+        if max_field<value:
+            max_field = value
+    except ValueError:
+        if value not in max_field_list:
+            max_field_list.append(value)
 
 def update_bc_in_use(value):
     global bc_in_use
     if value not in bc_in_use:
         bc_in_use.append(value)
+
+def process_tops(top1,top2):
+    top1_aux = 0 if top1 == float("inf") else top1
+    top2_aux = 0 if top2 == float("inf") else top2
+
+    return top1_aux, top2_aux
+
+
+    
 '''
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
@@ -262,18 +279,25 @@ corresponding translated instruction and the variables's index
 updated.
 Signed operations are not considered (SLT, SGT)
 '''
-def translateOpcodes10(opcode, index_variables):
+def translateOpcodes10(opcode, index_variables,cond):
     if opcode == "LT":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3 , updated_variables = get_new_variable(updated_variables)
-        instr = "lt(" + v1 + ", "+v2+")"
+        if cond :
+            instr = v3+ " = lt(" + v1 + ", "+v2+")"
+        else :
+            instr = "lt(" + v1 + ", "+v2+")"
         
     elif opcode == "GT":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3 , updated_variables = get_new_variable(updated_variables)
-        instr = "gt(" + v1 + ", "+v2+")"
+        if cond :
+            instr = v3+ " = gt(" + v1 + ", "+v2+")"
+        else :
+            instr = "gt(" + v1 + ", "+v2+")"
+
 
     # elif opcode == "SLT":
     #     pass
@@ -284,12 +308,18 @@ def translateOpcodes10(opcode, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3 , updated_variables = get_new_variable(updated_variables)
-        instr = "eq(" + v1 + ", "+v2+")"
+        if cond:
+            instr = v3+ "= eq(" + v1 + ", "+v2+")"
+        else:
+            instr = "eq(" + v1 + ", "+v2+")"
 
     elif opcode == "ISZERO":
         v1, updated_variables = get_consume_variable(index_variables)
         v2 , updated_variables = get_new_variable(updated_variables)
-        instr = "eq(" + v1 +", 0)"
+        if cond:
+            instr = v2+ "= eq(" + v1 + ", 0)"
+        else:
+            instr = "eq(" + v1 + ", 0)"
 
     elif opcode == "AND":
             v1, updated_variables = get_consume_variable(index_variables)
@@ -422,8 +452,11 @@ def translateOpcodes40(opcode, index_variables):
     elif opcode == "COINBASE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = coinbase"
+        update_bc_in_use("coinbase")
     elif opcode == "TIMESTAMP":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = timestamp"
+        update_bc_in_use("timestamp")
     elif opcode == "NUMBER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = number"
@@ -469,12 +502,12 @@ def translateOpcodes50(opcode, value, index_variables):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = " + "f(" + v0 + ")"
-        update_field_index(int(value))
+        update_field_index(value)
     elif opcode == "SSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         instr = "f(" + v0 + ") = " + v1
-        update_field_index(int(value))
+        update_field_index(value)
     # elif opcode == "JUMP":
     #     pass
     # elif opcode == "JUMPI":
@@ -504,8 +537,10 @@ def translateOpcodes50(opcode, value, index_variables):
 
     return instr, updated_variables
 
-# def translateOpcodesA(opcode, index_variables):
-#     pass
+def translateOpcodesA(opcode, index_variables):
+    instr = ""
+    updated_variables = index_variables
+    return instr, updated_variables
 
 
 '''
@@ -632,8 +667,24 @@ def translateOpcodes90(opcode, value, index_variables):
     return instr, index_variables
 
 
-def is_conditional(opcode):
-    return opcode in ["LT","GT","EQ","ISZERO"]
+def is_conditional(instr):
+
+    valid = True
+    i = 1
+    if instr[0] in ["LT","GT","EQ","ISZERO"] and instr[-1] in ["JUMP","JUMPI"]:
+        while(i<len(instr)-2 and valid):
+            ins = instr[i].split()
+            if(ins[0] not in ["ISZERO","PUSH"]):
+                valid = False
+            i+=1
+    else:
+        valid = False
+
+    return valid
+
+
+# def is_conditional(opcode):
+#     return opcode in ["LT","GT","EQ","ISZERO"]
 
 
 '''
@@ -670,7 +721,7 @@ It translates the bytecode corresponding to evm_opcode.
 We mantain some empty instructions to insert the evm bytecodes
 They are remove when displaying
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info):
+def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -682,7 +733,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info):
         value, index_variables = translateOpcodes0(opcode_name, variables)
         rule.add_instr(value)
     elif opcode_name in opcodes10:
-        value, index_variables = translateOpcodes10(opcode_name, variables)
+        value, index_variables = translateOpcodes10(opcode_name, variables,cond)
         rule.add_instr(value)
     elif opcode_name in opcodes20:
         value, index_variables = translateOpcodes20(opcode_name, variables)
@@ -826,7 +877,7 @@ It generates the new two jump blocks.
 def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
     print "BLOCK"
     print block_id
-    guard, index_variables = translateOpcodes10(l_instr[0], variables)
+    guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
             guard = get_opposite_guard(guard)
@@ -843,7 +894,11 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
 
     top1 = get_stack_index(jumps[0])[0]
     top2 = get_stack_index(falls_to)[0]
-
+    top1, top2 = process_tops(top1, top2)
+    print jumps
+    print falls_to
+    print top1
+    print top2
 
     if (len(stack_variables)!=0):
         p1_vars = ", ".join(stack_variables[:top1])+"," if top1 !=0 else ""
@@ -882,7 +937,7 @@ def compile_block(block):
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
     while not(finish) and cont< len(l_instr):
-        if is_conditional(l_instr[cont]):
+        if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
                         block.get_falls_to())
@@ -898,7 +953,7 @@ def compile_block(block):
             
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),block.get_stack_info())
+                                                   index_variables,block.get_list_jumps(),block.get_stack_info(),True)
                 
         cont+=1
     if(block.get_block_type()=="falls_to"):
