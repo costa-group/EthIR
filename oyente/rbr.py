@@ -71,6 +71,9 @@ def init_globals():
     global max_field
     max_field = 0
 
+    global bc_in_use
+    bc_in_use = []
+
 def get_stack_index(block):
     try:
         return stack_index[block]
@@ -176,12 +179,16 @@ def get_local_variable(address):
         return var
 
 
-
 def update_field_index(value):
     global max_field
     if max_field<value:
         max_field = value
-               
+
+
+def update_bc_in_use(value):
+    global bc_in_use
+    if value not in bc_in_use:
+        bc_in_use.append(value)
 '''
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
@@ -333,7 +340,6 @@ def translateOpcodes20(opcode, index_variables):
 
     return instr, updated_variables
 
-
 '''
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
@@ -341,27 +347,35 @@ corresponding translated instruction and the variables's index
 updated.
 '''
 def translateOpcodes30(opcode, value, index_variables):
-    # if opcode == "ADDRESS":
-    #     pass
-    if opcode == "BALANCE":
+    
+    if opcode == "ADDRESS":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = address"
+        update_bc_in_use("address")
+    elif opcode == "BALANCE":
         _, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = balance"
+        update_bc_in_use("balance")
     # elif opcode == "ORIGIN":
     #     pass
     elif opcode == "CALLER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = caller"
+        update_bc_in_use("caller")
     elif opcode == "CALLVALUE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = callvalue"
+        update_bc_in_use("callvalue")
     elif opcode == "CALLDATALOAD":
         _, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = "+value
+        instr = v1+" = calldataload("+value+")"
+        update_bc_in_use("calldataload")
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
+        update_bc_in_use("calldatasize")
     elif opcode == "CALLDATACOPY":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
@@ -369,16 +383,19 @@ def translateOpcodes30(opcode, value, index_variables):
         instr = ""
     elif opcode == "CODESIZE":
         v1, updated_variables = get_new_variable(index_variables)
-        instr = v1+" = callvalue"
+        instr = v1+" = codesize"
+        update_bc_in_use("codesize")
     # elif opcode == "CODECOPY":
     #     pass
     elif opcode == "GASPRICE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gas_price"
+        update_bc_in_use("gasprice")
     elif opcode == "EXTCODESIZE":
         _, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = extcodesize"
+        update_bc_in_use("extcodesize")
     elif opcode == "EXTCODECOPY":
         pass
     elif opcode == "MCOPY":
@@ -398,7 +415,10 @@ updated.
 '''
 def translateOpcodes40(opcode, index_variables):
     if opcode == "BLOCKHASH":
-        pass
+        v0, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = blockhash("+v0+")"
+        update_bc_in_use("blockhash")
     elif opcode == "COINBASE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = coinbase"
@@ -407,11 +427,15 @@ def translateOpcodes40(opcode, index_variables):
     elif opcode == "NUMBER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = number"
+        update_bc_in_use("number")
     elif opcode == "DIFFICULTY":
-        pass
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = difficulty"
+        update_bc_in_use("difficulty")
     elif opcode == "GASLIMIT":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gaslimit"
+        update_bc_in_use("gaslimit")
     else:
         instr = "Error opcodes40: "+opcode
         updated_variables = index_variables
@@ -462,7 +486,7 @@ def translateOpcodes50(opcode, value, index_variables):
     elif opcode == "GAS":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = "+"gas"
-
+        update_bc_in_use("gas")
     elif opcode == "JUMPDEST":
         instr = ""
         updated_variables = index_variables
@@ -489,7 +513,7 @@ def translateOpcodes50(opcode, value, index_variables):
 def translateOpcodesF(opcode, index_variables, addr):
     if opcode == "CREATE":
         pass
-    elif opcode == "CALL":
+    elif opcode == "CALL": #Suppose that all the calls are executed without errors
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
@@ -536,8 +560,9 @@ def translateOpcodesF(opcode, index_variables, addr):
     #     pass
     # elif opcode == "INVALID":
     #     pass
-    # elif opcode == "SUICIDE":
-    #     pass
+    elif opcode == "SUICIDE":
+        instr = ""
+        updated_variables = index_variables
     else:
         instr = "Error opcodesF: "+opcode
         updated_variables = index_variables
@@ -688,12 +713,8 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info):
         rule.add_instr(value)
     elif opcode_name in opcodesF:
         value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest)
-        instr = value.split()
-        if(len(instr)>1): #Return opcode
-            rule.set_ret_var(instr[1])
-            rule.add_instr("")
-        else:
-            rule.add_instr(value)
+        #RETURN
+        rule.add_instr(value)
     else:
         value = "Error. No opcode matchs"
         index_variables = variables
@@ -708,7 +729,7 @@ def process_falls_to_blocks(index_variables, falls_to):
     top = get_stack_index(falls_to)[0]
     stack_variables = get_stack_variables(index_variables)[:top]
     p_vars = ",".join(stack_variables)
-    instr = "call(block"+str(falls_to)+"("+p_vars+", globals, []))"
+    instr = "call(block"+str(falls_to)+"("+p_vars+", globals, bc))"
     return instr
 
 '''
@@ -741,7 +762,7 @@ def create_uncond_jump(block_id,variables,jumps):
         p_vars = ""
 
         
-    instr = "call("+ head +"("+p_vars+"globals, []))"
+    instr = "call("+ head +"("+p_vars+"globals, bc))"
     return rule1,rule2,instr
 
 '''
@@ -803,6 +824,8 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to):
 It generates the new two jump blocks.
 '''
 def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
+    print "BLOCK"
+    print block_id
     guard, index_variables = translateOpcodes10(l_instr[0], variables)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
@@ -821,9 +844,10 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
     top1 = get_stack_index(jumps[0])[0]
     top2 = get_stack_index(falls_to)[0]
 
+
     if (len(stack_variables)!=0):
-        p1_vars = ", ".join(stack_variables[:top1])+","
-        p2_vars = ", ".join(stack_variables[:top2])+","
+        p1_vars = ", ".join(stack_variables[:top1])+"," if top1 !=0 else ""
+        p2_vars = ", ".join(stack_variables[:top2])+"," if top2 != 0 else ""
     else:
         p1_vars = p2_vars = ""
 
@@ -904,7 +928,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None):
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
         for rule in rbr:# _blocks.values():
             for r in rule:
+                r.set_bc(bc_in_use)
                 r.set_global_arg(max_field)
+                r.update_calls()
                 r.display()
 
     else :
