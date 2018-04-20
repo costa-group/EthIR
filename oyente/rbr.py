@@ -398,9 +398,9 @@ def translateOpcodes30(opcode, value, index_variables):
         instr = v1+" = callvalue"
         update_bc_in_use("callvalue")
     elif opcode == "CALLDATALOAD":
-        _, updated_variables = get_consume_variable(index_variables)
+        v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = calldataload("+value+")"
+        instr = v1+" = calldataload("+v0+")"
         update_bc_in_use("calldataload")
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
@@ -514,8 +514,10 @@ def translateOpcodes50(opcode, value, index_variables):
     #     pass
     # elif opcode == "PC":
     #     pass
-    # elif opcode == "MSIZE":
-    #     pass
+    elif opcode == "MSIZE":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1 + " = msize"
+        update_bc_in_use("msize")
     elif opcode == "GAS":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = "+"gas"
@@ -875,8 +877,6 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to):
 It generates the new two jump blocks.
 '''
 def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
-    print "BLOCK"
-    print block_id
     guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
@@ -895,10 +895,6 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
     top1 = get_stack_index(jumps[0])[0]
     top2 = get_stack_index(falls_to)[0]
     top1, top2 = process_tops(top1, top2)
-    print jumps
-    print falls_to
-    print top1
-    print top2
 
     if (len(stack_variables)!=0):
         p1_vars = ", ".join(stack_variables[:top1])+"," if top1 !=0 else ""
