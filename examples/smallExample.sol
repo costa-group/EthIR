@@ -2,23 +2,23 @@ pragma solidity ^0.4.11;
 
 contract SmallExample{
 
-  int suma = 0;
-  int numero = 0;
+  int sum = 0;
+  int number = 0;
   
-  function multiplica(int a){
+  function multiply(int a){
     
     for(int i = 0; i<a; i++){
-      suma = suma+numero;
+      sum = sum+number;
     }
 
   }
 
   function enter(){
-    numero = 5;
-    multiplica(3);    
+    number = 5;
+    multiply(7);    
   }
 
-  //Analogo a nuestro main
+  //main
   function (){
     enter();
   }
