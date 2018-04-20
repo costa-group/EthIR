@@ -19,22 +19,20 @@ class RBRRule:
         self.arg_input = 0
         self.arg_global = 0
         self.arg_local = []
-        self.arg_ret = []
         self.guard=""
         self.instr=[]
         self.rbr_type = typeBlock
-        self.bc = ["address","balance","origin","caller","callvalue","calldataload","calldatasize","calldatacopy",
-                   "codesize","codecopy","gasprice","extcodesize","extcodecopy","mcopy","coinbase","number","difficulty",
-                   "gaslimit","gas"] #To be extended
+        self.bc = []
+        # self.bc = ["address","balance","origin","caller","callvalue","calldataload","calldatasize","calldatacopy",
+        #            "codesize","codecopy","gasprice","extcodesize","extcodecopy","mcopy","blockhash","coinbase",
+        #            "number","difficulty",
+        #            "gaslimit","gas"] #To be extended
         
     def get_guard(self):
         return self.guard
 
     def set_guard(self, guard):
         self.guard = guard
-
-    # def add_guard(self, guard):
-    #     self.guard.append(guard)
 
     def get_Id(self):
         return self.blockId
@@ -82,14 +80,13 @@ class RBRRule:
     def get_global_arg(self):
         return self.arg_global
 
-    def get_ret_var(self):
-        return arg_ret
+    def set_bc(self,bc_used):
+        self.bc = bc_used
 
-    def set_ret_var(self,var):
-        self.arg_ret = var
-
+    def get_bc(self):
+        return self.bc
+    
     def build_bc_vars(self):
-        #Todo: get only those that are used in this contract
         instr = self.bc
         return ", ".join(instr)
 
@@ -107,6 +104,13 @@ class RBRRule:
             field_vars.append(var)
         return field_vars
 
+    def update_calls(self):
+        if "call(" in self.instr[-1]:
+            call = self.instr.pop()
+            posInit = call.find("global",0)
+            new_instr = call[:posInit]+str(self.arg_global)+", "+str(len(self.bc))+"))"
+            self.instr.append(new_instr)
+            
     def display(self):
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
@@ -116,9 +120,9 @@ class RBRRule:
         bc_input = self.build_bc_vars()
         
         if (arg_input == []):
-            print self.rule_name+"("+str(self.arg_global)+", bc"+")=>"
+            print self.rule_name+"("+str(self.arg_global)+", "+ str(len(self.bc))+")=>"
         else:
-            print self.rule_name+"(" + ", ".join(arg_input) + ", " + str(self.arg_global) + ", "+ str(self.arg_ret) +")=>"
+            print self.rule_name+"(" + ", ".join(arg_input) + ", " + str(self.arg_global) + ", " + str(len(self.bc))+")=>"
 
         if self.guard != "" :
             print "\t"+self.guard
