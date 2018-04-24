@@ -501,12 +501,12 @@ def translateOpcodes50(opcode, value, index_variables):
     elif opcode == "SLOAD":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = " + "f(" + v0 + ")"
+        instr = v1+" = " + "g(" + v0 + ")"
         update_field_index(value)
     elif opcode == "SSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
-        instr = "f(" + v0 + ") = " + v1
+        instr = "g(" + v0 + ") = " + v1
         update_field_index(value)
     # elif opcode == "JUMP":
     #     pass
@@ -659,9 +659,10 @@ def translateOpcodes90(opcode, value, index_variables):
     if opcode == "SWAP":
         v1 = get_ith_variable(index_variables,int(value))
         v2 = get_current_variable(index_variables)
-        instr1 = "s(aux) = " + v1
+        v3,_ = get_new_variable(index_variables)
+        instr1 = v3 + " = " + v1
         instr2 = v1 + " = " + v2
-        instr3 = v2 + " = s(aux)"
+        instr3 = v2 + " = " + v3
         instr = [instr1,instr2,instr3]
     else:
         instr = "Error opcodes90: "+opcode
@@ -927,6 +928,9 @@ def compile_block(block):
     
     cont = 0
     finish = False
+    print "BLOCK"
+    print block.get_start_address()
+    print block.get_stack_info()
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
@@ -970,7 +974,6 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None):
     stack_index = stack_info
     if blocks_input and stack_info:
         blocks = sorted(blocks_input.values(), key = getKey)
-        
         for block in blocks:
             rule = compile_block(block)
             rbr_blocks[rule.get_rule_name()]=[rule]
