@@ -114,7 +114,7 @@ class RBRRule:
     def display(self):
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
-
+        new_instr = ["skip"] if new_instr == [] else new_instr
         arg_input = self.build_input_vars()
 
         bc_input = self.build_bc_vars()
