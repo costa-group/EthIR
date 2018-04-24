@@ -1,6 +1,6 @@
 ETHIR
 =====
-[![License: GPL v3][license-badge]][license-badge-url]
+
 
 A framework for high-level Analysis of Ethereum Bytecode.
 
