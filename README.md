@@ -24,7 +24,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
 
 3. Install [Z3](https://github.com/Z3Prover/z3/releases) (last version tested 4.5.0)
 
-   Download the [source code folder](https://github.com/Z3Prover/z3/releases/tag/z3-4.5.0)
+   Download the [source code folder](https://github.com/Z3Prover/z3/releases/tag/z3-4.5.0).
 
    Decompress the folder and install it.
 ```
@@ -35,6 +35,10 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
  sudo make install
 ```
 ## Run ETHIR
+To run our framework go inside XXX folder and execute the command:
+```
+.\oyente-ethir -s file_name 
+```
 
 ## Examples
 The folder "Exampes" contains some running examples to test the tool.
