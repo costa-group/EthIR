@@ -118,7 +118,7 @@ class BasicBlock:
         for instr in self.instructions:
             instr = instr.strip(" ")
             if(instr == "CALLDATALOAD"):
-                new_instr = instr + " " +  str(self.calldatavalues.pop(0))
+                new_instr = instr + " " +  self._get_calldatavalue()
             elif instr == "MLOAD":
                 new_instr = instr + " " + self._get_concrete_load_store("mload")
             elif instr == "MSTORE":
