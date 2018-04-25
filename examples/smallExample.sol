@@ -2,12 +2,12 @@ pragma solidity ^0.4.11;
 
 contract SmallExample{
 
-  int sum = 0;
-  int number = 0;
+  uint sum = 0;
+  uint number = 0;
   
-  function multiply(int a){
+  function multiply(uint a){
     
-    for(int i = 0; i<a; i++){
+    for(uint i = 0; i<a; i++){
       sum = sum+number;
     }
 
