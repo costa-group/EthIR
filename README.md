@@ -35,7 +35,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
  sudo make install
 ```
 ## Run ETHIR
-To run our framework go inside XXX folder and execute the command:
+To run our framework go to folder XXX and execute the command:
 ```
 .\oyente-ethir -s file_name 
 ```
