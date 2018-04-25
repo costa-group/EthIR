@@ -170,13 +170,13 @@ local_variables.
 def get_local_variable(address):
     global current_local_var
     global local_variables
-
+    
     try:
-        idx = local_variables[str(address)]
+        idx = local_variables[int(address)]
         var = "l(" + str(idx) + ")"
         return var
     except KeyError:
-        local_variables[str(address)] = current_local_var
+        local_variables[int(address)] = current_local_var
         var = "l(" + str(current_local_var) + ")"
         current_local_var += 1
         return var
@@ -487,27 +487,41 @@ def translateOpcodes50(opcode, value, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
-        l_var = get_local_variable(value)
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+ " = " + l_var
+        try:
+            l_var = get_local_variable(value)
+            instr = v1+ " = " + l_var
+        except ValueError:
+            instr = ["ll = " + v1, v1 + " = fresh()"]
     elif opcode == "MSTORE":
-        _ , updated_variables = get_consume_variable(index_variables)
+        v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
-        l_var = get_local_variable(value)
-        instr = l_var + " = "+ v1
+        try:
+            l_var = get_local_variable(value)
+            instr = l_var + " = "+ v1
+        except ValueError:
+            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
     # elif opcode == "MSTORE8":
     #     pass
     elif opcode == "SLOAD":
-        v0 , updated_variables = get_consume_variable(index_variables)
+        _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = " + "g(" + v0 + ")"
-        update_field_index(value)
+        try:
+            idx = int(value)
+            instr = v1+" = " + "g(" + value + ")"
+            update_field_index(value)
+        except ValueError:
+            instr = ["gl = " + v1, v1 + " = fresh()"]
     elif opcode == "SSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
-        instr = "g(" + v0 + ") = " + v1
-        update_field_index(value)
+        try:
+            idx = int(value)
+            instr = "g(" + value + ") = " + v1
+            update_field_index(value)
+        except ValueError:
+            instr = ["gs(1) = "+ v1, "gs(2) = "+v0]
     # elif opcode == "JUMP":
     #     pass
     # elif opcode == "JUMPI":
@@ -749,7 +763,11 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond):
         rule.add_instr(value)
     elif opcode_name in opcodes50:
         value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
-        rule.add_instr(value)
+        if type(value) is list:
+            for ins in value:
+                rule.add_instr(ins)
+        else:
+            rule.add_instr(value)
     elif opcode_name[:4] in opcodes60:
         value, index_variables = translateOpcodes60(opcode_name[:4], opcode_rest, variables)
         rule.add_instr(value)
@@ -928,9 +946,6 @@ def compile_block(block):
     
     cont = 0
     finish = False
-    print "BLOCK"
-    print block.get_start_address()
-    print block.get_stack_info()
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
