@@ -405,6 +405,9 @@ def collect_vertices(tokens):
 def construct_bb():
     global vertices
     global edges
+    global stack_h
+    global calldataload_values
+    
     sorted_addresses = sorted(instructions.keys())
     size = len(sorted_addresses)
     for key in end_ins_dict:
@@ -555,6 +558,8 @@ def full_sym_exec():
 
 # Added by Pablo Gordillo
 def update_stack_heigh(block,h,pos):
+    global stack_h
+    
     l = stack_h[block]
     if(l[pos]>h):
         l.pop(pos)
@@ -747,7 +752,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         raise Exception('Unknown Jump-Type')
 
 def updateCallDataValues(block,var_name):
- 
+    global calldataload_values
+    
     laux = calldataload_values[block]
     l = laux+[var_name]
     calldataload_values[block] = l
