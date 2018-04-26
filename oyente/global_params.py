@@ -33,7 +33,7 @@ WEB = 0
 STORE_RESULT = 0
 
 # depth limit for DFS
-DEPTH_LIMIT = 50
+DEPTH_LIMIT = 250
 
 GAS_LIMIT = 4000000
 
