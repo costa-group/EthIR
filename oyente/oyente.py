@@ -95,7 +95,7 @@ def run_solidity_analysis(inputs):
     exit_code = 0
 
     for inp in inputs:
-        logging.info("contract %s:", inp['contract'])
+        #logging.info("contract %s:", inp['contract'])
         result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'])
 
         try:
