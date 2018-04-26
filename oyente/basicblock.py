@@ -69,7 +69,7 @@ class BasicBlock:
                 self.list_jumps.append(el)
 
     def set_calldataload_values(self,l):
-        self.calldatavalues=l
+        self.calldatavalues=list(l)
 
     def get_load_store_values(self):
         return self.ls_values
@@ -140,7 +140,7 @@ class BasicBlock:
         return self.stack_info
 
     def set_stack_info(self,stack_info):
-        self.stack_info = stack_info
+        self.stack_info = list(stack_info)
         
     def display(self):
         six.print_("================")
@@ -149,7 +149,7 @@ class BasicBlock:
         six.print_("end statement type: " + self.type)
 
         if self.list_jumps == []:
-            self.list_jumps =[2]
+            self.list_jumps =[0]
 
         six.print_("jump target: " + " ".join(str(x) for x in self.list_jumps))
         # six.print_("jump target: %d" %self.jump_target)
