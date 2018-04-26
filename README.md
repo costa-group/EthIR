@@ -28,6 +28,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
 
    Decompress the folder and install it.
 ```
+ unzip z3-z3-4.5.0.zip
  cd z3-z3-4.5.0
  python scripts/mk_make.py --python
  cd build
