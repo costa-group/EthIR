@@ -362,7 +362,7 @@ def translateOpcodes20(opcode, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
-        instr = v3+" = sha3( "+ v1+", "+v2+")"
+        instr = v3+" = sha3("+ v1+", "+v2+")"
 
     else:
         instr = "Error opcodes20: "+opcode
