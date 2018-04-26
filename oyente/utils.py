@@ -292,3 +292,8 @@ def run_command(cmd):
     FNULL = open(os.devnull, 'w')
     solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
     return solc_p.communicate()[0].decode()
+
+#Added by PG
+
+def get_uncalled_blocks(blocks, visited_blocks):
+    return list(set(blocks).difference(set(visited_blocks)))
