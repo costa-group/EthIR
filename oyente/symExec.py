@@ -248,11 +248,6 @@ def build_cfg_and_analyze():
     print stack_h
     print calldataload_values
 
-
-# Added or modified by Pablo Gordillo    
-def getKey(block):
-    return block.get_start_address()
-
 #Added by Pablo Gordillo
 def update_block_info():
     vert = sorted(vertices.values(), key = getKey)
