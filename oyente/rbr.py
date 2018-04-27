@@ -2,6 +2,7 @@
 
 import rbr_rule
 import opcodes
+from utils import getKey
 
 
 '''
@@ -68,9 +69,6 @@ def init_globals():
     global stack_index
     stack_index = {}
     
-    global max_field
-    max_field = 0
-
     global max_field_list
     max_field_list = []
 
@@ -83,12 +81,6 @@ def get_stack_index(block):
     
     except:
         return [0,0]
-'''
-It returns the start address of the block received.
-
-'''    
-def getKey(block):
-    return block.get_start_address()
 
 
 '''
@@ -183,15 +175,11 @@ def get_local_variable(address):
 
 
 def update_field_index(value):
-    global max_field
     global max_field_list
-    try:
-        value = int(value)
-        if max_field<value:
-            max_field = value
-    except ValueError:
-        if value not in max_field_list:
-            max_field_list.append(value)
+
+    if value not in max_field_list:
+        max_field_list.append(value)
+        
 
 def update_bc_in_use(value):
     global bc_in_use
@@ -998,7 +986,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None):
         for rule in rbr:# _blocks.values():
             for r in rule:
                 r.set_bc(bc_in_use)
-                r.set_global_arg(max_field)
+                r.set_global_vars(max_field_list)
                 r.update_calls()
                 r.display()
 
