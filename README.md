@@ -1,4 +1,4 @@
-ETHIR
+EthIR
 =====
 
 
@@ -35,7 +35,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
  make
  sudo make install
 ```
-## Run ETHIR
+## Run EthIR
 
 Display help: 
 ```
