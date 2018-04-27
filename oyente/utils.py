@@ -293,7 +293,18 @@ def run_command(cmd):
     solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
     return solc_p.communicate()[0].decode()
 
+
 #Added by PG
 
 def get_uncalled_blocks(blocks, visited_blocks):
     return list(set(blocks).difference(set(visited_blocks)))
+
+'''
+It returns the start address of the block received.
+
+'''    
+def getKey(block):
+    return block.get_start_address()
+
+def toInt(a):
+    return int(a)
