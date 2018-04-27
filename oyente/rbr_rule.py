@@ -1,5 +1,6 @@
 #Pablo Gordillo
 
+from utils import toInt
 '''
 RBRRule class represents the rules of the transaction system.
 Each rule contains:
@@ -17,7 +18,7 @@ class RBRRule:
             self.rule_name = "jump"+str(blockId)
 
         self.arg_input = 0
-        self.arg_global = 0
+        self.arg_global = []
         self.arg_local = []
         self.guard=""
         self.instr=[]
@@ -74,8 +75,9 @@ class RBRRule:
         if l not in self.arg_local:
             self.arg_local.append(l)
 
-    def set_global_arg(self,val):
-        self.arg_global = val
+    def set_global_vars(self,l):
+        self.arg_global = sorted(l,key= toInt)[::-1]
+        
 
     def get_global_arg(self):
         return self.arg_global
@@ -86,9 +88,6 @@ class RBRRule:
     def get_bc(self):
         return self.bc
     
-    def build_bc_vars(self):
-        instr = self.bc
-        return ", ".join(instr)
 
     def build_input_vars(self):
         in_vars = []
@@ -99,7 +98,7 @@ class RBRRule:
 
     def build_field_vars(self):
         field_vars = []
-        for i in xrange(0,self.arg_global+1):
+        for i in self.arg_global:
             var = "g("+ str(i)+")"
             field_vars.append(var)
         return field_vars
@@ -108,21 +107,68 @@ class RBRRule:
         if "call(" in self.instr[-1]:
             call = self.instr.pop()
             posInit = call.find("global",0)
-            new_instr = call[:posInit]+str(self.arg_global)+", "+str(len(self.bc))+"))"
+
+            gv_aux = self.build_field_vars()
+            if (len(gv_aux)==0):
+                gv = ""
+            else:
+                gv = ", ".join(gv_aux)
+            if gv != "":
+                new_instr = call[:posInit]+gv+", "+self.vars_to_string("data")+"))"
+            else:
+                new_instr = call[:posInit]+self.vars_to_string("data")+"))"
             self.instr.append(new_instr)
-            
+
+    def vars_to_string(self,types):
+        if types == "input":
+            in_aux = self.build_input_vars()
+            if len(in_aux) ==0:
+                string_vars = ""
+            else:
+                string_vars = ", ".join(in_aux)
+        elif types == "global":
+            gv_aux = self.build_field_vars()
+            if (len(gv_aux)==0):
+                string_vars = ""
+            else:
+                string_vars = ", ".join(gv_aux)
+        else: #contract vars
+            if len(self.bc) == 0:
+                string_vars = ""
+            else:
+                string_vars = ", ".join(self.bc)
+                
+        return string_vars
+
+    
     def display(self):
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
         new_instr = ["skip"] if new_instr == [] else new_instr
-        arg_input = self.build_input_vars()
-
-        bc_input = self.build_bc_vars()
+        in_aux = self.build_input_vars()
         
-        if (arg_input == []):
-            print self.rule_name+"("+str(self.arg_global)+", "+ str(len(self.bc))+")=>"
+        
+        in_vars = self.vars_to_string("input")
+        gv = self.vars_to_string("global")
+        bc_input = self.vars_to_string("data")
+        
+        if (in_vars == ""):
+            if(gv == ""):
+                d_vars = ""
+            else:
+                d_vars = gv
         else:
-            print self.rule_name+"(" + ", ".join(arg_input) + ", " + str(self.arg_global) + ", " + str(len(self.bc))+")=>"
+            d_vars = in_vars
+            if(gv != ""):
+                d_vars = d_vars+", "+gv
+
+        if (bc_input != ""):
+            d_vars = d_vars+", "+bc_input
+
+        print self.rule_name+"("+d_vars+")=>"
+            # print self.rule_name+"("+gv+", "+ bc_input+")=>"
+        # else:
+        #     print self.rule_name+"(" +  + ", " + gv + ", " + bc_input+")=>"
 
         if self.guard != "" :
             print "\t"+self.guard
