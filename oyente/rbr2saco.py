@@ -1,15 +1,20 @@
 import rbr_rule
 
+#rbr contains a list of lists
 def rbr2saco(rbr):
-    with open("/tmp/evm/rbr.rbr","w") as f:
-        for rule in rbr:
-            new_rule = process_instructions_saco(rule)
-            write(new_rule,f)
-    f.close()
+    new_rules = []
+    for rules in rbr:
+        for rule in rules:
+            new_rule = process_rule_saco(rule)
+            new_rules.append(new_rule)
+
+    wirte(new_rules)
 
 
-def process_instructions_saco(rule):
+def process_rule_saco(rule):
     pass
     
-def write(new_rule,f):
-    pass
+def write(rules):
+    with open("/tmp/costa/rbr.rbr","w") as f:
+        for rule in rules:
+            f.write(rule)
