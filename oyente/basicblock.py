@@ -9,12 +9,14 @@ class BasicBlock:
         self.falls_to= None
 
         self.list_jumps = []
-        self.ls_values = {} #load and store values. It is needed for rbr representation
-        self.ls_values["mload"] = []
-        self.ls_values["mstore"] = []
-        self.ls_values["sload"] = []
-        self.ls_values["sstore"] = []
-        self.ls_values_computed = False
+        #It stores de value of each load/store instructions to know if it is constant.
+        #keys-> number of instructions inside a block
+        #value-> its value
+        #It is needed for rbr representation.
+        self.mload_values = {} 
+        self.mstore_values = {}
+        self.sload_values = {}
+        self.sstore_values = {}
         self.calldatavalues = []
         self.stack_info = []
         self.ret_val = -1
@@ -65,29 +67,52 @@ class BasicBlock:
 
     def compute_list_jump(self,edges):
         for el in edges:
-            if (el != self.end+1) and (el!=self.falls_to):
+            if (el!=self.falls_to):
                 self.list_jumps.append(el)
 
     def set_calldataload_values(self,l):
         self.calldatavalues=list(l)
 
-    def get_load_store_values(self):
-        return self.ls_values
+    def get_load_store_values(self,type_value):
+        if type_value == "mload":
+            result = self.mload_values
+        elif type_value == "mstore":
+            result = self.mstore_values
+        elif type_value == "sload":
+            result = self.sload_values
+        elif type_value == "sstore":
+            result = self.sstore_values
+        else:
+            result = "Error"
+        return result
 
-    def get_load_store_values(self, ls_type):
-        return self.ls_values[ls_type]
-
-    def add_ls_value(self,ls_type,val):
-        laux = self.ls_values[ls_type]
-        l = laux+[val]
-        self.ls_values[ls_type] = l
-
-    def get_ls_values_computed(self):
-        return self.ls_values_computed
-
-    def act_ls_values(self):
-        self.ls_values_computed = True
-
+    def add_ls_value(self,type_value,key,val):
+        if type_value == "mload":
+            l = self.mload_values.get(key,-1)
+            if l == -1:
+                self.mload_values[key] = [val]
+            else:
+                l.append(val)
+        elif type_value == "mstore":
+            l = self.mstore_values.get(key,-1)
+            if l == -1:
+                self.mstore_values[key] = [val]
+            else:
+                l.append(val)
+        elif type_value == "sload":
+            l = self.sload_values.get(key,-1)
+            if l == -1:
+                self.sload_values[key] = [val]
+            else:
+                l.append(val)
+        elif type_value == "sstore":
+            l = self.sstore_values.get(key,-1)
+            if l == -1:
+                self.sstore_values[key] = [val]
+            else:
+                l.append(val)
+        else:
+            raise Exception("Error when adding "+type_value+" value to block: "+ str(self.start_address))
 
     def get_ret_val(self):
         return self.ret_val
@@ -95,13 +120,48 @@ class BasicBlock:
     def set_ret_val(self, val):
         self.ret_val = val
 
-    def _get_concrete_load_store(self,ls_type):
-        try:
-            return str(self.ls_values[ls_type].pop(0))
-        except IndexError:
-            ident = self.currentId
-            self.currentId+=1
-            return ls_type+str(self.start)+"_"+str(self.currentId)
+
+    def _check_same_elem(self,l,elem):
+        list_aux = list(filter(lambda x: str(x)!=elem,l))
+        if len(list_aux) == 0: #All the elements are the same
+            val = elem
+        else:
+            val = "?"
+        return val
+    
+    def _get_concrete_value(self,type_value,cont):
+        
+        if type_value == "mload":
+            l = self.mload_values.get(cont,-1)
+            if len(l) == 1:
+                val = l[0]
+            else:
+                print "LIST"
+                print l
+                val = self._check_same_elem(l[1:],str(l[0]))
+
+        elif type_value == "mstore":
+            l = self.mstore_values.get(cont,-1)
+            if len(l) == 1:
+                val = l[0]
+            else:
+                val = self._check_same_elem(l[1:],str(l[0]))
+
+        elif type_value == "sload":
+            l = self.sload_values.get(cont,-1)
+            if len(l) == 1:
+                val = l[0]
+            else:
+                val = self._check_same_elem(l[1:],str(l[0]))
+
+        else:    #sstore 
+            l = self.sstore_values.get(cont,-1)
+            if len(l) == 1:
+                val = l[0]
+            else:
+                val = self._check_same_elem(l[1:],str(l[0]))
+
+        return str(val)
 
     def _get_calldatavalue(self):
         try:
@@ -114,21 +174,30 @@ class BasicBlock:
         
     def update_instr(self):
         new_instructions = []
-    
+        mload = 0
+        mstore = 0
+        sstore = 0
+        sload = 0
+        
         for instr in self.instructions:
             instr = instr.strip(" ")
             if(instr == "CALLDATALOAD"):
                 new_instr = instr + " " +  self._get_calldatavalue()
             elif instr == "MLOAD":
-                new_instr = instr + " " + self._get_concrete_load_store("mload")
+                new_instr = instr + " " + self._get_concrete_value("mload",mload)
+                mload +=1
             elif instr == "MSTORE":
-                new_instr = instr + " " + self._get_concrete_load_store("mstore")
+                new_instr = instr + " " + self._get_concrete_value("mstore",mstore)
+                mstore+=1
             elif instr == "SLOAD":
-                new_instr = instr + " " + self._get_concrete_load_store("sload")
+                new_instr = instr + " " + self._get_concrete_value("sload",sload)
+                sload+=1
             elif instr == "SSTORE":
-                new_instr = instr + " " + self._get_concrete_load_store("sstore")
-            elif instr == "RETURN":
-                new_instr = instr + " " + str(self.ret_val)
+                new_instr = instr + " " + self._get_concrete_value("sstore",sstore)
+                sstore+=1
+            #For the moment we don't annotate return evm 
+            # elif instr == "RETURN":
+            #     new_instr = instr + " " + str(self.ret_val)
             else:
                 new_instr = instr
                 
@@ -148,8 +217,9 @@ class BasicBlock:
         six.print_("end address: %d" % self.end)
         six.print_("end statement type: " + self.type)
 
+
         if self.list_jumps == []:
-            self.list_jumps =[0]
+            self.list_jumps =[-1]
 
         six.print_("jump target: " + " ".join(str(x) for x in self.list_jumps))
         # six.print_("jump target: %d" %self.jump_target)
