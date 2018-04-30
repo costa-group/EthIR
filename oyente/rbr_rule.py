@@ -24,6 +24,7 @@ class RBRRule:
         self.instr=[]
         self.rbr_type = typeBlock
         self.bc = []
+        self.fresh_index = 0
         # self.bc = ["address","balance","origin","caller","callvalue","calldataload","calldatasize","calldatacopy",
         #            "codesize","codecopy","gasprice","extcodesize","extcodecopy","mcopy","blockhash","coinbase",
         #            "number","difficulty",
@@ -87,6 +88,12 @@ class RBRRule:
 
     def get_bc(self):
         return self.bc
+
+    def set_fresh_index(self,val):
+        self.fresh_index = val
+
+    def get_fresh_index(self):
+        return self.fresh_index
     
 
     def build_input_vars(self):
