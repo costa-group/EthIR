@@ -72,8 +72,6 @@ def get_field_vars(rule):
 def process_instructions(rule):
     cont = rule.get_fresh_index()+1
     contract_vars = rule.get_bc()
-    print "CONTRACT"
-    print contract_vars
     instructions = rule.get_instructions()
     new_instructions = []
     for instr in instructions:
