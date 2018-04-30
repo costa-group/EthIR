@@ -75,6 +75,9 @@ def init_globals():
     global bc_in_use
     bc_in_use = []
 
+    global fresh_index
+    fresh_index = 0
+
 def get_stack_index(block):
     try:
         return stack_index[block]
@@ -83,6 +86,12 @@ def get_stack_index(block):
         return [0,0]
 
 
+def update_fresh_index(val):
+    global fresh_index
+
+    if fresh_index < val:
+        fresh_index = val
+        
 '''
 It returns the id of a rbr_rule.
 '''
@@ -110,6 +119,7 @@ index.
 '''
 def get_new_variable(index_variables):
     new_current = index_variables + 1
+    update_fresh_index(new_current)
     return "s(" + str(new_current) + ")", new_current
 
 
@@ -931,8 +941,10 @@ The stack could be reconstructed as
 '''
 def compile_block(block):
     global rbr_blocks
+    global fresh_index
     
     cont = 0
+    fresh_index = 0
     finish = False
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
@@ -962,6 +974,7 @@ def compile_block(block):
     if(block.get_block_type()=="falls_to"):
         instr = process_falls_to_blocks(index_variables,block.get_falls_to())
         rule.add_instr(instr)
+    rule.set_fresh_index(fresh_index)
     return rule
 
 
