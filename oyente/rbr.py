@@ -417,7 +417,7 @@ def translateOpcodes30(opcode, value, index_variables):
     #     pass
     elif opcode == "GASPRICE":
         v1, updated_variables = get_new_variable(index_variables)
-        instr = v1+" = gas_price"
+        instr = v1+" = gasprice"
         update_bc_in_use("gasprice")
     elif opcode == "EXTCODESIZE":
         _, updated_variables = get_consume_variable(index_variables)
@@ -1000,6 +1000,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None):
             for r in rule:
                 r.set_bc(bc_in_use)
                 r.set_global_vars(max_field_list)
+                r.set_args_local(current_local_var)
                 r.update_calls()
                 r.display()
         rbr2saco.rbr2saco(rbr)
