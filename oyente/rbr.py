@@ -3,7 +3,7 @@
 import rbr_rule
 import opcodes
 from utils import getKey
-import rbr2saco
+import saco
 
 '''
 It initialize the globals variables. 
@@ -1003,7 +1003,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None):
                 r.set_args_local(current_local_var)
                 r.update_calls()
                 r.display()
-        rbr2saco.rbr2saco(rbr)
+        saco.rbr2saco(rbr)
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 
