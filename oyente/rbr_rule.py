@@ -19,7 +19,7 @@ class RBRRule:
 
         self.arg_input = 0
         self.arg_global = []
-        self.arg_local = []
+        self.arg_local = 0
         self.guard=""
         self.instr=[]
         self.rbr_type = typeBlock
@@ -72,10 +72,6 @@ class RBRRule:
     def set_args_local(self,ls):
         self.arg_local = ls
 
-    def add_arg_local(self,l):
-        if l not in self.arg_local:
-            self.arg_local.append(l)
-
     def set_global_vars(self,l):
         self.arg_global = sorted(l,key= toInt)[::-1]
         
@@ -110,20 +106,29 @@ class RBRRule:
             field_vars.append(var)
         return field_vars
 
+    def build_local_vars(self):
+        local_vars = []
+        for i in xrange(self.arg_local-1,-1,-1):
+            var = "l("+str(i)+")"
+            local_vars.append(var)
+        return local_vars
+
     def update_calls(self):
         if "call(" in self.instr[-1]:
             call = self.instr.pop()
             posInit = call.find("global",0)
 
             gv_aux = self.build_field_vars()
+            local_vars = self.build_local_vars()
+            local_vars_string = ", ".join(local_vars)
             if (len(gv_aux)==0):
                 gv = ""
             else:
                 gv = ", ".join(gv_aux)
             if gv != "":
-                new_instr = call[:posInit]+gv+", "+self.vars_to_string("data")+"))"
+                new_instr = call[:posInit]+gv+", "+local_vars_string+", "+self.vars_to_string("data")+"))"
             else:
-                new_instr = call[:posInit]+self.vars_to_string("data")+"))"
+                new_instr = call[:posInit]+local_vars_string+", "+self.vars_to_string("data")+"))"
             self.instr.append(new_instr)
 
     def vars_to_string(self,types):
@@ -153,7 +158,7 @@ class RBRRule:
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
         new_instr = ["skip"] if new_instr == [] else new_instr
         in_aux = self.build_input_vars()
-        
+        local_vars = self.build_local_vars()
         
         in_vars = self.vars_to_string("input")
         gv = self.vars_to_string("global")
@@ -169,6 +174,11 @@ class RBRRule:
             if(gv != ""):
                 d_vars = d_vars+", "+gv
 
+        if d_vars == "":
+            d_vars = ", ".join(local_vars)
+        else:
+            d_vars = d_vars+", "+ ", ".join(local_vars)
+            
         if (bc_input != ""):
             d_vars = d_vars+", "+bc_input
 
