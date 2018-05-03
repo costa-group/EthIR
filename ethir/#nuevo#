@@ -1,5 +1,0 @@
-And(Extract(255,8,
-               128 +
-               32*Concat(0, Extract(255, 5, 31 + Id_2))) ==
-       0,
-       ULE(128 + 32*Extract(12, 5, 31 + Id_2), 128))
