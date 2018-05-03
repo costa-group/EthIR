@@ -163,7 +163,9 @@ def main():
     parser.add_argument( "-gtc", "--generate-test-cases",    help="Generate test cases each branch of symbolic execution tree", action="store_true")
     parser.add_argument( "-sjo",  "--standard-json-output",  help="Support Standard JSON output", action="store_true")
     #Added by Pablo Gordillo
-    parser.add_argument( "-disasm", "--disassembly",           help="Consider a dissasembly evm file directly", action="store_true")           
+    parser.add_argument( "-disasm", "--disassembly",           help="Consider a dissasembly evm file directly", action="store_true")
+    parser.add_argument( "-cfg", "--control-flow-graph",           help="Store the CFG", action="store_true")
+    parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")           
     args = parser.parse_args()
 
     if args.root_path:
