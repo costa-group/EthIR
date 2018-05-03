@@ -121,10 +121,18 @@ class BasicBlock:
         self.ret_val = val
 
 
+    def _is_numerical(self,elem):
+        try:
+            int(elem)
+            val = elem
+        except:
+            val = "?"
+        return val
+        
     def _check_same_elem(self,l,elem):
         list_aux = list(filter(lambda x: str(x)!=elem,l))
-        if len(list_aux) == 0: #All the elements are the same
-            val = elem
+        if len(list_aux) == 0: #All the elements are the same (and numerical)
+            val = self._is_numerical(elem)
         else:
             val = "?"
         return val
@@ -134,7 +142,7 @@ class BasicBlock:
         if type_value == "mload":
             l = self.mload_values.get(cont,-1)
             if len(l) == 1:
-                val = l[0]
+                val = self._is_numerical(l[0])
             else:
                 print "LIST"
                 print l
@@ -143,21 +151,21 @@ class BasicBlock:
         elif type_value == "mstore":
             l = self.mstore_values.get(cont,-1)
             if len(l) == 1:
-                val = l[0]
+                val = self._is_numerical(l[0])
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
         elif type_value == "sload":
             l = self.sload_values.get(cont,-1)
             if len(l) == 1:
-                val = l[0]
+                val = self._is_numerical(l[0])
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
         else:    #sstore 
             l = self.sstore_values.get(cont,-1)
             if len(l) == 1:
-                val = l[0]
+                val = self._is_numerical(l[0])
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
