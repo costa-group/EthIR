@@ -274,8 +274,8 @@ def write_cfg():
             f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
             if(block.get_falls_to() != None):
                 f.write("falls to: " +str(block.get_falls_to())+"\n")
-                for instr in block.get_instructions():
-                    f.write(instr+"\n")
+            for instr in block.get_instructions():
+                f.write(instr+"\n")
     f.close()
             
 def mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length):
