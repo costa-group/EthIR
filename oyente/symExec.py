@@ -240,11 +240,8 @@ def build_cfg_and_analyze():
         construct_bb()
         construct_static_edges()
         full_sym_exec()  # jump targets are constructed on the fly
-    #print_cfg()
-    #print "SIGUIENTE"
     delete_uncalled()
     update_block_info()
-    # print_cfg()
     print stack_h
     print calldataload_values
 
@@ -264,7 +261,23 @@ def print_cfg():
         block.display()
     log.debug(str(edges))
 
+def write_cfg():
+    vert = sorted(vertices.values(), key = getKey)
+    
+    with open("/tmp/costabs/cfg_evm.cfg","w") as f:
+        for block in vert:
+            f.write("================\n")
+            f.write("start address: "+ str(block.get_start_address())+"\n")
+            f.write("end address: "+str(block.get_end_address())+"\n")
+            f.write("end statement type: " + block.get_block_type()+"\n")
 
+            f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
+            if(block.get_falls_to() != None):
+                f.write("falls to: " +str(block.get_falls_to())+"\n")
+                for instr in block.get_instructions():
+                    f.write(instr+"\n")
+    f.close()
+            
 def mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length):
     global g_src_map
 
@@ -2469,7 +2482,7 @@ def delete_uncalled():
             stack_h.pop(b)
             calldataload_values.pop(b)
     
-def run(disasm_file=None, source_file=None, source_map=None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2485,10 +2498,11 @@ def run(disasm_file=None, source_file=None, source_map=None):
         test()
     else:
         begin = time.time()
-        #log.info("\t============ Results ===========")
         analyze()
-        print_cfg()
+        if cfg:
+            write_cfg()
+            
         print "TOCONSTRUCT"
         print blocks_to_create
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create)
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop)
         return [], 0#detect_vulnerabilities()
