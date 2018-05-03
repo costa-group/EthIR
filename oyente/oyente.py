@@ -70,7 +70,7 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
     
-    result, exit_code = symExec.run(disasm_file=args.source)
+    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,nop = args.evm_opcodes)
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -82,7 +82,7 @@ def analyze_bytecode():
     helper = InputHelper(InputHelper.BYTECODE, source=args.source)
     inp = helper.get_inputs()[0]
 
-    result, exit_code = symExec.run(disasm_file=inp['disasm_file'])
+    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,nop = args.evm_opcodes)
     helper.rm_tmp_files()
 
     if global_params.WEB:
@@ -96,7 +96,7 @@ def run_solidity_analysis(inputs):
 
     for inp in inputs:
         #logging.info("contract %s:", inp['contract'])
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'])
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes)
 
         try:
             c_source = inp['c_source']
