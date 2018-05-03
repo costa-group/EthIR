@@ -981,7 +981,7 @@ def compile_block(block,nop):
             rule.add_instr(instr)
             if nop:
                 for elem in l_instr[cont:]:
-                    rule.add_instr("nop("+elem+")")
+                    rule.add_instr("nop("+elem.split()[0]+")")
                     
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
@@ -1016,17 +1016,16 @@ def create_blocks(blocks):
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None):
     global rbr_blocks
     global stack_index
     
     init_globals()
-    nop = False
     stack_index = stack_info
     if blocks_input and stack_info:
         blocks = sorted(blocks_input.values(), key = getKey)
         for block in blocks:
-            rule = compile_block(block,nop)
+            rule = compile_block(block,nop_opcodes)
             rbr_blocks[rule.get_rule_name()]=[rule]
             
         
