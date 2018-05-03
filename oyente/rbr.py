@@ -231,15 +231,21 @@ def translateOpcodes0(opcode,index_variables):
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "/" + v2
-    # elif opcode == "SDIV":
-    #     pass
+    elif opcode == "SDIV":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
+        instr = v3+" = " + v1 + "/" + v2
     elif opcode == "MOD":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "%" + v2
-    # elif opcode == "SMOD":
-    #     pass
+    elif opcode == "SMOD":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
+        instr = v3+" = " + v1 + "%" + v2
     elif opcode == "ADDMOD":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
@@ -297,10 +303,23 @@ def translateOpcodes10(opcode, index_variables,cond):
             instr = "gt(" + v1 + ", "+v2+")"
 
 
-    # elif opcode == "SLT":
-    #     pass
-    # elif opcode == "SGT":
-    #     pass
+    elif opcode == "SLT":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3 , updated_variables = get_new_variable(updated_variables)
+        if cond :
+            instr = v3+ " = lt(" + v1 + ", "+v2+")"
+        else :
+            instr = "lt(" + v1 + ", "+v2+")"
+
+    elif opcode == "SGT":
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3 , updated_variables = get_new_variable(updated_variables)
+        if cond :
+            instr = v3+ " = gt(" + v1 + ", "+v2+")"
+        else :
+            instr = "gt(" + v1 + ", "+v2+")"
 
     elif opcode == "EQ":
         v1, updated_variables = get_consume_variable(index_variables)
@@ -385,8 +404,10 @@ def translateOpcodes30(opcode, value, index_variables):
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = balance"
         update_bc_in_use("balance")
-    # elif opcode == "ORIGIN":
-    #     pass
+    elif opcode == "ORIGIN":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = origin"
+        update_bc_in_use("origin")
     elif opcode == "CALLER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = caller"
@@ -398,7 +419,7 @@ def translateOpcodes30(opcode, value, index_variables):
     elif opcode == "CALLDATALOAD":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = calldataload("+v0+")"
+        instr = v1+" = calldataload"
         update_bc_in_use("calldataload")
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
@@ -413,8 +434,11 @@ def translateOpcodes30(opcode, value, index_variables):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = codesize"
         update_bc_in_use("codesize")
-    # elif opcode == "CODECOPY":
-    #     pass
+    elif opcode == "CODECOPY":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     elif opcode == "GASPRICE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gasprice"
@@ -697,11 +721,6 @@ def is_conditional(instr):
 
     return valid
 
-
-# def is_conditional(opcode):
-#     return opcode in ["LT","GT","EQ","ISZERO"]
-
-
 '''
 It returns the opposite guard of the one given as parameter.
 '''     
@@ -736,7 +755,7 @@ It translates the bytecode corresponding to evm_opcode.
 We mantain some empty instructions to insert the evm bytecodes
 They are remove when displaying
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond):
+def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond,nop):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -789,6 +808,10 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond):
         value = "Error. No opcode matchs"
         index_variables = variables
         rule.add_instr(value)
+
+    if nop :
+        rule.add_instr("nop("+opcode_name+")")
+        
     return index_variables
 
 
@@ -870,9 +893,9 @@ def create_uncond_jumpBlock(block_id,variables,jumps):
 Ponemos en consume el numero de las variables que se consumen depende de si la
 condicion es un iszero o una normal
 '''
-def create_cond_jump(block_id,l_instr,variables,jumps,falls_to):
+def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop):
     
-    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to)
+    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
 
@@ -893,7 +916,7 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to):
 '''
 It generates the new two jump blocks.
 '''
-def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
+def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop):
     guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
     for elem in l_instr[1:]:
         if elem == "ISZERO":
@@ -905,7 +928,6 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to):
             _, index_variables = get_consume_variable(index_variables)
         else:
             guard = "Error while creating the jump"
-
     
     stack_variables = get_stack_variables(index_variables)
 
@@ -939,7 +961,7 @@ index_variables points to the corresponding top element.
 The stack could be reconstructed as
 [s(ith)...s(0)].
 '''
-def compile_block(block):
+def compile_block(block,nop):
     global rbr_blocks
     global fresh_index
     
@@ -955,8 +977,12 @@ def compile_block(block):
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
-                        block.get_falls_to())
+                                                  block.get_falls_to(),nop)
             rule.add_instr(instr)
+            if nop:
+                for elem in l_instr[cont:]:
+                    rule.add_instr("nop("+elem+")")
+                    
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
         elif l_instr[cont] == "JUMP":
@@ -965,10 +991,11 @@ def compile_block(block):
                 rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
                 
             rule.add_instr(instr)
-            
+            if nop:
+                rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),block.get_stack_info(),True)
+                                                   index_variables,block.get_list_jumps(),block.get_stack_info(),True,nop)
                 
         cont+=1
     if(block.get_block_type()=="falls_to"):
@@ -978,31 +1005,47 @@ def compile_block(block):
     return rule
 
 
+def create_blocks(blocks):
+    rules = []
+    for b in blocks:
+        rule = rbr_rule.RBRRule(b,"block")
+        rules.append(rule)
+    return rules
+
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None):
     global rbr_blocks
     global stack_index
     
     init_globals()
+    nop = False
     stack_index = stack_info
     if blocks_input and stack_info:
         blocks = sorted(blocks_input.values(), key = getKey)
         for block in blocks:
-            rule = compile_block(block)
+            rule = compile_block(block,nop)
             rbr_blocks[rule.get_rule_name()]=[rule]
-
-
-        rbr = sorted(rbr_blocks.values(),key = orderRBR)
-        for rule in rbr:# _blocks.values():
+            
+        
+        for rule in rbr_blocks.values():# _blocks.values():
             for r in rule:
                 r.set_bc(bc_in_use)
                 r.set_global_vars(max_field_list)
                 r.set_args_local(current_local_var)
                 r.update_calls()
                 r.display()
+
+        rule_c = create_blocks(block_unbuild)
+        for r in rule_c:
+            r.set_bc(bc_in_use)
+            r.set_global_vars(max_field_list)
+            r.set_args_local(current_local_var)
+            rbr_blocks[r.get_rule_name()]=[r]
+
+        rbr = sorted(rbr_blocks.values(),key = orderRBR)
         saco.rbr2saco(rbr)
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
