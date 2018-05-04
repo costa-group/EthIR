@@ -2,14 +2,14 @@ import rbr_rule
 import os
 
 #rbr contains a list of lists
-def rbr2saco(rbr):
+def rbr2saco(rbr,execution):
     new_rules = []
     for rules in rbr:
         for rule in rules:
             new_rule = process_rule_saco(rule)
             new_rules.append(new_rule)
 
-    write(new_rules)
+    write(new_rules,execution)
 
     
 def build_head(rule):
@@ -191,12 +191,19 @@ def process_instructions(rule):
 
     return new_instructions
 
-def write(rules):
+def write(rules,execution):
     # print "EMPEZAMOS"
     # for rule in rules:
     #     print rule
-    os.mkdir("/tmp/costabs/")
-    with open("/tmp/costabs/rbr.rbr","w") as f:
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+
+    if execution == None:
+        name = "/tmp/costabs/rbr.rbr"
+    else:
+        name = "/tmp/costabs/rbr"+str(execution)+".rbr"
+        
+    with open(name,"w") as f:
         for rule in rules:
             f.write(rule+"\n")
 
