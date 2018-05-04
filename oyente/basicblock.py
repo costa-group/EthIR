@@ -194,7 +194,7 @@ class BasicBlock:
             elif instr == "MLOAD":
                 new_instr = instr + " " + self._get_concrete_value("mload",mload)
                 mload +=1
-            elif instr == "MSTORE":
+            elif instr[:6] == "MSTORE": #MSTORE8
                 new_instr = instr + " " + self._get_concrete_value("mstore",mstore)
                 mstore+=1
             elif instr == "SLOAD":
