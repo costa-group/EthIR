@@ -55,18 +55,18 @@ class Parameter:
 
 def initGlobalVars():
     global g_src_map
-    #global solver
+    global solver
     # Z3 solver
 
-    # if global_params.PARALLEL:
-    #     t2 = Then('simplify', 'solve-eqs', 'smt')
-    #     _t = Then('tseitin-cnf-core', 'split-clause')
-    #     t1 = ParThen(_t, t2)
-    #     solver = OrElse(t1, t2).solver()
-    # else:
-    #     solver = Solver()
+    if global_params.PARALLEL:
+        t2 = Then('simplify', 'solve-eqs', 'smt')
+        _t = Then('tseitin-cnf-core', 'split-clause')
+        t1 = ParThen(_t, t2)
+        solver = OrElse(t1, t2).solver()
+    else:
+        solver = Solver()
 
-    # solver.set("timeout", global_params.TIMEOUT)
+    solver.set("timeout", global_params.TIMEOUT)
 
     global MSIZE
     MSIZE = False
@@ -240,10 +240,12 @@ def build_cfg_and_analyze():
         construct_bb()
         construct_static_edges()
         full_sym_exec()  # jump targets are constructed on the fly
+#    print_cfg()
     delete_uncalled()
     update_block_info()
-    print stack_h
-    print calldataload_values
+    print_cfg()
+    #print stack_h
+    #print calldataload_values
 
 #Added by Pablo Gordillo
 def update_block_info():
@@ -261,10 +263,16 @@ def print_cfg():
         block.display()
     log.debug(str(edges))
 
-def write_cfg():
+def write_cfg(it):
     vert = sorted(vertices.values(), key = getKey)
-    
-    with open("/tmp/costabs/cfg_evm.cfg","w") as f:
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+    if it == None:
+        name = "/tmp/costabs/cfg_evm.cfg"
+    else:
+        name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
+        
+    with open(name,"w") as f:
         for block in vert:
             f.write("================\n")
             f.write("start address: "+ str(block.get_start_address())+"\n")
@@ -660,8 +668,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     ls_cont = [0,0,0,0]
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
-        print "Stack despues de la ejecucion de la instruccion "+ instr
-        print stack
+        #print "Stack despues de la ejecucion de la instruccion "+ instr
+        #print stack
         
     # Mark that this basic block in the visited blocks
     visited.append(block)
@@ -1719,6 +1727,10 @@ def sym_exec_ins(params, block, instr, func_call):
             stored_address = stack.pop(0)
             temp_value = stack.pop(0)
             stored_value = temp_value % 256  # get the least byte
+
+            vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
+            ls_cont[1]+=1
+            
             current_miu_i = global_state["miu_i"]
             if isAllReal(stored_address, current_miu_i):
                 if six.PY2:
@@ -1818,8 +1830,6 @@ def sym_exec_ins(params, block, instr, func_call):
             #         target_address = int(str(simplify(target_address)))
             #     except:
             #         raise TypeError("Target address must be an integer")
-            if block == 2902:
-                print "HOLA"
             vertices[block].set_jump_target(target_address)
             if target_address not in edges[block]:
                 edges[block].append(target_address)
@@ -2482,7 +2492,7 @@ def delete_uncalled():
             stack_h.pop(b)
             calldataload_values.pop(b)
     
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, execution = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2500,9 +2510,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
         begin = time.time()
         analyze()
         if cfg:
-            write_cfg()
+            write_cfg(execution)
             
-        print "TOCONSTRUCT"
-        print blocks_to_create
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop)
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop, exe = execution)
         return [], 0#detect_vulnerabilities()
