@@ -1,4 +1,5 @@
 import rbr_rule
+import os
 
 #rbr contains a list of lists
 def rbr2saco(rbr):
@@ -194,6 +195,7 @@ def write(rules):
     # print "EMPEZAMOS"
     # for rule in rules:
     #     print rule
+    os.mkdir("/tmp/costabs/")
     with open("/tmp/costabs/rbr.rbr","w") as f:
         for rule in rules:
             f.write(rule+"\n")
