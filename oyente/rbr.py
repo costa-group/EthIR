@@ -1046,7 +1046,7 @@ def create_blocks(blocks):
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None, exe = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None):
     global rbr_blocks
     global stack_index
     
@@ -1073,9 +1073,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             r.set_global_vars(max_field_list)
             r.set_args_local(current_local_var)
             rbr_blocks[r.get_rule_name()]=[r]
-
+        
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
-        saco.rbr2saco(rbr,exe)
+        if saco_rbr:
+            saco.rbr2saco(rbr,exe)
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 

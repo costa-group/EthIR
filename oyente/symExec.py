@@ -2492,7 +2492,7 @@ def delete_uncalled():
             stack_h.pop(b)
             calldataload_values.pop(b)
     
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, execution = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2511,6 +2511,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
         analyze()
         if cfg:
             write_cfg(execution)
-            
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop, exe = execution)
+
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution)
+        
         return [], 0#detect_vulnerabilities()
