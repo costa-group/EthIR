@@ -57,6 +57,9 @@ def init_globals():
                 "SLOADBYTES", "SSTOREBYTES", "SSIZE", "STATEROOT", "TXEXECGAS",
                 "CALLSTATIC", "INVALID", "SUICIDE"]
 
+    global opcodesZ
+    opcodesZ = ["RETURNDATACOPY","RETURNDATASIZE"]
+    
     global current_local_var
     current_local_var = 0
 
@@ -361,6 +364,11 @@ def translateOpcodes10(opcode, index_variables,cond):
         v2, updated_variables = get_new_variable(updated_variables)
         instr = v2+" = not(" + v1 + ")"
 
+    elif opcode == "BYTE":
+        v0, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(updated_variables)
+        v2, updated_variables = get_new_variable(updated_variables)
+        instr = v2+" = byte(" + v1 + " , " + v0 + ")" 
     else:    
         instr = "Error opcodes10: "+ opcode
         updated_variables = index_variables
@@ -524,8 +532,14 @@ def translateOpcodes50(opcode, value, index_variables):
             instr = l_var + " = "+ v1
         except ValueError:
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
-    # elif opcode == "MSTORE8":
-    #     pass
+    elif opcode == "MSTORE8":
+        v0 , updated_variables = get_consume_variable(index_variables)
+        v1 , updated_variables = get_consume_variable(updated_variables)
+        try:
+            l_var = get_local_variable(value)
+            instr = l_var + " = "+ v1
+        except ValueError:
+            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
     elif opcode == "SLOAD":
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
@@ -705,7 +719,20 @@ def translateOpcodes90(opcode, value, index_variables):
 
     return instr, index_variables
 
+def translateOpcodesZ(opcode, index_variables):
+    if opcode == "RETURNDATASIZE":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = returndatasize"
+        update_bc_in_use("returndatasize")
+    elif opcode == "RETURNDATACOPY":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
+    else:
+        instr = "Error opcodesZ: "+opcode
 
+    return instr, index_variables
 def is_conditional(instr):
 
     valid = True
@@ -803,6 +830,9 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond,nop):
     elif opcode_name in opcodesF:
         value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest)
         #RETURN
+        rule.add_instr(value)
+    elif opcode_name in opcodesZ:
+        value, index_variables = translateOpcodesZ(opcode_name,variables)
         rule.add_instr(value)
     else:
         value = "Error. No opcode matchs"
@@ -1016,7 +1046,7 @@ def create_blocks(blocks):
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None, exe = None):
     global rbr_blocks
     global stack_index
     
@@ -1045,7 +1075,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             rbr_blocks[r.get_rule_name()]=[r]
 
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
-        saco.rbr2saco(rbr)
+        saco.rbr2saco(rbr,exe)
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 

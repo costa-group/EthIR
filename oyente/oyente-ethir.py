@@ -94,10 +94,12 @@ def run_solidity_analysis(inputs):
     results = {}
     exit_code = 0
 
+    i = 0
     for inp in inputs:
+        
         #logging.info("contract %s:", inp['contract'])
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes)
-
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,execution = i)
+        i+=1
         try:
             c_source = inp['c_source']
             c_name = inp['c_name']
