@@ -923,9 +923,9 @@ def create_uncond_jumpBlock(block_id,variables,jumps):
 Ponemos en consume el numero de las variables que se consumen depende de si la
 condicion es un iszero o una normal
 '''
-def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop):
+def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop,guard = None):
     
-    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop)
+    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
 
@@ -946,8 +946,14 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop):
 '''
 It generates the new two jump blocks.
 '''
-def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop):
-    guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
+def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard):
+    if guard:
+        guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
+    else:
+        _ , index_variables = get_consume_variable(variables)
+        v1, index_variables = get_consume_variable(index_variables)
+        guard = "eq("+v1+", 1 )"
+    
     for elem in l_instr[1:]:
         if elem == "ISZERO":
             guard = get_opposite_guard(guard)
@@ -1007,7 +1013,19 @@ def compile_block(block,nop):
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
-                                                  block.get_falls_to(),nop)
+                                                  block.get_falls_to(),nop,True)
+            rule.add_instr(instr)
+            if nop:
+                for elem in l_instr[cont:]:
+                    rule.add_instr("nop("+elem.split()[0]+")")
+                    
+            rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
+            finish = True
+        elif l_instr[cont] == "JUMPI": #It only checks if the top is 1
+            rule1,rule2, instr = create_cond_jump(block.get_start_address(),
+                             l_instr[cont:], index_variables,
+                             block.get_list_jumps(),
+                             block.get_falls_to(),nop)
             rule.add_instr(instr)
             if nop:
                 for elem in l_instr[cont:]:
