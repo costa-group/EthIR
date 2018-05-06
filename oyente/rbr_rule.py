@@ -109,7 +109,7 @@ class RBRRule:
     def build_local_vars(self):
         local_vars = []
         for i in xrange(self.arg_local-1,-1,-1):
-            var = "l("+str(i)+")"
+            var = "l(m"+str(i)+")"
             local_vars.append(var)
         return local_vars
 
