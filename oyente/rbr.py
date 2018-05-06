@@ -3,7 +3,9 @@
 import rbr_rule
 import opcodes
 from utils import getKey
+import os
 import saco
+
 
 '''
 It initialize the globals variables. 
@@ -1060,6 +1062,18 @@ def create_blocks(blocks):
         rules.append(rule)
     return rules
 
+def write_rbr(rbr,executions):
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+
+    if executions == None:
+        name = "/tmp/costabs/rbr.rbr"
+    else:
+        name = "/tmp/costabs/rbr"+str(executions)+".rbr"
+
+        
+
+
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 It receives as input the blocks of the CFG (basicblock.py)
@@ -1093,6 +1107,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             rbr_blocks[r.get_rule_name()]=[r]
         
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
+        write_rbr(rbr,exe)
         if saco_rbr:
             saco.rbr2saco(rbr,exe)
     else :

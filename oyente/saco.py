@@ -192,16 +192,14 @@ def process_instructions(rule):
     return new_instructions
 
 def write(rules,execution):
-    # print "EMPEZAMOS"
-    # for rule in rules:
-    #     print rule
-    if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+    
+    # if "costabs" not in os.listdir("/tmp/"):
+    #     os.mkdir("/tmp/costabs/")
 
     if execution == None:
-        name = "/tmp/costabs/rbr.rbr"
+        name = "/tmp/costabs/rbr_saco.rbr"
     else:
-        name = "/tmp/costabs/rbr"+str(execution)+".rbr"
+        name = "/tmp/costabs/rbr"+str(execution)+"_saco.rbr"
         
     with open(name,"w") as f:
         for rule in rules:
