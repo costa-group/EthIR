@@ -63,6 +63,14 @@ def has_dependencies_installed():
 
     return True
 
+def clean_dir():
+    if "costabs" in os.listdir("/tmp/"):
+        for elem in os.listdir("/tmp/costabs/"):
+            last = elem.split(".")[-1]
+            if last == "rbr" or last == "cfg":
+                os.remove("/tmp/costabs/"+elem)
+
+
 #Added by Pablo Gordillo
 '''
 We believe that source is a dissasembly evm file
@@ -171,42 +179,43 @@ def main():
     parser.add_argument( "-saco", "--saco",           help="Translate EthIR RBR to SACO RBR", action="store_true")           
     args = parser.parse_args()
 
-    if args.root_path:
-        if args.root_path[-1] != '/':
-            args.root_path += '/'
-    else:
-        args.root_path = ""
+    # if args.root_path:
+    #     if args.root_path[-1] != '/':
+    #         args.root_path += '/'
+    # else:
+    #     args.root_path = ""
 
-    if args.timeout:
-        global_params.TIMEOUT = args.timeout
+    # if args.timeout:
+    #     global_params.TIMEOUT = args.timeout
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-    global_params.PRINT_PATHS = 1 if args.paths else 0
-    global_params.REPORT_MODE = 1 if args.report else 0
-    global_params.USE_GLOBAL_BLOCKCHAIN = 1 if args.globalblockchain else 0
-    global_params.INPUT_STATE = 1 if args.state else 0
-    global_params.WEB = 1 if args.web else 0
-    global_params.STORE_RESULT = 1 if args.json else 0
-    global_params.CHECK_ASSERTIONS = 1 if args.assertion else 0
-    global_params.DEBUG_MODE = 1 if args.debug else 0
-    global_params.GENERATE_TEST_CASES = 1 if args.generate_test_cases else 0
-    global_params.PARALLEL = 1 if args.parallel else 0
+    # if args.verbose:
+    #     logging.basicConfig(level=logging.DEBUG)
+    # else:
+    #     logging.basicConfig(level=logging.INFO)
+    
+    global_params.PRINT_PATHS = 0 #1 if args.paths else 0
+    global_params.REPORT_MODE = 0 #1  if args.report else 0
+    global_params.USE_GLOBAL_BLOCKCHAIN = 0#1 if args.globalblockchain else 0
+    global_params.INPUT_STATE = 0#1 if args.state else 0
+    global_params.WEB = 0#1 if args.web else 0
+    global_params.STORE_RESULT = 0#1 if args.json else 0
+    global_params.CHECK_ASSERTIONS = 0#1 if args.assertion else 0
+    global_params.DEBUG_MODE = 0#1 if args.debug else 0
+    global_params.GENERATE_TEST_CASES = 0#1 if args.generate_test_cases else 0
+    global_params.PARALLEL = 0#1 if args.parallel else 0
 
     if args.depth_limit:
         global_params.DEPTH_LIMIT = args.depth_limit
-    if args.gas_limit:
-        global_params.GAS_LIMIT = args.gas_limit
+    # if args.gas_limit:
+    #     global_params.GAS_LIMIT = args.gas_limit
     if args.loop_limit:
         global_params.LOOP_LIMIT = args.loop_limit
-    if global_params.WEB:
-        if args.global_timeout and args.global_timeout < global_params.GLOBAL_TIMEOUT:
-            global_params.GLOBAL_TIMEOUT = args.global_timeout
-    else:
-        if args.global_timeout:
-            global_params.GLOBAL_TIMEOUT = args.global_timeout
+    # if global_params.WEB:
+    #     if args.global_timeout and args.global_timeout < global_params.GLOBAL_TIMEOUT:
+    #         global_params.GLOBAL_TIMEOUT = args.global_timeout
+    # else:
+    #     if args.global_timeout:
+    #         global_params.GLOBAL_TIMEOUT = args.global_timeout
 
     if not has_dependencies_installed():
         return
@@ -221,15 +230,17 @@ def main():
 
     exit_code = 0
 
+    clean_dir()
+
     #Added by Pablo Gordillo
     if args.disassembly:
         exit_code = analyze_disasm_bytecode()
     elif args.bytecode:
         exit_code = analyze_bytecode()
-    elif args.standard_json:
-        exit_code = analyze_solidity(input_type='standard_json')
-    elif args.standard_json_output:
-        exit_code = analyze_solidity(input_type='standard_json_output')
+    # elif args.standard_json:
+    #     exit_code = analyze_solidity(input_type='standard_json')
+    # elif args.standard_json_output:
+    #     exit_code = analyze_solidity(input_type='standard_json_output')
     else:
         exit_code = analyze_solidity()
 
