@@ -180,9 +180,6 @@ def initGlobalVars():
     global visited_blocks
     visited_blocks = []
         
-    global num_blocks
-    num_blocks = 0
-
     global blocks_to_create
     blocks_to_create =[]
 
@@ -613,14 +610,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global all_gs
     global results
     global g_src_map
-    global num_blocks
     global visited_blocks
     global blocks_to_create
     global ls_cont
     
-    print "BLOCK"
-    print block
-    num_blocks+=1
     visited = params.visited
     stack = params.stack
     mem = params.mem

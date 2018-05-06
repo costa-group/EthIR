@@ -144,8 +144,6 @@ class BasicBlock:
             if len(l) == 1:
                 val = self._is_numerical(l[0])
             else:
-                print "LIST"
-                print l
                 val = self._check_same_elem(l[1:],str(l[0]))
 
         elif type_value == "mstore":
