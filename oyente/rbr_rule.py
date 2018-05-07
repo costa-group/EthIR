@@ -152,8 +152,8 @@ class RBRRule:
                 
         return string_vars
 
-    
-    def display(self):
+    def rule2string(self):
+        rule = ""
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
         new_instr = ["skip"] if new_instr == [] else new_instr
@@ -182,13 +182,15 @@ class RBRRule:
         if (bc_input != ""):
             d_vars = d_vars+", "+bc_input
 
-        print self.rule_name+"("+d_vars+")=>"
-            # print self.rule_name+"("+gv+", "+ bc_input+")=>"
-        # else:
-        #     print self.rule_name+"(" +  + ", " + gv + ", " + bc_input+")=>"
+        rule = rule + self.rule_name+"("+d_vars+")=>\n"
 
         if self.guard != "" :
-            print "\t"+self.guard
+            rule = rule + "\t"+self.guard+"\n"
 
         for instr in new_instr:
-            print "\t"+instr
+            rule = rule + "\t"+instr+"\n"
+
+        return rule
+    
+    def display(self):
+        print self.rule2string()
