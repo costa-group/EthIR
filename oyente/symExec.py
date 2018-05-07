@@ -613,7 +613,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global visited_blocks
     global blocks_to_create
     global ls_cont
-    
+
+    print "BLOCK"
+    print block
     visited = params.visited
     stack = params.stack
     mem = params.mem
@@ -661,8 +663,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     ls_cont = [0,0,0,0]
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
-        #print "Stack despues de la ejecucion de la instruccion "+ instr
-        #print stack
+        print "Stack despues de la ejecucion de la instruccion "+ instr
+        print stack
         
     # Mark that this basic block in the visited blocks
     visited.append(block)
