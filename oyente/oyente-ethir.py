@@ -103,20 +103,26 @@ def run_solidity_analysis(inputs):
     exit_code = 0
 
     i = 0
-    for inp in inputs:
-        
-        #logging.info("contract %s:", inp['contract'])
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i)
-        i+=1
-        try:
-            c_source = inp['c_source']
-            c_name = inp['c_name']
-            results[c_source][c_name] = result
-        except:
-            results[c_source] = {c_name: result}
-
+    if len(inputs) == 1:
+        inp = inputs[0]
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco)
         if return_code == 1:
             exit_code = 1
+    else:
+        for inp in inputs:
+        
+            #logging.info("contract %s:", inp['contract'])
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i)
+            i+=1
+            try:
+                c_source = inp['c_source']
+                c_name = inp['c_name']
+                results[c_source][c_name] = result
+            except:
+                results[c_source] = {c_name: result}
+
+            if return_code == 1:
+                exit_code = 1
     return results, exit_code
 
 def analyze_solidity(input_type='solidity'):
