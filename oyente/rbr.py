@@ -1062,6 +1062,7 @@ def create_blocks(blocks):
         rules.append(rule)
     return rules
 
+
 def write_rbr(rbr,executions):
     if "costabs" not in os.listdir("/tmp/"):
         os.mkdir("/tmp/costabs/")
@@ -1071,6 +1072,12 @@ def write_rbr(rbr,executions):
     else:
         name = "/tmp/costabs/rbr"+str(executions)+".rbr"
 
+    with open(name,"w") as f:
+        for rules in rbr:
+            for r in rules:
+                f.write(r.rule2string()+"\n")
+
+    f.close()
         
 
 
