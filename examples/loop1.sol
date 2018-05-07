@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-contract SmallExample{
+contract Loop1{
 
   uint sum = 0;
   uint number = 0;
