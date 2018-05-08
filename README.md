@@ -83,9 +83,11 @@ bound for those loops. Here are some of the loop bounds inferred by SACO for som
 |Example|Bound|
 |--|--|
 | blockKing | nat(g8/10)*36+8934493 |
-| cryptoPhoenix| nat(g3)*228409344+4113285485 |
-| loop1| nat(a)*25+234 |
+| cryptoPhoenix | nat(g3)*228409344+4113285485 |
+| loop1 | nat(a)*25+234 |
+| eligma | nat(_numberOfReturns)*2628+134 |
 | lottery | 159 |
+| blockSquareSerieA | 286 |
 | validToken | inf |
 
 Note that due to precision limitations of SACO (it does not have bit-operations) the analyzer forgets the
