@@ -37,25 +37,40 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
 ```
 ## Run EthIR
 
-Display help: 
-```
-./oyente-ethir -h
-```
+EthIR stores the RBR generated during its execution in the direcrtory /tmp/costabs/ .
+To execute EthIR, run one of the following commands:
 
-Run ETHIR from a solidity file:
+1. Run ETHIR from a solidity file:
 ```
 ./oyente-ethir -s solidity_file_name 
 ```
-Run ETHIR from an EVM file:
+2. Run ETHIR from an EVM file:
 ```
 ./oyente-ethir -s evm_file_name -b 
 ```
-Run ETHIR from a disassembly EVM file:
+3. Run ETHIR from a disassembly EVM file:
 ```
-./oyente-ethir -s evm_file_name -disasm 
+./oyente-ethir -s evmdisasm_file_name -disasm 
 ```
-
+### Options
+1. Display help: 
+```
+./oyente-ethir -h
+```
+2. Store the control-flow-graph:
+```
+./oyente-ethir -s filename -cfg
+```
+3. Add nop annotations with EVM bytecodes:
+```
+./oyente-ethir -s filename -eop
+```
+4. Generate SACO RBR
+```
+./oyente-ethir -s filename -saco
+```
 ## Examples
 The folder "Exampes" contains some running examples to test the tool.
 Some of the solidity files such as bloccking, advertisement, validToken or cryptoPhoenix are real-world scripts and smallExample, sum or voting are ad-hoc examples where is easier to undestand the decompilation.
 
+## Bounding Loops using SACO
