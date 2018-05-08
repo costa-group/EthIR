@@ -86,7 +86,7 @@ bound for those loops. Here are some of the loop bounds inferred by SACO for som
 | cryptoPhoenix| nat(g3)*228409344+4113285485 |
 | loop1| nat(a)*25+234 |
 | lottery | 159 |
-| | |
+| validToken | inf |
 
 Note that due to precision limitations of SACO (it does not have bit-operations) the analyzer forgets the
 information on bit variables. Due to this factor, SACO is not able to infer a bound for some of the examples.
