@@ -53,25 +53,23 @@ To execute EthIR, run one of the following commands inside the folder *ethir*:
 ./oyente-ethir -s evmdisasm_file_name -disasm 
 ```
 ### Options
-1. Display help: 
-```
-./oyente-ethir -h
-```
-2. Store the control-flow-graph:
+The command `./oyente-ethir -h` displays a list with all the available options of EthIR. Some of the most relevant ones are:
+
+1. Store the control-flow-graph:
 ```
 ./oyente-ethir -s filename -cfg
 ```
-3. Add nop annotations with EVM bytecodes:
+2. Add nop annotations with EVM bytecodes:
 ```
 ./oyente-ethir -s filename -eop
 ```
-4. Generate SACO RBR
+3. Generate SACO RBR
 ```
 ./oyente-ethir -s filename -saco
 ```
 ## Examples
 The folder *Examples* contains running examples to test the tool.
-Most of the examples such as bloccking.evm.disasm, advertisement.sol, validToken.sol or cryptoPhoenix.sol are real-world smart contracts obtained from the blockchain while others such as smallExample.sol, sum.sol are ad-hoc examples where it is easier to undestand the decompilation process.
+Most of the examples such as bloccking.evm.disasm, advertisement.sol, validToken.sol or cryptoPhoenix.sol are real-world smart contracts obtained from the blockchain while others such as loop1.sol and sum.sol are ad-hoc examples where it is easier to undestand the decompilation process.
 
 Note that some solidity files contain more than one smart contract and EthIR generates one RBR file per each one.
 
@@ -84,10 +82,10 @@ bound for those loops. Here are some of the loop bounds inferred by SACO for som
 
 |Example|Bound|
 |--|--|
-| BlockKing | nat(g8/10)*36+8934493 |
+| blockKing | nat(g8/10)*36+8934493 |
 | cryptoPhoenix| nat(g3)*228409344+4113285485 |
 | loop1| nat(a)*25+234 |
-| | |
+| lottery | 159 |
 | | |
 
 Note that due to precision limitations of SACO (it does not have bit-operations) the analyzer forgets the
