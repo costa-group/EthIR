@@ -601,7 +601,11 @@ def translateOpcodesA(opcode, index_variables):
 '''
 def translateOpcodesF(opcode, index_variables, addr):
     if opcode == "CREATE":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr=""
     elif opcode == "CALL": #Suppose that all the calls are executed without errors
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
@@ -613,7 +617,15 @@ def translateOpcodesF(opcode, index_variables, addr):
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1 +" = 1"
     elif opcode == "CALLCODE":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1 +" = 1" 
     elif opcode == "RETURN":
         # var = get_local_variable(addr)
         _, updated_variables = get_consume_variable(index_variables)
