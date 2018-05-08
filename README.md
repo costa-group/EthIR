@@ -92,3 +92,5 @@ Note that due to precision limitations of SACO (it does not have bit-operations)
 information on bit variables. Due to this factor, SACO is not able to infer a bound for some of the examples.
 
 Other high-level analyzers that work on intermediate forms like Integer transition systems or Horn clauses  (e.g., AproVe, T2, VeryMax, CoFloCo) could be easily adapted as well to work on RBR translated programs produced by EthIR. 
+
+If you are interesting in using EthIR jointly with SACO contact with SACO developers through a pull-request.
