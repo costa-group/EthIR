@@ -95,4 +95,4 @@ information on bit variables. Due to this factor, [SACO](http://costa.fdi.ucm.es
 
 Other high-level analyzers that work on intermediate forms like Integer transition systems or Horn clauses  (e.g., AproVe, T2, VeryMax, CoFloCo) could be easily adapted as well to work on RBR translated programs produced by EthIR. 
 
-If you are interesting in using EthIR jointly with [SACO](http://costa.fdi.ucm.es/saco/web/) contact with [SACO](http://costa.fdi.ucm.es/saco/web/) developers through a pull-request.
+If you are interesting in using EthIR jointly with [SACO](http://costa.fdi.ucm.es/saco/web/) contact [SACO](http://costa.fdi.ucm.es/saco/web/) developers through a pull-request.
