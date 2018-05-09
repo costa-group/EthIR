@@ -90,14 +90,10 @@ bound for those loops. Here are some of the loop bounds inferred by SACO for som
 
 |Example|Bound|Example|Bound|
 |--|--|--|--|
-| blockKing | nat(g8/10)*36+8934493 |
-| cryptoPhoenix | nat(g3)*228409344+4113285485 |
-| loop1 | nat(a)*25+234 |
-| eligma | nat(_numberOfReturns)*2628+134 |
-| lottery | 159 |
-| blockSquareSerieA | 286 |
-| advertisement | inf |
-| validToken | inf |
+| blockKing | nat(g8/10)*36+8934493 | cryptoPhoenix | nat(g3)*228409344+4113285485 |
+| loop1 | nat(a)*25+234 | eligma | nat(_numberOfReturns)*2628+134 |
+| lottery | 159 | blockSquareSerieA | 286 |
+| advertisement | inf |  validToken | inf |
 
 SACO infers a linear bound for the first four smart contracts shown in the table above. The bounds of blockking and cryptoPhoenix smart contracts depend on the value of one of their fields (the eighth and third respectively). For loop1 and eligma smart contracts, the bounds obtained  rely on function arguments (a and _numberOfReturns). In case smart contracts do not contain any loop as lottery or blockSquareSerieA, [SACO](http://costa.fdi.ucm.es/saco/web/) infers a constant bound.
 
