@@ -69,9 +69,54 @@ def get_contract_vars(rule):
 
 def get_field_vars(rule):
     gv = rule.get_global_arg()
-    new = map(lambda x: "field("+x+")",gv)
+    new = map(lambda x: "field(g"+x+")",gv)
     return new
 
+def call_instruction(rule,instr):
+    pos_head = instr.find("(",5) #It is a call. It starts with call(__( 
+    pos0 = instr.find("s(s0)",0)
+    pos1 = instr.find("g(",0)
+
+    local_vars = rule.build_local_vars()
+    local_vars_string = ", ".join(local_vars)
+
+    if pos1 != -1:
+        gv = get_field_vars(rule)
+        fv = ", ".join(gv)
+    else:
+        fv = ""
+        
+    cv_aux = get_contract_vars(rule)
+    if len(cv_aux)>0:
+        cv =", ".join(cv_aux)
+    else:
+        cv = ""
+                    
+    if fv != "":
+        if pos0 != -1:
+            if cv!="":
+                new = instr[:pos0+5]+", "+fv+", "+local_vars_string+", "+cv+"))"
+            else:
+                new = instr[:pos0+5]+", "+fv+", "+local_vars_string+"))"
+        else:
+            if cv!="":
+                new = instr[:pos_head+1]+fv+", "+local_vars_string+", "+cv+"))"
+            else:
+                new = instr[:pos_head+1]+fv+", "+local_vars_string+"))"
+    else:
+        if pos0 != -1: #there is a 
+            if cv!="":
+                new = instr[:pos0+5]+","+local_vars_string+", "+cv+"))"
+            else:
+                new = instr[:pos0+5]+","+local_vars_string+"))"
+        else:
+            if cv!="":
+                new = instr[:pos_head+1]+local_vars_string+", "+cv+"))"
+            else:
+                new = instr[:pos_head+1]+local_vars_string+"))"
+
+    return new
+    
 def process_instructions(rule):
     cont = rule.get_fresh_index()+1
     contract_vars = rule.get_bc()
@@ -79,63 +124,22 @@ def process_instructions(rule):
     new_instructions = []
     for instr in instructions:
         if instr.find("call(",0)!=-1:
-            pos_head = instr.find("(",5) #It is a call. It starts with call(__( 
-            pos0 = instr.find("s(0)",0)
-            pos1 = instr.find("g(",0)
-
-            local_vars = rule.build_local_vars()
-            local_vars_string = ", ".join(local_vars)
-
-            if pos1 != -1:
-                gv = get_field_vars(rule)
-                fv = ", ".join(gv)
-            else:
-                fv = ""
-                
-            cv_aux = get_contract_vars(rule)
-            if len(cv_aux)>0:
-                cv =", ".join(cv_aux)
-            else:
-                cv = ""
-
-                          
-            if fv != "":
-                if pos0 != -1:
-                    if cv!="":
-                        new = instr[:pos0+4]+", "+fv+", "+local_vars_string+", "+cv+"))"
-                    else:
-                        new = instr[:pos0+4]+", "+fv+", "+local_vars_string+"))"
-                else:
-                    if cv!="":
-                        new = instr[:pos_head+1]+fv+", "+local_vars_string+", "+cv+"))"
-                    else:
-                        new = instr[:pos_head+1]+fv+", "+local_vars_string+"))"
-            else:
-                if pos0 != -1: #there is a 
-                    if cv!="":
-                        new = instr[:pos0+4]+","+local_vars_string+", "+cv+"))"
-                    else:
-                        new = instr[:pos0+4]+","+local_vars_string+"))"
-                else:
-                    if cv!="":
-                        new = instr[:pos_head+1]+local_vars_string+", "+cv+"))"
-                    else:
-                        new = instr[:pos_head+1]+local_vars_string+"))"
+            new = call_instruction(rule,instr)
         elif instr.find("and",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("or",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("not",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("xor",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("gs(",0)!=-1:
             pos = instr.find("=")
@@ -151,30 +155,37 @@ def process_instructions(rule):
             new = "l("+instr[:pos].strip()+") "+instr[pos:]        
         elif instr.find("fresh",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("= eq",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("= lt",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("= gt",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif instr.find("g(",0)!=-1:
             pos = instr.find("=",0)
             posI = instr.find("g(",0)
             if posI <pos: #field var in the left
-                new = "field("+instr[posI+2:]
+                new = "field(g"+instr[posI+2:]
             else:
-                new = instr[:pos+1]+" field("+instr[posI+2:]
+                new = instr[:pos+1]+" field(g"+instr[posI+2:]
         elif instr.find("^",0)!=-1:
             pos = instr.find("=",0)
-            new = instr[:pos+1]+" s("+str(cont)+")"
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            cont+=1
+        elif instr.find("byte",0)!=-1: # upper bound-> 255
+            pos = instr.find("=",0)
+            new = instr[:pos+1]+" 255"
+        elif instr.find("sha",0)!=-1:
+            pos = instr.find("=",0)
+            new = instr[:pos+1]+" s(s"+str(cont)+")"
             cont+=1
         elif len(instr.split("=")) > 1:
             slices = instr.split("=")
