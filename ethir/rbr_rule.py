@@ -25,11 +25,7 @@ class RBRRule:
         self.rbr_type = typeBlock
         self.bc = []
         self.fresh_index = 0
-        # self.bc = ["address","balance","origin","caller","callvalue","calldataload","calldatasize","calldatacopy",
-        #            "codesize","codecopy","gasprice","extcodesize","extcodecopy","mcopy","blockhash","coinbase",
-        #            "number","difficulty",
-        #            "gaslimit","gas"] #To be extended
-        
+    
     def get_guard(self):
         return self.guard
 
@@ -56,9 +52,6 @@ class RBRRule:
 
     def get_rule_name(self):
         return self.rule_name
-
-    def write_rule(self, fd):
-        pass
 
     def get_index_invars(self):
         return self.arg_input
