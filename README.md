@@ -4,7 +4,7 @@ EthIR
 
 A framework for high-level Analysis of Ethereum Bytecode.
 
-The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to build the CFG of EVM programs analyzed and builds a Rule-based representation. This high-level representation can be injected in other resource static analayzers. 
+The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to build the CFG of EVM programs analyzed and generates a Rule-based representation. This high-level representation can be injected in other resource static analayzers. 
 
 ## Installation
 1. Install Solidity compiler (last version tested 0.4.19)
@@ -34,6 +34,13 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
  cd build
  make
  sudo make install
+```
+4. Install dependencies
+   Use `pip install` command to install six, requests, web3 python libraries.
+```
+pip install six
+pip install requests
+pip install web3
 ```
 ## Run EthIR
 
