@@ -74,7 +74,7 @@ def get_field_vars(rule):
 
 def call_instruction(rule,instr):
     pos_head = instr.find("(",5) #It is a call. It starts with call(__( 
-    pos0 = instr.find("s(s0)",0)
+    pos0 = instr.find("s(0)",0)
     pos1 = instr.find("g(",0)
 
     local_vars = rule.build_local_vars()
@@ -95,9 +95,9 @@ def call_instruction(rule,instr):
     if fv != "":
         if pos0 != -1:
             if cv!="":
-                new = instr[:pos0+5]+", "+fv+", "+local_vars_string+", "+cv+"))"
+                new = instr[:pos0+4]+", "+fv+", "+local_vars_string+", "+cv+"))"
             else:
-                new = instr[:pos0+5]+", "+fv+", "+local_vars_string+"))"
+                new = instr[:pos0+4]+", "+fv+", "+local_vars_string+"))"
         else:
             if cv!="":
                 new = instr[:pos_head+1]+fv+", "+local_vars_string+", "+cv+"))"
@@ -106,9 +106,9 @@ def call_instruction(rule,instr):
     else:
         if pos0 != -1: #there is a 
             if cv!="":
-                new = instr[:pos0+5]+","+local_vars_string+", "+cv+"))"
+                new = instr[:pos0+4]+","+local_vars_string+", "+cv+"))"
             else:
-                new = instr[:pos0+5]+","+local_vars_string+"))"
+                new = instr[:pos0+4]+","+local_vars_string+"))"
         else:
             if cv!="":
                 new = instr[:pos_head+1]+local_vars_string+", "+cv+"))"
@@ -127,19 +127,19 @@ def process_instructions(rule):
             new = call_instruction(rule,instr)
         elif instr.find("and",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("or",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("not",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("xor",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("gs(",0)!=-1:
             pos = instr.find("=")
@@ -155,19 +155,19 @@ def process_instructions(rule):
             new = "l("+instr[:pos].strip()+") "+instr[pos:]        
         elif instr.find("fresh",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("= eq",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("= lt",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("= gt",0)!=-1:
             pos = instr.find("=")
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("g(",0)!=-1:
             pos = instr.find("=",0)
@@ -178,14 +178,14 @@ def process_instructions(rule):
                 new = instr[:pos+1]+" field(g"+instr[posI+2:]
         elif instr.find("^",0)!=-1:
             pos = instr.find("=",0)
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("byte",0)!=-1: # upper bound-> 255
             pos = instr.find("=",0)
             new = instr[:pos+1]+" 255"
         elif instr.find("sha",0)!=-1:
             pos = instr.find("=",0)
-            new = instr[:pos+1]+" s(s"+str(cont)+")"
+            new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif len(instr.split("=")) > 1:
             slices = instr.split("=")
