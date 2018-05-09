@@ -47,7 +47,7 @@ contract AuctusEther {
 	* @param _cliff duration in seconds of the cliff in which will begin to vest and between the steps
 	* @param _steps total number of steps to release all the balance
 	*/
-	function AuctusStepVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _steps) public {
+	function AuctusEther(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _steps) public {
 		require(_beneficiary != address(0));
 		require(_steps > 0);
 		require(_cliff > 0);
@@ -109,10 +109,10 @@ contract AuctusEther {
 }
 
 
-contract AuctusEtherVesting is AuctusStepVesting {
+contract AuctusEtherVesting is AuctusEther {
 	function AuctusEtherVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _steps) 
 		public 
-		AuctusStepVesting(_beneficiary, _start, _cliff, _steps) 
+		AuctusEther(_beneficiary, _start, _cliff, _steps) 
 	{
 	}
 
@@ -136,12 +136,12 @@ contract ContractReceiver {
 }
 
 
-contract AuctusTokenVesting is AuctusStepVesting, ContractReceiver {
+contract AuctusTokenVesting is AuctusEther, ContractReceiver {
 	address public auctusTokenAddress = 0xc12d099be31567add4e4e4d0D45691C3F58f5663;
 
 	function AuctusTokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _steps) 
 		public 
-		AuctusStepVesting(_beneficiary, _start, _cliff, _steps) 
+		AuctusEther(_beneficiary, _start, _cliff, _steps) 
 	{
 	}
 
