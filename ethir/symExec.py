@@ -240,7 +240,7 @@ def build_cfg_and_analyze():
 #    print_cfg()
     delete_uncalled()
     update_block_info()
-    print_cfg()
+    #print_cfg()
     #print stack_h
     #print calldataload_values
 
