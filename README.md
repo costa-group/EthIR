@@ -50,15 +50,15 @@ To execute EthIR, run one of the following commands inside the folder *ethir*:
 
 1. Run ETHIR from a solidity file:
 ```
-./oyente-ethir -s solidity_file_name 
+./oyente-ethir -s file_name.sol
 ```
 2. Run ETHIR from an EVM file:
 ```
-./oyente-ethir -s evm_file_name -b 
+./oyente-ethir -s file_name.evm -b 
 ```
 3. Run ETHIR from a disassembly EVM file:
 ```
-./oyente-ethir -s evmdisasm_file_name -disasm 
+./oyente-ethir -s file_name.disasm -disasm 
 ```
 ### Options
 The command `./oyente-ethir -h` displays a list with all the available options of EthIR. Some of the most relevant ones are:
