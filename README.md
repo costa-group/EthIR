@@ -96,11 +96,13 @@ bound for those loops. Here are some of the loop bounds inferred by SACO for som
 | eligma | nat(_numberOfReturns)*2628+134 |
 | lottery | 159 |
 | blockSquareSerieA | 286 |
+| advertisement | inf |
 | validToken | inf |
 
-Note that due to precision limitations of [SACO](http://costa.fdi.ucm.es/saco/web/) (it does not have bit-operations) the analyzer forgets the
-information on bit variables. Due to this factor, [SACO](http://costa.fdi.ucm.es/saco/web/) is not able to infer a bound for some of the smart contracts.
+SACO infers a linear bound for the first four smart contracts shown in the table above. The bounds of blockking and cryptoPhoenix smart contracts depend on the value of one of their fields (the eighth and third respectively). For loop1 and eligma smart contracts, the bounds obtained  rely on function arguments (a and _numberOfReturns). In case smart contracts do not contain any loop as lottery or blockSquareSerieA, [SACO](http://costa.fdi.ucm.es/saco/web/) infers a constant bound.
+
+Note that due to precision limitations of [SACO](http://costa.fdi.ucm.es/saco/web/) (it does not have bit-operations) the analyzer forgets the information on bit variables. Due to this factor, [SACO](http://costa.fdi.ucm.es/saco/web/) is not able to infer a bound for some of the smart contracts such as validToken or advertisement and returns *inf*.
 
 Other high-level analyzers that work on intermediate forms like Integer transition systems or Horn clauses  (e.g., AproVe, T2, VeryMax, CoFloCo) could be easily adapted as well to work on RBR translated programs produced by EthIR. 
 
-If you are interesting in using EthIR jointly with [SACO](http://costa.fdi.ucm.es/saco/web/) contact [SACO](http://costa.fdi.ucm.es/saco/web/) developers through a pull-request.
+If you are interesting in using EthIR jointly with [SACO](http://costa.fdi.ucm.es/saco/web/) contact [SACO](http://costa.fdi.ucm.es/saco/web/) developers through a pull-request or a new issue.
