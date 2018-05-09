@@ -36,6 +36,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente) to b
  sudo make install
 ```
 4. Install dependencies
+
    Use `pip install` command to install six, requests, web3 python libraries.
 ```
 pip install six
