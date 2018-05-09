@@ -86,11 +86,11 @@ class InputHelper:
     #Modified by Pablo Gordillo
     #Not remove tmp files (dissasamble files)
     def rm_tmp_files(self):
-        i = 0
-        # if self.input_type == InputHelper.BYTECODE:
-        #     self._rm_tmp_files(self.source)
-        # else:
-        #     self._rm_tmp_files_of_multiple_contracts(self.compiled_contracts)
+        #i = 0
+        if self.input_type == InputHelper.BYTECODE:
+            self._rm_tmp_files(self.source)
+        else:
+            self._rm_tmp_files_of_multiple_contracts(self.compiled_contracts)
 
     def _get_compiled_contracts(self):
         if not self.compiled_contracts:
