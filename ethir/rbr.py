@@ -2,7 +2,7 @@
 
 import rbr_rule
 import opcodes
-from utils import getKey
+from utils import getKey, orderRBR
 import os
 import saco
 
@@ -97,12 +97,6 @@ def update_fresh_index(val):
     if fresh_index < val:
         fresh_index = val
         
-'''
-It returns the id of a rbr_rule.
-'''
-def orderRBR(rbr):
-    return rbr[0].get_Id()
-
 
 '''
 It is used when a bytecode consume stack variables. It returns the

@@ -308,3 +308,9 @@ def getKey(block):
 
 def toInt(a):
     return int(a)
+
+'''
+It returns the id of a rbr_rule.
+'''
+def orderRBR(rbr):
+    return rbr[0].get_Id()
