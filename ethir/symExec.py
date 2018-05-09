@@ -19,8 +19,8 @@ from vargenerator import *
 from ethereum_data import *
 from basicblock import BasicBlock
 from analysis import *
-from test_evm.global_test_params import (TIME_OUT, UNKNOWN_INSTRUCTION,
-                                         EXCEPTION, PICKLE_PATH)
+# from test_evm.global_test_params import (TIME_OUT, UNKNOWN_INSTRUCTION,
+#                                          EXCEPTION, PICKLE_PATH)
 from vulnerability import CallStack, TimeDependency, MoneyConcurrency, Reentrancy, AssertionFailure, ParityMultisigBug2
 import global_params
 
@@ -614,8 +614,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global blocks_to_create
     global ls_cont
 
-    print "BLOCK"
-    print block
+    # print "BLOCK"
+    # print block
     visited = params.visited
     stack = params.stack
     mem = params.mem
@@ -663,8 +663,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     ls_cont = [0,0,0,0]
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
-        print "Stack despues de la ejecucion de la instruccion "+ instr
-        print stack
+        # print "Stack despues de la ejecucion de la instruccion "+ instr
+        # print stack
         
     # Mark that this basic block in the visited blocks
     visited.append(block)
@@ -2113,9 +2113,9 @@ def sym_exec_ins(params, block, instr, func_call):
 
     else:
         log.debug("UNKNOWN INSTRUCTION: " + opcode)
-        if global_params.UNIT_TEST == 2 or global_params.UNIT_TEST == 3:
-            log.critical("Unknown instruction: %s" % opcode)
-            exit(UNKNOWN_INSTRUCTION)
+        # if global_params.UNIT_TEST == 2 or global_params.UNIT_TEST == 3:
+        #     log.critical("Unknown instruction: %s" % opcode)
+        #     exit(UNKNOWN_INSTRUCTION)
         raise Exception('UNKNOWN INSTRUCTION: ' + opcode)
 
 # Detect if a money flow depends on the timestamp
@@ -2459,14 +2459,14 @@ def get_recipients(disasm_file, contract_address):
         'timeout': g_timeout
     }
 
-def test():
-    global_params.GLOBAL_TIMEOUT = global_params.GLOBAL_TIMEOUT_TEST
+# def test():
+#     global_params.GLOBAL_TIMEOUT = global_params.GLOBAL_TIMEOUT_TEST
 
-    def timeout_cb():
-        traceback.print_exc()
-        exit(EXCEPTION)
+#     def timeout_cb():
+#         traceback.print_exc()
+#         exit(EXCEPTION)
 
-    run_build_cfg_and_analyze(timeout_cb=timeout_cb)
+#     run_build_cfg_and_analyze(timeout_cb=timeout_cb)
 
 def analyze():
     def timeout_cb():
@@ -2498,15 +2498,15 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     g_src_map = source_map
 
     #atexit.register(closing_message)
-
-    if is_testing_evm():
-        test()
-    else:
-        begin = time.time()
-        analyze()
-        if cfg:
-            write_cfg(execution)
-
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution)
+    # if is_testing_evm():
+    #     test()
+    # else:
+    begin = time.time()
+    analyze()
+    if cfg:
+        write_cfg(execution)
         
-        return [], 0#detect_vulnerabilities()
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution)
+        
+    return [], 0
+#detect_vulnerabilities()
