@@ -1116,7 +1116,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 r.set_global_vars(max_field_list)
                 r.set_args_local(current_local_var)
                 r.update_calls()
-                r.display()
+                #r.display()
 
         rule_c = create_blocks(block_unbuild)
         for r in rule_c:
