@@ -6,7 +6,6 @@ from utils import getKey, orderRBR
 import os
 import saco
 
-
 '''
 It initialize the globals variables. 
 List opcodeX contains the evm bytecodes from set X.
@@ -80,9 +79,12 @@ def init_globals():
     global bc_in_use
     bc_in_use = []
 
-    global fresh_index
-    fresh_index = 0
+    global top_index
+    top_index = 0
 
+    global new_fid
+    new_fid = 0
+    
 def get_stack_index(block):
     try:
         return stack_index[block]
@@ -91,11 +93,11 @@ def get_stack_index(block):
         return [0,0]
 
 
-def update_fresh_index(val):
-    global fresh_index
+def update_top_index(val):
+    global top_index
 
-    if fresh_index < val:
-        fresh_index = val
+    if top_index < val:
+        top_index = val
         
 
 '''
@@ -118,7 +120,7 @@ index.
 '''
 def get_new_variable(index_variables):
     new_current = index_variables + 1
-    update_fresh_index(new_current)
+    update_top_index(new_current)
     return "s(" + str(new_current) + ")", new_current
 
 
@@ -509,6 +511,8 @@ corresponding translated instruction and the variables's index
 updated.
 '''
 def translateOpcodes50(opcode, value, index_variables):
+    global new_fid
+    
     if opcode == "POP":
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
@@ -519,7 +523,8 @@ def translateOpcodes50(opcode, value, index_variables):
             l_var = get_local_variable(value)
             instr = v1+ " = " + l_var
         except ValueError:
-            instr = ["ll = " + v1, v1 + " = fresh()"]
+            instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
+            new_fid+=1
     elif opcode == "MSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
@@ -544,7 +549,8 @@ def translateOpcodes50(opcode, value, index_variables):
             instr = v1+" = " + "g(" + value + ")"
             update_field_index(value)
         except ValueError:
-            instr = ["gl = " + v1, v1 + " = fresh()"]
+            instr = ["gl = " + v1, v1 + " = fresh("+str(new_fid)+")"]
+            new_fid+=1
     elif opcode == "SSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
@@ -1007,16 +1013,20 @@ The stack could be reconstructed as
 '''
 def compile_block(block,nop):
     global rbr_blocks
-    global fresh_index
+    global top_index
+    global new_fid
     
     cont = 0
-    fresh_index = 0
+    top_index = 0
+    new_fid = 0
     finish = False
+    
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
     rule = rbr_rule.RBRRule(block_id, "block")
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
+    
     while not(finish) and cont< len(l_instr):
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
@@ -1027,37 +1037,45 @@ def compile_block(block,nop):
                 for elem in l_instr[cont:]:
                     rule.add_instr("nop("+elem.split()[0]+")")
                     
+
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
-        elif l_instr[cont] == "JUMPI": #It only checks if the top is 1
+            
+        elif l_instr[cont] == "JUMPI": #JUMPI without conditional instruction before. It checks if top == 1
             rule1,rule2, instr = create_cond_jump(block.get_start_address(),
                              l_instr[cont:], index_variables,
                              block.get_list_jumps(),
                              block.get_falls_to(),nop)
+
             rule.add_instr(instr)
+
             if nop:
                 for elem in l_instr[cont:]:
                     rule.add_instr("nop("+elem.split()[0]+")")
                     
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
+
         elif l_instr[cont] == "JUMP":
             rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps())
+
             if rule1:
                 rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
                 
             rule.add_instr(instr)
+
             if nop:
                 rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),block.get_stack_info(),True,nop)
-                
+                                                   index_variables,block.get_list_jumps(),block.get_stack_info(),True,nop)        
         cont+=1
+
     if(block.get_block_type()=="falls_to"):
         instr = process_falls_to_blocks(index_variables,block.get_falls_to())
         rule.add_instr(instr)
-    rule.set_fresh_index(fresh_index)
+
+    rule.set_fresh_index(top_index)
     return rule
 
 
