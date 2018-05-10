@@ -109,7 +109,7 @@ block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0)
 	s(2) = s(0)
 	call(jump11(s(2),s(1),s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
 ```
-If we execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -eop` instead of the above one, the RBR that EthIR produces have nops annotations, with the EVM bytecode translated, interleaved in the text. Below is a sketch of the RBR with nops annotations generated for *blockking.evm.disasm*:
+If we execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -eop` instead of the above one, the RBR that EthIR produces has nops annotations, with the EVM bytecode translated, interleaved in the text. Below is a sketch of the RBR with nops annotations generated for *blockking.evm.disasm*:
 ```
 block0(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
 	s(0) = 96
