@@ -107,22 +107,29 @@ class RBRRule:
         return local_vars
 
     def update_calls(self):
-        if "call(" in self.instr[-1]:
-            call = self.instr.pop()
-            posInit = call.find("global",0)
+        instructions = []
+        for elem in self.instr:
+            
+            if elem.find("call(")!=-1:
+                posInit = elem.find("global",0)
 
-            gv_aux = self.build_field_vars()
-            local_vars = self.build_local_vars()
-            local_vars_string = ", ".join(local_vars)
-            if (len(gv_aux)==0):
-                gv = ""
+                gv_aux = self.build_field_vars()
+                local_vars = self.build_local_vars()
+                local_vars_string = ", ".join(local_vars)
+                if (len(gv_aux)==0):
+                    gv = ""
+                else:
+                    gv = ", ".join(gv_aux)
+                if gv != "":
+                    new_instr = elem[:posInit]+gv+", "+local_vars_string+", "+self.vars_to_string("data")+"))"
+                else:
+                    new_instr = elem[:posInit]+local_vars_string+", "+self.vars_to_string("data")+"))"
+
             else:
-                gv = ", ".join(gv_aux)
-            if gv != "":
-                new_instr = call[:posInit]+gv+", "+local_vars_string+", "+self.vars_to_string("data")+"))"
-            else:
-                new_instr = call[:posInit]+local_vars_string+", "+self.vars_to_string("data")+"))"
-            self.instr.append(new_instr)
+                new_instr = elem
+                
+            instructions.append(new_instr)
+        self.instr = instructions
 
     def vars_to_string(self,types):
         if types == "input":
