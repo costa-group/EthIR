@@ -156,7 +156,7 @@ block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0)
 	nop(JUMPI)
 ```
 
-EthIR also allows us to store the CFG bound to the file analysed. In that case, we have to execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -cfg`. EthIR stores the cfg in a file called *cfg.cfg* in the directory */tmp/costabs/*.
+EthIR also allows us to store the CFG of the file analysed. In that case, we have to execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -cfg`. EthIR stores the cfg in a file called *cfg.cfg* in the directory */tmp/costabs/*.
 
 Note that a file may contain more than one smart contract. In that case, EthIR generates one file per each contract called rbr0.rbr, rbr1.rbr,...rbrn.rbr .
 
