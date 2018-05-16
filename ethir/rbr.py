@@ -8,10 +8,14 @@ import saco
 
 '''
 It initialize the globals variables. 
-List opcodeX contains the evm bytecodes from set X.
-current_local_var has the max index of the local variables created.
-local_variables is a mapping address->local_variable.
-rbr_blocks is a mapping rbr_id->list of rbr rules (jumps contains 2 rules per rbr_id).
+-List opcodeX contains the evm bytecodes from set X.
+-current_local_var has the max index of the local variables created.
+-local_variables is a mapping address->local_variable if known.
+-rbr_blocks is a mapping rbr_id->list of rbr rules (jumps contains 2 rules per rbr_id).
+-stack_index is a mapping block_id->[stack_height_begin, stack_heigh_end].
+-max_field_list keeps the id of the known fields accessed during the execution.
+-bc_in_use keeps the contract data used during the execution.
+-new fid keeps the index of the new fresh variable.
 '''
 def init_globals():
     
@@ -84,7 +88,13 @@ def init_globals():
 
     global new_fid
     new_fid = 0
-    
+
+'''
+Given a block it returns a list containingn the height of its
+stack when arriving and leaving the block.
+-bock:block start address. int.
+-It returns a list with 2 elements. [int, int].
+'''
 def get_stack_index(block):
     try:
         return stack_index[block]
@@ -102,8 +112,10 @@ def update_top_index(val):
 
 '''
 It is used when a bytecode consume stack variables. It returns the
-current stack variable (the top most one) and update the variable index.
-index_variables is a tuple (current_stack_variable,current_input_variable).
+current stack variable (the top most one) and after that update the variable index.
+index_variables contains the index of current stack variable.
+-index_variables: int.
+-It returns a tuple (stack variable, top stack index). (string, int).
 '''
 def get_consume_variable(index_variables):
     current = index_variables
@@ -115,8 +127,10 @@ def get_consume_variable(index_variables):
 
 
 '''
-It returns a fresh stack variable and updates the variables'
+It returns the next fresh stack variable and updates the current
 index.
+-index_variables: int.
+-It returns a tuple (stack variable, top stack index). (string, int).
 '''
 def get_new_variable(index_variables):
     new_current = index_variables + 1
@@ -125,11 +139,9 @@ def get_new_variable(index_variables):
 
 
 '''
-It returns the variable corresponding to the top stack
-variable. It checks the value of index_variables to know if it is one
-of those created inside a block (current >= 0) or if it is one received
-as a parameter (current==-1).
-
+It returns the variable palced in the top of stack.
+-index_variables: int.
+variable: stack variable returned. string.
 '''
 def get_current_variable(index_variables):
     current = index_variables
@@ -139,10 +151,9 @@ def get_current_variable(index_variables):
     return variable
 
 '''
-It returns a list that contains all the "alive" stack variables.
+It returns a list that contains all the stack variables which are "active".
 It goes from current to 0. 
-If current == -1 range is empty and the
-function return an empty list.  s_vars: list of strings.
+s_vars: [string].
 '''
 def get_stack_variables(index_variables):
     current = index_variables
@@ -154,8 +165,10 @@ def get_stack_variables(index_variables):
 
 
 '''
-It returns the ith variable.
-It can be a fresh stack variable or an input variable.
+It returns the posth variable.
+index_variables: top stack index. int.
+pos: position of the variable required. int.
+variable: stack variable returned. string.
 '''
 def get_ith_variable(index_variables, pos):
     current = index_variables
@@ -169,6 +182,8 @@ def get_ith_variable(index_variables, pos):
 It returns the local variable bound to argument address.  If it
 does not exist, the method creates and store it in the dictionary
 local_variables.
+-address: memory address. string.
+-var: new local variable. string.
 '''
 def get_local_variable(address):
     global current_local_var
@@ -184,19 +199,26 @@ def get_local_variable(address):
         current_local_var += 1
         return var
 
-
+'''
+It adds to the list max_field_list the index of the field used.
+-value: index_field. int.
+'''
 def update_field_index(value):
     global max_field_list
 
     if value not in max_field_list:
         max_field_list.append(value)
         
-
+'''
+It adds to the list bc_in_use the name of the contract variable used.
+-value: contract variable name. string.
+'''
 def update_bc_in_use(value):
     global bc_in_use
     if value not in bc_in_use:
         bc_in_use.append(value)
 
+        
 def process_tops(top1,top2):
     top1_aux = 0 if top1 == float("inf") else top1
     top2_aux = 0 if top2 == float("inf") else top2
@@ -209,7 +231,7 @@ def process_tops(top1,top2):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes0(opcode,index_variables):
     if opcode == "ADD":
@@ -281,8 +303,7 @@ def translateOpcodes0(opcode,index_variables):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
-Signed operations are not considered (SLT, SGT)
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes10(opcode, index_variables,cond):
     if opcode == "LT":
@@ -378,7 +399,7 @@ def translateOpcodes10(opcode, index_variables,cond):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes20(opcode, index_variables):
     if opcode == "SHA3":
@@ -397,7 +418,7 @@ def translateOpcodes20(opcode, index_variables):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes30(opcode, value, index_variables):
     
@@ -469,7 +490,7 @@ def translateOpcodes30(opcode, value, index_variables):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes40(opcode, index_variables):
     if opcode == "BLOCKHASH":
@@ -508,7 +529,7 @@ def translateOpcodes40(opcode, index_variables):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes50(opcode, value, index_variables):
     global new_fid
@@ -590,7 +611,13 @@ def translateOpcodes50(opcode, value, index_variables):
         updated_variables = index_variables
 
     return instr, updated_variables
-
+'''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated. It also updated the corresponding global variables.
+They corresponds to LOGS opcodes.
+'''
 def translateOpcodesA(opcode, index_variables):
     instr = ""
     updated_variables = index_variables
@@ -598,6 +625,10 @@ def translateOpcodesA(opcode, index_variables):
 
 
 '''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated. It also updated the corresponding global variables.
 '''
 def translateOpcodesF(opcode, index_variables, addr):
     if opcode == "CREATE":
@@ -675,8 +706,8 @@ def translateOpcodesF(opcode, index_variables, addr):
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
-value is string that contains the number tpushed to the stack.
+updated. It also updated the corresponding global variables.
+-value is astring that contains the number pushed to the stack.
 '''
 def translateOpcodes60(opcode, value, index_variables):
     
@@ -693,13 +724,14 @@ def translateOpcodes60(opcode, value, index_variables):
 
 '''
 It simulates the execution of dup bytecode.
-It consumes or
+It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
-It duplicates what is sotred in the stack at pos value (when
-value == 1, it duplicates the top of the stack) 
-value is string
+updated. It also updated the corresponding global variables.
+
+It duplicates what is stored in the stack at pos value (when
+value == 1, it duplicates the top of the stack) .
+-value refers to the position to be duplicated. string.
 '''
 def translateOpcodes80(opcode, value, index_variables):
     if opcode == "DUP":
@@ -715,9 +747,11 @@ def translateOpcodes80(opcode, value, index_variables):
 
 '''
 It simulates the execution of swap bytecode.
-It consumes or generates variables depending on the bytecode and returns the
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
-updated.
+updated. It also updated the corresponding global variables.
+-value refers to the position involved in the swap. string.
 '''
 def translateOpcodes90(opcode, value, index_variables):
     if opcode == "SWAP":
@@ -733,6 +767,13 @@ def translateOpcodes90(opcode, value, index_variables):
 
     return instr, index_variables
 
+'''
+It simulates the execution of evm bytecodes.  It consumes or
+generates variables depending on the bytecode and returns the
+corresponding translated instruction and the variables's index
+updated. It also updated the corresponding global variables.
+Unclassified opcodes.
+'''
 def translateOpcodesZ(opcode, index_variables):
     if opcode == "RETURNDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
@@ -747,8 +788,15 @@ def translateOpcodesZ(opcode, index_variables):
         instr = "Error opcodesZ: "+opcode
 
     return instr, index_variables
-def is_conditional(instr):
 
+'''
+It checks if the list instr contains the element to generated a
+guard,i.e., just conditional statements, push and ended with a jump
+intruction.
+-instr is a list with instructions.
+-It returns a boolean.
+'''
+def is_conditional(instr):
     valid = True
     i = 1
     if instr[0] in ["LT","GT","EQ","ISZERO"] and instr[-1] in ["JUMP","JUMPI"]:
@@ -764,6 +812,8 @@ def is_conditional(instr):
 
 '''
 It returns the opposite guard of the one given as parameter.
+-guard is the guard to be "reversed". string.
+-opposit = not(guard). string.
 '''     
 def get_opposite_guard(guard):
     if guard[:2] == "lt":
@@ -793,10 +843,16 @@ def get_opposite_guard(guard):
 
 '''
 It translates the bytecode corresponding to evm_opcode.
-We mantain some empty instructions to insert the evm bytecodes
-They are remove when displaying
+We mantain some empty instructions to insert the evm bytecodes.
+They are remove when displaying.
+-rule refers to the rule that is being built. rbr_rule instance.
+-evm_opcode is the bytecode to be translated. string.
+-list_jumps contains the addresses of next blocks.
+-cond is True if the conditional statemnt refers to a guard. False otherwise.
+-nop is True when generating nop annotations with the opcode. False otherwise.
+-index_variables refers to the top stack index. int.
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond,nop):
+def compile_instr(rule,evm_opcode,variables,list_jumps,cond,nop):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -861,6 +917,9 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,stack_info,cond,nop):
 
 '''
 It creates the call to next block when the type of the current one is falls_to.
+-index_variables refers to the top stack index. int.
+-falls_to contains the address of the next block. int.
+-instr contains the call instruction generated. string.
 '''
 def process_falls_to_blocks(index_variables, falls_to):
     top = get_stack_index(falls_to)[0]
@@ -870,9 +929,16 @@ def process_falls_to_blocks(index_variables, falls_to):
     return instr
 
 '''
-It translates the jump instruction.
+It translates the jump instruction. 
 If the len(jumps)==1, it corresponds to a uncondtional jump.
-Otherwise we have to convert it into a conditional jump.
+Otherwise we have to convert it into a conditional jump. 
+-block_id refers to the id of the current block. int. 
+-variables refers to the top stack index. int.
+-jumps is a list with the addresses of the next blocks. 
+-It returns a tuple (rule1, rule2, instr) where rule1 and rule2 
+ are rule_rbr instances corresponding to the guarded jump rules
+ (if it is the case), and instr is the called instruction to the
+ jump rule generated. If it is a jump, rule1 = rule2 = None.
 '''
 def create_uncond_jump(block_id,variables,jumps):
     if (len(jumps)>1):
@@ -903,7 +969,11 @@ def create_uncond_jump(block_id,variables,jumps):
     return rule1,rule2,instr
 
 '''
-It generates the new two jump blocks.
+It generates the new two jump blocks (if it is the case).
+-block_id is the address of jump blocks. int.
+-variables refers to the top stack index when starting the rule. int.
+-jumps is a list with the addresses of the next blocks.
+- rule1 and rule2 are rbr_rule instances containing the jump rules.
 '''
 def create_uncond_jumpBlock(block_id,variables,jumps):
     v1, index_variables = get_consume_variable(variables)
@@ -934,8 +1004,18 @@ def create_uncond_jumpBlock(block_id,variables,jumps):
     return rule1, rule2
 
 '''
-Ponemos en consume el numero de las variables que se consumen depende de si la
-condicion es un iszero o una normal
+It translates the jumpi instruction.  
+-block_id refers to the id of the current block. int.
+-l_instr contains the instructions involved in the generation of the jump. 
+-variables refers to the top stack index. int.
+-jumps is a list with the addresses of the next blocks. [int].
+- falls_to is the address of one of the next blocks. int.
+-nop is True when generating nop annotations with the opcode. False otherwise.
+-guard is true if we have to generate the guard. Otherwise we have to compare
+ it he top variable is equal to 1.
+-It returns a tuple (rule1, rule2, instr) where rule1 and rule2 
+ are rule_rbr instances corresponding to the guarded jump rules,
+ and instr is the called instruction to the jump rule generated.
 '''
 def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop,guard = None):
     
@@ -958,7 +1038,14 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop,guard = None)
     return rule1, rule2, instr
 
 '''
-It generates the new two jump blocks.
+-l_instr contains the instructions involved in the generation of the jump. 
+-variables refers to the top stack index. int.
+-jumps is a list with the addresses of the next blocks. [int].
+- falls_to is the address of one of the next blocks. int.
+-nop is True when generating nop annotations with the opcode. False otherwise.
+-guard is true if we have to generate the guard. Otherwise we have to compare
+ it he top variable is equal to 1.
+- rule1 and rule2 are rbr_rule instances containing the jump rules.
 '''
 def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard):
     if guard:
@@ -1007,9 +1094,9 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard):
     return rule1, rule2
 
 '''
-index_variables points to the corresponding top element.
-The stack could be reconstructed as
-[s(ith)...s(0)].
+It generates the rbr rules corresponding to a block from the CFG.
+index_variables points to the corresponding top stack index.
+The stack could be reconstructed as [s(ith)...s(0)].
 '''
 def compile_block(block,nop):
     global rbr_blocks
@@ -1068,7 +1155,7 @@ def compile_block(block,nop):
                 rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),block.get_stack_info(),True,nop)        
+                                                   index_variables,block.get_list_jumps(),True,nop)        
         cont+=1
 
     if(block.get_block_type()=="falls_to"):
@@ -1079,6 +1166,12 @@ def compile_block(block,nop):
     return rule
 
 
+'''
+Disasm files can be modified manually and may contain nonexistent
+blocks. This function generate one empty rule for these blocks.
+-blocks is a list with the id of the unbuilt blocks.
+-It returns a list with the new rules generated.
+'''
 def create_blocks(blocks):
     rules = []
     for b in blocks:
@@ -1087,6 +1180,13 @@ def create_blocks(blocks):
     return rules
 
 
+'''
+It creates a file with the rbr rules generated for the programa
+analyzed. If it contains more than 1 smart contract it creates a file
+for each smart contract.
+-rbr is a list containing instances of rbr_rule.
+-executions refers to the number of smart contract that has been translated. int.
+'''
 def write_rbr(rbr,executions):
     if "costabs" not in os.listdir("/tmp/"):
         os.mkdir("/tmp/costabs/")
@@ -1107,7 +1207,12 @@ def write_rbr(rbr,executions):
 
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
-It receives as input the blocks of the CFG (basicblock.py)
+-blocks_input contains a list with the blocks of the CFG. basicblock.py instances.
+-stack_info is a mapping block_id => height of the stack.
+-block_unbuild is a list that contains the id of the blocks that have not been considered yet. [string].
+-nop_opcodes is True if it has to annotate the evm bytecodes.
+-saco_rbr is True if it has to generate the RBR in SACO syntax.
+-exe refers to the number of smart contracts analyzed.
 '''
 def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None):
     global rbr_blocks
