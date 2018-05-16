@@ -2,10 +2,18 @@
 
 from utils import toInt
 '''
-RBRRule class represents the rules of the transaction system.
+RBRRule class. It represents the rules of the transaction system.
 Each rule contains:
- * identifier
-
+- blockId: It is the same that the id of the block translated.
+- rule_name: name that identifies the rbr.
+- arg_input: top stack index.
+- arg_global: list containing the field index known.
+- arg_local: index of the top most local variable.
+- guard: It contains the guard of the jump rbr.
+- instr: list of instructions translated.
+- rbr_type: block or jump depending on the type of the rbr generated.
+- bc: list of the contract variables used by the program analyzed.
+- fresh_index: index to generate new fresh variables.
 '''
 
 class RBRRule:
@@ -84,7 +92,10 @@ class RBRRule:
     def get_fresh_index(self):
         return self.fresh_index
     
-
+    '''
+    It generates the stack variables using the arg_input attribute.
+    It returns a list with the stack variables.
+    '''
     def build_input_vars(self):
         in_vars = []
         for i in xrange(self.arg_input-1,-1,-1):
@@ -92,6 +103,10 @@ class RBRRule:
             in_vars.append(var)
         return in_vars
 
+    '''
+    It generates the field variables using the indexes in the list arg_global.
+    It returns a list with the field variables.
+    '''
     def build_field_vars(self):
         field_vars = []
         for i in self.arg_global:
@@ -99,6 +114,10 @@ class RBRRule:
             field_vars.append(var)
         return field_vars
 
+    '''
+    It generates the local variables using the arg_local attribute.
+    It returns a list with the local variables.
+    '''
     def build_local_vars(self):
         local_vars = []
         for i in xrange(self.arg_local-1,-1,-1):
@@ -106,6 +125,9 @@ class RBRRule:
             local_vars.append(var)
         return local_vars
 
+    '''
+    It generates the final call instruction.
+    '''
     def update_calls(self):
         instructions = []
         for elem in self.instr:
@@ -131,6 +153,9 @@ class RBRRule:
             instructions.append(new_instr)
         self.instr = instructions
 
+    '''
+    It returns a string that contains the variables specified in types.
+    '''
     def vars_to_string(self,types):
         if types == "input":
             in_aux = self.build_input_vars()
@@ -152,6 +177,9 @@ class RBRRule:
                 
         return string_vars
 
+    '''
+    It builds a string that represent the rbr.
+    '''
     def rule2string(self):
         rule = ""
         
@@ -191,6 +219,6 @@ class RBRRule:
             rule = rule + "\t"+instr+"\n"
 
         return rule
-    
+
     def display(self):
         print self.rule2string()
