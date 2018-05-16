@@ -151,7 +151,7 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument("-s",  "--source",    type=str, help="local source file name. Solidity by default. Use -b to process evm instead. Use stdin to read from stdin.")
-    group.add_argument("-ru", "--remoteURL", type=str, help="Get contract from remote URL. Solidity by default. Use -b to process evm instead.", dest="remote_URL")
+    # group.add_argument("-ru", "--remoteURL", type=str, help="Get contract from remote URL. Solidity by default. Use -b to process evm instead.", dest="remote_URL")
 
     parser.add_argument("--version", action="version", version="oyente version 0.2.7 - Commonwealth")
 
@@ -226,15 +226,15 @@ def main():
     if not has_dependencies_installed():
         return
 
-    if args.remote_URL:
-        r = requests.get(args.remote_URL)
-        code = r.text
-        filename = "remote_contract.evm" if args.bytecode else "remote_contract.sol"
-        args.source = filename
-        with open(filename, 'w') as f:
-            f.write(code)
+    # if args.remote_URL:
+    #     r = requests.get(args.remote_URL)
+    #     code = r.text
+    #     filename = "remote_contract.evm" if args.bytecode else "remote_contract.sol"
+    #     args.source = filename
+    #     with open(filename, 'w') as f:
+    #         f.write(code)
 
-    exit_code = 0
+    # exit_code = 0
 
     clean_dir()
 
