@@ -180,9 +180,9 @@ bound for those loops. Here are some of the loop bounds inferred by SACO for som
 | Enclaves | 268 | AuctusEther | 264 |
 | Advertisement | inf |  validToken | inf |
 
-[SACO](http://costa.fdi.ucm.es/saco/web/) infers a linear bound for the first four smart contracts shown in the table above. The bounds of BlockKing and CryptoPhoenix smart contracts depend on the value of one of their fields (the eighth and third respectively). For Loop1 and Eligma smart contracts, the bounds obtained rely on function arguments (a and _numberOfReturns). In case smart contracts do not contain any loop as Lottery or BlockSquareSerieA, [SACO](http://costa.fdi.ucm.es/saco/web/) infers a constant bound.
+[SACO](http://costa.fdi.ucm.es/saco/web/) infers a linear bound for the first four smart contracts shown in the table above. The bounds of smart contracts BlockKing and CryptoPhoenix depend on the value of one of their fields (the eighth and third respectively). For smart contracts Loop1 and Eligma, the bounds obtained rely on arguments of some of its functions (a and _numberOfReturns). In case smart contracts do not contain any loop as Lottery, BlockSquareSerieA, Enclaves or AuctusEther, [SACO](http://costa.fdi.ucm.es/saco/web/) infers a constant bound.
 
-Note that due to precision limitations of [SACO](http://costa.fdi.ucm.es/saco/web/) (it does not have bit-operations) the analyzer forgets the information on bit variables. Due to this factor, [SACO](http://costa.fdi.ucm.es/saco/web/) is not able to infer a bound for some of the smart contracts such as ValidToken or Advertisement and returns *inf*.
+Note that due to precision limitations of [SACO](http://costa.fdi.ucm.es/saco/web/) (it does not have bit-operations and a model for function sha3) the analyzer forgets the information on bit variables. Due to this factor, [SACO](http://costa.fdi.ucm.es/saco/web/) is not able to infer a bound for some of the smart contracts such as ValidToken or Advertisement and returns *inf*.
 
 Other high-level analyzers that work on intermediate forms like Integer transition systems or Horn clauses  (e.g., AproVe, T2, VeryMax, CoFloCo) could be easily adapted as well to work on RBR translated programs produced by EthIR. 
 
