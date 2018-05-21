@@ -47,15 +47,15 @@ pip install web3
 
 To execute EthIR, run one of the following commands inside the folder *ethir*:
 
-1. Run ETHIR from a solidity file:
+1. Run EthIR from a solidity file:
 ```
 ./oyente-ethir -s file_name.sol
 ```
-2. Run ETHIR from an EVM file:
+2. Run EthIR from an EVM file:
 ```
 ./oyente-ethir -s file_name.evm -b 
 ```
-3. Run ETHIR from a disassembly EVM file:
+3. Run EthIR from a disassembly EVM file:
 ```
 ./oyente-ethir -s file_name.disasm -disasm 
 ```
