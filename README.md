@@ -24,7 +24,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
 
 3. Install [Z3](https://github.com/Z3Prover/z3/releases) (last version tested 4.5.0)
 
-   Download the [source code folder](https://github.com/Z3Prover/z3/releases/tag/z3-4.5.0).
+   Download the [source code folder](https://github.com/Z3Prover/z3/archive/z3-4.5.0.zip).
 
    Decompress the folder and install it.
 ```
