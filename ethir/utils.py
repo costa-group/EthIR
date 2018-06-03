@@ -344,7 +344,6 @@ def process_hashes(solidity_file):
     solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
     string = solc_p.communicate()[0].decode()
     lines = string.split("\n")
-    print(lines)
     i = 0
     while i < len(lines):
         line = lines[i]
