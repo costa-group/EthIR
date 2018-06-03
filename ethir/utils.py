@@ -314,3 +314,47 @@ It returns the id of a rbr_rule.
 '''
 def orderRBR(rbr):
     return rbr[0].get_Id()
+
+
+def get_function_names(i,lineas):
+    delimiter = "======"
+    names = []
+    line = lineas[i]
+    while line !="" and line.find(delimiter)==-1:
+        parts = line.split(":")
+        hash_code = parts[0].strip()
+        fun_name = parts[1].strip()
+        names.append((hash_code,fun_name))
+        i+=1
+        line = lineas[i]
+
+    return i, names
+
+'''
+It returns a map that for each contract, it returns a list of pairs (hash, name_function).
+Solidity file is a string that contains the name of the solidity file that is going to be analized.
+'''
+def process_hashes(solidity_file):
+    cmd = "solc --hashes "+str(solidity_file)
+    delimiter = "======="
+
+    m = {}
+    
+    FNULL = open(os.devnull, 'w')
+    solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
+    string = solc_p.communicate()[0].decode()
+    lines = string.split("\n")
+    print(lines)
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        parts = line.strip().split()
+        
+        if parts!=[] and parts[0] == delimiter:
+            cname = parts[1].split(":")[1]
+            i, names = get_function_names(i+2,lines)
+            m[cname] = names
+        else:
+            i+=1
+
+    return m
