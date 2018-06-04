@@ -10,7 +10,7 @@ import requests
 import argparse
 import subprocess
 import global_params
-from utils import run_command
+from utils import run_command, process_hashes
 from input_helper import InputHelper
 
 def cmd_exists(cmd):
@@ -98,19 +98,22 @@ def analyze_bytecode():
 
     return exit_code
 
-def run_solidity_analysis(inputs):
+def run_solidity_analysis(inputs,hashes):
     results = {}
     exit_code = 0
 
     i = 0
     if len(inputs) == 1:
         inp = inputs[0]
+        print inp["c_names"]
+#        function_names = hashes[inp["c_name"]]
         result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco)
         if return_code == 1:
             exit_code = 1
     else:
         for inp in inputs:
-        
+            print inp["c_name"]
+#        function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i)
             i+=1
@@ -135,7 +138,8 @@ def analyze_solidity(input_type='solidity'):
     elif input_type == 'standard_json_output':
         helper = InputHelper(InputHelper.STANDARD_JSON_OUTPUT, source=args.source,evm=args.evm)
     inputs = helper.get_inputs()
-    results, exit_code = run_solidity_analysis(inputs)
+    hashes = process_hashes(args.source)
+    results, exit_code = run_solidity_analysis(inputs,hashes)
     helper.rm_tmp_files()
 
     if global_params.WEB:
