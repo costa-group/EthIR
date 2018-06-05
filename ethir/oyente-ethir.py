@@ -105,17 +105,16 @@ def run_solidity_analysis(inputs,hashes):
     i = 0
     if len(inputs) == 1:
         inp = inputs[0]
-        print inp["c_names"]
-#        function_names = hashes[inp["c_name"]]
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco)
+        function_names = hashes[inp["c_name"]]
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,cname = inp["c_name"],hashes = function_names)
         if return_code == 1:
             exit_code = 1
     else:
         for inp in inputs:
-            print inp["c_name"]
-#        function_names = hashes[inp["c_name"]]
+            #print hashes[inp["c_name"]]
+            function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names)
             i+=1
             try:
                 c_source = inp['c_source']
