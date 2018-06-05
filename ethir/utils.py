@@ -318,13 +318,13 @@ def orderRBR(rbr):
 
 def get_function_names(i,lineas):
     delimiter = "======"
-    names = []
+    names = {}
     line = lineas[i]
     while line !="" and line.find(delimiter)==-1:
         parts = line.split(":")
         hash_code = parts[0].strip()
         fun_name = parts[1].strip()
-        names.append((hash_code,fun_name))
+        names[hash_code]=fun_name
         i+=1
         line = lineas[i]
 
