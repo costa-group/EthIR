@@ -2521,6 +2521,6 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
         write_cfg(execution)
         
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution)
-    #print function_block_map  
+      
     return [], 0
 #detect_vulnerabilities()
