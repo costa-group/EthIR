@@ -446,8 +446,13 @@ def translateOpcodes30(opcode, value, index_variables):
     elif opcode == "CALLDATALOAD":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = calldataload"
-        update_bc_in_use("calldataload")
+        val = str(value).split("_")
+        if val[0] == "Id":
+            instr = v1+" = calldataload"
+            update_bc_in_use("calldataload")
+        else:
+            instr = v1+" = "+str(value).strip("_")
+            update_bc_in_use(str(value).strip("_"))
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
