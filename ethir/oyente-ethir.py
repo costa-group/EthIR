@@ -67,7 +67,7 @@ def clean_dir():
     if "costabs" in os.listdir("/tmp/"):
         for elem in os.listdir("/tmp/costabs/"):
             last = elem.split(".")[-1]
-            if last == "rbr" or last == "cfg":
+            if last == "rbr" or last == "cfg" or last == "txt":
                 os.remove("/tmp/costabs/"+elem)
 
 
@@ -145,6 +145,9 @@ def analyze_solidity(input_type='solidity'):
         six.print_(json.dumps(results))
     return exit_code
 
+def hashes_cond(args):
+    return args.hashes and (not args.disassembly and not args.evm)
+
 def main():
     # TODO: Implement -o switch.
 
@@ -189,7 +192,8 @@ def main():
     parser.add_argument( "-disasm", "--disassembly",           help="Consider a dissasembly evm file directly", action="store_true")
     parser.add_argument( "-cfg", "--control-flow-graph",           help="Store the CFG", action="store_true")
     parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
-    parser.add_argument( "-saco", "--saco",           help="Translate EthIR RBR to SACO RBR", action="store_true")           
+    parser.add_argument( "-saco", "--saco",           help="Translate EthIR RBR to SACO RBR", action="store_true")
+    parser.add_argument( "-hashes", "--hashes",       help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
 
     # if args.root_path:
@@ -254,6 +258,17 @@ def main():
     #     exit_code = analyze_solidity(input_type='standard_json')
     # elif args.standard_json_output:
     #     exit_code = analyze_solidity(input_type='standard_json_output')
+    elif hashes_cond(args):
+        mp = process_hashes(args.source)
+        with open("/tmp/costabs/solidity_functions.txt", "w") as f:
+            for name in mp:
+                f_names = mp[name].values()
+                cf_names = map(lambda x: name+"."+str(x),f_names)
+                new_names = "\n".join(cf_names)+"\n" if cf_names!=[] else ""
+                f.write(new_names)
+        f.close()
+        exit_code = 0
+        
     else:
         exit_code = analyze_solidity()
 
