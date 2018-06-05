@@ -185,6 +185,12 @@ def initGlobalVars():
 
     global ls_cont #load store cont 
     ls_cont = [0,0,0,0] #[mload, mstore, sload, sstore]
+
+    global f_hashes
+    f_hashes = None
+
+    global function_block_map
+    function_block_map = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -811,6 +817,8 @@ def sym_exec_ins(params, block, instr, func_call):
     global calls_affect_state
     global data_source
     global ls_cont
+    global function_block_map
+
     
     stack = params.stack
     mem = params.mem
@@ -1878,6 +1886,11 @@ def sym_exec_ins(params, block, instr, func_call):
     elif opcode.startswith('PUSH', 0):  # this is a push instruction
         position = int(opcode[4:], 10)
         global_state["pc"] = global_state["pc"] + 1 + position
+        hs = str(instr_parts[1])[2:] #To delete 0x...
+        if f_hashes and hs in f_hashes :
+            name = f_hashes[hs]
+            function_block_map[name]=block
+        
         pushed_value = int(instr_parts[1], 16)
         stack.insert(0, pushed_value)
         if global_params.UNIT_TEST == 3: # test evm symbolic
@@ -2425,7 +2438,6 @@ def do_nothing():
     pass
 
 def run_build_cfg_and_analyze(timeout_cb=do_nothing):
-    initGlobalVars()
     global g_timeout
 
     try:
@@ -2487,26 +2499,28 @@ def delete_uncalled():
             stack_h.pop(b)
             calldataload_values.pop(b)
     
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
     global results
+    global f_hashes
 
     g_disasm_file = disasm_file
     g_source_file = source_file
     g_src_map = source_map
 
-    #atexit.register(closing_message)
-    # if is_testing_evm():
-    #     test()
-    # else:
+    initGlobalVars()
+     
+    if hashes != None:
+        f_hashes = hashes
+    
     begin = time.time()
     analyze()
     if cfg:
         write_cfg(execution)
         
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution)
-        
+    #print function_block_map  
     return [], 0
 #detect_vulnerabilities()
