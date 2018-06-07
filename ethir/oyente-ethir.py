@@ -67,7 +67,7 @@ def clean_dir():
     if "costabs" in os.listdir("/tmp/"):
         for elem in os.listdir("/tmp/costabs/"):
             last = elem.split(".")[-1]
-            if last == "rbr" or last == "cfg" or last == "txt":
+            if last == "rbr" or last == "cfg" or last == "txt" or last == "config":
                 os.remove("/tmp/costabs/"+elem)
 
 
