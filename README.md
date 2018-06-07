@@ -35,14 +35,24 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  make
  sudo make install
 ```
-4. Install dependencies
+4. Install dependencies (last pip version tested 8.1.1)
+   
+   Use `pip install` command to install six, requests python libraries.
 
-   Use `pip install` command to install six, requests, web3 python libraries.
 ```
 pip install six
 pip install requests
-pip install web3
 ```
+
+   The above commands may fail depending on the pip version. If it is the case, run the following command instead of the   previous ones.
+
+```
+python -m pip install six
+python -m pip install requests
+```
+
+   To check the version run the command `pip -V`.
+
 ## Run EthIR
 
 To execute EthIR, run one of the following commands inside the folder *ethir*:
@@ -109,7 +119,7 @@ block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0)
 	s(2) = s(0)
 	call(jump11(s(2),s(1),s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
 ```
-If we execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -eop` instead of the above one, the RBR that EthIR produces has nops annotations, with the EVM bytecode translated, interleaved in the text. Below is a sketch of the RBR with nops annotations generated for *blockking.evm.disasm*:
+If we execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -eop` instead of the above one, the RBR that EthIR produces has nops annotations, with the EVM bytecode interleaved in the text. Below is a sketch of the RBR with nops annotations generated for *blockking.evm.disasm*:
 ```
 block0(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
 	s(0) = 96
@@ -156,7 +166,7 @@ block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0)
 	nop(JUMPI)
 ```
 
-EthIR also allows us to store the CFG of the file analysed. In that case, we have to execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -cfg`. EthIR stores the cfg in a file named *cfg.cfg* in the directory */tmp/costabs/*.
+EthIR also allows us to store the CFG of the file analysed. In that case, we have to execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -cfg`. EthIR stores the cfg in a file with *.cfg* extension in the directory */tmp/costabs/*.
 
 Note that a file may contain more than one smart contract. In that case, EthIR generates one file per each contract rbr0.rbr, rbr1.rbr,...rbrn.rbr .
 
