@@ -36,18 +36,23 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  sudo make install
 ```
 4. Install dependencies (last pip version tested 8.1.1)
+   
+   Use `pip install` command to install six, requests python libraries.
 
-   Use `pip install` command to install six, requests python libraries.
 ```
 pip install six
 pip install requests
 ```
-   The above commands may fail depending on the pip version. If it is the case, run the following command instead of the previous ones.
+
+   The above commands may fail depending on the pip version. If it is the case, run the following command instead of the   previous ones.
+
 ```
 python -m pip install six
 python -m pip install requests
 ```
+
    To check the version run the command `pip -V`.
+
 ## Run EthIR
 
 To execute EthIR, run one of the following commands inside the folder *ethir*:
