@@ -1192,15 +1192,16 @@ for each smart contract.
 -rbr is a list containing instances of rbr_rule.
 -executions refers to the number of smart contract that has been translated. int.
 '''
-def write_rbr(rbr,executions):
+def write_rbr(rbr,executions,cname = None):
     if "costabs" not in os.listdir("/tmp/"):
         os.mkdir("/tmp/costabs/")
 
     if executions == None:
         name = "/tmp/costabs/rbr.rbr"
-    else:
+    elif cname == None:
         name = "/tmp/costabs/rbr"+str(executions)+".rbr"
-
+    else:
+        name = "/tmp/costabs/"+cname+".rbr"
     with open(name,"w") as f:
         for rules in rbr:
             for r in rules:
@@ -1219,7 +1220,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None):
     global rbr_blocks
     global stack_index
     
@@ -1248,9 +1249,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             rbr_blocks[r.get_rule_name()]=[r]
         
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
-        write_rbr(rbr,exe)
+        write_rbr(rbr,exe,contract_name)
         if saco_rbr:
-            saco.rbr2saco(rbr,exe)
+            saco.rbr2saco(rbr,exe,contract_name)
     else :
         print "Error, you have to provide the CFG associated with the solidity file analyzed"
 
