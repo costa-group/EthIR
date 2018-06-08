@@ -162,7 +162,8 @@ def generate_saco_hashes_file(dicc):
     with open("/tmp/costabs/solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
-            cf_names = map(process_name,f_names)
+            cf_names1 = map(process_name,f_names)
+            cf_names = map(lambda x: name+"."+x,cf_names1)
             new_names = "\n".join(cf_names)+"\n" if cf_names!=[] else ""
             f.write(new_names)
     f.close()
