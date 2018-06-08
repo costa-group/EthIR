@@ -266,15 +266,16 @@ def print_cfg():
         block.display()
     log.debug(str(edges))
 
-def write_cfg(it):
+def write_cfg(it,name = False):
     vert = sorted(vertices.values(), key = getKey)
     if "costabs" not in os.listdir("/tmp/"):
         os.mkdir("/tmp/costabs/")
     if it == None:
         name = "/tmp/costabs/cfg_evm.cfg"
-    else:
+    elif name == False:
         name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
-        
+    else:
+        name = "/tmp/costabs/cfg_"+name+".cfg"
     with open(name,"w") as f:
         for block in vert:
             f.write("================\n")
@@ -2498,7 +2499,21 @@ def delete_uncalled():
             vertices.pop(b)
             stack_h.pop(b)
             calldataload_values.pop(b)
-    
+
+def generate_saco_config_file(cname):
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+        
+    if cname == None:
+        name = "/tmp/costabs/config_block.config"
+    else:
+        name = "/tmp/costabs/"+cname+".config"
+    with open(name,"w") as f:
+        elems = map(lambda (x,y): "("+str(x)+";"+str(y)+")", function_block_map.items())
+        elems2write = "\n".join(elems)
+        f.write(elems2write)
+    f.close()
+            
 def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None):
     global g_disasm_file
     global g_source_file
@@ -2518,9 +2533,15 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     begin = time.time()
     analyze()
     if cfg:
-        write_cfg(execution)
-        
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution)
-      
+        if cname == None:
+            write_cfg(execution)
+        else:
+            write_cfg(execution,name = cname)
+    
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname)
+
+    if saco != None and hashes != None: #Hashes is != None only if source file is solidity
+        generate_saco_config_file(cname)
+    
     return [], 0
 #detect_vulnerabilities()
