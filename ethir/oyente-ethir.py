@@ -106,7 +106,7 @@ def run_solidity_analysis(inputs,hashes):
     if len(inputs) == 1:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,cname = inp["c_name"],hashes = function_names)
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names)
         if return_code == 1:
             exit_code = 1
     else:
@@ -148,12 +148,21 @@ def analyze_solidity(input_type='solidity'):
 def hashes_cond(args):
     return args.hashes and (not args.disassembly and not args.evm)
 
+def process_name(fname):
+    name = str(fname)
+    pos = name.find("(")
+    if pos!=-1 and name[pos+1]==")":
+        new_name = name[:pos]
+    else :
+        new_name = name.replace("(",":").replace(")","")
+
+    return new_name
 
 def generate_saco_hashes_file(dicc):
     with open("/tmp/costabs/solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
-            cf_names = map(lambda x: name+"."+str(x),f_names)
+            cf_names = map(process_name,f_names)
             new_names = "\n".join(cf_names)+"\n" if cf_names!=[] else ""
             f.write(new_names)
     f.close()
