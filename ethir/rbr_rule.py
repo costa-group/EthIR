@@ -27,12 +27,14 @@ class RBRRule:
 
         self.arg_input = 0
         self.arg_global = []
-        self.arg_local = 0
+        self.arg_local = []
         self.guard=""
         self.instr=[]
         self.rbr_type = typeBlock
         self.bc = []
         self.fresh_index = 0
+        self.call_to = -1
+        self.call_to_info = None
     
     def get_guard(self):
         return self.guard
@@ -73,28 +75,51 @@ class RBRRule:
     def set_args_local(self,ls):
         self.arg_local = ls
 
+    def update_local_arg(self,l):
+        self.arg_local = list(set(self.arg_local+l))
+
     def set_global_vars(self,l):
         self.arg_global = sorted(l,key= toInt)[::-1]
         
 
     def get_global_arg(self):
-        return self.arg_global
+        return sorted(self.arg_global,key = toInt)[::-1]
 
+    def update_global_arg(self,l):
+        aux = self.arg_global+l
+        self.arg_global = list(set(aux))
+        
     def set_bc(self,bc_used):
         self.bc = bc_used
 
     def get_bc(self):
-        return self.bc
+        return sorted(self.bc)
+
+    def update_bc(self,l):
+        aux = self.bc+l
+        self.bc = list(set(aux))
 
     def set_fresh_index(self,val):
         self.fresh_index = val
 
     def get_fresh_index(self):
         return self.fresh_index
-    
+
+    def get_call_to(self):
+        return self.call_to
+
+    def set_call_to(self,blockId):
+        self.call_to = blockId
+
+    def get_call_to_info(self):
+        return self.call_to_info
+
+    def set_call_to_info(self, info):
+        self.call_to_info = info
+        
     '''
-    It generates the stack variables using the arg_input attribute.
-    It returns a list with the stack variables.
+    It generates the stack variables using the arg_input attribute. 
+   It returns a list with the stack variables.
     '''
     def build_input_vars(self):
         in_vars = []
@@ -109,7 +134,8 @@ class RBRRule:
     '''
     def build_field_vars(self):
         field_vars = []
-        for i in self.arg_global:
+        ordered = sorted(self.arg_global,key= toInt)[::-1]
+        for i in ordered:
             var = "g("+ str(i)+")"
             field_vars.append(var)
         return field_vars
@@ -120,7 +146,8 @@ class RBRRule:
     '''
     def build_local_vars(self):
         local_vars = []
-        for i in xrange(self.arg_local-1,-1,-1):
+        ordered = sorted(self.arg_local)[::-1]
+        for i in ordered:
             var = "l("+str(i)+")"
             local_vars.append(var)
         return local_vars
@@ -130,23 +157,37 @@ class RBRRule:
     '''
     def update_calls(self):
         instructions = []
+        
         for elem in self.instr:
             
-            if elem.find("call(")!=-1:
+            posCall = elem.find("call(")
+
+            if posCall != -1:
+                posBra = elem.find("(",posCall+5)
                 posInit = elem.find("global",0)
-
-                gv_aux = self.build_field_vars()
-                local_vars = self.build_local_vars()
+                if self.call_to_info!=None:
+                    gv_aux, bc, local_vars = self.call_to_info #local_vars
+                else:
+                    gv_aux = self.build_field_vars()
+                    bc = self.vars_to_string("data")
+                    local_vars = self.build_local_vars()
+                    
+                gv = ", ".join(gv_aux)
                 local_vars_string = ", ".join(local_vars)
-                if (len(gv_aux)==0):
-                    gv = ""
-                else:
-                    gv = ", ".join(gv_aux)
+                                    
                 if gv != "":
-                    new_instr = elem[:posInit]+gv+", "+local_vars_string+", "+self.vars_to_string("data")+"))"
+                    new_instr = elem[:posInit]+gv#+", "+local_vars_string#+", "+bc+"))"
                 else:
-                    new_instr = elem[:posInit]+local_vars_string+", "+self.vars_to_string("data")+"))"
-
+                    new_instr = elem[:posBra+1]
+                    new_instr = new_instr+elem[posBra+1:posInit-1]#+local_vars_string#+", "+bc+"))"
+                
+                if local_vars_string != "":
+                    new_instr = new_instr+", "+local_vars_string
+                
+                if bc != "":
+                    new_instr = new_instr+", "+bc+"))"
+                else:
+                    new_instr = new_instr+"))"
             else:
                 new_instr = elem
                 
@@ -173,7 +214,7 @@ class RBRRule:
             if len(self.bc) == 0:
                 string_vars = ""
             else:
-                string_vars = ", ".join(self.bc)
+                string_vars = ", ".join(sorted(self.bc))
                 
         return string_vars
 
@@ -191,6 +232,7 @@ class RBRRule:
         in_vars = self.vars_to_string("input")
         gv = self.vars_to_string("global")
         bc_input = self.vars_to_string("data")
+
         
         if (in_vars == ""):
             if(gv == ""):
@@ -202,14 +244,17 @@ class RBRRule:
             if(gv != ""):
                 d_vars = d_vars+", "+gv
 
-        if d_vars == "":
+        if d_vars == "" and local_vars != []:
             d_vars = ", ".join(local_vars)
-        else:
+        elif d_vars != "" and local_vars !=[]:
             d_vars = d_vars+", "+ ", ".join(local_vars)
             
-        if (bc_input != ""):
+        if d_vars != "" and bc_input != "":
             d_vars = d_vars+", "+bc_input
 
+        elif d_vars == "" and bc_input !="":
+            d_vars = bc_input
+            
         rule = rule + self.rule_name+"("+d_vars+")=>\n"
 
         if self.guard != "" :
@@ -221,4 +266,4 @@ class RBRRule:
         return rule
 
     def display(self):
-        print self.rule2string()
+        print (self.rule2string())
