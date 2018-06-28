@@ -17,35 +17,44 @@ def rbr2saco(rbr,execution,cname):
     
 def build_head(rule):
     head = rule.get_rule_name()
+
     input_vars = rule.vars_to_string("input")
+
     local_vars = rule.build_local_vars()
     local_vars_string = ", ".join(local_vars)
+
     gv_aux = get_field_vars(rule)
     if(len(gv_aux)> 0 ):
         gv = ", ".join(gv_aux)
     else:
         gv = ""
-
+    
     cv_aux = get_contract_vars(rule)
     if(len(cv_aux)>0):
         cv = ", ".join(cv_aux)
-
     else:
         cv = ""
-        
+
     if (input_vars == ""):
             if(gv == ""):
-                d_vars = ""+local_vars_string
+                d_vars = ""
             else:
-                d_vars = gv+", "+local_vars_string
+                d_vars = gv
     else:
         d_vars = input_vars
         if(gv != ""):
-            d_vars = d_vars+", "+gv+", "+local_vars_string
+            d_vars = d_vars+", "+gv
 
-    if (cv != ""):
+    if d_vars == "" and local_vars_string != "":
+        d_vars = local_vars_string
+    elif d_vars != "" and local_vars_string != "":
+        d_vars = d_vars+", "+local_vars_string
+    
+    if d_vars != "" and cv != "":
         d_vars = d_vars+", "+cv
-
+    elif d_vars == "" and cv != "":
+        d_vars = cv
+    
     return head+"("+d_vars+")=>"
 
 
@@ -75,50 +84,114 @@ def get_field_vars(rule):
     new = map(lambda x: "field(g"+x+")",gv)
     return new
 
-def call_instruction(rule,instr):
-    pos_head = instr.find("(",5) #It is a call. It starts with call(__( 
-    pos0 = instr.find("s(0)",0)
-    pos1 = instr.find("g(",0)
-
-    local_vars = rule.build_local_vars()
-    local_vars_string = ", ".join(local_vars)
-
-    if pos1 != -1:
-        gv = get_field_vars(rule)
-        fv = ", ".join(gv)
+def transform_vars(var):
+    
+    if var.find("s(")!=-1: #stack variable
+        new_var = var
+    elif var.find("g(")!=-1: #field variable
+        posEnd = var.find(")")
+        new_var = "field(g"+var[2:posEnd]+")"
+    elif var.find("l(")!=-1: #local variable
+        new_var = var
+    elif var != "": #contract variable
+        new_var = "l("+var+")"
     else:
-        fv = ""
+        new_var = ""
+    return new_var
+
+def call_instruction(instr):
+
+    pos_head = instr.find("(",5) #It is a call. It starts with call(__(
+    end = len(instr)-2
+    variables = instr[pos_head+1:end].split(",")
+    new_vars = map(lambda x: transform_vars(x.strip()),variables)
+    new_vars_string = ", ".join(new_vars)
+
+    new_instr = instr[:pos_head+1]+new_vars_string+"))"
+    return new_instr
+
+# def call_instruction(rule,instr):
+
+#     pos_head = instr.find("(",5) #It is a call. It starts with call(__( 
+#     pos0 = instr.find("s(0)",0)
+#     pos1 = instr.find("g(",0)
+    
+#     if pos1 != -1:
+#         if rule.get_call_to_info() == None:
+#             gv = get_field_vars(rule)
+#         else:
+#             gv_aux =  rule.get_call_to_info()[0]
+#             gv = map(lambda x: "field("+x.replace("(","").replace(")","")+")",gv_aux)
+
+#         fv = ", ".join(gv)
+            
+#     else:
+#         fv = ""
         
-    cv_aux = get_contract_vars(rule)
-    if len(cv_aux)>0:
-        cv =", ".join(cv_aux)
-    else:
-        cv = ""
-                    
-    if fv != "":
-        if pos0 != -1:
-            if cv!="":
-                new = instr[:pos0+4]+", "+fv+", "+local_vars_string+", "+cv+"))"
-            else:
-                new = instr[:pos0+4]+", "+fv+", "+local_vars_string+"))"
-        else:
-            if cv!="":
-                new = instr[:pos_head+1]+fv+", "+local_vars_string+", "+cv+"))"
-            else:
-                new = instr[:pos_head+1]+fv+", "+local_vars_string+"))"
-    else:
-        if pos0 != -1: #there is a 
-            if cv!="":
-                new = instr[:pos0+4]+","+local_vars_string+", "+cv+"))"
-            else:
-                new = instr[:pos0+4]+","+local_vars_string+"))"
-        else:
-            if cv!="":
-                new = instr[:pos_head+1]+local_vars_string+", "+cv+"))"
-            else:
-                new = instr[:pos_head+1]+local_vars_string+"))"
+#     cv_aux = get_contract_vars(rule) if rule.get_call_to_info()==None else rule.get_call_to_info()[1]
+#     if len(cv_aux)>0 :
+#         if type(cv_aux) == type([]):
+#             cv =", ".join(cv_aux)
+#         else:
+#             cv = map(lambda x: "l("+x.strip()+")",cv_aux.split(","))
+#             cv = ", ".join(cv)
+#     else:
+#         cv = ""
 
-    return new
+#     local_vars = rule.build_local_vars() if rule.get_call_to_info() == None else rule.get_call_to_info()[2]
+#     local_vars_string = ", ".join(local_vars)
+
+
+#     #It generates the secuence of variables
+#     if fv != "":
+#         if pos0 != -1:
+#             if local_vars_string != "":
+#                 new = instr[:pos0+4]+", "+fv+", "+local_vars_string
+
+#             else:
+#                 new = instr[:pos0+4]+", "+fv
+                
+#             if cv!="":
+#                 new = new +", "+cv+"))"
+#             else:
+#                 new = new+"))"
+#         else:
+#             if local_vars_string != "":
+#                 new = instr[:pos_head+1]+fv+", "+local_vars_string
+
+#             else:
+#                 new = instr[:pos_head+1]+fv
+            
+#             if cv!="":
+#                 new = new + ", " + cv + "))"
+#             else:
+#                 new = new + "))"
+#     else:
+#         if pos0 != -1: #there is a
+
+#             if local_vars_string != "":
+#                 new = instr[:pos0+4]+","+local_vars_string
+
+#             else:
+#                 new = instr[:pos0+4]
+            
+#             if cv!="":
+#                 new = new + ", "+cv+"))"
+#             else:
+#                 new = new + "))"
+#         else:
+
+#             if local_vars_string != "" and cv != "":
+#                 new = instr[:pos_head+1] + local_vars_string+", "+cv+"))"
+#             elif local_vars_string != "" and cv == "":
+#                 new = instr[:pos_head+1] + local_vars_string+"))"
+
+#             elif local_vars_string == "" and cv != "":
+#                 new = instr[:pos_head+1] +cv+"))"
+#             else:
+#                 new = instr[:pos_head+1]+"))"
+
+#     return new
     
 def process_instructions(rule):
     cont = rule.get_fresh_index()+1
@@ -127,7 +200,7 @@ def process_instructions(rule):
     new_instructions = []
     for instr in instructions:
         if instr.find("call(",0)!=-1:
-            new = call_instruction(rule,instr)
+            new = call_instruction(instr)
         elif instr.find("and",0)!=-1:
             pos = instr.find("=")
             new = instr[:pos+1]+" s("+str(cont)+")"
