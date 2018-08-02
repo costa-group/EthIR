@@ -825,7 +825,7 @@ def translateOpcodesZ(opcode, index_variables,block):
     else:
         instr = "Error opcodesZ: "+opcode
 
-    return instr, index_variables
+    return instr, updated_variables
 
 '''
 It checks if the list instr contains the element to generated a
@@ -1310,6 +1310,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     component_of = component
 
     begin = dtimer()
+
     if blocks_input and stack_info:
         blocks = sorted(blocks_input.values(), key = getKey)
         for block in blocks:

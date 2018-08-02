@@ -100,15 +100,15 @@ block0(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0),
 	s(0) = calldatasize
 	call(jump0(s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
  
-jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
+jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, calldatasize, caller, callvalue, gas, gasprice, number)=>
 	eq(s(0), 0)
-	call(block174(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
+	call(block174(g(11), g(8), g(4), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), caller, callvalue, gas, gasprice, number))
 
-jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
+jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, calldatasize, caller, callvalue, gas, gasprice, number)=>
 	neq(s(0), 0)
- call(block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
+	call(block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, caller, callvalue, gas, gasprice, number))
  
-block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
+block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, caller, callvalue, gas, gasprice, number)=>
 	s(0) = 224
 	s(1) = 2
 	s(0) = s(1)^s(0)
@@ -117,7 +117,7 @@ block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0)
 	s(0) = s(1)/s(0)
 	s(1) = 607252836
 	s(2) = s(0)
-	call(jump11(s(2),s(1),s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
+	call(jump11(s(2),s(1),s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, caller, callvalue, gas, gasprice, number))
 ```
 If we execute the command `./oyente-ethir -s ../examples/blockking.evm.disasm -disasm -eop` instead of the above one, the RBR that EthIR produces has nops annotations, with the EVM bytecode interleaved in the text. Below is a sketch of the RBR with nops annotations generated for *blockking.evm.disasm*:
 ```
@@ -135,15 +135,15 @@ block0(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0),
 	nop(PUSH2)
 	nop(JUMPI)
  
-jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
+jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, calldatasize, caller, callvalue, gas, gasprice, number)=>
 	eq(s(0), 0)
-	call(block174(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
+	call(block174(g(11), g(8), g(4), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), caller, callvalue, gas, gasprice, number))
 
-jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
+jump0(s(0), g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, calldatasize, caller, callvalue, gas, gasprice, number)=>
 	neq(s(0), 0)
-	call(block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
+	call(block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, caller, callvalue, gas, gasprice, number))
  
-block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance)=>
+block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, caller, callvalue, gas, gasprice, number)=>
 	s(0) = 224
 	nop(PUSH1)
 	s(1) = 2
@@ -160,7 +160,7 @@ block11(g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0)
 	nop(PUSH4)
 	s(2) = s(0)
 	nop(DUP2)
-	call(jump11(s(2),s(1),s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(8), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), calldatasize, calldataload, gas, caller, callvalue, number, gasprice, balance))
+	call(jump11(s(2),s(1),s(0),g(11), g(10), g(9), g(8), g(7), g(6), g(5), g(4), g(3), g(2), g(1), g(0), l(7), l(6), l(5), l(4), l(3), l(2), l(1), l(0), balance, calldataload, caller, callvalue, gas, gasprice, number))
 	nop(EQ)
 	nop(PUSH2)
 	nop(JUMPI)
@@ -197,3 +197,5 @@ Note that due to precision limitations of [SACO](http://costa.fdi.ucm.es/saco/we
 Other high-level analyzers that work on intermediate forms like Integer transition systems or Horn clauses  (e.g., AproVe, T2, VeryMax, CoFloCo) could be easily adapted as well to work on RBR translated programs produced by EthIR. 
 
 If you are interesting in using EthIR jointly with [SACO](http://costa.fdi.ucm.es/saco/web/) contact [SACO](http://costa.fdi.ucm.es/saco/web/) developers through a pull-request or a new issue.
+
+You can try a first prototype [here](http://costa.fdi.ucm.es/ethir). SACO infers an upper-bound of the gas involved in each transaction.

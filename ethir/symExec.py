@@ -197,6 +197,9 @@ def initGlobalVars():
 
     global function_info
     function_info = (False,"")
+
+    # global old_stack_h
+    # old_stack_h = 0
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -628,9 +631,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global visited_blocks
     global blocks_to_create
     global ls_cont
-
-    # print "BLOCK"
-    # print block
+    # global old_stack_h
+    
+    # print "BLOCK "+ str(block)
     visited = params.visited
     stack = params.stack
     mem = params.mem
@@ -659,6 +662,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_edges.update({current_edge: 1})
 
     if visited_edges[current_edge] > global_params.LOOP_LIMIT:
+        # print "AQUI"
+        # print block
         log.debug("Overcome a number of loop limit. Terminating this path ...")
         return stack
 
@@ -680,7 +685,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         sym_exec_ins(params, block, instr, func_call)
         # print "Stack despues de la ejecucion de la instruccion "+ instr
         # print stack
-        
+        # print len(stack)
+
+    #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
     visited.append(block)
     depth += 1
@@ -2585,6 +2592,8 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     end = dtimer()
     # print("Component performance: "+str(end-begin1)+"s")
     
+    compute_component_of_cfg()
+
     if cfg:
         if cname == None:
             write_cfg(execution)
