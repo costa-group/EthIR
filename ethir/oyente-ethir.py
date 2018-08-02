@@ -10,6 +10,7 @@ import requests
 import argparse
 import subprocess
 import global_params
+from timeit import default_timer as dtimer
 from utils import run_command, process_hashes
 from input_helper import InputHelper
 
@@ -87,9 +88,12 @@ def analyze_disasm_bytecode():
 def analyze_bytecode():
     global args
 
+    x = dtimer()
     helper = InputHelper(InputHelper.BYTECODE, source=args.source,evm = args.evm)
     inp = helper.get_inputs()[0]
-
+    y = dtimer()
+    print("Compilation time: "+str(y-x)+"s")
+    
     result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco)
     helper.rm_tmp_files()
 
@@ -130,6 +134,8 @@ def run_solidity_analysis(inputs,hashes):
 def analyze_solidity(input_type='solidity'):
     global args
 
+    x = dtimer()
+
     if input_type == 'solidity':
         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm)
     elif input_type == 'standard_json':
@@ -138,6 +144,11 @@ def analyze_solidity(input_type='solidity'):
         helper = InputHelper(InputHelper.STANDARD_JSON_OUTPUT, source=args.source,evm=args.evm)
     inputs = helper.get_inputs()
     hashes = process_hashes(args.source)
+    
+    y = dtimer()
+    print("**************************************************************")
+    print("Compilation time: "+str(y-x)+"s")
+    print("**************************************************************")
     results, exit_code = run_solidity_analysis(inputs,hashes)
     helper.rm_tmp_files()
 
