@@ -22,6 +22,8 @@ class BasicBlock:
         self.ret_val = -1
         self.currentId = 0
 
+        self.comes_from = []
+        
     def get_start_address(self):
         return self.start
 
@@ -177,7 +179,15 @@ class BasicBlock:
             ident = self.currentId
             self.currentId+=1
             return "calldataload"+str(self.start)+"_"+str(self.currentId)
-        
+
+
+    def add_origin(self,block):
+        if block not in self.comes_from:
+            self.comes_from.append(block)
+
+    def get_comes_from(self):
+        return self.comes_from
+    
     def update_instr(self):
         new_instructions = []
         mload = 0
