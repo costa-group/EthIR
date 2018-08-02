@@ -1,10 +1,11 @@
 #Pablo Gordillo
 
-import rbr_rule
+from rbr_rule import RBRRule
 import opcodes
 from utils import getKey, orderRBR
 import os
 import saco
+from timeit import default_timer as dtimer
 
 '''
 It initialize the globals variables. 
@@ -71,23 +72,32 @@ def init_globals():
     global local_variables
     local_variables = {}
     
+    global lvariables_per_block
+    lvariables_per_block = {}
+    
     global rbr_blocks
     rbr_blocks = {}
 
     global stack_index
     stack_index = {}
     
-    global max_field_list
-    max_field_list = []
+    # global max_field_list
+    # max_field_list = []
 
-    global bc_in_use
-    bc_in_use = []
+    # global bc_in_use
+    # bc_in_use = []
+
+    global bc_per_block
+    bc_per_block = {}
 
     global top_index
     top_index = 0
 
     global new_fid
     new_fid = 0
+
+    global fields_per_block
+    fields_per_block = {}
 
 '''
 Given a block it returns a list containingn the height of its
@@ -191,33 +201,54 @@ def get_local_variable(address):
     
     try:
         idx = local_variables[int(address)]
-        var = "l(" + str(idx) + ")"
-        return var
+        #var = "l(" + str(idx) + ")"
+        return idx
     except KeyError:
         local_variables[int(address)] = current_local_var
-        var = "l(" + str(current_local_var) + ")"
+        #var = "l(" + str(current_local_var) + ")"
         current_local_var += 1
-        return var
+        return current_local_var-1
 
 '''
 It adds to the list max_field_list the index of the field used.
 -value: index_field. int.
 '''
-def update_field_index(value):
-    global max_field_list
+def update_field_index(value,block):
+#    global max_field_list
+    global fields_per_block
 
-    if value not in max_field_list:
-        max_field_list.append(value)
+    if block not in fields_per_block:
+        fields_per_block[block]=[value]
+    elif value not in fields_per_block[block]:
+        fields_per_block[block].append(value)
+        
+    # if value not in max_field_list:
+    #     max_field_list.append(value)
         
 '''
 It adds to the list bc_in_use the name of the contract variable used.
 -value: contract variable name. string.
 '''
-def update_bc_in_use(value):
-    global bc_in_use
-    if value not in bc_in_use:
-        bc_in_use.append(value)
+def update_bc_in_use(value,block):
+    # global bc_in_use
+    global bc_per_block
 
+
+    if block not in bc_per_block:
+        bc_per_block[block]=[value]
+    elif value not in bc_per_block[block]:
+        bc_per_block[block].append(value)
+    
+    # if value not in bc_in_use:
+    #     bc_in_use.append(value)
+
+def update_local_variables(value,block):
+    global lvariables_per_block
+
+    if block not in lvariables_per_block:
+        lvariables_per_block[block]=[value]
+    elif value not in lvariables_per_block[block]:
+        lvariables_per_block[block].append(value)
         
 def process_tops(top1,top2):
     top1_aux = 0 if top1 == float("inf") else top1
@@ -420,43 +451,43 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes30(opcode, value, index_variables):
+def translateOpcodes30(opcode, value, index_variables,block):
     
     if opcode == "ADDRESS":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = address"
-        update_bc_in_use("address")
+        update_bc_in_use("address",block)
     elif opcode == "BALANCE":
         _, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = balance"
-        update_bc_in_use("balance")
+        update_bc_in_use("balance",block)
     elif opcode == "ORIGIN":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = origin"
-        update_bc_in_use("origin")
+        update_bc_in_use("origin",block)
     elif opcode == "CALLER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = caller"
-        update_bc_in_use("caller")
+        update_bc_in_use("caller",block)
     elif opcode == "CALLVALUE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = callvalue"
-        update_bc_in_use("callvalue")
+        update_bc_in_use("callvalue",block)
     elif opcode == "CALLDATALOAD":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         val = str(value).split("_")
         if val[0] == "Id":
             instr = v1+" = calldataload"
-            update_bc_in_use("calldataload")
+            update_bc_in_use("calldataload",block)
         else:
             instr = v1+" = "+str(value).strip("_")
-            update_bc_in_use(str(value).strip("_"))
+            update_bc_in_use(str(value).strip("_"),block)
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
-        update_bc_in_use("calldatasize")
+        update_bc_in_use("calldatasize",block)
     elif opcode == "CALLDATACOPY":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
@@ -465,7 +496,7 @@ def translateOpcodes30(opcode, value, index_variables):
     elif opcode == "CODESIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = codesize"
-        update_bc_in_use("codesize")
+        update_bc_in_use("codesize",block)
     elif opcode == "CODECOPY":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
@@ -474,12 +505,12 @@ def translateOpcodes30(opcode, value, index_variables):
     elif opcode == "GASPRICE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gasprice"
-        update_bc_in_use("gasprice")
+        update_bc_in_use("gasprice",block)
     elif opcode == "EXTCODESIZE":
         _, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = extcodesize"
-        update_bc_in_use("extcodesize")
+        update_bc_in_use("extcodesize",block)
     elif opcode == "EXTCODECOPY":
         pass
     elif opcode == "MCOPY":
@@ -497,32 +528,32 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes40(opcode, index_variables):
+def translateOpcodes40(opcode, index_variables,block):
     if opcode == "BLOCKHASH":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = blockhash("+v0+")"
-        update_bc_in_use("blockhash")
+        update_bc_in_use("blockhash",block)
     elif opcode == "COINBASE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = coinbase"
-        update_bc_in_use("coinbase")
+        update_bc_in_use("coinbase",block)
     elif opcode == "TIMESTAMP":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = timestamp"
-        update_bc_in_use("timestamp")
+        update_bc_in_use("timestamp",block)
     elif opcode == "NUMBER":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = number"
-        update_bc_in_use("number")
+        update_bc_in_use("number",block)
     elif opcode == "DIFFICULTY":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = difficulty"
-        update_bc_in_use("difficulty")
+        update_bc_in_use("difficulty",block)
     elif opcode == "GASLIMIT":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gaslimit"
-        update_bc_in_use("gaslimit")
+        update_bc_in_use("gaslimit",block)
     else:
         instr = "Error opcodes40: "+opcode
         updated_variables = index_variables
@@ -536,7 +567,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes50(opcode, value, index_variables):
+def translateOpcodes50(opcode, value, index_variables,block):
     global new_fid
     
     if opcode == "POP":
@@ -546,8 +577,9 @@ def translateOpcodes50(opcode, value, index_variables):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
-            l_var = get_local_variable(value)
-            instr = v1+ " = " + l_var
+            l_idx = get_local_variable(value)
+            instr = v1+ " = " + "l("+str(l_idx)+")"
+            update_local_variables(l_idx,block)
         except ValueError:
             instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
@@ -555,16 +587,17 @@ def translateOpcodes50(opcode, value, index_variables):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
-            l_var = get_local_variable(value)
-            instr = l_var + " = "+ v1
+            l_idx = get_local_variable(value)
+            instr = "l("+str(l_idx)+") = "+ v1
+            update_local_variables(l_idx,block)
         except ValueError:
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
     elif opcode == "MSTORE8":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
-            l_var = get_local_variable(value)
-            instr = l_var + " = "+ v1
+            l_idx = get_local_variable(value)
+            instr = "l("+str(l_idx)+") = "+ v1
         except ValueError:
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
     elif opcode == "SLOAD":
@@ -573,7 +606,7 @@ def translateOpcodes50(opcode, value, index_variables):
         try:
             idx = int(value)
             instr = v1+" = " + "g(" + value + ")"
-            update_field_index(value)
+            update_field_index(value,block)
         except ValueError:
             instr = ["gl = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
@@ -583,7 +616,7 @@ def translateOpcodes50(opcode, value, index_variables):
         try:
             idx = int(value)
             instr = "g(" + value + ") = " + v1
-            update_field_index(value)
+            update_field_index(value,block)
         except ValueError:
             instr = ["gs(1) = "+ v1, "gs(2) = "+v0]
     # elif opcode == "JUMP":
@@ -595,11 +628,11 @@ def translateOpcodes50(opcode, value, index_variables):
     elif opcode == "MSIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1 + " = msize"
-        update_bc_in_use("msize")
+        update_bc_in_use("msize",block)
     elif opcode == "GAS":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = "+"gas"
-        update_bc_in_use("gas")
+        update_bc_in_use("gas",block)
     elif opcode == "JUMPDEST":
         instr = ""
         updated_variables = index_variables
@@ -779,11 +812,11 @@ corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 Unclassified opcodes.
 '''
-def translateOpcodesZ(opcode, index_variables):
+def translateOpcodesZ(opcode, index_variables,block):
     if opcode == "RETURNDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = returndatasize"
-        update_bc_in_use("returndatasize")
+        update_bc_in_use("returndatasize",block)
     elif opcode == "RETURNDATACOPY":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(index_variables)
@@ -875,13 +908,13 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,nop):
         value, index_variables = translateOpcodes20(opcode_name, variables)
         rule.add_instr(value)
     elif opcode_name in opcodes30:
-        value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables)
+        value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes40:
-        value, index_variables = translateOpcodes40(opcode_name,variables)
+        value, index_variables = translateOpcodes40(opcode_name,variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables)
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id())
         if type(value) is list:
             for ins in value:
                 rule.add_instr(ins)
@@ -907,7 +940,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,nop):
         #RETURN
         rule.add_instr(value)
     elif opcode_name in opcodesZ:
-        value, index_variables = translateOpcodesZ(opcode_name,variables)
+        value, index_variables = translateOpcodesZ(opcode_name,variables,rule.get_Id())
         rule.add_instr(value)
     else:
         value = "Error. No opcode matchs"
@@ -930,7 +963,7 @@ def process_falls_to_blocks(index_variables, falls_to):
     top = get_stack_index(falls_to)[0]
     stack_variables = get_stack_variables(index_variables)[:top]
     p_vars = ",".join(stack_variables)
-    instr = "call(block"+str(falls_to)+"("+p_vars+", globals, bc))"
+    instr = "call(block"+str(falls_to)+"("+p_vars+",globals, bc))"
     return instr
 
 '''
@@ -995,16 +1028,18 @@ def create_uncond_jumpBlock(block_id,variables,jumps):
     else:
         p1_vars = p2_vars = ""
     
-    rule1 = rbr_rule.RBRRule(block_id,"jump")
+    rule1 = RBRRule(block_id,"jump")
     rule1.set_guard(guard)
     instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
     rule1.add_instr(instr)
+    rule1.set_call_to(str(jumps[0]))
 
-    rule2 = rbr_rule.RBRRule(block_id,"jump")
+    rule2 = RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
     instr = "call(block"+str(jumps[1])+"("+p2_vars+"globals,bc))"
     rule2.add_instr(instr)
+    rule2.set_call_to(str(jumps[1]))
     
     return rule1, rule2
 
@@ -1084,17 +1119,18 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard):
         p1_vars = p2_vars = ""
 
 
-    rule1 = rbr_rule.RBRRule(block_id,"jump")
+    rule1 = RBRRule(block_id,"jump")
     rule1.set_guard(guard)
     instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
     rule1.add_instr(instr)
+    rule1.set_call_to(str(jumps[0]))
 
-
-    rule2 = rbr_rule.RBRRule(block_id,"jump")
+    rule2 = RBRRule(block_id,"jump")
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
     instr = "call(block"+str(falls_to)+"("+p2_vars+"globals,bc))"
     rule2.add_instr(instr)
+    rule2.set_call_to(str(falls_to))
     
     return rule1, rule2
 
@@ -1115,7 +1151,7 @@ def compile_block(block,nop):
     
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
-    rule = rbr_rule.RBRRule(block_id, "block")
+    rule = RBRRule(block_id, "block")
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
     
@@ -1153,6 +1189,8 @@ def compile_block(block,nop):
 
             if rule1:
                 rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
+            else:
+                rule.set_call_to(block.get_list_jumps()[0])
                 
             rule.add_instr(instr)
 
@@ -1165,6 +1203,7 @@ def compile_block(block,nop):
 
     if(block.get_block_type()=="falls_to"):
         instr = process_falls_to_blocks(index_variables,block.get_falls_to())
+        rule.set_call_to(block.get_falls_to())
         rule.add_instr(instr)
 
     rule.set_fresh_index(top_index)
@@ -1178,9 +1217,12 @@ blocks. This function generate one empty rule for these blocks.
 -It returns a list with the new rules generated.
 '''
 def create_blocks(blocks):
+    global rbr_blocks
+    
     rules = []
     for b in blocks:
-        rule = rbr_rule.RBRRule(b,"block")
+        rule = RBRRule(b,"block")
+        rbr_blocks["block"+str(b)]=[rule]
         rules.append(rule)
     return rules
 
@@ -1209,8 +1251,47 @@ def write_rbr(rbr,executions,cname = None):
 
     f.close()
         
+def component_update_fields_block(block,data):
+    fields, bc, local = data #local
+    rule = rbr_blocks.get("block"+str(block),-1)
+    if rule != -1:
+        rule[0].update_global_arg(fields)
+        rule[0].update_bc(bc)
+        rule[0].update_local_arg(local)
 
+    rule = rbr_blocks.get("jump"+str(block),-1)
+    if rule != -1:
+        rule[0].update_global_arg(fields)
+        rule[1].update_global_arg(fields)
+        rule[0].update_bc(bc)
+        rule[1].update_bc(bc)
+        rule[0].update_local_arg(local)
+        rule[1].update_local_arg(local)
 
+    
+def component_update_fields(rule,component):
+    
+    block = rule.get_Id()
+    
+    fields = fields_per_block.get(block,[])
+    bc = bc_per_block.get(block,[])
+    local = lvariables_per_block.get(block,[])
+
+    if fields != [] or bc !=[]:
+        rule.update_global_arg(fields)
+        rule.update_bc(bc)
+        rule.update_local_arg(local)
+        
+        # if rule.get_type() == "block":
+        #         rule = rbr_blocks.get("jump"+str(block),-1)
+        #         if rule != -1:
+        #             print "JUMP"
+        #             rule[0].update_global_arg(fields)
+        #             rule[1].update_global_arg(fields)
+        for elem_c in component[block]:
+            component_update_fields_block(elem_c,(fields,bc,local))#local)
+
+    
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 -blocks_input contains a list with the blocks of the CFG. basicblock.py instances.
@@ -1220,38 +1301,59 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None, component = None):
     global rbr_blocks
     global stack_index
     
     init_globals()
     stack_index = stack_info
+    component_of = component
+
+    begin = dtimer()
     if blocks_input and stack_info:
         blocks = sorted(blocks_input.values(), key = getKey)
         for block in blocks:
             rule = compile_block(block,nop_opcodes)
             rbr_blocks[rule.get_rule_name()]=[rule]
             
-        
-        for rule in rbr_blocks.values():# _blocks.values():
-            for r in rule:
-                r.set_bc(bc_in_use)
-                r.set_global_vars(max_field_list)
-                r.set_args_local(current_local_var)
-                r.update_calls()
-                #r.display()
 
         rule_c = create_blocks(block_unbuild)
-        for r in rule_c:
-            r.set_bc(bc_in_use)
-            r.set_global_vars(max_field_list)
-            r.set_args_local(current_local_var)
-            rbr_blocks[r.get_rule_name()]=[r]
+               
+        for rule in rbr_blocks.values():# _blocks.values():
+            for r in rule:
+#                r.set_bc(bc_in_use)
+                component_update_fields(r,component_of)
+#                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
+#                r.set_global_vars(max_field_list)
+                #r.set_args_local(current_local_var)
+                #r.display()
+
+        for rule in rbr_blocks.values():
+            for r in rule:
+                jumps_to = r.get_call_to()
+                
+                if jumps_to != -1:
+                    f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
+                    bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
+                    l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+                    r.set_call_to_info((f,bc,l))
+
+                r.update_calls()
+
+        # for r in rule_c:
+        #     r.set_bc(bc_in_use)
+        #     r.set_global_vars(max_field_list)
+        #     r.set_args_local(current_local_var)
+        #     rbr_blocks[r.get_rule_name()]=[r]
         
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
         write_rbr(rbr,exe,contract_name)
+        
+        end = dtimer()
+        print("Build RBR: "+str(end-begin)+"s")
+        
         if saco_rbr:
             saco.rbr2saco(rbr,exe,contract_name)
     else :
-        print "Error, you have to provide the CFG associated with the solidity file analyzed"
+        print ("Error, you have to provide the CFG associated with the solidity file analyzed")
 
