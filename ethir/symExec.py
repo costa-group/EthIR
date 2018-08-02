@@ -9,7 +9,7 @@ import pickle
 import json
 import traceback
 import signal
-import time
+from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
@@ -191,6 +191,12 @@ def initGlobalVars():
 
     global function_block_map
     function_block_map = {}
+
+    global component_of_blocks
+    component_of_blocks = {}
+
+    global function_info
+    function_info = (False,"")
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -246,7 +252,7 @@ def build_cfg_and_analyze():
 #    print_cfg()
     delete_uncalled()
     update_block_info()
-    #print_cfg()
+#    print_cfg()
     #print stack_h
     #print calldataload_values
 
@@ -264,6 +270,8 @@ def print_cfg():
     vert = sorted(vertices.values(), key = getKey)
     for block in vert:
         block.display()
+        print ("COMES FROM")
+        print (block.get_comes_from())
     log.debug(str(edges))
 
 def write_cfg(it,name = False):
@@ -716,7 +724,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         #     compare_storage_and_gas_unit_test(global_state, analysis)
 
     elif jump_type[block] == "unconditional":  # executing "JUMP"
-        
         successor = vertices[block].get_jump_target()
         new_params = params.copy()
         new_params.global_state["pc"] = successor
@@ -724,7 +731,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
             source_code = g_src_map.get_source_code(global_state['pc'])
             if source_code in g_src_map.func_call_names:
                 func_call = global_state['pc']
+                
+
         if successor in vertices:
+            vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
             sym_exec_block(new_params, successor, block, depth, func_call)
         else:
             if successor not in blocks_to_create:
@@ -732,6 +742,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
                 
     elif jump_type[block] == "falls_to":  # just follow to the next basic block
         successor = vertices[block].get_falls_to()
+
+        vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
+
         new_params = params.copy()
         new_params.global_state["pc"] = successor
         sym_exec_block(new_params, successor, block, depth, func_call)
@@ -751,12 +764,15 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         #         log.debug("INFEASIBLE PATH DETECTED")
         #     else:
         left_branch = vertices[block].get_jump_target()
+
+
         new_params = params.copy()
         new_params.global_state["pc"] = left_branch
         #new_params.path_conditions_and_vars["path_condition"].append(branch_expression)
         last_idx = len(new_params.path_conditions_and_vars["path_condition"]) - 1
                 #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if left_branch in vertices:
+            vertices[left_branch].add_origin(block) #to compute which are the blocks that leads to successor
             sym_exec_block(new_params, left_branch, block, depth, func_call)
         else:
             if left_branch not in blocks_to_create:
@@ -783,12 +799,15 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         #         log.debug("INFEASIBLE PATH DETECTED")
         #     else:
         right_branch = vertices[block].get_falls_to()
+
+        
         new_params = params.copy()
         new_params.global_state["pc"] = right_branch
         #new_params.path_conditions_and_vars["path_condition"].append(negated_branch_expression)
         last_idx = len(new_params.path_conditions_and_vars["path_condition"]) - 1
         #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if right_branch in vertices:
+            vertices[right_branch].add_origin(block) #to compute which are the blocks that leads to successor
             sym_exec_block(new_params, right_branch, block, depth, func_call)
         else:
             if right_branch not in blocks_to_create:
@@ -819,6 +838,7 @@ def sym_exec_ins(params, block, instr, func_call):
     global data_source
     global ls_cont
     global function_block_map
+    global function_info
 
     
     stack = params.stack
@@ -1856,6 +1876,10 @@ def sym_exec_ins(params, block, instr, func_call):
                     branch_expression = True
             else:
                 branch_expression = (flag != 0)
+            if (function_info[0]):
+                name = function_info[1]
+                function_block_map[name]=target_address
+                function_info = (False,"")
             vertices[block].set_branch_expression(branch_expression)
             if target_address not in edges[block]:
                 edges[block].append(target_address)
@@ -1890,7 +1914,8 @@ def sym_exec_ins(params, block, instr, func_call):
         hs = str(instr_parts[1])[2:] #To delete 0x...
         if f_hashes and hs in f_hashes :
             name = f_hashes[hs]
-            function_block_map[name]=block
+            function_info = (True,name)
+#           function_block_map[name]=block
         
         pushed_value = int(instr_parts[1], 16)
         stack.insert(0, pushed_value)
@@ -2499,7 +2524,25 @@ def delete_uncalled():
             vertices.pop(b)
             stack_h.pop(b)
             calldataload_values.pop(b)
+                
+def compute_component_of_cfg():
+    global component_of_blocks
 
+    for block in vertices.keys():
+        comp = component_of(block)
+        component_of_blocks[block] = comp
+            
+def component_of(block):
+    return component_of_aux(block,[])
+
+def component_of_aux(block,visited):
+    blocks_conn = vertices[block].get_comes_from()
+    for elem in blocks_conn:
+        if elem not in visited:
+            visited.append(elem)
+            component_of_aux(elem,visited)
+    return visited
+            
 def generate_saco_config_file(cname):
     if "costabs" not in os.listdir("/tmp/"):
         os.mkdir("/tmp/costabs/")
@@ -2530,15 +2573,28 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     if hashes != None:
         f_hashes = hashes
     
-    begin = time.time()
+    begin = dtimer()
+
     analyze()
+
+    end = dtimer()
+    print("Build CFG: "+str(end-begin)+"s")
+
+    begin1 = dtimer()
+    compute_component_of_cfg()
+    end = dtimer()
+    # print("Component performance: "+str(end-begin1)+"s")
+    
     if cfg:
         if cname == None:
             write_cfg(execution)
         else:
             write_cfg(execution,name = cname)
+
+    end = dtimer()
+    print("OYENTE tool: "+str(end-begin)+"s")
     
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname)
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
