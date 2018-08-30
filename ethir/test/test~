@@ -1,0 +1,17 @@
+#!/bin/csh
+
+set result = `python ./test.py "../examples/lottery.sol"`
+set loops = `echo $result | cut -c 7-`
+
+if $loops == 0 then
+    echo "no"
+else
+    echo "si"
+endif
+
+#echo $nuevo
+
+# #!/bin/bash
+
+# nuevo=$(python ./test.py "../examples/pot.sol")
+# echo $nuevo

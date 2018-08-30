@@ -1,0 +1,27 @@
+#!/bin/csh
+
+set files = `ls ../../examples/`
+set names = `echo $files:q | sed 's/ /  /g'`
+
+foreach contract ($names)
+    set ext = `echo $contract:q | sed 's/\./  /g'`
+    if $ext[2] == "sol" then
+        set result = `python ./test.py "../../examples/"$contract""`
+        set loops = `echo $result | cut -c 7-`
+
+        if $loops == 0 then
+            echo $contract" no"
+        else
+            echo $contract" si"
+        endif
+    endif
+end
+
+
+
+#echo $nuevo
+
+# #!/bin/bash
+
+# nuevo=$(python ./test.py "../examples/pot.sol")
+# echo $nuevo
