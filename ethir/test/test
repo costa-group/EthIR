@@ -2,6 +2,8 @@
 
 set files = `ls ../../examples/`
 set names = `echo $files:q | sed 's/ /  /g'`
+set COSTABSHOME = /home/pablo/Systems/costa/costabs
+
 
 if (-e ./result.txt) then
     rm -f ./result.txt
@@ -26,23 +28,27 @@ foreach contract ($names)
             #It takes the name of the contract without the extension
             set c_name = `echo $contract:q | sed 's/\./ /g'`
             set rbr_file = $c_name[1]"_saco.rbr"
+
+            echo ""
+            echo $rbr_file
+            echo""
             
-            # if (-e /tmp/costabs/$rbr_file) then
-            #     ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/$rbr_file -entries block0 -cost_model gas -ethir yes -backend cofloco
-            # else if (-e /tmp/costabs/rbr_saco.rbr) then
-            #     ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
+            if (-e /tmp/costabs/$rbr_file) then
+                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/$rbr_file -entries block0 -cost_model gas -ethir yes -backend cofloco
+            else if (-e /tmp/costabs/rbr_saco.rbr) then
+                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
 
-            # else if (-e /tmp/costabs/rbr1_saco.rbr && $words[3] == "AuctusEther.sol") then
-            #     ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr1_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
+            else if (-e /tmp/costabs/rbr1_saco.rbr && $contract == "AuctusEther.sol") then
+                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr1_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
 
-            # else if (-e /tmp/costabs/rbr0_saco.rbr) then
-            #     ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr0_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
+            else if (-e /tmp/costabs/rbr0_saco.rbr) then
+                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr0_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
 
-            # else 
-            #     echo "no2"
-            #     echo $rbr_file
+            else 
+                echo "no2"
+                echo $rbr_file
 
-            # endif
+            endif
 
         endif
     endif
