@@ -657,8 +657,42 @@ updated. It also updated the corresponding global variables.
 They corresponds to LOGS opcodes.
 '''
 def translateOpcodesA(opcode, index_variables):
-    instr = ""
-    updated_variables = index_variables
+    print "translate "+opcode
+    if opcode == "LOG0":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
+    elif opcode == "LOG1":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
+    elif opcode == "LOG2":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
+    elif opcode == "LOG3":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
+        
+    elif opcode == "LOG4":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
+        
+    else:
+        instr = "Error opcodesA: "+ opcode
+    
     return instr, updated_variables
 
 
