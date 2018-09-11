@@ -657,7 +657,7 @@ updated. It also updated the corresponding global variables.
 They corresponds to LOGS opcodes.
 '''
 def translateOpcodesA(opcode, index_variables):
-    print "translate "+opcode
+
     if opcode == "LOG0":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
