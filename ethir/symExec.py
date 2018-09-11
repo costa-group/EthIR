@@ -2579,7 +2579,10 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
      
     if hashes != None:
         f_hashes = hashes
-    
+
+    if cname != None:
+        print("File: "+str(cname))
+        
     begin = dtimer()
 
     analyze()
