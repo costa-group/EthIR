@@ -180,14 +180,21 @@ class RBRRule:
                 else:
                     new_instr = elem[:posBra+1]
                     new_instr = new_instr+elem[posBra+1:posInit-1]#+local_vars_string#+", "+bc+"))"
-                
+
                 if local_vars_string != "":
-                    new_instr = new_instr+", "+local_vars_string
-                
+                    if new_instr[-1] != "(":
+                        new_instr = new_instr+", "+local_vars_string
+                    else:
+                        new_instr = new_instr+local_vars_string
+                        
                 if bc != "":
-                    new_instr = new_instr+", "+bc+"))"
+                    if new_instr[-1] != "(":
+                        new_instr = new_instr+", "+bc+"))"
+                    else:
+                        new_instr = new_instr+bc+"))"
                 else:
                     new_instr = new_instr+"))"
+                    
             else:
                 new_instr = elem
                 
