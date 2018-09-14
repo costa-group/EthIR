@@ -302,18 +302,12 @@ def write_cfg(it,name = False):
     f.close()
 
 def build_tree(block,visited):
-    start = block.get_start_address()
-    print "START: "+str(start)
-    print "VISTED: "+str(visited)+"\n"
     
+    start = block.get_start_address()   
     r = Tree(start,start,start)
     
     for block_id in block.get_list_jumps():
-        print "CHECK"
-        print str((start,block_id))
-        print str(visited)
         if (start,block_id) not in visited:
-            print "HOLA"
             visited.append((start,block_id))
             ch = build_tree(vertices.get(block_id),visited)
             if ch not in r.get_children():
