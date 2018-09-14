@@ -259,12 +259,14 @@ class Tree:
         self.children = []
         self.tag = None
         self.id = 0
+        self.block_type = None
         
-    def __init__(self,root,tag,id):
+    def __init__(self,root,tag,id,type_block):
         self.root = root
         self.tag = tag
         self.id = id
         self.children = []
+        self.type_block = type_block
 
 
     def setId(self, new_id):
@@ -291,10 +293,16 @@ class Tree:
         fo.write("}")
         
     def generategraph(self,fo,level):
-        if self.isLeaf() :
+        if self.type_block == "terminal" :
             fo.write("n_%s [style=diagonals,color=green,label=\"%s\"];\n"%(self.id,self.root))
         else :
-            fo.write("n_%s [style=solid,color=red,label=\"%s\"];\n"%(self.id,self.root))
+            if self.type_block == "conditional":
+                fo.write("n_%s [style=solid,color=blue,label=\"%s\"];\n"%(self.id,self.root))
+            elif self.type_block == "unconditional":
+                fo.write("n_%s [style=solid,color=orange,label=\"%s\"];\n"%(self.id,self.root))
+            else:
+                fo.write("n_%s [style=solid,color=yellow,label=\"%s\"];\n"%(self.id,self.root))
+                
             i = 0
             for child in self.children:
                 new_level = i
