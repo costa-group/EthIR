@@ -17,7 +17,7 @@ from z3 import *
 
 from vargenerator import *
 from ethereum_data import *
-from basicblock import BasicBlock
+from basicblock import BasicBlock, Tree
 from analysis import *
 # from test_evm.global_test_params import (TIME_OUT, UNKNOWN_INSTRUCTION,
 #                                          EXCEPTION, PICKLE_PATH)
@@ -300,7 +300,53 @@ def write_cfg(it,name = False):
             for instr in block.get_instructions():
                 f.write(instr+"\n")
     f.close()
-            
+
+def build_tree(block,visited):
+    start = block.get_start_address()
+    print "START: "+str(start)
+    print "VISTED: "+str(visited)+"\n"
+    
+    r = Tree(start,start,start)
+    
+    for block_id in block.get_list_jumps():
+        print "CHECK"
+        print str((start,block_id))
+        print str(visited)
+        if (start,block_id) not in visited:
+            print "HOLA"
+            visited.append((start,block_id))
+            ch = build_tree(vertices.get(block_id),visited)
+            if ch not in r.get_children():
+                r.add_child(ch)
+
+    falls_to = block.get_falls_to()
+    if (falls_to != None) and (start,falls_to) not in visited:
+        visited.append((start,falls_to))
+        ch = build_tree(vertices.get(falls_to),visited)
+        if ch not in r.get_children():
+            r.add_child(ch)
+        
+    return r
+    
+def cfg_dot(it,name = False):
+    vert = sorted(vertices.values(), key = getKey)
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+
+    if it == None:
+        name = "/tmp/costabs/cfg.dot"
+    elif name == False:
+        name = "/tmp/costabs/cfg"+str(it)+".dot"
+    else:
+        name = "/tmp/costabs/"+name+".dot"
+        
+    f = open(name,"wb")
+    tree = build_tree(vert[0],[("st",0)])
+    tree.generatedot(f)
+    f.close()
+    
+    
+    
 def mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length):
     global g_src_map
 
@@ -633,7 +679,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global ls_cont
     # global old_stack_h
     
-    # print "BLOCK "+ str(block)
+    print "\nBLOCK "+ str(block)
     visited = params.visited
     stack = params.stack
     mem = params.mem
@@ -655,6 +701,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_blocks.append(block)
     
     current_edge = Edge(pre_block, block)
+    print "CURRENT EDGE"+str(current_edge)
     if current_edge in visited_edges:
         updated_count_number = visited_edges[current_edge] + 1
         visited_edges.update({current_edge: updated_count_number})
@@ -662,7 +709,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_edges.update({current_edge: 1})
 
     if visited_edges[current_edge] > global_params.LOOP_LIMIT:
-        # print "AQUI"
+        print global_params.LOOP_LIMIT
+        print "AQUI BLOCK "+str(block)
         # print block
         log.debug("Overcome a number of loop limit. Terminating this path ...")
         return stack
@@ -683,8 +731,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     ls_cont = [0,0,0,0]
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
-        # print "Stack despues de la ejecucion de la instruccion "+ instr
-        # print stack
+        print "Stack despues de la ejecucion de la instruccion "+ instr
+        print stack
         # print len(stack)
 
     #old_stack_h = len(stack)
@@ -2600,8 +2648,10 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     if cfg:
         if cname == None:
             write_cfg(execution)
+            cfg_dot(execution)
         else:
             write_cfg(execution,name = cname)
+            cfg_dot(execution,name = cname)
 
     end = dtimer()
     print("OYENTE tool: "+str(end-begin)+"s")
