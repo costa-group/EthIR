@@ -304,9 +304,14 @@ def write_cfg(it,name = False):
 def build_tree(block,visited):
     
     start = block.get_start_address()   
-    r = Tree(start,start,start)
+    falls_to = block.get_falls_to()
+    list_jumps = block.get_list_jumps()
+
+    type_block = jump_type[start]
     
-    for block_id in block.get_list_jumps():
+    r = Tree(start,start,start,type_block)
+    
+    for block_id in list_jumps:
         if (start,block_id) not in visited:
             visited.append((start,block_id))
             ch = build_tree(vertices.get(block_id),visited)
