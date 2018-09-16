@@ -301,7 +301,7 @@ class Tree:
             elif self.type_block == "unconditional":
                 fo.write("n_%s [style=solid,color=orange,label=\"%s\"];\n"%(self.id,self.root))
             else:
-                fo.write("n_%s [style=solid,color=yellow,label=\"%s\"];\n"%(self.id,self.root))
+                fo.write("n_%s [style=solid,color=red,label=\"%s\"];\n"%(self.id,self.root))
                 
             i = 0
             for child in self.children:
