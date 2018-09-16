@@ -301,27 +301,36 @@ def write_cfg(it,name = False):
                 f.write(instr+"\n")
     f.close()
 
-def build_tree(block,visited):
+def build_tree(block,visited,condTrue = "t"):
     
     start = block.get_start_address()   
     falls_to = block.get_falls_to()
     list_jumps = block.get_list_jumps()
 
     type_block = jump_type[start]
-    
-    r = Tree(start,start,start,type_block)
-    
+
+    if condTrue == "u":
+        r = Tree(start,"",start,type_block)        
+    else:
+        r = Tree(start,condTrue,start,type_block)
+        
     for block_id in list_jumps:
         if (start,block_id) not in visited:
             visited.append((start,block_id))
-            ch = build_tree(vertices.get(block_id),visited)
+            if type_block == "conditional":
+                ch = build_tree(vertices.get(block_id),visited)
+            else:
+                ch = build_tree(vertices.get(block_id),visited,"u")
             if ch not in r.get_children():
                 r.add_child(ch)
 
     falls_to = block.get_falls_to()
     if (falls_to != None) and (start,falls_to) not in visited:
         visited.append((start,falls_to))
-        ch = build_tree(vertices.get(falls_to),visited)
+        if type_block == "falls_to":
+            ch = build_tree(vertices.get(falls_to),visited,"")
+        else:
+            ch = build_tree(vertices.get(falls_to),visited,"f")
         if ch not in r.get_children():
             r.add_child(ch)
         
