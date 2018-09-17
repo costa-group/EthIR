@@ -722,7 +722,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_edges.update({current_edge: 1})
 
     if visited_edges[current_edge] > global_params.LOOP_LIMIT:
-        log.debug("Overcome a number of loop limit. Terminating this path ...")
+        if debug_info :
+            print ("LOOP LIMIT REACHED")
+            
+        #log.debug("Overcome a number of loop limit. Terminating this path ...")
         return stack
 
     # current_gas_used = analysis["gas"]
@@ -765,6 +768,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
+        if debug_info and depth > global_params.DEPTH_LIMIT:
+            print ("DEPTH LIMIT REACHED")
         global total_no_of_paths
         global no_of_test_cases
 
