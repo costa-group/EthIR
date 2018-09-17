@@ -198,6 +198,9 @@ def initGlobalVars():
     global function_info
     function_info = (False,"")
 
+    global debug_info
+    debug_info = False
+
     # global old_stack_h
     # old_stack_h = 0
     
@@ -686,8 +689,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global blocks_to_create
     global ls_cont
     # global old_stack_h
-    
-    print "\nBLOCK "+ str(block)
+
+    if debug_info:
+        print ("\nBLOCK "+ str(block))
     visited = params.visited
     stack = params.stack
     mem = params.mem
@@ -709,7 +713,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_blocks.append(block)
     
     current_edge = Edge(pre_block, block)
-    print "CURRENT EDGE"+str(current_edge)
+    # print "CURRENT EDGE"+str(current_edge)
     if current_edge in visited_edges:
         updated_count_number = visited_edges[current_edge] + 1
         visited_edges.update({current_edge: updated_count_number})
@@ -717,9 +721,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         visited_edges.update({current_edge: 1})
 
     if visited_edges[current_edge] > global_params.LOOP_LIMIT:
-        print global_params.LOOP_LIMIT
-        print "AQUI BLOCK "+str(block)
-        # print block
         log.debug("Overcome a number of loop limit. Terminating this path ...")
         return stack
 
@@ -739,9 +740,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     ls_cont = [0,0,0,0]
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call)
-        print "Stack despues de la ejecucion de la instruccion "+ instr
-        print stack
-        # print len(stack)
+        if debug_info:
+            print ("Stack despues de la ejecucion de la instruccion "+ instr)
+            print (stack)
+            # print len(stack)
 
     #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
@@ -2620,13 +2622,14 @@ def generate_saco_config_file(cname):
         f.write(elems2write)
     f.close()
             
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
     global results
     global f_hashes
-
+    global debug_info
+    
     g_disasm_file = disasm_file
     g_source_file = source_file
     g_src_map = source_map
@@ -2638,6 +2641,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
 
     if cname != None:
         print("File: "+str(cname))
+
+    if debug :
+        debug_info = debug
         
     begin = dtimer()
 
