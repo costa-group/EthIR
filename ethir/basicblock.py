@@ -9,6 +9,7 @@ class BasicBlock:
         self.falls_to= None
 
         self.list_jumps = []
+        
         #It stores de value of each load/store instructions to know if it is constant.
         #keys-> number of instructions inside a block
         #value-> its value
