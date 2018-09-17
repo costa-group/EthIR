@@ -688,10 +688,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     global visited_blocks
     global blocks_to_create
     global ls_cont
-    # global old_stack_h
 
-    if debug_info:
-        print ("\nBLOCK "+ str(block))
     visited = params.visited
     stack = params.stack
     mem = params.mem
@@ -702,6 +699,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     analysis = params.analysis
     calls = params.calls
 
+
+    if debug_info:
+        print ("\nBLOCK "+ str(block))
+    
     update_stack_heigh(block,len(stack),0)
     Edge = namedtuple("Edge", ["v1", "v2"]) # Factory Function for tuples is used as dictionary key
     if block < 0:
