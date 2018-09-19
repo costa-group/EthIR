@@ -22,8 +22,10 @@ class BasicBlock:
         self.stack_info = []
         self.ret_val = -1
         self.currentId = 0
-
+        
         self.comes_from = []
+        self.depth = -1
+
         
     def get_start_address(self):
         return self.start
@@ -65,6 +67,13 @@ class BasicBlock:
         return self.branch_expression
 
     #Added by Pablo Gordillo
+    def set_depth_level(self, l):
+        self.depth = l
+
+    def get_depth_level(self):
+        return self.depth
+
+    
     def get_list_jumps(self):
         return self.list_jumps
 

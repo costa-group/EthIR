@@ -672,11 +672,11 @@ def full_sym_exec():
     global_state = get_init_global_state(path_conditions_and_vars)
     analysis = init_analysis()
     params = Parameter(path_conditions_and_vars=path_conditions_and_vars, global_state=global_state, analysis=analysis)
-    return sym_exec_block(params, 0, 0, 0, -1)
+    return sym_exec_block(params, 0, 0, 0, -1, 0)
 
 
 # Symbolically executing a block from the start address
-def sym_exec_block(params, block, pre_block, depth, func_call):
+def sym_exec_block(params, block, pre_block, depth, func_call,level):
     global solver
     global visited_edges
     global money_flow_all_paths
@@ -736,6 +736,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
     # Execute every instruction, one at a time
     try:
         block_ins = vertices[block].get_instructions()
+        vertices[block].set_depth_level(level)
     except KeyError:
         log.debug("This path results in an exception, possibly an invalid jump address")
         return ["ERROR"]
@@ -806,7 +807,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
 
         if successor in vertices:
             vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
-            sym_exec_block(new_params, successor, block, depth, func_call)
+            sym_exec_block(new_params, successor, block, depth, func_call,level+1)
         else:
             if successor not in blocks_to_create:
                 blocks_to_create.append(successor)
@@ -818,7 +819,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
 
         new_params = params.copy()
         new_params.global_state["pc"] = successor
-        sym_exec_block(new_params, successor, block, depth, func_call)
+        sym_exec_block(new_params, successor, block, depth, func_call,level+1)
     elif jump_type[block] == "conditional":  # executing "JUMPI"
 
         # A choice point, we proceed with depth first search
@@ -844,7 +845,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
                 #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if left_branch in vertices:
             vertices[left_branch].add_origin(block) #to compute which are the blocks that leads to successor
-            sym_exec_block(new_params, left_branch, block, depth, func_call)
+            sym_exec_block(new_params, left_branch, block, depth, func_call,level+1)
         else:
             if left_branch not in blocks_to_create:
                 blocks_to_create.append(left_branch)
@@ -879,7 +880,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call):
         #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if right_branch in vertices:
             vertices[right_branch].add_origin(block) #to compute which are the blocks that leads to successor
-            sym_exec_block(new_params, right_branch, block, depth, func_call)
+            sym_exec_block(new_params, right_branch, block, depth, func_call,level+1)
         else:
             if right_branch not in blocks_to_create:
                 blocks_to_create.append(right_branch)
