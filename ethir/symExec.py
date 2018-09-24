@@ -725,12 +725,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     else:
         visited_edges.update({current_edge: 1})
 
-    if visited_edges[current_edge] > global_params.LOOP_LIMIT:
-        if debug_info :
-            print ("LOOP LIMIT REACHED")
+    # if visited_edges[current_edge] > global_params.LOOP_LIMIT:
+    #     if debug_info :
+    #         print ("LOOP LIMIT REACHED")
+    #         print current_edge
             
-        #log.debug("Overcome a number of loop limit. Terminating this path ...")
-        return stack
+    #     #log.debug("Overcome a number of loop limit. Terminating this path ...")
+    #     return stack
 
     # current_gas_used = analysis["gas"]
     # if current_gas_used > global_params.GAS_LIMIT:
@@ -2572,6 +2573,9 @@ def do_nothing():
 def run_build_cfg_and_analyze(timeout_cb=do_nothing):
     global g_timeout
 
+    if not debug_info:
+        global_params.GLOBAL_TIMEOUT = 20
+        
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
             build_cfg_and_analyze()

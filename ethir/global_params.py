@@ -18,7 +18,7 @@ TIMEOUT = 100
 UNIT_TEST = 0
 
 # timeout to run symbolic execution (in secs)
-GLOBAL_TIMEOUT = 50
+GLOBAL_TIMEOUT = 120
 
 # timeout to run symbolic execution (in secs) for testing
 GLOBAL_TIMEOUT_TEST = 2
@@ -33,11 +33,11 @@ WEB = 0
 STORE_RESULT = 0
 
 # depth limit for DFS
-DEPTH_LIMIT = 250
+DEPTH_LIMIT = 300
 
 GAS_LIMIT = 4000000
 
-LOOP_LIMIT = 5
+LOOP_LIMIT = 50
 
 # Use a public blockchain to speed up the symbolic execution
 USE_GLOBAL_BLOCKCHAIN = 0
