@@ -203,6 +203,9 @@ def initGlobalVars():
 
     global potential_jump
     potential_jump = False
+
+    global cloning
+    cloning = []
     # global old_stack_h
     # old_stack_h = 0
     
@@ -266,9 +269,14 @@ def build_cfg_and_analyze():
 
 #Added by Pablo Gordillo
 def update_block_info():
+    global cloning
+    
     vert = sorted(vertices.values(), key = getKey)
     for block in vert:    
         block.compute_list_jump(edges[block.get_start_address()])
+        c = block.compute_cloning()
+        if c:
+            cloning.append(block.get_start_address())
         block.set_calldataload_values(calldataload_values[block.get_start_address()])
         block.set_stack_info(stack_h[block.get_start_address()])
         block.update_instr()
@@ -2719,6 +2727,6 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
-    
+   
     return [], 0
 #detect_vulnerabilities()

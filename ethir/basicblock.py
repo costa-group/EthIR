@@ -25,8 +25,7 @@ class BasicBlock:
         
         self.comes_from = []
         self.depth = -1
-        self.path = []
-
+        self.clone = False
         
     def get_start_address(self):
         return self.start
@@ -68,20 +67,13 @@ class BasicBlock:
         return self.branch_expression
 
     #Added by Pablo Gordillo
-    def set_path(self, l):
-        self.path = l
-
-    def get_path(self):
-        return self.path
-
-    def add_node_to_path(self, address):
-        self.path.append(address)
 
     def remove_node_from_path(self):
         self.path.pop()
     
     def set_depth_level(self, l):
-        self.depth = l
+        if self.depth == -1:
+            self.depth = l
 
     def get_depth_level(self):
         return self.depth
@@ -94,6 +86,13 @@ class BasicBlock:
         for el in edges:
             if (el!=self.falls_to):
                 self.list_jumps.append(el)
+
+
+    def compute_cloning(self):
+        if self.falls_to == None and self.jump_target != 0: #case when it is unconditional
+            if len(self.list_jumps)>1:
+                self.clone = True
+        return self.clone
 
     def set_calldataload_values(self,l):
         self.calldatavalues=list(l)
@@ -210,7 +209,7 @@ class BasicBlock:
 
     def get_comes_from(self):
         return self.comes_from
-    
+
     def update_instr(self):
         new_instructions = []
         mload = 0
