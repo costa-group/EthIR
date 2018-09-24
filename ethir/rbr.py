@@ -1392,3 +1392,19 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     else :
         print ("Error, you have to provide the CFG associated with the solidity file analyzed")
 
+
+
+###########################################################
+
+def get_common_predecessors(block):
+    return get_common_predecessor_aux(block,[block.get_start_address()])
+
+def get_common_predecessor_aux(block,pred):
+    c = block.get_comes_from()
+    if len(c)>1:
+        b = block.get_start_address()
+        if b not in pred:
+            pred.append(b)
+    else:
+        get_common_predecessor_aux(c[0],pred)
+    return pred
