@@ -25,6 +25,7 @@ class BasicBlock:
         
         self.comes_from = []
         self.depth = -1
+        self.path = []
 
         
     def get_start_address(self):
@@ -67,6 +68,18 @@ class BasicBlock:
         return self.branch_expression
 
     #Added by Pablo Gordillo
+    def set_path(self, l):
+        self.path = l
+
+    def get_path(self):
+        return self.path
+
+    def add_node_to_path(self, address):
+        self.path.append(address)
+
+    def remove_node_from_path(self):
+        self.path.pop()
+    
     def set_depth_level(self, l):
         self.depth = l
 
