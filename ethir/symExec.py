@@ -201,6 +201,8 @@ def initGlobalVars():
     global debug_info
     debug_info = False
 
+    global potential_jump
+    potential_jump = False
     # global old_stack_h
     # old_stack_h = 0
     
@@ -672,11 +674,11 @@ def full_sym_exec():
     global_state = get_init_global_state(path_conditions_and_vars)
     analysis = init_analysis()
     params = Parameter(path_conditions_and_vars=path_conditions_and_vars, global_state=global_state, analysis=analysis)
-    return sym_exec_block(params, 0, 0, 0, -1, 0)
+    return sym_exec_block(params, 0, 0, 0, -1, 0,[(0,0)])
 
 
 # Symbolically executing a block from the start address
-def sym_exec_block(params, block, pre_block, depth, func_call,level):
+def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global solver
     global visited_edges
     global money_flow_all_paths
@@ -688,6 +690,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level):
     global visited_blocks
     global blocks_to_create
     global ls_cont
+    global potential_jump
 
     visited = params.visited
     stack = params.stack
@@ -698,10 +701,11 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level):
     path_conditions_and_vars = params.path_conditions_and_vars
     analysis = params.analysis
     calls = params.calls
-
-
+        
     if debug_info:
         print ("\nBLOCK "+ str(block))
+        print "PATH"
+        print path
     
     update_stack_heigh(block,len(stack),0)
     Edge = namedtuple("Edge", ["v1", "v2"]) # Factory Function for tuples is used as dictionary key
@@ -765,35 +769,16 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level):
     #     path_conditions.append(path_conditions_and_vars["path_condition"])
     #     global_problematic_pcs["time_dependency_bug"].append(analysis["time_dependency_bug"])
     #     all_gs.append(copy_global_values(global_state))
-
     
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
+        #vertices[block].add_new_path(path)
         if debug_info and depth > global_params.DEPTH_LIMIT:
             print ("DEPTH LIMIT REACHED")
         global total_no_of_paths
         global no_of_test_cases
 
         total_no_of_paths += 1
-
-        # if global_params.GENERATE_TEST_CASES:
-        #     try:
-        #         model = solver.model()
-        #         no_of_test_cases += 1
-        #         filename = "test%s.otest" % no_of_test_cases
-        #         with open(filename, 'w') as f:
-        #             for variable in model.decls():
-        #                 f.write(str(variable) + " = " + str(model[variable]) + "\n")
-        #         if os.stat(filename).st_size == 0:
-        #             os.remove(filename)
-        #             no_of_test_cases -= 1
-        #     except Exception as e:
-        #         pass
-
-        # log.debug("TERMINATING A PATH ...")
-        #display_analysis(analysis)
-        # if is_testing_evm():
-        #     compare_storage_and_gas_unit_test(global_state, analysis)
 
     elif jump_type[block] == "unconditional":  # executing "JUMP"
         successor = vertices[block].get_jump_target()
@@ -804,22 +789,49 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level):
             if source_code in g_src_map.func_call_names:
                 func_call = global_state['pc']
                 
-
+        
         if successor in vertices:
+            
             vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
-            sym_exec_block(new_params, successor, block, depth, func_call,level+1)
+            if (((block,successor) not in path)):
+                if potential_jump:
+                    potential_jump = False
+                path.append((block,successor))
+                sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                path.pop()
+            else : #the pair is in the path
+                if not potential_jump:
+                    potential_jump = True
+                    path.append((block,successor))
+                    sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                    path.pop()
+                else:
+                    potential_jump = False 
         else:
             if successor not in blocks_to_create:
                 blocks_to_create.append(successor)
                 
     elif jump_type[block] == "falls_to":  # just follow to the next basic block
         successor = vertices[block].get_falls_to()
-
+        
         vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
 
         new_params = params.copy()
         new_params.global_state["pc"] = successor
-        sym_exec_block(new_params, successor, block, depth, func_call,level+1)
+        if (((block,successor) not in path)):
+            if potential_jump:
+                potential_jump = False
+            path.append((block,successor))
+            sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+            path.pop()
+        else:
+            if not potential_jump:
+                potential_jump = True
+                path.append((block,successor))
+                sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                path.pop()
+            else:
+                potential_jump = False
     elif jump_type[block] == "conditional":  # executing "JUMPI"
 
         # A choice point, we proceed with depth first search
@@ -845,15 +857,24 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level):
                 #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if left_branch in vertices:
             vertices[left_branch].add_origin(block) #to compute which are the blocks that leads to successor
-            sym_exec_block(new_params, left_branch, block, depth, func_call,level+1)
+
+            if ((block,left_branch) not in path):
+                if potential_jump:
+                    potential_jump = False
+                path.append((block,left_branch))
+                sym_exec_block(new_params, left_branch, block, depth, func_call,level+1,path)
+                path.pop()
+            else:
+                if not potential_jump:
+                    potential_jump = True
+                    path.append((block,left_branch))
+                    sym_exec_block(new_params, left_branch, block, depth, func_call,level+1,path)
+                    path.pop()
+                else:
+                    potential_jump = False
         else:
             if left_branch not in blocks_to_create:
                 blocks_to_create.append(left_branch)
-        # except TimeoutError:
-        #     raise
-        # except Exception as e:
-        #     if global_params.DEBUG_MODE:
-        #         traceback.print_exc()
 
         # solver.pop()  # POP SOLVER CONTEXT
 
@@ -880,7 +901,20 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level):
         #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if right_branch in vertices:
             vertices[right_branch].add_origin(block) #to compute which are the blocks that leads to successor
-            sym_exec_block(new_params, right_branch, block, depth, func_call,level+1)
+            if ((block,right_branch) not in path):
+                if potential_jump:
+                    potential_jump = False
+                path.append((block,right_branch))
+                sym_exec_block(new_params, right_branch, block, depth, func_call,level+1,path)
+                path.pop()
+            else:
+                if not potential_jump:
+                    potential_jump = True
+                    path.append((block,right_branch))
+                    sym_exec_block(new_params, right_branch, block, depth, func_call,level+1,path)
+                    path.pop()
+                else:
+                    potential_jump = False
         else:
             if right_branch not in blocks_to_create:
                 blocks_to_create.append(right_branch)
@@ -911,7 +945,7 @@ def sym_exec_ins(params, block, instr, func_call):
     global ls_cont
     global function_block_map
     global function_info
-
+    global potential_jump
     
     stack = params.stack
     mem = params.mem
@@ -1420,7 +1454,7 @@ def sym_exec_ins(params, block, instr, func_call):
             second = stack.pop(0)
 
             if isAllReal(first, second):
-                if first >= 32 or first < 0:
+                if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
                 else:
                     computed = second & (255 << (8 * byte_index))
@@ -1430,17 +1464,17 @@ def sym_exec_ins(params, block, instr, func_call):
                 second = to_symbolic(second)
                 # solver.push()
                 # solver.add( Not (Or( first >= 32, first < 0 ) ) )
-                # if check_sat(solver) == unsat:
-                #     computed = 0
-                # else:
-                computed = second & (255 << (8 * byte_index))
-                computed = computed >> (8 * byte_index)
+                if byte_index < 0:
+                    computed = 0
+                else:
+                    computed = second & (255 << (8 * byte_index))
+                    computed = computed >> (8 * byte_index)
                 #solver.pop()
             computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
-    #
+        
     # 20s: SHA3
     #
     elif opcode == "SHA3":
@@ -2589,7 +2623,7 @@ def delete_uncalled():
     global vertices
     global stack_h
     global calldataload_values
-    
+
     blocks = vertices.keys()
     uncalled = get_uncalled_blocks(blocks,visited_blocks)
     for b in uncalled:
