@@ -56,7 +56,7 @@ class BasicBlock:
             self.jump_target = address
         else:
             self.jump_target = -1
-
+            
     def get_jump_target(self):
         return self.jump_target
 
@@ -88,6 +88,12 @@ class BasicBlock:
                 self.list_jumps.append(el)
 
 
+    def set_cloning(self, c):
+        self.clone = c
+
+    def get_cloning(self):
+        return self.clone
+    
     def compute_cloning(self):
         if self.falls_to == None and self.jump_target != 0: #case when it is unconditional
             if len(self.list_jumps)>1:
