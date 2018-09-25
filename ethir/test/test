@@ -1,56 +1,95 @@
 #!/bin/csh
 
-set files = `ls ../../examples/`
+#set files = `ls ../../examples/`
+set files = `ls ../../../../contract-resources/scraping/code/`
 set names = `echo $files:q | sed 's/ /  /g'`
-set COSTABSHOME = /home/pablo/Systems/costa/costabs
+set COSTABSHOME = /home/pablo/Systems/costa/costabs/
 
 
 if (-e ./result.txt) then
     rm -f ./result.txt
 endif
 
+if $argv[1] == "c" then
 
-foreach contract ($names)
-    set ext = `echo $contract:q | sed 's/\./  /g'`
-    if $ext[2] == "sol" then
-        set result = `python ./test.py "../../examples/"$contract""`
-        set loops = `echo $result | cut -c 7-`
+    foreach contract ($names)
+        set ext = `echo $contract:q | sed 's/\./  /g'`
+        if $ext[2] == "sol" then
+    #        set result = `python ./test.py "../../examples/"$contract""`
+            set result = `python ./test.py "../../../../contract-resources/scraping/code/"$contract""`
+            set loops = `echo $result | cut -c 7-`
 
-        if $loops != 0 then
-            echo $contract" si" >> result.txt
-            #It contains a loop -> It executes EthIR
+            if $loops == 0 then
+                cp ../../../../contract-resources/scraping/code/$contract ../../examples/code/constant/
+
+            else
+                cp ../../../../contract-resources/scraping/code/$contract ../../examples/code/loops/
+            
+            # if $loops != 0 then
+            #     echo $contract" si" >> result.txt
+            #     #It contains a loop -> It executes EthIR
+            #     echo " "
+            #     echo "Starting the decompilation of "$contract
+            #     echo " "
+
+            #     python ../oyente-ethir.py -s ../../examples/$contract -saco -eop
+
+            #     #It takes the name of the contract without the extension
+            #     set c_name = `echo $contract:q | sed 's/\./ /g'`
+            #     set rbr_file = $c_name[1]"_saco.rbr"
+
+            #     echo ""
+            #     echo $rbr_file
+            #     echo""
+            
+            #     if (-e /tmp/costabs/$rbr_file) then
+            #         ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/$rbr_file -entries block0 -cost_model gas -ethir yes -backend cofloco
+            #     else if (-e /tmp/costabs/rbr_saco.rbr) then
+            #         ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
+                
+            #     else if (-e /tmp/costabs/rbr1_saco.rbr && $contract == "AuctusEther.sol") then
+            #         ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr1_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
+                
+            #     else if (-e /tmp/costabs/rbr0_saco.rbr) then
+            #         ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr0_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
+
+            #     else 
+            #         echo "no2"
+            #         echo $rbr_file
+
+            #     endif
+
+            endif
+        endif
+    end
+
+else
+
+    set files = `ls ../../examples/code/small-constant/`
+    set names = `echo $files:q | sed 's/ /  /g'`
+
+
+    rm -f ../../examples/code/small-constant/*.disasm
+    rm -f ../../examples/code/small-constant/*.evm
+    
+    foreach contract ($names)
             echo " "
             echo "Starting the decompilation of "$contract
             echo " "
+            python ../oyente-ethir.py -s ../../examples/code/small-constant/$contract -saco -eop -cfg
 
-            python ../oyente-ethir.py -s ../../examples/$contract -saco -eop
-
-            #It takes the name of the contract without the extension
-            set c_name = `echo $contract:q | sed 's/\./ /g'`
-            set rbr_file = $c_name[1]"_saco.rbr"
-
-            echo ""
-            echo $rbr_file
-            echo""
+            set rbr_files = `ls /tmp/costabs/`
+            set all_files = `echo $rbr_files:q | sed 's/ /  /g'`
             
-            if (-e /tmp/costabs/$rbr_file) then
-                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/$rbr_file -entries block0 -cost_model gas -ethir yes -backend cofloco
-            else if (-e /tmp/costabs/rbr_saco.rbr) then
-                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
-
-            else if (-e /tmp/costabs/rbr1_saco.rbr && $contract == "AuctusEther.sol") then
-                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr1_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
-
-            else if (-e /tmp/costabs/rbr0_saco.rbr) then
-                ${COSTABSHOME}/src/interfaces/shell/costabs /tmp/costabs/rbr0_saco.rbr -entries block0 -cost_model gas -ethir yes -backend cofloco
-
-            else 
-                echo "no2"
-                echo $rbr_file
-
-            endif
-
-        endif
-    endif
-end
+            foreach file ($all_files)
+                set ext = `echo $file:q | sed 's/_/ /g'`
+                if(${#ext} == 2) then
+                    echo "Starting SACO with file "$file
+                    echo " "
+                    python exe_saco.py $contract $file
+                endif
+            end
+    end
+    
+endif
 
