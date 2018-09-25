@@ -276,7 +276,7 @@ def update_block_info():
         block.compute_list_jump(edges[block.get_start_address()])
         c = block.compute_cloning()
         if c:
-            cloning.append(block.get_start_address())
+            cloning.append(block)
         block.set_calldataload_values(calldataload_values[block.get_start_address()])
         block.set_stack_info(stack_h[block.get_start_address()])
         block.update_instr()
@@ -2582,7 +2582,7 @@ def run_build_cfg_and_analyze(timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 20
+        global_params.GLOBAL_TIMEOUT = 30
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
@@ -2722,11 +2722,14 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
 
     end = dtimer()
     print("OYENTE tool: "+str(end-begin)+"s")
-    
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks)
+
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks,to_clone = cloning)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
-   
+
+    # for e in vertices.values():
+    #     print e.get_start_address()
+    #     print e.get_comes_from()
     return [], 0
 #detect_vulnerabilities()
