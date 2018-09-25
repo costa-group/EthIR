@@ -76,8 +76,6 @@ if __name__ == '__main__':
                 result = saco(name,b[1])
                 statistics(cfile,name,b,result,fp)
 
-            else:
-                fp.writerow(["ALREADY","ALREADY","","","ALREADY","ALREADY"])
         fp.writerow(["","","","","",""])
 
     f.close()
