@@ -2,7 +2,7 @@
 
 from rbr_rule import RBRRule
 import opcodes
-from utils import getKey, orderRBR
+from utils import getKey, orderRBR, getLevel
 import os
 import saco
 from timeit import default_timer as dtimer
@@ -1335,76 +1335,119 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None, component = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None, component = None,to_clone = None):
     global rbr_blocks
     global stack_index
-    
+
     init_globals()
     stack_index = stack_info
     component_of = component
 
     begin = dtimer()
-
-    if blocks_input and stack_info:
-        blocks = sorted(blocks_input.values(), key = getKey)
-        for block in blocks:
-            rule = compile_block(block,nop_opcodes)
-            rbr_blocks[rule.get_rule_name()]=[rule]
+    
+    if to_clone != []:
+         blocks2clone = sorted(to_clone, key = getLevel)
+         
+         for b in blocks2clone:
+             clone(b,blocks_input)
+    #     for b in to_clone:
+    #         clone(b,blocks_input)
+            
+#     if blocks_input and stack_info:
+#         blocks = sorted(blocks_input.values(), key = getKey)
+#         for block in blocks:
+#             #if block.get_start_address() not in to_clone:
+#                 rule = compile_block(block,nop_opcodes)
+#                 rbr_blocks[rule.get_rule_name()]=[rule]
             
 
-        rule_c = create_blocks(block_unbuild)
+#         rule_c = create_blocks(block_unbuild)
                
-        for rule in rbr_blocks.values():# _blocks.values():
-            for r in rule:
-#                r.set_bc(bc_in_use)
-                component_update_fields(r,component_of)
-#                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
-#                r.set_global_vars(max_field_list)
-                #r.set_args_local(current_local_var)
-                #r.display()
+#         for rule in rbr_blocks.values():# _blocks.values():
+#             for r in rule:
+# #                r.set_bc(bc_in_use)
+#                 component_update_fields(r,component_of)
+# #                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
+# #                r.set_global_vars(max_field_list)
+#                 #r.set_args_local(current_local_var)
+#                 #r.display()
 
-        for rule in rbr_blocks.values():
-            for r in rule:
-                jumps_to = r.get_call_to()
+#         for rule in rbr_blocks.values():
+#             for r in rule:
+#                 jumps_to = r.get_call_to()
                 
-                if jumps_to != -1:
-                    f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
-                    bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
-                    l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
-                    r.set_call_to_info((f,bc,l))
+#                 if jumps_to != -1:
+#                     f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
+#                     bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
+#                     l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+#                     r.set_call_to_info((f,bc,l))
 
-                r.update_calls()
+#                 r.update_calls()
 
-        # for r in rule_c:
-        #     r.set_bc(bc_in_use)
-        #     r.set_global_vars(max_field_list)
-        #     r.set_args_local(current_local_var)
-        #     rbr_blocks[r.get_rule_name()]=[r]
+#         # for r in rule_c:
+#         #     r.set_bc(bc_in_use)
+#         #     r.set_global_vars(max_field_list)
+#         #     r.set_args_local(current_local_var)
+#         #     rbr_blocks[r.get_rule_name()]=[r]
         
-        rbr = sorted(rbr_blocks.values(),key = orderRBR)
-        write_rbr(rbr,exe,contract_name)
+#         rbr = sorted(rbr_blocks.values(),key = orderRBR)
+#         write_rbr(rbr,exe,contract_name)
         
-        end = dtimer()
-        print("Build RBR: "+str(end-begin)+"s")
+#         end = dtimer()
+#         print("Build RBR: "+str(end-begin)+"s")
         
-        if saco_rbr:
-            saco.rbr2saco(rbr,exe,contract_name)
-    else :
-        print ("Error, you have to provide the CFG associated with the solidity file analyzed")
+#         if saco_rbr:
+#             saco.rbr2saco(rbr,exe,contract_name)
+#     else :
+#         print ("Error, you have to provide the CFG associated with the solidity file analyzed")
 
 
 
 ###########################################################
 
-def get_common_predecessors(block):
-    return get_common_predecessor_aux(block,[block.get_start_address()])
+def preprocess_push(block,addresses,blocks_input):
+    push_per_block = {}
 
-def get_common_predecessor_aux(block,pred):
+    b_source = blocks_input[block]
+    comes_from = b_source.get_comes_from()
+    print "COMESFROM"
+    print comes_from
+    for bl in comes_from:
+        b = blocks_input[bl]
+        instructions = b.get_instructions()
+        m = filter(lambda x: x.split()[0][:-1]=="PUSH",instructions)
+        numbers = map(lambda x: int(x.split()[1],16),m)
+        push_per_block[bl]=numbers
+    return bl
+
+def get_common_predecessors(block,blocks_input):
+    return get_common_predecessor_aux(block,blocks_input,[block.get_start_address()])
+
+def get_common_predecessor_aux(block,blocks_input,pred):
     c = block.get_comes_from()
     if len(c)>1:
         b = block.get_start_address()
         if b not in pred:
             pred.append(b)
     else:
-        get_common_predecessor_aux(c[0],pred)
+        get_common_predecessor_aux(blocks_input[c[0]],blocks_input,pred)
     return pred
+
+def clone(block, blocks_input):
+    pred = get_common_predecessors(block, blocks_input)
+    print "PRED"
+    print pred
+
+    address = block.get_list_jumps()
+    n_clones = len(address)
+    
+    source_path = pred[-1]
+
+    preprocess_push(source_path,address,blocks_input)
+    
+    i = 0
+    while (i<n_clones):
+        #clonar
+        a = address[i]
+        i = i+1
+        
