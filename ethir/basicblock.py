@@ -30,6 +30,10 @@ class BasicBlock:
     def get_start_address(self):
         return self.start
 
+    def set_start_address(self,address):
+        self.start = address
+
+        
     def get_end_address(self):
         return self.end
 
@@ -51,12 +55,15 @@ class BasicBlock:
     def get_falls_to(self):
         return self.falls_to
 
-    def set_jump_target(self, address):
-        if isinstance(address, six.integer_types):
+    def set_jump_target(self, address, cloning = None):
+        
+        if isinstance(address, six.integer_types) and cloning == None:
+            self.jump_target = address
+        elif cloning:
             self.jump_target = address
         else:
             self.jump_target = -1
-            
+
     def get_jump_target(self):
         return self.jump_target
 
@@ -254,6 +261,9 @@ class BasicBlock:
 
     def set_stack_info(self,stack_info):
         self.stack_info = list(stack_info)
+
+    def set_stack_info_pos(self,value,pos):
+        self.stack_info[pos] = value
         
     def display(self):
         six.print_("================")
