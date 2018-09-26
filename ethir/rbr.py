@@ -1420,6 +1420,13 @@ def preprocess_push(block,addresses,blocks_input):
         push_per_block[bl]=numbers
     return bl
 
+def get_push_block(m_block,address):
+    block = -1
+    for l in mblocks:
+        if address in mblcoks[l]:
+            block = l
+    return block
+
 def get_common_predecessors(block,blocks_input):
     return get_common_predecessor_aux(block,blocks_input,[block.get_start_address()])
 
@@ -1443,11 +1450,14 @@ def clone(block, blocks_input):
     
     source_path = pred[-1]
 
-    preprocess_push(source_path,address,blocks_input)
+    in_blocks = preprocess_push(source_path,address,blocks_input)
     
     i = 0
     while (i<n_clones):
         #clonar
         a = address[i]
+        push_block = get_push_block(in_blocks,a)
+        print "PUSH BLOCK"
+        print push_block
         i = i+1
         
