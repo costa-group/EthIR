@@ -13,7 +13,7 @@ import re
 import difflib
 import six
 from z3 import *
-from z3.z3util import get_vars
+#from z3.z3util import get_vars
 
 def ceil32(x):
     return x if x % 32 == 0 else x + 32 - (x % 32)
@@ -309,6 +309,8 @@ def getKey(block):
 def toInt(a):
     return int(a)
 
+def getLevel(block):
+    return block.get_depth_level()
 '''
 It returns the id of a rbr_rule.
 '''
