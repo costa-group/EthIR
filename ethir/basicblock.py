@@ -60,7 +60,6 @@ class BasicBlock:
         if isinstance(address, six.integer_types) and cloning == None:
             self.jump_target = address
         elif cloning:
-            print "HOLA"
             self.jump_target = address
         else:
             self.jump_target = -1
@@ -99,11 +98,18 @@ class BasicBlock:
                 self.list_jumps.append(el)
 
     def update_list_jump_cloned(self,val):
-        num = int(val.split("_")[0])
-        if num in self.list_jumps:
-            i = self.list_jumps.index(num)
-            self.list_jumps[i]=val
-        
+        num = val.split("_")
+        if len(num) == 2:
+            numI = int(num[0])
+            if numI in self.list_jumps:
+                i = self.list_jumps.index(numI)
+                self.list_jumps[i]=val
+        elif len(num)>2:
+            numI = num[:-1]
+            address = "_".join(numI)
+            if address in self.list_jumps:
+                i = self.list_jumps.index(address)
+                self.list_jumps[i]=val
 
     def set_cloning(self, c):
         self.clone = c
