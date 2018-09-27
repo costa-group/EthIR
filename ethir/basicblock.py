@@ -60,6 +60,7 @@ class BasicBlock:
         if isinstance(address, six.integer_types) and cloning == None:
             self.jump_target = address
         elif cloning:
+            print "HOLA"
             self.jump_target = address
         else:
             self.jump_target = -1
@@ -89,11 +90,20 @@ class BasicBlock:
     def get_list_jumps(self):
         return self.list_jumps
 
+    def set_list_jump(self,l):
+        self.list_jumps = l
+        
     def compute_list_jump(self,edges):
         for el in edges:
             if (el!=self.falls_to):
                 self.list_jumps.append(el)
 
+    def update_list_jump_cloned(self,val):
+        num = int(val.split("_")[0])
+        if num in self.list_jumps:
+            i = self.list_jumps.index(num)
+            self.list_jumps[i]=val
+        
 
     def set_cloning(self, c):
         self.clone = c
@@ -156,7 +166,6 @@ class BasicBlock:
 
     def set_ret_val(self, val):
         self.ret_val = val
-
 
     def _is_numerical(self,elem):
         try:
@@ -223,6 +232,9 @@ class BasicBlock:
     def get_comes_from(self):
         return self.comes_from
 
+    def set_comes_from(self,l):
+        self.comes_from = l
+        
     def update_instr(self):
         new_instructions = []
         mload = 0
@@ -267,7 +279,12 @@ class BasicBlock:
         
     def display(self):
         six.print_("================")
-        six.print_("start address: %d" % self.start)
+
+        if type(self.start)==int:
+            six.print_("start address: %d" % self.start)
+        else:
+            six.print_("start address: "+self.start)
+            
         six.print_("end address: %d" % self.end)
         six.print_("end statement type: " + self.type)
 
@@ -276,6 +293,27 @@ class BasicBlock:
             self.list_jumps =[-1]
 
         six.print_("jump target: " + " ".join(str(x) for x in self.list_jumps))
+        # six.print_("jump target: %d" %self.jump_target)
+        if(self.falls_to != None):
+            six.print_("falls to: %d" %self.falls_to)
+        for instr in self.instructions:
+            # if(instr.strip(" ") == "CALLDATALOAD"):
+            #     six.print_(instr+"("+self.calldatavalues.pop(0)+")")
+            # else:
+            six.print_(instr)
+
+    def display2(self):
+        six.print_("================")
+
+        if type(self.start)==int:
+            six.print_("start address: %d" % self.start)
+        else:
+            six.print_("start address: "+self.start)
+            
+        six.print_("end address: %d" % self.end)
+        six.print_("end statement type: " + self.type)
+
+        six.print_("jump target: " + str(self.jump_target))
         # six.print_("jump target: %d" %self.jump_target)
         if(self.falls_to != None):
             six.print_("falls to: %d" %self.falls_to)
