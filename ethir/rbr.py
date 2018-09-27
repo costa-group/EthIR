@@ -1348,62 +1348,61 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     component_of = component
 
     begin = dtimer()
-    
-    if to_clone != []:
-         blocks2clone = sorted(to_clone, key = getLevel)
+    blocks_dict = blocks_input
+    # if to_clone != []:
+    #      blocks2clone = sorted(to_clone, key = getLevel)
 
-         for b in blocks2clone:
-             clone(b,blocks_input,nop_opcodes)
-    #     for b in to_clone:
-    #         clone(b,blocks_input)
-            
-#     if blocks_input and stack_info:
-#         blocks = sorted(blocks_input.values(), key = getKey)
-#         for block in blocks:
-#             #if block.get_start_address() not in to_clone:
-#                 rule = compile_block(block,nop_opcodes)
-#                 rbr_blocks[rule.get_rule_name()]=[rule]
+    #      for b in blocks2clone:
+    #          blocks_dict = clone(b,blocks_dict,nop_opcodes)
+    #          print blocks_dict 
+             
+    if blocks_input and stack_info:
+        blocks = sorted(blocks_input.values(), key = getKey)
+        for block in blocks:
+            #if block.get_start_address() not in to_clone:
+                rule = compile_block(block,nop_opcodes)
+                rbr_blocks[rule.get_rule_name()]=[rule]
             
 
-#         rule_c = create_blocks(block_unbuild)
+        rule_c = create_blocks(block_unbuild)
                
-#         for rule in rbr_blocks.values():# _blocks.values():
-#             for r in rule:
-# #                r.set_bc(bc_in_use)
-#                 component_update_fields(r,component_of)
-# #                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
-# #                r.set_global_vars(max_field_list)
-#                 #r.set_args_local(current_local_var)
-#                 #r.display()
+        for rule in rbr_blocks.values():# _blocks.values():
+            for r in rule:
+#                r.set_bc(bc_in_use)
+                component_update_fields(r,component_of)
+#                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
+#                r.set_global_vars(max_field_list)
+                #r.set_args_local(current_local_var)
+                #r.display()
 
-#         for rule in rbr_blocks.values():
-#             for r in rule:
-#                 jumps_to = r.get_call_to()
+        for rule in rbr_blocks.values():
+            for r in rule:
+                jumps_to = r.get_call_to()
                 
-#                 if jumps_to != -1:
-#                     f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
-#                     bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
-#                     l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
-#                     r.set_call_to_info((f,bc,l))
+                if jumps_to != -1:
+                    f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
+                    bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
+                    l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+                    r.set_call_to_info((f,bc,l))
 
-#                 r.update_calls()
+                r.update_calls()
 
-#         # for r in rule_c:
-#         #     r.set_bc(bc_in_use)
-#         #     r.set_global_vars(max_field_list)
-#         #     r.set_args_local(current_local_var)
-#         #     rbr_blocks[r.get_rule_name()]=[r]
+        # for r in rule_c:
+        #     r.set_bc(bc_in_use)
+        #     r.set_global_vars(max_field_list)
+        #     r.set_args_local(current_local_var)
+        #     rbr_blocks[r.get_rule_name()]=[r]
         
-#         rbr = sorted(rbr_blocks.values(),key = orderRBR)
-#         write_rbr(rbr,exe,contract_name)
+        rbr = sorted(rbr_blocks.values(),key = orderRBR)
+        write_rbr(rbr,exe,contract_name)
         
-#         end = dtimer()
-#         print("Build RBR: "+str(end-begin)+"s")
+        end = dtimer()
+        print("Build RBR: "+str(end-begin)+"s")
         
-#         if saco_rbr:
-#             saco.rbr2saco(rbr,exe,contract_name)
-#     else :
-#         print ("Error, you have to provide the CFG associated with the solidity file analyzed")
+        if saco_rbr:
+            saco.rbr2saco(rbr,exe,contract_name)
+    else :
+        print ("Error, you have to provide the CFG associated with the solidity file analyzed")
 
 
 
@@ -1414,8 +1413,8 @@ def preprocess_push(block,addresses,blocks_input):
 
     b_source = blocks_input[block]
     comes_from = b_source.get_comes_from()
-    print "COMESFROM"
-    print comes_from
+    # print "COMESFROM"
+    # print comes_from
     for bl in comes_from:
         b = blocks_input[bl]
         instructions = b.get_instructions()
@@ -1441,167 +1440,9 @@ def get_common_predecessor_aux(block,blocks_input,pred):
         if b not in pred:
             pred.append(b)
     else:
+        pred.append(c[0])
         get_common_predecessor_aux(blocks_input[c[0]],blocks_input,pred)
     return pred
-
-
-
-def create_uncond_jump_clone(block_id,variables,jumps):
-    if (len(jumps)>1):
-        rule1, rule2 = create_uncond_jump_block_clone(block_id,variables,jumps)
-        stack_variables = get_stack_variables(variables)
-        head = "jump"+str(block_id)
-
-        in_vars = len(stack_variables)
-        rule1.set_index_input(in_vars)
-        rule2.set_index_input(in_vars)
-
-    else:
-        _ , updated_variables = get_consume_variable(variables)
-        
-        stack_variables = get_stack_variables(updated_variables)
-        top = get_stack_index(jumps[0])[0]
-        stack_variables = stack_variables[:top]
-        head = "block"+str(jumps[0])
-        rule1 = rule2 = None
-        
-    if (len(stack_variables)!=0):
-        p_vars = ",".join(stack_variables)+","
-    else:
-        p_vars = ""
-
-        
-    instr = "call("+ head +"("+p_vars+"globals, bc))"
-    return rule1,rule2,instr
-
-'''
-It generates the new two jump blocks (if it is the case).
--block_id is the address of jump blocks. int.
--variables refers to the top stack index when starting the rule. int.
--jumps is a list with the addresses of the next blocks.
-- rule1 and rule2 are rbr_rule instances containing the jump rules.
-'''
-def create_uncond_jump_block_clone(block_id,variables,jumps):
-    v1, index_variables = get_consume_variable(variables)
-    guard = "eq("+ v1 + ","+ str(jumps[0])+")"
-
-    stack_variables = get_stack_variables(index_variables)
-
-    top1 = get_stack_index(jumps[0])[0]
-    top2 = get_stack_index(jumps[1])[0]
-    
-    if (len(stack_variables)!=0):
-        p1_vars = ", ".join(stack_variables[:top1])+","
-        p2_vars = ", ".join(stack_variables[:top2])+","
-    else:
-        p1_vars = p2_vars = ""
-    
-    rule1 = RBRRule(block_id,"jump")
-    rule1.set_guard(guard)
-    instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
-    rule1.add_instr(instr)
-    rule1.set_call_to(str(jumps[0]))
-
-    rule2 = RBRRule(block_id,"jump")
-    guard = get_opposite_guard(guard)
-    rule2.set_guard(guard)
-    instr = "call(block"+str(jumps[1])+"("+p2_vars+"globals,bc))"
-    rule2.add_instr(instr)
-    rule2.set_call_to(str(jumps[1]))
-    
-    return rule1, rule2
-
-'''
-It translates the jumpi instruction.  
--block_id refers to the id of the current block. int.
--l_instr contains the instructions involved in the generation of the jump. 
--variables refers to the top stack index. int.
--jumps is a list with the addresses of the next blocks. [int].
-- falls_to is the address of one of the next blocks. int.
--nop is True when generating nop annotations with the opcode. False otherwise.
--guard is true if we have to generate the guard. Otherwise we have to compare
- it he top variable is equal to 1.
--It returns a tuple (rule1, rule2, instr) where rule1 and rule2 
- are rule_rbr instances corresponding to the guarded jump rules,
- and instr is the called instruction to the jump rule generated.
-'''
-def create_cond_jump_clone(block_id,l_instr,variables,jumps,falls_to,nop,guard = None,cloned=None,clone_info = None):
-
-    rule1, rule2 = create_cond_jumpBlock_clone(block_id,l_instr,variables,jumps,falls_to,nop,guard)
-
-    consume = 1 if l_instr[0] == "ISZERO" else 2
-    stack_variables = get_stack_variables(variables)
-
-    if (len(stack_variables)!=0):
-        p_vars = ",".join(stack_variables)+","
-    else:
-        p_vars = ""
-
-
-    in_vars = len(stack_variables)
-    rule1.set_index_input(in_vars)
-    rule2.set_index_input(in_vars)
-    
-    instr = "call(jump"+str(block_id)+"("+p_vars+"globals,bc))"
-    
-    return rule1, rule2, instr
-
-'''
--l_instr contains the instructions involved in the generation of the jump. 
--variables refers to the top stack index. int.
--jumps is a list with the addresses of the next blocks. [int].
-- falls_to is the address of one of the next blocks. int.
--nop is True when generating nop annotations with the opcode. False otherwise.
--guard is true if we have to generate the guard. Otherwise we have to compare
- it he top variable is equal to 1.
-- rule1 and rule2 are rbr_rule instances containing the jump rules.
-'''
-def create_cond_jump_block_clone(block_id,l_instr,variables,jumps,falls_to,nop,guard):
-    if guard:
-        guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
-    else:
-        _ , index_variables = get_consume_variable(variables)
-        v1, index_variables = get_consume_variable(index_variables)
-        guard = "eq("+v1+", 1 )"
-    
-    for elem in l_instr[1:]:
-        if elem == "ISZERO":
-            guard = get_opposite_guard(guard)
-        elif elem[:4] == "PUSH":
-            _, index_variables = get_new_variable(index_variables)
-        elif elem == "JUMPI":
-            _, index_variables = get_consume_variable(index_variables)
-            _, index_variables = get_consume_variable(index_variables)
-        else:
-            guard = "Error while creating the jump"
-    
-    stack_variables = get_stack_variables(index_variables)
-
-    top1 = get_stack_index(jumps[0])[0]
-    top2 = get_stack_index(falls_to)[0]
-    top1, top2 = process_tops(top1, top2)
-
-    if (len(stack_variables)!=0):
-        p1_vars = ", ".join(stack_variables[:top1])+"," if top1 !=0 else ""
-        p2_vars = ", ".join(stack_variables[:top2])+"," if top2 != 0 else ""
-    else:
-        p1_vars = p2_vars = ""
-
-
-    rule1 = RBRRule(block_id,"jump")
-    rule1.set_guard(guard)
-    instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
-    rule1.add_instr(instr)
-    rule1.set_call_to(str(jumps[0]))
-
-    rule2 = RBRRule(block_id,"jump")
-    guard = get_opposite_guard(guard)
-    rule2.set_guard(guard)
-    instr = "call(block"+str(falls_to)+"("+p2_vars+"globals,bc))"
-    rule2.add_instr(instr)
-    rule2.set_call_to(str(falls_to))
-    
-    return rule1, rule2
 
 def get_stack_evol(block,inpt):
     i = inpt
@@ -1612,97 +1453,47 @@ def get_stack_evol(block,inpt):
         i = i-op_info[1]+op_info[2]
     return i
         
-def compile_block_to_clone(block,nop,pred,id_copy,address):
-    global rbr_blocks
-    global top_index
-    global new_fid
-    
-    cont = 0
-    top_index = 0
-    new_fid = 0
-    finish = False
-    
-    index_variables = block.get_stack_info()[0]-1
-    block_id = block.get_start_address()
-    rule = RBRRule(str(block_id)+str(id_copy), "block")
-    rule.set_index_input(block.get_stack_info()[0])
-    l_instr = block.get_instructions()
-    
-    while not(finish) and cont< len(l_instr):
-        if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
-            rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
-                        index_variables, block.get_list_jumps(),
-                                                  block.get_falls_to(),nop,True)
-            rule.add_instr(instr)
-            if nop:
-                for elem in l_instr[cont:]:
-                    rule.add_instr("nop("+elem.split()[0]+")")
-                    
-
-            rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
-            finish = True
-            
-        elif l_instr[cont] == "JUMPI": #JUMPI without conditional instruction before. It checks if top == 1
-            rule1,rule2, instr = create_cond_jump(block.get_start_address(),
-                             l_instr[cont:], index_variables,
-                             block.get_list_jumps(),
-                             block.get_falls_to(),nop)
-
-            rule.add_instr(instr)
-
-            if nop:
-                for elem in l_instr[cont:]:
-                    rule.add_instr("nop("+elem.split()[0]+")")
-                    
-            rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
-            finish = True
-
-        elif l_instr[cont] == "JUMP":
-            rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps())
-
-            if rule1:
-                rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
-            else:
-                rule.set_call_to(block.get_list_jumps()[0])
-                
-            rule.add_instr(instr)
-
-            if nop:
-                rule.add_instr("nop(JUMP)")
-        else:
-            index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),True,nop)        
-        cont+=1
-
-    if(block.get_block_type()=="falls_to"):
-        instr = process_falls_to_blocks(index_variables,block.get_falls_to())
-        rule.set_call_to(block.get_falls_to())
-        rule.add_instr(instr)
-
-    rule.set_fresh_index(top_index)
-    return rule
-
 def update_block_cloned(new_block,pre_block,pred,idx):
+    global cloned_blocks
+    global stack_index
+    
     stack_in = stack_index[pre_block][1]
     stack_out = get_stack_evol(new_block,stack_in)
 
     new_block.set_stack_info((stack_in,stack_out))
+    
+    cloned_blocks.append(new_block.get_start_address())
     new_block.set_start_address(str(new_block.get_start_address())+"_"+str(idx))
 
-    jumps_to = new_block.get_jump_to()
+    
+    jumps_to = new_block.get_jump_target()
     falls_to = new_block.get_falls_to()
 
+    comes_from = new_block.get_comes_from()
+    if (pre_block in cloned_blocks) and (pre_block in comes_from):
+        i = comes_from.index(pre_block)
+        comes_from[i] = str(pre_block)+"_"+str(idx)
+        new_block.set_comes_from(comes_from)
+        
     if jumps_to in pred:
-        new_block.set_jump_to(jumps_to+"_"+str(idx))
+        new_block.set_jump_target(str(jumps_to)+"_"+str(idx),True)
     else:
-        new_block.set_falls_to(falls_to+"_"+str(idx))
+        new_block.set_falls_to(str(falls_to)+"_"+str(idx))
 
+    stack_index[new_block.get_start_address()] = [stack_in,stack_out]
+    
     return new_block
+
+def delete_old_blocks(blocks_to_remove, blocks):
+    for block in blocks_to_remove:
+        del blocks[block]
 
 def clone(block, blocks_input,nop):
     global cloned_blocks
-    global rbr_blocks
+    global stack_index
 
+    print "STARTING CLONE"
+    print block.get_start_address()
     rules = []
     pred = get_common_predecessors(block, blocks_input)
     print "PRED"
@@ -1717,6 +1508,7 @@ def clone(block, blocks_input,nop):
     cloned_blocks = cloned_blocks+pred
     
     i = 0
+    
     while (i<n_clones): #bucle que hace las copias
 
         #clonar
@@ -1732,9 +1524,13 @@ def clone(block, blocks_input,nop):
         push_block_obj = blocks_input[push_block]
         if push_block_obj.get_falls_to() == source_path:
             push_block_obj.set_falls_to(str(source_path)+"_"+str(i))
-        else:
-            push_block_obj.set_jump_target(str(source_path)+"_"+str(i))
+            #blocks_input[push_block] = push_block_obj
+            push_block_obj.update_list_jump_cloned(str(source_path)+"_"+str(i))
 
+        else:
+            push_block_obj.set_jump_target(str(source_path)+"_"+str(i),True)
+            #blocks_input[push_block] = push_block_obj
+            push_block_obj.update_list_jump_cloned(str(source_path)+"_"+str(i))
 
         #we copy the last block
         pre_block = push_block
@@ -1743,8 +1539,56 @@ def clone(block, blocks_input,nop):
         for idx in xrange(len(pred)-1,0,-1):
             new_block = copy.deepcopy(blocks_input[pred[idx]])
             new_block = update_block_cloned(new_block,pre_block,pred,i)
-            blocks_input[new_block.get_start_address()] = new_block            
-            pre_block = e
-            
-        i = i+1
+            blocks_input[new_block.get_start_address()] = new_block
+            pre_block = pred[idx]
         
+        #We modify the last block
+        new_block = copy.deepcopy(blocks_input[pred[0]])
+        stack_in = stack_index[pre_block][1]
+        stack_out = get_stack_evol(new_block,stack_in)
+        new_block.set_stack_info((stack_in,stack_out))
+
+        cloned_blocks.append(new_block.get_start_address())
+        new_block.set_start_address(str(new_block.get_start_address())+"_"+str(i))
+
+        
+        stack_index[new_block.get_start_address()] = [stack_in,stack_out]
+    
+        if (len(pred) != 1):
+            comes_from = new_block.get_comes_from()
+            if (pre_block in cloned_blocks) and (pre_block in comes_from):
+                idx = comes_from.index(pre_block)
+                comes_from[idx] = str(pre_block)+"_"+str(idx)
+                new_block.set_comes_from(comes_from)
+        else: #It is the only block
+            new_block.set_comes_from([pre_block])
+            
+        new_block.set_jump_target(a,True) #By definition
+        new_block.set_list_jump(filter(lambda x: x == a,new_block.get_list_jumps()))
+        blocks_input[new_block.get_start_address()] = new_block
+        
+        #Target block
+        target_block = blocks_input[a]
+        comes_from = target_block.get_comes_from()
+        if (block.get_start_address() in comes_from):
+            idx = comes_from.index(block.get_start_address())
+            comes_from[idx] = new_block.get_start_address()
+            target_block.set_comes_from(comes_from)
+
+        i = i+1
+        print "I"
+        print i
+        print "NCLONES"
+        print n_clones
+        print blocks_input.keys()
+
+    print "STACK"
+    print stack_index
+        
+    delete_old_blocks(pred,blocks_input)
+    for e in blocks_input.values():
+        e.display()
+        print e.get_comes_from()
+
+    print "FINISH"
+    return blocks_input
