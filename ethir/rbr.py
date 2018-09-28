@@ -1459,11 +1459,10 @@ def get_stack_evol(block,inpt):
         i = i-op_info[1]+op_info[2]
     return i
         
-def update_block_cloned(new_block,pre_block,pred,idx):
+def update_block_cloned(new_block,pre_block,pred,idx,stack_in):
     global cloned_blocks
     global stack_index
     
-    stack_in = stack_index[pre_block][1]
     stack_out = get_stack_evol(new_block,stack_in)
 
     new_block.set_stack_info((stack_in,stack_out))
@@ -1512,12 +1511,18 @@ def clone(block, blocks_input,nop):
     cloned_blocks = cloned_blocks+pred
     
     i = 0
+
+    print "PRED"
+    print pred
     
     while (i<n_clones): #bucle que hace las copias
-
+        
         #clonar
         a = address[i]
         push_block = get_push_block(in_blocks,a)
+
+        print a
+        print push_block
         
         #modified the jump address of the first block
         push_block_obj = blocks_input[push_block]
@@ -1535,10 +1540,12 @@ def clone(block, blocks_input,nop):
         pre_block = push_block
 
         first = True
+
+        stack_in = stack_index[pre_block][1]
         #We start to clone each path
         for idx in xrange(len(pred)-1,0,-1):
             new_block = copy.deepcopy(blocks_input[pred[idx]])
-            new_block = update_block_cloned(new_block,pre_block,pred,i)
+            new_block = update_block_cloned(new_block,pre_block,pred,i,stack_in)
             if first == True:
                 first = False
                 comes_from = [push_block]
@@ -1549,11 +1556,16 @@ def clone(block, blocks_input,nop):
             # print new_block.get_list_jumps()
             blocks_input[new_block.get_start_address()] = new_block
             pre_block = pred[idx]
+            stack_in = new_block.get_stack_info()[1]
 
-        
+
+        if first: #It means that the block to copy has no predecessor
+            stack_in = stack_index[pre_block][1]
+        else:
+            stack_in = new_block.get_stack_info()[1]
+            
         #We modify the last block
         new_block = copy.deepcopy(blocks_input[pred[0]])
-        stack_in = stack_index[pre_block][1]
         stack_out = get_stack_evol(new_block,stack_in)
         new_block.set_stack_info((stack_in,stack_out))
 
@@ -1590,7 +1602,7 @@ def clone(block, blocks_input,nop):
             target_block.set_comes_from(comes_from)
 
         i = i+1
-
+        print stack_index
     # print "STACK"
     # print stack_index
         
