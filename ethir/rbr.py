@@ -575,10 +575,7 @@ updated. It also updated the corresponding global variables.
 def translateOpcodes50(opcode, value, index_variables,block):
     global new_fid
     
-    if opcode == "POP":
-        print "HERE"
-        print block
-        
+    if opcode == "POP":        
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
@@ -1354,13 +1351,12 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     begin = dtimer()
     blocks_dict = blocks_input
     if to_clone != []:
-         blocks2clone = sorted(to_clone, key = getLevel)
 
-         for b in blocks2clone:
-             blocks_dict = clone(b,blocks_dict,nop_opcodes)
-             #print blocks_dict
+        blocks2clone = sorted(to_clone, key = getLevel)
 
-    print stack_index
+        for b in blocks2clone:
+            blocks_dict = clone(b,blocks_dict,nop_opcodes)
+            #print blocks_dict
     
     if blocks_dict and stack_info:
         blocks = sorted(blocks_dict.values(), key = getKey)
@@ -1510,19 +1506,12 @@ def clone(block, blocks_input,nop):
     in_blocks = preprocess_push(source_path,address,blocks_input)
     cloned_blocks = cloned_blocks+pred
     
-    i = 0
-
-    print "PRED"
-    print pred
-    
+    i = 0    
     while (i<n_clones): #bucle que hace las copias
         
         #clonar
         a = address[i]
         push_block = get_push_block(in_blocks,a)
-
-        print a
-        print push_block
         
         #modified the jump address of the first block
         push_block_obj = blocks_input[push_block]
@@ -1602,15 +1591,11 @@ def clone(block, blocks_input,nop):
             target_block.set_comes_from(comes_from)
 
         i = i+1
-        print stack_index
-    # print "STACK"
-    # print stack_index
         
     delete_old_blocks(pred,blocks_input)
-    print "FINISH"
-    for e in blocks_input.values():
-        e.display()
-        print e.get_comes_from()
+    # for e in blocks_input.values():
+    #     e.display()
+    #     print e.get_comes_from()
 
     return blocks_input
 
