@@ -2,6 +2,7 @@
 
 from rbr_rule import RBRRule
 import opcodes
+from basicblock import Tree
 from utils import getKey, orderRBR, getLevel
 import os
 import saco
@@ -575,6 +576,9 @@ def translateOpcodes50(opcode, value, index_variables,block):
     global new_fid
     
     if opcode == "POP":
+        print "HERE"
+        print block
+        
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
@@ -1349,15 +1353,17 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
     begin = dtimer()
     blocks_dict = blocks_input
-    # if to_clone != []:
-    #      blocks2clone = sorted(to_clone, key = getLevel)
+    if to_clone != []:
+         blocks2clone = sorted(to_clone, key = getLevel)
 
-    #      for b in blocks2clone:
-    #          blocks_dict = clone(b,blocks_dict,nop_opcodes)
-    #          print blocks_dict 
-             
-    if blocks_input and stack_info:
-        blocks = sorted(blocks_input.values(), key = getKey)
+         for b in blocks2clone:
+             blocks_dict = clone(b,blocks_dict,nop_opcodes)
+             #print blocks_dict
+
+    print stack_index
+    
+    if blocks_dict and stack_info:
+        blocks = sorted(blocks_dict.values(), key = getKey)
         for block in blocks:
             #if block.get_start_address() not in to_clone:
                 rule = compile_block(block,nop_opcodes)
@@ -1468,15 +1474,17 @@ def update_block_cloned(new_block,pre_block,pred,idx):
     
     jumps_to = new_block.get_jump_target()
     falls_to = new_block.get_falls_to()
-
+    
     comes_from = new_block.get_comes_from()
     if (pre_block in cloned_blocks) and (pre_block in comes_from):
+        # print "UPDATE COMESFROM"
         i = comes_from.index(pre_block)
         comes_from[i] = str(pre_block)+"_"+str(idx)
         new_block.set_comes_from(comes_from)
         
     if jumps_to in pred:
         new_block.set_jump_target(str(jumps_to)+"_"+str(idx),True)
+        new_block.update_list_jump_cloned(str(jumps_to)+"_"+str(idx))
     else:
         new_block.set_falls_to(str(falls_to)+"_"+str(idx))
 
@@ -1492,12 +1500,8 @@ def clone(block, blocks_input,nop):
     global cloned_blocks
     global stack_index
 
-    print "STARTING CLONE"
-    print block.get_start_address()
     rules = []
     pred = get_common_predecessors(block, blocks_input)
-    print "PRED"
-    print pred
 
     address = block.get_list_jumps()
     n_clones = len(address)
@@ -1515,11 +1519,6 @@ def clone(block, blocks_input,nop):
         a = address[i]
         push_block = get_push_block(in_blocks,a)
         
-        print "PUSH BLOCK"
-        print push_block
-        print "ADDRESS"
-        print a
-
         #modified the jump address of the first block
         push_block_obj = blocks_input[push_block]
         if push_block_obj.get_falls_to() == source_path:
@@ -1534,13 +1533,23 @@ def clone(block, blocks_input,nop):
 
         #we copy the last block
         pre_block = push_block
-        
+
+        first = True
         #We start to clone each path
         for idx in xrange(len(pred)-1,0,-1):
             new_block = copy.deepcopy(blocks_input[pred[idx]])
             new_block = update_block_cloned(new_block,pre_block,pred,i)
+            if first == True:
+                first = False
+                comes_from = [push_block]
+                new_block.set_comes_from(comes_from)
+                
+            # print "DISPLAY"
+            # print new_block.get_jump_target()
+            # print new_block.get_list_jumps()
             blocks_input[new_block.get_start_address()] = new_block
             pre_block = pred[idx]
+
         
         #We modify the last block
         new_block = copy.deepcopy(blocks_input[pred[0]])
@@ -1556,9 +1565,14 @@ def clone(block, blocks_input,nop):
     
         if (len(pred) != 1):
             comes_from = new_block.get_comes_from()
+            # print "PRE_BLOCK"
+            # print pre_block
+
+            # print new_block.get_start_address()
+            
             if (pre_block in cloned_blocks) and (pre_block in comes_from):
                 idx = comes_from.index(pre_block)
-                comes_from[idx] = str(pre_block)+"_"+str(idx)
+                comes_from[idx] = str(pre_block)+"_"+str(i)
                 new_block.set_comes_from(comes_from)
         else: #It is the only block
             new_block.set_comes_from([pre_block])
@@ -1576,19 +1590,70 @@ def clone(block, blocks_input,nop):
             target_block.set_comes_from(comes_from)
 
         i = i+1
-        print "I"
-        print i
-        print "NCLONES"
-        print n_clones
-        print blocks_input.keys()
 
-    print "STACK"
-    print stack_index
+    # print "STACK"
+    # print stack_index
         
     delete_old_blocks(pred,blocks_input)
+    print "FINISH"
     for e in blocks_input.values():
         e.display()
         print e.get_comes_from()
 
-    print "FINISH"
     return blocks_input
+
+
+
+# def build_tree(block,visited,block_input,condTrue = "t"):
+    
+#     start = block.get_start_address()   
+#     falls_to = block.get_falls_to()
+#     list_jumps = block.get_list_jumps()
+
+#     type_block = block.get_block_type()
+
+#     if condTrue == "u":
+#         r = Tree(start,"",start,type_block)        
+#     else:
+#         r = Tree(start,condTrue,start,type_block)
+        
+#     for block_id in list_jumps:
+#         print block_id
+#         print block_input.get(block_id)
+#         if (start,block_id) not in visited:
+#             visited.append((start,block_id))
+#             if type_block == "conditional":
+#                 ch = build_tree(block_input.get(block_id),visited,block_input)
+#             else:
+#                 ch = build_tree(block_input.get(block_id),visited,block_input,"u")
+#             if ch not in r.get_children():
+#                 r.add_child(ch)
+
+#     falls_to = block.get_falls_to()
+#     if (falls_to != None) and (start,falls_to) not in visited:
+#         visited.append((start,falls_to))
+#         if type_block == "falls_to":
+#             ch = build_tree(block_input.get(falls_to),visited,block_input,"")
+#         else:
+#             ch = build_tree(block_input.get(falls_to),visited,block_input,"f")
+#         if ch not in r.get_children():
+#             r.add_child(ch)
+        
+#     return r
+    
+# def cfg_dot(it,block_input,name = False):
+#     vert = sorted(block_input.values(), key = getKey)
+#     if "costabs" not in os.listdir("/tmp/"):
+#         os.mkdir("/tmp/costabs/")
+
+#     if it == None:
+#         name = "/tmp/costabs/cfg_cloned.dot"
+#     elif name == False:
+#         name = "/tmp/costabs/cfg_cloned_"+str(it)+".dot"
+#     else:
+#         name = "/tmp/costabs/cloned_"+name+".dot"
+        
+#     f = open(name,"wb")
+#     tree = build_tree(vert[0],[("st",0)],block_input)
+#     tree.generatedot(f)
+#     f.close()
