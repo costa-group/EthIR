@@ -81,10 +81,6 @@ contract StupidCrowdsale {
         token = StupidToken(_token);
     }
 
-    // fallback function can be used to buy tokens
-    function () external payable {
-        buyTokens(msg.sender);
-    }
 
     // low level token purchase function
     function buyTokens(address investor) public payable {
