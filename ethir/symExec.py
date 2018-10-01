@@ -13,7 +13,7 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
-from z3 import *
+#from z3 import *
 
 from vargenerator import *
 from ethereum_data import *
@@ -2722,7 +2722,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
 
     end = dtimer()
     print("OYENTE tool: "+str(end-begin)+"s")
-
+    
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks,to_clone = cloning)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
