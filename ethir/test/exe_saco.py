@@ -11,12 +11,15 @@ def run_command(cmd):
 
 
 def get_num_blocks(name):
-    l = name.split("_")[0]
-    config_name = l+".config"
-    f = open(config_name,"r")
-    signature = f.readlines()
-    blocks = map(lambda x: (x.split(";")[0].strip()[1:],x.split(";")[1].strip()[:-1]),signature)
-    return blocks
+    if name.split(".")[1] == "rbr":
+        l = name.split("_")[0]
+        config_name = l+".config"
+        f = open(config_name,"r")
+        signature = f.readlines()
+        blocks = map(lambda x: (x.split(";")[0].strip()[1:],x.split(";")[1].strip()[:-1]),signature)
+        return blocks
+    else:
+        return -1
 
 def saco(name, block):
     r = ""
@@ -69,13 +72,13 @@ if __name__ == '__main__':
     d = "/tmp/costabs/"+name
     if name != "cfg":
         v =  get_num_blocks(d)
-
+        if v != -1:
         
-        for b in v:
-            if (cfile,b[0]) not in contract_files:
-                result = saco(name,b[1])
-                statistics(cfile,name,b,result,fp)
+            for b in v:
+                if (cfile,b[0]) not in contract_files:
+                    result = saco(name,b[1])
+                    statistics(cfile,name,b,result,fp)
 
-        fp.writerow(["","","","","",""])
+            fp.writerow(["","","","","",""])
 
     f.close()
