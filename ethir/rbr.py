@@ -1316,7 +1316,16 @@ def component_update_fields(rule,component):
     bc = bc_per_block.get(block,[])
     local = lvariables_per_block.get(block,[])
 
-    if fields != [] or bc !=[]:
+    # print "FIELDS"
+    # print fields
+
+    # print "BC"
+    # print bc
+
+    # print "LOCAL"
+    # print local
+    
+    if fields != [] or bc !=[] or local !=[]:
         rule.update_global_arg(fields)
         rule.update_bc(bc)
         rule.update_local_arg(local)
@@ -1327,6 +1336,8 @@ def component_update_fields(rule,component):
         #             print "JUMP"
         #             rule[0].update_global_arg(fields)
         #             rule[1].update_global_arg(fields)
+        # print "COMPONENT_OF"
+        # print component[block]
         for elem_c in component[block]:
             component_update_fields_block(elem_c,(fields,bc,local))#local)
 
@@ -1371,6 +1382,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         for rule in rbr_blocks.values():# _blocks.values():
             for r in rule:
 #                r.set_bc(bc_in_use)
+                # print "REGLA"
+                # print r.get_Id()
+                # print "START UPDATING"
                 component_update_fields(r,component_of)
 #                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
 #                r.set_global_vars(max_field_list)
