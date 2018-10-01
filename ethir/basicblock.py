@@ -43,6 +43,9 @@ class BasicBlock:
     def get_instructions(self):
         return self.instructions
 
+    def set_instructions(self,l):
+        self.instructions = l
+    
     def set_block_type(self, type):
         self.type = type
 
@@ -139,6 +142,21 @@ class BasicBlock:
             result = "Error"
         return result
 
+    def _set_mload_values(self,val):
+        self.mload_values = val
+
+    def _set_mstore_values(self,val):
+        self.mstore_values = val
+
+    def _set_sload_values(self,val):
+        self.sload_values = val
+
+    def _set_sstore_values(self,val):
+        self.sstore_values = val
+
+    def _set_caldata_values(self,val):
+        self.calldatavalues = val
+    
     def add_ls_value(self,type_value,key,val):
         if type_value == "mload":
             l = self.mload_values.get(key,-1)
@@ -282,6 +300,30 @@ class BasicBlock:
 
     def set_stack_info_pos(self,value,pos):
         self.stack_info[pos] = value
+
+
+    def copy(self):
+        
+        new_obj =  BasicBlock(self.start, self.end)
+        new_obj.set_instructions(list(self.instructions))
+        new_obj.set_jump_target(self.jump_target,True)
+
+        if self.falls_to != None:
+            new_obj.set_falls_to(self.falls_to)
+            
+        new_obj.set_list_jump(list(self.list_jumps))
+        new_obj._set_mload_values(self.mload_values.copy())
+        new_obj._set_mstore_values(self.mstore_values.copy())
+        new_obj._set_sload_values(self.sload_values.copy())
+        new_obj._set_sstore_values(self.sstore_values.copy())
+        new_obj.set_calldataload_values(list(self.calldatavalues))
+        new_obj.set_comes_from(list(self.comes_from))
+        new_obj.set_block_type(self.type)
+        new_obj.set_depth_level(self.depth)
+        new_obj.set_stack_info(list(self.stack_info))
+        new_obj.set_cloning(self.clone)
+        
+        return new_obj
         
     def display(self):
         six.print_("================")
@@ -301,28 +343,7 @@ class BasicBlock:
         six.print_("jump target: " + " ".join(str(x) for x in self.list_jumps))
         # six.print_("jump target: %d" %self.jump_target)
         if(self.falls_to != None):
-            six.print_("falls to: %d" %self.falls_to)
-        for instr in self.instructions:
-            # if(instr.strip(" ") == "CALLDATALOAD"):
-            #     six.print_(instr+"("+self.calldatavalues.pop(0)+")")
-            # else:
-            six.print_(instr)
-
-    def display2(self):
-        six.print_("================")
-
-        if type(self.start)==int:
-            six.print_("start address: %d" % self.start)
-        else:
-            six.print_("start address: "+self.start)
-            
-        six.print_("end address: %d" % self.end)
-        six.print_("end statement type: " + self.type)
-
-        six.print_("jump target: " + str(self.jump_target))
-        # six.print_("jump target: %d" %self.jump_target)
-        if(self.falls_to != None):
-            six.print_("falls to: %d" %self.falls_to)
+            six.print_("falls to: " + str(self.falls_to))
         for instr in self.instructions:
             # if(instr.strip(" ") == "CALLDATALOAD"):
             #     six.print_(instr+"("+self.calldatavalues.pop(0)+")")
