@@ -1476,7 +1476,7 @@ def update_block_cloned(new_block,pre_block,pred,idx,stack_in):
         i = comes_from.index(pre_block)
         comes_from[i] = str(pre_block)+"_"+str(idx)
         new_block.set_comes_from(comes_from)
-        
+
     if jumps_to in pred:
         new_block.set_jump_target(str(jumps_to)+"_"+str(idx),True)
         new_block.update_list_jump_cloned(str(jumps_to)+"_"+str(idx))
@@ -1551,28 +1551,46 @@ def clone(block, blocks_input,nop):
 
     in_blocks = preprocess_push(source_path,address,blocks_input)
     cloned_blocks = cloned_blocks+pred
+
+    # print "PRED"
+    # print pred
+    # print "ADDRESS"
+    # print address
     
     i = 0    
     while (i<n_clones): #bucle que hace las copias
         
         #clonar
         a = address[i]
+        # print "ESTO ES LO QUE CALCULA"
+        # print a
+        # print in_blocks
         push_block = get_push_block(in_blocks,a)
         
         #modified the jump address of the first block
+        # print "PUSHBLOCK ERROR"
+        # print push_block
+        
         push_block_obj = blocks_input[push_block]
         modify_jump_first_block(push_block_obj,source_path,i)
 
         #we copy the last block
         pre_block = push_block
+        # print "PUSH"
+        # print pre_block
+        # print "ADDRESS"
+        # print a
         first = True
         stack_in = stack_index[pre_block][1]
 
         #We start to clone each path
         for idx in xrange(len(pred)-1,0,-1):
-            new_block = copy.deepcopy(blocks_input[pred[idx]])
+            new_block = blocks_input[pred[idx]].copy()
+            # new_block = copy.deepcopy(blocks_input[pred[idx]])
             new_block = update_block_cloned(new_block,pre_block,pred,i,stack_in)
-
+            # print "CLONED"
+            # new_block.display()
+            # print new_block.get_comes_from()
             if first == True:
                 first = False
                 comes_from = [push_block]
@@ -1581,7 +1599,7 @@ def clone(block, blocks_input,nop):
             blocks_input[new_block.get_start_address()] = new_block
             pre_block = pred[idx]
             stack_in = new_block.get_stack_info()[1]
-
+            
 
         if first: #It means that the block to copy has no predecessor
             stack_in = stack_index[pre_block][1]
@@ -1589,7 +1607,8 @@ def clone(block, blocks_input,nop):
             stack_in = new_block.get_stack_info()[1]
             
         #We modify the last block
-        new_block = copy.deepcopy(blocks_input[pred[0]])
+        new_block = blocks_input[pred[0]].copy()
+        # new_block = copy.deepcopy(blocks_input[pred[0]])
         new_block = modify_last_block(new_block,stack_in,i,pred,pre_block,a)
         blocks_input[new_block.get_start_address()] = new_block
         
@@ -1600,9 +1619,9 @@ def clone(block, blocks_input,nop):
         i = i+1
         
     delete_old_blocks(pred,blocks_input)
-    for e in blocks_input.values():
-        e.display()
-        print e.get_comes_from()
+    # for e in blocks_input.values():
+    #     e.display()
+    #     print e.get_comes_from()
 
     return blocks_input
 
