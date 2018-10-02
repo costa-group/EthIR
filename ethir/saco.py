@@ -37,7 +37,7 @@ def build_head(rule):
     
     cv_aux = get_contract_vars(rule)
     if(len(cv_aux)>0):
-        cv = rule.vars_to_string("cv")
+        cv = ", ".join(cv_aux)
     else:
         cv = ""
 
