@@ -1366,7 +1366,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         blocks2clone = sorted(to_clone, key = getLevel)
 
         for b in blocks2clone:
-            blocks_dict = clone(b,blocks_dict,nop_opcodes)
+            blocks_dict = clone(b,blocks_dict)
             #print blocks_dict
     
     if blocks_dict and stack_info:
@@ -1505,8 +1505,7 @@ def delete_old_blocks(blocks_to_remove, blocks):
     for block in blocks_to_remove:
         del blocks[block]
 
-
-
+        
 def modify_jump_first_block(block_obj,source_block,idx):
     if block_obj.get_falls_to() == source_block:
         block_obj.set_falls_to(str(source_block)+"_"+str(idx))
@@ -1551,7 +1550,7 @@ def modify_target_block(target_block,block_cloned,last_block):
         comes_from[idx] = last_block.get_start_address()
         target_block.set_comes_from(comes_from)
     
-def clone(block, blocks_input,nop):
+def clone(block, blocks_input):
     global cloned_blocks
     global stack_index
 
