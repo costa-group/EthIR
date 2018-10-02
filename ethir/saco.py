@@ -19,14 +19,16 @@ def rbr2saco(rbr,execution,cname):
     end = dtimer()
     print("SACO RBR: "+str(end-begin)+"s")
     print("*************************************************************")
+
+    
 def build_head(rule):
     head = rule.get_rule_name()
 
     input_vars = rule.vars_to_string("input")
 
-    local_vars = rule.build_local_vars()
+    local_vars = rule.build_local_vars() 
     local_vars_string = ", ".join(local_vars)
-
+    
     gv_aux = get_field_vars(rule)
     if(len(gv_aux)> 0 ):
         gv = ", ".join(gv_aux)
@@ -35,7 +37,7 @@ def build_head(rule):
     
     cv_aux = get_contract_vars(rule)
     if(len(cv_aux)>0):
-        cv = ", ".join(cv_aux)
+        cv = rule.vars_to_string("cv")
     else:
         cv = ""
 

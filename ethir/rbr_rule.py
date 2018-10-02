@@ -221,7 +221,7 @@ class RBRRule:
             if len(self.bc) == 0:
                 string_vars = ""
             else:
-                string_vars = ", ".join(sorted(self.bc))
+                string_vars = ", ".join(filter(lambda x: x!="",sorted(self.bc)))
                 
         return string_vars
 
@@ -239,7 +239,6 @@ class RBRRule:
         in_vars = self.vars_to_string("input")
         gv = self.vars_to_string("global")
         bc_input = self.vars_to_string("data")
-
         
         if (in_vars == ""):
             if(gv == ""):
