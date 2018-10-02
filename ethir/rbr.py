@@ -7,7 +7,6 @@ from utils import getKey, orderRBR, getLevel
 import os
 import saco
 from timeit import default_timer as dtimer
-import copy
 
 '''
 It initialize the globals variables. 
