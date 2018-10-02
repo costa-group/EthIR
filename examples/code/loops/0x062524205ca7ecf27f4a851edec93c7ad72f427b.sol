@@ -16,14 +16,11 @@ contract FirePonzi {
 
 
   uint public payoutCursor_Id=0;
-  modifier onlyowner { if (msg.sender == owner) _ }
+  modifier onlyowner { if (msg.sender == owner) _; }
   function quick() {
     owner = msg.sender;
   }
 
-  function() {
-    enter();
-  }
   function enter() {
     if (msg.value < 100 finney) { // Only  > 0.1 Eth depoits
         msg.sender.send(msg.value);
