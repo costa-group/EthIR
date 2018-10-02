@@ -1562,7 +1562,7 @@ def sym_exec_ins(params, block, instr, func_call):
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
                     params_list = params.split(",")
-                    params_list = [param.split(" ")[-1] for param in params_list]
+                    params_list = [param.rstrip().rstrip("\n").split(" ")[-1] for param in params_list]
                     param_idx = (position - 4) // 32
                     new_var_name = params_list[param_idx]
                     g_src_map.var_names.append(new_var_name)
