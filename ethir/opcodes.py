@@ -84,9 +84,6 @@ opcodes = {
     "CALLSTATIC": [0xfd, 7, 1],
     "INVALID": [0xfe, 0, 0],  # Not an opcode use to cause an exception
     "SUICIDE": [0xff, 1, 0],
-    #PG
-    "RETURNDATASIZE": [0xz0, 0, 1]
-    "RETURNDATACOPY": [0xz1, 3, 0]
     "---END---": [0x00, 0, 0]
 }
 
@@ -151,6 +148,14 @@ Wext = ("EXTCODESIZE")
 def get_opcode(opcode):
     if opcode in opcodes:
         return opcodes[opcode]
+
+    #PG
+    elif opcode == "RETURNDATASIZE":
+        return ["", 0, 1]
+
+    elif opcode == "RETURNDATACOPY":
+        return ["", 3, 0]
+
     # check PUSHi
     for i in range(32):
         if opcode == 'PUSH' + str(i + 1):
