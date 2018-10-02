@@ -1491,27 +1491,27 @@ def sym_exec_ins(params, block, instr, func_call):
             global_state["pc"] = global_state["pc"] + 1
             s0 = stack.pop(0)
             s1 = stack.pop(0)
-            if isAllReal(s0, s1):
-                # simulate the hashing of sha3
-                data = [str(x) for x in memory[s0: s0 + s1]]
-                position = ''.join(data)
-                position = re.sub('[\s+]', '', position)
-                position = zlib.compress(six.b(position), 9)
-                position = base64.b64encode(position)
-                position = position.decode()
-                if position in sha3_list:
-                    stack.insert(0, sha3_list[position])
-                else:
-                    new_var_name = gen.gen_arbitrary_var()
-                    new_var = BitVec(new_var_name, 256)
-                    sha3_list[position] = new_var
-                    stack.insert(0, new_var)
-            else:
-                # push into the execution a fresh symbolic variable
-                new_var_name = gen.gen_arbitrary_var()
-                new_var = BitVec(new_var_name, 256)
-                path_conditions_and_vars[new_var_name] = new_var
-                stack.insert(0, new_var)
+            # if isAllReal(s0, s1):
+            #     # simulate the hashing of sha3
+            #     data = [str(x) for x in memory[s0: s0 + s1]]
+            #     position = ''.join(data)
+            #     position = re.sub('[\s+]', '', position)
+            #     position = zlib.compress(six.b(position), 9)
+            #     position = base64.b64encode(position)
+            #     position = position.decode()
+            #     if position in sha3_list:
+            #         stack.insert(0, sha3_list[position])
+            #     else:
+            #         new_var_name = gen.gen_arbitrary_var()
+            #         new_var = BitVec(new_var_name, 256)
+            #         sha3_list[position] = new_var
+            #         stack.insert(0, new_var)
+            # else:
+            #     # push into the execution a fresh symbolic variable
+            new_var_name = gen.gen_arbitrary_var()
+            new_var = BitVec(new_var_name, 256)
+                # path_conditions_and_vars[new_var_name] = new_var
+            stack.insert(0, new_var)
         else:
             raise ValueError('STACK underflow')
     #
