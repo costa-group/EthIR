@@ -84,6 +84,9 @@ opcodes = {
     "CALLSTATIC": [0xfd, 7, 1],
     "INVALID": [0xfe, 0, 0],  # Not an opcode use to cause an exception
     "SUICIDE": [0xff, 1, 0],
+    #PG
+    "RETURNDATASIZE": [0xz0, 0, 1]
+    "RETURNDATACOPY": [0xz1, 3, 0]
     "---END---": [0x00, 0, 0]
 }
 
@@ -162,7 +165,7 @@ def get_opcode(opcode):
     for i in range(16):
         if opcode == 'SWAP' + str(i + 1):
             return [hex(0x90 + i), i + 2, i + 2]
-    raise ValueError('Bad Opcode' + opcode)
+    raise ValueError('Bad Opcode ' + opcode)
 
 
 def get_ins_cost(opcode):
