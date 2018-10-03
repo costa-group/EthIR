@@ -17,7 +17,7 @@ from collections import namedtuple
 
 from vargenerator import *
 from ethereum_data import *
-from basicblock import BasicBlock, Tree
+from basicblock import BasicBlock
 from analysis import *
 # from test_evm.global_test_params import (TIME_OUT, UNKNOWN_INSTRUCTION,
 #                                          EXCEPTION, PICKLE_PATH)
@@ -26,6 +26,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
+from utils import cfg_dot, write_cfg
 
 log = logging.getLogger(__name__)
 
@@ -205,8 +206,8 @@ def initGlobalVars():
     global potential_jump
     potential_jump = False
 
-    global cloning
-    cloning = []
+    global blocks_to_clone
+    blocks_to_clone = []
     # global old_stack_h
     # old_stack_h = 0
     
@@ -270,14 +271,14 @@ def build_cfg_and_analyze():
 
 #Added by Pablo Gordillo
 def update_block_info():
-    global cloning
+    global blocks_to_clone
     
     vert = sorted(vertices.values(), key = getKey)
     for block in vert:    
         block.compute_list_jump(edges[block.get_start_address()])
         c = block.compute_cloning()
         if c:
-            cloning.append(block)
+            blocks_to_clone.append(block)
         block.set_calldataload_values(calldataload_values[block.get_start_address()])
         block.set_stack_info(stack_h[block.get_start_address()])
         block.update_instr()
@@ -291,83 +292,51 @@ def print_cfg():
         print (block.get_comes_from())
     log.debug(str(edges))
 
-def write_cfg(it,name = False):
-    vert = sorted(vertices.values(), key = getKey)
-    if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
-    if it == None:
-        name = "/tmp/costabs/cfg_evm.cfg"
-    elif name == False:
-        name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
-    else:
-        name = "/tmp/costabs/cfg_"+name+".cfg"
-    with open(name,"w") as f:
-        for block in vert:
-            f.write("================\n")
-            f.write("start address: "+ str(block.get_start_address())+"\n")
-            f.write("end address: "+str(block.get_end_address())+"\n")
-            f.write("end statement type: " + block.get_block_type()+"\n")
+# def write_cfg(it,name = False,cloned = False):
+#     vert = sorted(vertices.values(), key = getKey)
+#     if "costabs" not in os.listdir("/tmp/"):
+#         os.mkdir("/tmp/costabs/")
 
-            f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
-            if(block.get_falls_to() != None):
-                f.write("falls to: " +str(block.get_falls_to())+"\n")
-            for instr in block.get_instructions():
-                f.write(instr+"\n")
-    f.close()
-
-def build_tree(block,visited,condTrue = "t"):
-    
-    start = block.get_start_address()   
-    falls_to = block.get_falls_to()
-    list_jumps = block.get_list_jumps()
-
-    type_block = jump_type[start]
-
-    if condTrue == "u":
-        r = Tree(start,"",start,type_block)        
-    else:
-        r = Tree(start,condTrue,start,type_block)
         
-    for block_id in list_jumps:
-        if (start,block_id) not in visited:
-            visited.append((start,block_id))
-            if type_block == "conditional":
-                ch = build_tree(vertices.get(block_id),visited)
-            else:
-                ch = build_tree(vertices.get(block_id),visited,"u")
-            if ch not in r.get_children():
-                r.add_child(ch)
+#     if it == None:
+#         name = "/tmp/costabs/cfg_evm.cfg"
+#     elif name == False:
+#         name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
+#     else:
+#         name = "/tmp/costabs/cfg_"+name+".cfg"
+#     with open(name,"w") as f:
+#         if cloned:
+#             f.write("\n CLONED CFG \n")
+#         for block in vert:
+#             f.write("================\n")
+#             f.write("start address: "+ str(block.get_start_address())+"\n")
+#             f.write("end address: "+str(block.get_end_address())+"\n")
+#             f.write("end statement type: " + block.get_block_type()+"\n")
 
-    falls_to = block.get_falls_to()
-    if (falls_to != None) and (start,falls_to) not in visited:
-        visited.append((start,falls_to))
-        if type_block == "falls_to":
-            ch = build_tree(vertices.get(falls_to),visited,"")
-        else:
-            ch = build_tree(vertices.get(falls_to),visited,"f")
-        if ch not in r.get_children():
-            r.add_child(ch)
-        
-    return r
+#             f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
+#             if(block.get_falls_to() != None):
+#                 f.write("falls to: " +str(block.get_falls_to())+"\n")
+#             for instr in block.get_instructions():
+#                 f.write(instr+"\n")
+#     f.close()
     
-def cfg_dot(it,name = False):
-    vert = sorted(vertices.values(), key = getKey)
-    if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+# def cfg_dot(it,name = False):
+#     vert = sorted(vertices.values(), key = getKey)
+#     if "costabs" not in os.listdir("/tmp/"):
+#         os.mkdir("/tmp/costabs/")
 
-    if it == None:
-        name = "/tmp/costabs/cfg.dot"
-    elif name == False:
-        name = "/tmp/costabs/cfg"+str(it)+".dot"
-    else:
-        name = "/tmp/costabs/"+name+".dot"
+#     if it == None:
+#         name = "/tmp/costabs/cfg.dot"
+#     elif name == False:
+#         name = "/tmp/costabs/cfg"+str(it)+".dot"
+#     else:
+#         name = "/tmp/costabs/"+name+".dot"
         
-    f = open(name,"wb")
-    tree = build_tree(vert[0],[("st",0)])
-    tree.generatedot(f)
-    f.close()
-    
-    
+#     f = open(name,"wb")
+#     tree = build_tree(vert[0],[("st",0)],vertices)
+#     tree.generatedot(f)
+#     f.close()
+
     
 def mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length):
     global g_src_map
@@ -2675,7 +2644,27 @@ def generate_saco_config_file(cname):
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
-            
+
+def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
+    if cfg and (not cloned):
+        if cname == None:
+            write_cfg(execution,vertices)
+            cfg_dot(execution,vertices)
+
+        else:
+            write_cfg(execution,vertices,name = cname)
+            cfg_dot(execution,vertices,name = cname)
+
+    elif cfg and cloned:
+        if blocks_to_clone != []:
+            if cname == None:
+                write_cfg(execution,vertices,cloned = True)
+                cfg_dot(execution,vertices,cloned = True)
+
+            else:
+                write_cfg(execution,vertices,name = cname,cloned = True)
+                cfg_dot(execution, vertices, name = cname, cloned = True)
+
 def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None):
     global g_disasm_file
     global g_source_file
@@ -2683,6 +2672,8 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     global results
     global f_hashes
     global debug_info
+    global vertices
+    global stack_h
     
     g_disasm_file = disasm_file
     g_source_file = source_file
@@ -2706,23 +2697,21 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
 
+    check_cfg_option(cfg,cname,execution)
+    
+    vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
+
+    check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
+    
     begin1 = dtimer()
     compute_component_of_cfg()
     end = dtimer()
     # print("Component performance: "+str(end-begin1)+"s")
     
-    if cfg:
-        if cname == None:
-            write_cfg(execution)
-            cfg_dot(execution)
-        else:
-            write_cfg(execution,name = cname)
-            cfg_dot(execution,name = cname)
-
     end = dtimer()
     print("OYENTE tool: "+str(end-begin)+"s")
     
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks,to_clone = cloning)
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks,to_clone = blocks_to_clone)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
