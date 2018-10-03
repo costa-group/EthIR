@@ -15,6 +15,8 @@ import six
 from z3 import *
 #from z3.z3util import get_vars
 
+from dot_tree import Tree, build_tree
+
 def ceil32(x):
     return x if x % 32 == 0 else x + 32 - (x % 32)
 
@@ -359,3 +361,67 @@ def process_hashes(solidity_file):
             i+=1
 
     return m
+
+
+def write_cfg(it,vertices,name = False,cloned = False):
+    vert = sorted(vertices.values(), key = getKey)
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+
+    if not cloned:
+        if it == None:
+            name = "/tmp/costabs/cfg_evm.cfg"
+        elif name == False:
+            name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
+        else:
+            name = "/tmp/costabs/cfg_"+name+".cfg"
+
+    else:
+        if it == None:
+            name = "/tmp/costabs/cfg_cloned_evm.cfg"
+        elif name == False:
+            name = "/tmp/costabs/cfg__cloned_evm"+str(it)+".cfg"
+        else:
+            name = "/tmp/costabs/cfg_"+name+"_cloned.cfg"
+        
+    with open(name,"w") as f:
+        for block in vert:
+            f.write("================\n")
+            f.write("start address: "+ str(block.get_start_address())+"\n")
+            f.write("end address: "+str(block.get_end_address())+"\n")
+            f.write("end statement type: " + block.get_block_type()+"\n")
+
+            f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
+            if(block.get_falls_to() != None):
+                f.write("falls to: " +str(block.get_falls_to())+"\n")
+            for instr in block.get_instructions():
+                f.write(instr+"\n")
+    f.close()
+
+def cfg_dot(it,block_input,name = False,cloned = False):
+    vert = sorted(block_input.values(), key = getKey)
+
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+    
+    if not cloned:
+
+        if it == None:
+            name = "/tmp/costabs/cfg.dot"
+        elif name == False:
+            name = "/tmp/costabs/cfg"+str(it)+".dot"
+        else:
+            name = "/tmp/costabs/"+name+".dot"
+    else:
+
+        if it == None:
+            name = "/tmp/costabs/cfg_cloned.dot"
+        elif name == False:
+            name = "/tmp/costabs/cfg_cloned_"+str(it)+".dot"
+        else:
+            name = "/tmp/costabs/"+name+"_cloned.dot"
+        
+    f = open(name,"wb")
+    tree = build_tree(vert[0],[("st",0)],block_input)
+    tree.generatedot(f)
+    f.close()
