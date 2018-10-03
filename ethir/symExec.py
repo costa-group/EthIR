@@ -2638,6 +2638,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     
     begin1 = dtimer()
     compute_component_of_cfg()
+        
     end = dtimer()
     # print("Component performance: "+str(end-begin1)+"s")
     
@@ -2650,4 +2651,3 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
         generate_saco_config_file(cname)
 
     return [], 0
-
