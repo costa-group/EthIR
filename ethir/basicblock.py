@@ -1,4 +1,5 @@
 import six
+from dot_tree import Tree
 
 class BasicBlock:
     def __init__(self, start_address, end_address):
@@ -354,68 +355,68 @@ class BasicBlock:
         return Tree(self.start,self.start,self.start)
         
             
-##Added by Pablo Gordillo
+# ##Added by Pablo Gordillo
 
-class Tree:
-    def __init__(self) :
-        self.root = None
-        self.children = []
-        self.tag = None
-        self.id = 0
-        self.block_type = None
+# class Tree:
+#     def __init__(self) :
+#         self.root = None
+#         self.children = []
+#         self.tag = None
+#         self.id = 0
+#         self.block_type = None
         
-    def __init__(self,root,tag,id,type_block):
-        self.root = root
-        self.tag = tag
-        self.id = id
-        self.children = []
-        self.type_block = type_block
+#     def __init__(self,root,tag,id,type_block):
+#         self.root = root
+#         self.tag = tag
+#         self.id = id
+#         self.children = []
+#         self.type_block = type_block
 
 
-    def setId(self, new_id):
-        self.id = new_id
+#     def setId(self, new_id):
+#         self.id = new_id
 
-    def getId(self):
-        return self.id
+#     def getId(self):
+#         return self.id
         
-    def get_children(self):
-        return self.children
+#     def get_children(self):
+#         return self.children
 
-    def set_children(self,children):
-        self.children = children
+#     def set_children(self,children):
+#         self.children = children
 
-    def add_child(self,child):
-        self.children.append(child)
+#     def add_child(self,child):
+#         self.children.append(child)
         
-    def isLeaf(self):
-        return self.children == []
+#     def isLeaf(self):
+#         return self.children == []
     
-    def generatedot(self,fo):
-        fo.write("digraph id3{ \n")
-        self.generategraph(fo,0)
-        fo.write("}")
+#     def generatedot(self,fo):
+#         fo.write("digraph id3{ \n")
+#         self.generategraph(fo,0)
+#         fo.write("}")
         
-    def generategraph(self,fo,level):
-        if self.type_block == "terminal" :
-            fo.write("n_%s [style=diagonals,color=green,label=\"%s\"];\n"%(self.id,self.root))
-        else :
-            if self.type_block == "conditional":
-                fo.write("n_%s [style=solid,color=blue,label=\"%s\"];\n"%(self.id,self.root))
-            elif self.type_block == "unconditional":
-                fo.write("n_%s [style=solid,color=orange,label=\"%s\"];\n"%(self.id,self.root))
-            else:
-                fo.write("n_%s [style=solid,color=red,label=\"%s\"];\n"%(self.id,self.root))
+#     def generategraph(self,fo,level):
+#         if self.type_block == "terminal" :
+#             fo.write("n_%s [style=diagonals,color=green,label=\"%s\"];\n"%(self.id,self.root))
+#         else :
+#             if self.type_block == "conditional":
+#                 fo.write("n_%s [style=solid,color=blue,label=\"%s\"];\n"%(self.id,self.root))
+#             elif self.type_block == "unconditional":
+#                 fo.write("n_%s [style=solid,color=orange,label=\"%s\"];\n"%(self.id,self.root))
+#             else:
+#                 fo.write("n_%s [style=solid,color=red,label=\"%s\"];\n"%(self.id,self.root))
                 
-            i = 0
-            for child in self.children:
-                new_level = i
-                fo.write("n_%s -> n_%s [label=\"%s\"];\n"%(self.id,child.id,child.tag))
-                child.generategraph(fo,new_level);
-                i += 1
+#             i = 0
+#             for child in self.children:
+#                 new_level = i
+#                 fo.write("n_%s -> n_%s [label=\"%s\"];\n"%(self.id,child.id,child.tag))
+#                 child.generategraph(fo,new_level);
+#                 i += 1
 
 
-    def __eq__(self, obj):
-        ig = False
-        if isinstance(obj,Tree):
-            ig = self.id == obj.getId()
-        return ig
+#     def __eq__(self, obj):
+#         ig = False
+#         if isinstance(obj,Tree):
+#             ig = self.id == obj.getId()
+#         return ig
