@@ -25,6 +25,7 @@ from vulnerability import CallStack, TimeDependency, MoneyConcurrency, Reentranc
 import global_params
 
 import rbr
+from clone import compute_cloning
 
 log = logging.getLogger(__name__)
 
@@ -2710,8 +2711,6 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     end = dtimer()
     # print("Component performance: "+str(end-begin1)+"s")
     
-    compute_component_of_cfg()
-
     if cfg:
         if cname == None:
             write_cfg(execution)
