@@ -208,8 +208,7 @@ def initGlobalVars():
 
     global blocks_to_clone
     blocks_to_clone = []
-    # global old_stack_h
-    # old_stack_h = 0
+
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -262,7 +261,7 @@ def build_cfg_and_analyze():
         construct_bb()
         construct_static_edges()
         full_sym_exec()  # jump targets are constructed on the fly
-#    print_cfg()
+
     delete_uncalled()
     update_block_info()
 #    print_cfg()
@@ -291,52 +290,6 @@ def print_cfg():
         print ("COMES FROM")
         print (block.get_comes_from())
     log.debug(str(edges))
-
-# def write_cfg(it,name = False,cloned = False):
-#     vert = sorted(vertices.values(), key = getKey)
-#     if "costabs" not in os.listdir("/tmp/"):
-#         os.mkdir("/tmp/costabs/")
-
-        
-#     if it == None:
-#         name = "/tmp/costabs/cfg_evm.cfg"
-#     elif name == False:
-#         name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
-#     else:
-#         name = "/tmp/costabs/cfg_"+name+".cfg"
-#     with open(name,"w") as f:
-#         if cloned:
-#             f.write("\n CLONED CFG \n")
-#         for block in vert:
-#             f.write("================\n")
-#             f.write("start address: "+ str(block.get_start_address())+"\n")
-#             f.write("end address: "+str(block.get_end_address())+"\n")
-#             f.write("end statement type: " + block.get_block_type()+"\n")
-
-#             f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
-#             if(block.get_falls_to() != None):
-#                 f.write("falls to: " +str(block.get_falls_to())+"\n")
-#             for instr in block.get_instructions():
-#                 f.write(instr+"\n")
-#     f.close()
-    
-# def cfg_dot(it,name = False):
-#     vert = sorted(vertices.values(), key = getKey)
-#     if "costabs" not in os.listdir("/tmp/"):
-#         os.mkdir("/tmp/costabs/")
-
-#     if it == None:
-#         name = "/tmp/costabs/cfg.dot"
-#     elif name == False:
-#         name = "/tmp/costabs/cfg"+str(it)+".dot"
-#     else:
-#         name = "/tmp/costabs/"+name+".dot"
-        
-#     f = open(name,"wb")
-#     tree = build_tree(vert[0],[("st",0)],vertices)
-#     tree.generatedot(f)
-#     f.close()
-
     
 def mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length):
     global g_src_map
@@ -2514,17 +2467,6 @@ def vulnerability_found():
             return 1
     return 0
 
-# def closing_message():
-#     global g_source_file
-#     global results
-
-#     log.info("\t====== Analysis Completed ======")
-#     if global_params.STORE_RESULT:
-#         result_file = g_source_file + '.json'
-#         with open(result_file, 'w') as of:
-#             of.write(json.dumps(results, indent=1))
-#         log.info("Wrote results to %s.", result_file)
-
 class TimeoutError(Exception):
     pass
 
@@ -2584,15 +2526,6 @@ def get_recipients(disasm_file, contract_address):
         'evm_code_coverage': evm_code_coverage,
         'timeout': g_timeout
     }
-
-# def test():
-#     global_params.GLOBAL_TIMEOUT = global_params.GLOBAL_TIMEOUT_TEST
-
-#     def timeout_cb():
-#         traceback.print_exc()
-#         exit(EXCEPTION)
-
-#     run_build_cfg_and_analyze(timeout_cb=timeout_cb)
 
 def analyze():
     def timeout_cb():
@@ -2716,8 +2649,5 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
 
-    # for e in vertices.values():
-    #     print e.get_start_address()
-    #     print e.get_comes_from()
     return [], 0
-#detect_vulnerabilities()
+
