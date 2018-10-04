@@ -2557,6 +2557,7 @@ def component_of(block):
     return component_of_aux(block,[])
 
 def component_of_aux(block,visited):
+    #print vertices[block].get_start_address()
     blocks_conn = vertices[block].get_comes_from()
     for elem in blocks_conn:
         if elem not in visited:
@@ -2634,6 +2635,10 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     
     vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
 
+    # for v in vertices.values():
+    #     v.display()
+    #     print v.get_comes_from()
+        
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
@@ -2645,7 +2650,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     end = dtimer()
     print("OYENTE tool: "+str(end-begin)+"s")
     
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks,to_clone = blocks_to_clone)
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
