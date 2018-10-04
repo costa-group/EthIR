@@ -37,10 +37,20 @@ def get_common_predecessors(block,blocks_input):
 
 def get_common_predecessor_aux(block,blocks_input,pred):
     c = block.get_comes_from()
+    # print "BLOCK"
+    # print block.get_start_address()
+    # print "COMES_FROM"
+    # print c
+    
     if len(c)>1:
-        b = block.get_start_address()
-        if b not in pred:
-            pred.append(b)
+        blocks = filter(lambda x: block.get_start_address() not in blocks_input[x].get_comes_from(),c)
+        if len(blocks)>1:
+            b = block.get_start_address()
+            if b not in pred:
+                pred.append(b)
+        else:
+            pred.append(blocks[0])
+            get_common_predecessor_aux(blocks_input[blocks[0]],blocks_input,pred)
     else:
         pred.append(c[0])
         get_common_predecessor_aux(blocks_input[c[0]],blocks_input,pred)
@@ -54,38 +64,102 @@ def get_stack_evol(block,inpt):
         op_info = opcodes.get_opcode(op[0])
         i = i-op_info[1]+op_info[2]
     return i
-        
-def update_block_cloned(new_block,pre_block,pred,idx,stack_in):
+
+def check_loop(start_address_old,pred,blocks_input,jumps_to,falls_to,stack_in,idx,to_delete):
+    global cloned_blocks
+
+    new_child = -1
+    if jumps_to not in pred: #it is the block to check
+        child = blocks_input[jumps_to]
+        stack_out = get_stack_evol(child,stack_in)
+        if child.get_block_type() != "terminal":
+            if start_address_old == child.get_jump_target():
+                new_child = child.copy()
+                new_child.set_jump_target(str(child.get_jump_target())+"_"+str(idx),True)
+                stack_index[new_child.get_start_address()] = [stack_in,stack_out]
+            elif start_address_old == child.get_falls_to():
+                new_child = child.copy()
+                new_child.set_falls_to(str(child.get_jump_target())+"_"+str(idx))
+                stack_index[new_child.get_start_address()] = [stack_in,stack_out]
+
+    elif falls_to not in pred:
+        child = blocks_input[falls_to]
+        stack_out = get_stack_evol(child,stack_in)
+        if child.get_block_type() != "terminal":
+            if start_address_old == child.get_jump_target():
+                new_child = child.copy()
+                new_child.set_start_address(str(new_child.get_start_address())+"_"+str(idx))
+                new_child.set_jump_target(str(child.get_jump_target())+"_"+str(idx),True)
+                new_child.update_list_jump_cloned(str(child.get_jump_target())+"_"+str(idx))
+                stack_index[new_child.get_start_address()] = [stack_in,stack_out]
+                
+            elif start_address_old == child.get_falls_to():
+                new_child = child.copy()
+                new_child.set_start_address(str(new_child.get_start_address())+"_"+str(idx))
+                new_child.set_falls_to(str(child.get_jump_target())+"_"+str(idx))
+                stack_index[new_child.get_start_address()] = [stack_in,stack_out]
+
+                
+    if new_child != -1:
+        new_child = update_comes_from(new_child,start_address_old,idx)
+        cloned_blocks.append(child.get_start_address())
+
+        if child.get_start_address() not in to_delete:
+                to_delete.append(child.get_start_address())
+                
+    return new_child
+
+def update_comes_from(block,pre_block,idx):
+    comes_from = block.get_comes_from()
+    if (pre_block in cloned_blocks) and (pre_block in comes_from):
+        i = comes_from.index(pre_block)
+        comes_from[i] = str(pre_block)+"_"+str(idx)
+        block.set_comes_from(comes_from)
+    return block
+
+def update_block_cloned(new_block,pre_block,pred,idx,stack_in,blocks_input,to_delete):
     global cloned_blocks
     global stack_index
-    
+
     stack_out = get_stack_evol(new_block,stack_in)
 
     new_block.set_stack_info((stack_in,stack_out))
-    
-    cloned_blocks.append(new_block.get_start_address())
-    new_block.set_start_address(str(new_block.get_start_address())+"_"+str(idx))
 
+    start_address_old = new_block.get_start_address()
+    cloned_blocks.append(new_block.get_start_address())
+    new_block.set_start_address(str(start_address_old)+"_"+str(idx))
     
     jumps_to = new_block.get_jump_target()
     falls_to = new_block.get_falls_to()
-    
-    comes_from = new_block.get_comes_from()
-    if (pre_block in cloned_blocks) and (pre_block in comes_from):
-        # print "UPDATE COMESFROM"
-        i = comes_from.index(pre_block)
-        comes_from[i] = str(pre_block)+"_"+str(idx)
-        new_block.set_comes_from(comes_from)
 
+    new_block = update_comes_from(new_block,pre_block,idx)
+    
+    #check loop
+    if new_block.get_block_type() == "conditional":
+        r = check_loop(start_address_old,pred,blocks_input,jumps_to,falls_to,stack_in,idx,to_delete)
+        if r != -1:
+            # r.display()
+            blocks_input[r.get_start_address()] = r
+            update_comes_from(new_block,int(r.get_start_address().split("_")[0]),idx)
+    else:
+        r = -1
+        
     if jumps_to in pred:
         new_block.set_jump_target(str(jumps_to)+"_"+str(idx),True)
         new_block.update_list_jump_cloned(str(jumps_to)+"_"+str(idx))
+        if r !=-1:
+            new_block.set_falls_to(r.get_start_address())
     else:
         new_block.set_falls_to(str(falls_to)+"_"+str(idx))
+        if r != -1:
+            new_block.set_jump_target(r.get_start_address(),True)
+            new_block.update_list_jump_cloned(r.get_start_address())
 
     stack_index[new_block.get_start_address()] = [stack_in,stack_out]
-    
-    return new_block
+
+    # print "TODELETE INSIDE"
+    # print to_delete
+    return new_block, blocks_input
 
 def delete_old_blocks(blocks_to_remove, blocks):
     for block in blocks_to_remove:
@@ -135,26 +209,31 @@ def modify_target_block(target_block,block_cloned,last_block):
         idx = comes_from.index(block_cloned.get_start_address())
         comes_from[idx] = last_block.get_start_address()
         target_block.set_comes_from(comes_from)
-    
+
 def clone(block, blocks_input):
     global cloned_blocks
     global stack_index
 
     rules = []
-    pred = get_common_predecessors(block, blocks_input)
 
+    
+    blocks_dict = blocks_input
+    pred = get_common_predecessors(block, blocks_dict)
+    to_delete = pred[:]
+    
     address = block.get_list_jumps()
     n_clones = len(address)
     
     source_path = pred[-1]
 
-    in_blocks = preprocess_push(source_path,address,blocks_input)
+    in_blocks = preprocess_push(source_path,address,blocks_dict)
     cloned_blocks = cloned_blocks+pred
-
+    
     # print "PRED"
     # print pred
     # print "ADDRESS"
     # print address
+    # print in_blocks
     
     i = 0    
     while (i<n_clones): #bucle que hace las copias
@@ -165,12 +244,13 @@ def clone(block, blocks_input):
         # print a
         # print in_blocks
         push_block = get_push_block(in_blocks,a)
+        #print push_block
         
         #modified the jump address of the first block
         # print "PUSHBLOCK ERROR"
         # print push_block
         
-        push_block_obj = blocks_input[push_block]
+        push_block_obj = blocks_dict[push_block]
         modify_jump_first_block(push_block_obj,source_path,i)
 
         #we copy the last block
@@ -184,9 +264,12 @@ def clone(block, blocks_input):
 
         #We start to clone each path
         for idx in xrange(len(pred)-1,0,-1):
-            new_block = blocks_input[pred[idx]].copy()
+            new_block = blocks_dict[pred[idx]].copy()
+            # print "TYPE"
+            # print new_block.get_block_type()
             # new_block = copy.deepcopy(blocks_input[pred[idx]])
-            new_block = update_block_cloned(new_block,pre_block,pred,i,stack_in)
+            new_block, blocks_dict  = update_block_cloned(new_block,pre_block,pred,i,stack_in,blocks_dict,to_delete)
+            
             # print "CLONED"
             # new_block.display()
             # print new_block.get_comes_from()
@@ -195,7 +278,7 @@ def clone(block, blocks_input):
                 comes_from = [push_block]
                 new_block.set_comes_from(comes_from)
                 
-            blocks_input[new_block.get_start_address()] = new_block
+            blocks_dict[new_block.get_start_address()] = new_block
             pre_block = pred[idx]
             stack_in = new_block.get_stack_info()[1]
             
@@ -206,23 +289,25 @@ def clone(block, blocks_input):
             stack_in = new_block.get_stack_info()[1]
             
         #We modify the last block
-        new_block = blocks_input[pred[0]].copy()
+        new_block = blocks_dict[pred[0]].copy()
         # new_block = copy.deepcopy(blocks_input[pred[0]])
         new_block = modify_last_block(new_block,stack_in,i,pred,pre_block,a)
-        blocks_input[new_block.get_start_address()] = new_block
+        blocks_dict[new_block.get_start_address()] = new_block
         
         #Target block
-        target_block = blocks_input[a]
+        target_block = blocks_dict[a]
         modify_target_block(target_block,block,new_block)
         
         i = i+1
-        
-    delete_old_blocks(pred,blocks_input)
+    # print "TO DELETE"
+    # print to_delete
+    
+    delete_old_blocks(to_delete,blocks_dict)
     # for e in blocks_input.values():
     #     e.display()
     #     print e.get_comes_from()
 
-    return blocks_input
+    return blocks_dict
 
 def compute_cloning(blocks_to_clone,blocks_input,stack_info):
     global stack_index
