@@ -81,6 +81,13 @@ def check_loop(start_address_old,pred,blocks_input,jumps_to,falls_to,stack_in,id
                 new_child = child.copy()
                 new_child.set_falls_to(str(child.get_jump_target())+"_"+str(idx))
                 stack_index[new_child.get_start_address()] = [stack_in,stack_out]
+        else:
+            comes_from = child.get_comes_from()
+            if start_address_old in comes_from:
+                i = comes_from.index(start_address_old)
+                comes_from.pop(i)
+            comes_from.append(str(start_address_old)+"_"+str(idx))
+            child.set_comes_from(comes_from)
 
     elif falls_to not in pred:
         child = blocks_input[falls_to]
@@ -98,7 +105,13 @@ def check_loop(start_address_old,pred,blocks_input,jumps_to,falls_to,stack_in,id
                 new_child.set_start_address(str(new_child.get_start_address())+"_"+str(idx))
                 new_child.set_falls_to(str(child.get_jump_target())+"_"+str(idx))
                 stack_index[new_child.get_start_address()] = [stack_in,stack_out]
-
+        else:
+            comes_from = child.get_comes_from()
+            if start_address_old in comes_from:
+                i = comes_from.index(start_address_old)
+                comes_from.pop(i)
+            comes_from.append(str(start_address_old)+"_"+str(idx))
+            child.set_comes_from(comes_from)
                 
     if new_child != -1:
         new_child = update_comes_from(new_child,start_address_old,idx)
