@@ -114,6 +114,9 @@ def check_loop(start_address_old,pred,blocks_input,jumps_to,falls_to,stack_in,id
             child.set_comes_from(comes_from)
                 
     if new_child != -1:
+        # print "AQUI ESTA EL ERROR"
+        # print start_address_old
+        # print new_child.get_start_address()
         new_child = update_comes_from(new_child,start_address_old,idx)
         cloned_blocks.append(child.get_start_address())
 
@@ -129,6 +132,22 @@ def update_comes_from(block,pre_block,idx):
         comes_from[i] = str(pre_block)+"_"+str(idx)
         block.set_comes_from(comes_from)
     return block
+
+def get_split_start_address(address):
+    a = str(address)
+    idx = a.find("_")
+    if idx == -1:
+        return address
+    else:
+        it = 0
+        while (idx != -1):
+            prev_idx = idx
+            idx = a.find("_",prev_idx+1)
+            it = it+1
+        if it == 1:
+            return int(address[:prev_idx])
+        else:
+            return address[:prev_idx]
 
 def update_block_cloned(new_block,pre_block,pred,idx,stack_in,blocks_input,to_delete):
     global cloned_blocks
@@ -153,7 +172,8 @@ def update_block_cloned(new_block,pre_block,pred,idx,stack_in,blocks_input,to_de
         if r != -1:
             # r.display()
             blocks_input[r.get_start_address()] = r
-            update_comes_from(new_block,int(r.get_start_address().split("_")[0]),idx)
+            r_start_address = get_split_start_address(r.get_start_address())
+            update_comes_from(new_block,r_start_address,idx)
     else:
         r = -1
         
@@ -332,8 +352,15 @@ def compute_cloning(blocks_to_clone,blocks_input,stack_info):
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
 
     for b in blocks2clone:
+        # print "HOLA"
+        # print b.get_start_address()
         blocks_dict = clone(b,blocks_dict)
+        # for e in blocks_dict.values():
+        #     e.display()
+        #     print e.get_comes_from()
+    # print "CLONING"
 
+    # print blocks_dict
     # for e in blocks_dict.values():
     #     e.display()
     #     print e.get_comes_from()
