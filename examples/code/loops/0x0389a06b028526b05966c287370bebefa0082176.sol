@@ -20,7 +20,7 @@ address public profitAddr;
 
 modifier execute {
     if (msg.sender == deployer)
-        _ 
+      _; 
 }
 
 
@@ -28,12 +28,6 @@ function Dividend() {
     deployer = msg.sender;
     profitAddr = deployer;
 }
-
-
-function() {
-    Enter();
-}
-
 
 function Enter() {
 
