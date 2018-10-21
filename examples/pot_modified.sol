@@ -964,35 +964,20 @@ contract usingOraclize {
 // </ORACLIZE_API>
 contract EthereumPot {
 
-    // address public owner;
-    // address[] public addresses;
-    // address public winnerAddress;
+    address public owner;
+    address[] public addresses;
+    address public winnerAddress;
 
-    // uint[] public slots;
-    // uint minBetSize = 0.01 ether;
-    // uint public potSize = 0;
-    // uint public amountWon;
-    // uint public potTime = 300;
-    // uint public endTime = now + potTime;
-    // uint public totalBet = 0;
-    // uint public random_number;
-
-    // bool public locked = false;
-
-    address owner;
-    address[] addresses;
-    address winnerAddress;
-
-    uint[] slots;
+    uint[] public slots;
     uint minBetSize = 0.01 ether;
-    uint potSize = 0;
-    uint amountWon;
-    uint potTime = 300;
-    uint endTime = now + potTime;
-    uint totalBet = 0;
-    uint random_number;
+    uint public potSize = 0;
+    uint public amountWon;
+    uint public potTime = 300;
+    uint public endTime = now + potTime;
+    uint public totalBet = 0;
+    uint public random_number;
 
-    bool locked = false;
+    bool public locked = false;
 
     byte constant proofType_Ledger = 0x30;
 
