@@ -325,6 +325,24 @@ class BasicBlock:
         new_obj.set_cloning(self.clone)
         
         return new_obj
+
+    def is_direct_block(self):
+        if self.type == "falls_to":
+            return True
+        if self._isPUSH_JUMP_Instruction():
+            return True
+        else:
+            return False
+
+    def _isPUSH_JUMP_Instruction(self):
+        if self.instructions[-1] in ["JUMP","JUMPI"]:
+            push = self.instructions[-2].split(" ")[0]
+            if push[0:4] == "PUSH":
+                return True
+            else:
+                return False
+        else:
+            return False
         
     def display(self):
         six.print_("================")
@@ -350,7 +368,7 @@ class BasicBlock:
             #     six.print_(instr+"("+self.calldatavalues.pop(0)+")")
             # else:
             six.print_(instr)
-
+        
     def getTree(self):
         return Tree(self.start,self.start,self.start)
         
