@@ -1087,19 +1087,9 @@ contract EthereumPot {
         timeLeft(endTime - now);
         
         locked = false; 
-        delete slots;
-        delete addresses;
-
 
     }
 
-    // function delete_slot() internal {
-    //          delete slots;
-    // }
-
-    // function delete_addresses() internal {
-    //          delete addresses;
-    // }
 
     function rewardWinner() public payable {
 
