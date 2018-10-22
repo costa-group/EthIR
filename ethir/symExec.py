@@ -26,7 +26,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg
+from utils import cfg_dot, write_cfg, update_map
 
 log = logging.getLogger(__name__)
 
@@ -209,6 +209,11 @@ def initGlobalVars():
     global blocks_to_clone
     blocks_to_clone = []
 
+    global indirect_jump
+    indirect_jump = {}
+
+    global procesed_indirect_jumps
+    procesed_indirect_jumps = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -622,9 +627,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global blocks_to_create
     global ls_cont
     global potential_jump
-
+    global procesed_indirect_jumps
     visited = params.visited
     stack = params.stack
+    stack_old = list(params.stack)
     mem = params.mem
     memory = params.memory
     global_state = params.global_state
@@ -632,7 +638,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     path_conditions_and_vars = params.path_conditions_and_vars
     analysis = params.analysis
     calls = params.calls
-        
+
+    # print ("\nBLOCK "+ str(block))
+    # print path
+    
     if debug_info:
         print ("\nBLOCK "+ str(block))
         print "PATH"
@@ -680,7 +689,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     #Added by PG
     ls_cont = [0,0,0,0]
     for instr in block_ins:
-        sym_exec_ins(params, block, instr, func_call)
+        sym_exec_ins(params, block, instr, func_call,stack_old)
         if debug_info:
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
@@ -693,19 +702,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     update_stack_heigh(block,len(stack),1)
 
-    
-    # reentrancy_all_paths.append(analysis["reentrancy_bug"])
-    # if analysis["money_flow"] not in money_flow_all_paths:
-    #     global_problematic_pcs["money_concurrency_bug"].append(analysis["money_concurrency_bug"])
-    #     money_flow_all_paths.append(analysis["money_flow"])
-    #     path_conditions.append(path_conditions_and_vars["path_condition"])
-    #     global_problematic_pcs["time_dependency_bug"].append(analysis["time_dependency_bug"])
-    #     all_gs.append(copy_global_values(global_state))
+
     
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
         #vertices[block].add_new_path(path)
-        if debug_info and depth > global_params.DEPTH_LIMIT:
+        #if debug_info and depth > global_params.DEPTH_LIMIT:
+        if depth > global_params.DEPTH_LIMIT:
             print ("DEPTH LIMIT REACHED")
         global total_no_of_paths
         global no_of_test_cases
@@ -725,11 +728,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if successor in vertices:
             
             vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
-            if (((block,successor) not in path)):
+            proc = procesed_indirect_jumps.get(successor,[])
+            if ((block,successor) not in path):
                 if potential_jump:
                     potential_jump = False
                 path.append((block,successor))
                 sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                procesed_indirect_jumps = update_map(procesed_indirect_jumps,block,successor)
                 path.pop()
             else : #the pair is in the path
                 if not potential_jump:
@@ -738,7 +743,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
                     path.pop()
                 else:
-                    potential_jump = False 
+                    potential_jump = False
+                    if not(vertices[successor].is_direct_block()):
+                        #print "ENTRARIA con"+str(successor)
+                        if stack[indirect_jump[successor]] not in proc:
+                            sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                    #if stack[indirect_jump[successor]] not in proc:
+                    
         else:
             if successor not in blocks_to_create:
                 blocks_to_create.append(successor)
@@ -768,17 +779,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
         # A choice point, we proceed with depth first search
 
-        # branch_expression = vertices[block].get_branch_expression()
-
-        # log.debug("Branch expression: " + str(branch_expression))
-
-        # solver.push()  # SET A BOUNDARY FOR SOLVER
-        # solver.add(branch_expression)
-
-        # try:
-        #     if solver.check() == unsat:
-        #         log.debug("INFEASIBLE PATH DETECTED")
-        #     else:
         left_branch = vertices[block].get_jump_target()
 
 
@@ -790,7 +790,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if left_branch in vertices:
             vertices[left_branch].add_origin(block) #to compute which are the blocks that leads to successor
 
-            if ((block,left_branch) not in path):
+            if (((block,left_branch) not in path)):
                 if potential_jump:
                     potential_jump = False
                 path.append((block,left_branch))
@@ -865,7 +865,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
 
 # Symbolically executing an instruction
-def sym_exec_ins(params, block, instr, func_call):
+def sym_exec_ins(params, block, instr, func_call,stack_first):
     global MSIZE
     global visited_pcs
     global solver
@@ -878,6 +878,7 @@ def sym_exec_ins(params, block, instr, func_call):
     global function_block_map
     global function_info
     global potential_jump
+    global indirect_jump
     
     stack = params.stack
     mem = params.mem
@@ -1414,27 +1415,27 @@ def sym_exec_ins(params, block, instr, func_call):
             global_state["pc"] = global_state["pc"] + 1
             s0 = stack.pop(0)
             s1 = stack.pop(0)
-            # if isAllReal(s0, s1):
-            #     # simulate the hashing of sha3
-            #     data = [str(x) for x in memory[s0: s0 + s1]]
-            #     position = ''.join(data)
-            #     position = re.sub('[\s+]', '', position)
-            #     position = zlib.compress(six.b(position), 9)
-            #     position = base64.b64encode(position)
-            #     position = position.decode()
-            #     if position in sha3_list:
-            #         stack.insert(0, sha3_list[position])
-            #     else:
-            #         new_var_name = gen.gen_arbitrary_var()
-            #         new_var = BitVec(new_var_name, 256)
-            #         sha3_list[position] = new_var
-            #         stack.insert(0, new_var)
-            # else:
-            #     # push into the execution a fresh symbolic variable
-            new_var_name = gen.gen_arbitrary_var()
-            new_var = BitVec(new_var_name, 256)
+            if isAllReal(s0, s1):
+                # simulate the hashing of sha3
+                data = [str(x) for x in memory[s0: s0 + s1]]
+                position = ''.join(data)
+                position = re.sub('[\s+]', '', position)
+                position = zlib.compress(six.b(position), 9)
+                position = base64.b64encode(position)
+                position = position.decode()
+                if position in sha3_list:
+                    stack.insert(0, sha3_list[position])
+                else:
+                    new_var_name = gen.gen_arbitrary_var()
+                    new_var = BitVec(new_var_name, 256)
+                    sha3_list[position] = new_var
+                    stack.insert(0, new_var)
+            else:
+                # push into the execution a fresh symbolic variable
+                new_var_name = gen.gen_arbitrary_var()
+                new_var = BitVec(new_var_name, 256)
                 # path_conditions_and_vars[new_var_name] = new_var
-            stack.insert(0, new_var)
+                stack.insert(0, new_var)
         else:
             raise ValueError('STACK underflow')
     #
@@ -1609,6 +1610,7 @@ def sym_exec_ins(params, block, instr, func_call):
                     new_var = path_conditions_and_vars[new_var_name]
                 else:
                     new_var = BitVec(new_var_name, 256)
+                    # new_var = new_var_name
                     path_conditions_and_vars[new_var_name] = new_var
                 stack.insert(0, new_var)
         else:
@@ -1893,6 +1895,12 @@ def sym_exec_ins(params, block, instr, func_call):
             #     except:
             #         raise TypeError("Target address must be an integer")
             vertices[block].set_jump_target(target_address)
+            #print vertices[block].is_direct_block()
+            if not(vertices[block].is_direct_block()):
+            #     vertices[block].display()
+            #    print stack_first
+                idx = stack_first.index(target_address)
+                indirect_jump[block] = idx
             if target_address not in edges[block]:
                 edges[block].append(target_address)
         else:
@@ -2494,7 +2502,7 @@ def run_build_cfg_and_analyze(timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 30
+        global_params.GLOBAL_TIMEOUT = 60
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
@@ -2531,6 +2539,7 @@ def analyze():
     def timeout_cb():
         if global_params.DEBUG_MODE:
             traceback.print_exc()
+            print "Timeout reached"
 
     run_build_cfg_and_analyze(timeout_cb=timeout_cb)
 
@@ -2631,14 +2640,17 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
 
-    check_cfg_option(cfg,cname,execution)
-    
-    vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
-
+    # print "BLOCKS TO CLONE"
+    # print blocks_to_clone[0].get_start_address()
     # for v in vertices.values():
     #     v.display()
     #     print v.get_comes_from()
-        
+    
+    check_cfg_option(cfg,cname,execution)
+
+    
+    #vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
+    
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
