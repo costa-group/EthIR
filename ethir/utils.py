@@ -425,3 +425,9 @@ def cfg_dot(it,block_input,name = False,cloned = False):
     tree = build_tree(vert[0],[("st",0)],block_input)
     tree.generatedot(f)
     f.close()
+
+def update_map(m,key,val):
+    l = m.get(key,[])
+    l.append(val)
+    m[key]=l
+    return m
