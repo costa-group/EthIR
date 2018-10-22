@@ -335,7 +335,7 @@ class BasicBlock:
             return False
 
     def _isPUSH_JUMP_Instruction(self):
-        if self.instructions[-1] in ["JUMP","JUMPI"]:
+        if self.instructions[-1].strip() in ["JUMP","JUMPI"]:
             push = self.instructions[-2].split(" ")[0]
             if push[0:4] == "PUSH":
                 return True
