@@ -1087,7 +1087,8 @@ contract EthereumPot {
         timeLeft(endTime - now);
         
         locked = false; 
-
+        delete slots;
+        delete addresses;
     }
 
 
