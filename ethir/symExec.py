@@ -743,11 +743,14 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
                     path.pop()
                 else:
+            
                     potential_jump = False
-                    if not(vertices[successor].is_direct_block()):
-                        #print "ENTRARIA con"+str(successor)
-                        if stack[indirect_jump[successor]] not in proc:
-                            sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                    # if not(vertices[successor].is_direct_block()):
+                    #     #print "ENTRARIA con"+str(successor)
+                    #     if stack[indirect_jump[successor]] not in proc:
+                    #         path.append((block,successor))
+                    #         sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                    #         path.pop()
                     #if stack[indirect_jump[successor]] not in proc:
                     
         else:
@@ -1897,10 +1900,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             vertices[block].set_jump_target(target_address)
             #print vertices[block].is_direct_block()
             if not(vertices[block].is_direct_block()):
-            #     vertices[block].display()
-            #    print stack_first
-                idx = stack_first.index(target_address)
-                indirect_jump[block] = idx
+                # vertices[block].display()
+                # print stack_first
+                try:
+                        idx = stack_first.index(target_address)
+                        indirect_jump[block] = idx
+                except:
+                    #the push is generated in this block
+                    pass
             if target_address not in edges[block]:
                 edges[block].append(target_address)
         else:
@@ -2649,9 +2656,11 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     check_cfg_option(cfg,cname,execution)
 
     
-    #vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
+    vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
     
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
+    print "NUM NODOS"
+    print len(vertices)
     
     begin1 = dtimer()
     compute_component_of_cfg()
