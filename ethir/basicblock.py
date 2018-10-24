@@ -258,7 +258,7 @@ class BasicBlock:
         return self.comes_from
 
     def set_comes_from(self,l):
-        self.comes_from = l
+        self.comes_from = list(l)
         
     def update_instr(self):
         new_instructions = []
@@ -318,7 +318,7 @@ class BasicBlock:
         new_obj._set_sload_values(self.sload_values.copy())
         new_obj._set_sstore_values(self.sstore_values.copy())
         new_obj.set_calldataload_values(list(self.calldatavalues))
-        new_obj.set_comes_from(list(self.comes_from))
+        new_obj.set_comes_from([])
         new_obj.set_block_type(self.type)
         new_obj.set_depth_level(self.depth)
         new_obj.set_stack_info(list(self.stack_info))
