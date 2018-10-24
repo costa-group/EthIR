@@ -2647,10 +2647,15 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     #     print v.get_comes_from()
     
     check_cfg_option(cfg,cname,execution)
+    
+    compute_cloning(blocks_to_clone,vertices,stack_h)
+    # print "AQUI"
+    # print vertices['4416_1'].get_falls_to()
+    # for e in vertices.values():
+    #     e.display()
+    #     print e.get_comes_from()
+    # print stack_h
 
-    
-    #vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
-    
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
