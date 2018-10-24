@@ -2656,11 +2656,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     check_cfg_option(cfg,cname,execution)
 
     
-    vertices, stack_h = compute_cloning(blocks_to_clone,vertices,stack_h)
+    compute_cloning(blocks_to_clone,vertices,stack_h)
     
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
-    print "NUM NODOS"
-    print len(vertices)
     
     begin1 = dtimer()
     compute_component_of_cfg()
