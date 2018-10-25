@@ -1189,7 +1189,8 @@ def compile_block(block,nop):
     
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
-    rule = RBRRule(block_id, "block")
+    is_string_getter = block.get_string_getter()
+    rule = RBRRule(block_id, "block",is_string_getter)
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
     
@@ -1314,15 +1315,6 @@ def component_update_fields(rule,component):
     fields = fields_per_block.get(block,[])
     bc = bc_per_block.get(block,[])
     local = lvariables_per_block.get(block,[])
-
-    # print "FIELDS"
-    # print fields
-
-    # print "BC"
-    # print bc
-
-    # print "LOCAL"
-    # print local
     
     if fields != [] or bc !=[] or local !=[]:
         rule.update_global_arg(fields)
@@ -1362,14 +1354,6 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     begin = dtimer()
     blocks_dict = blocks_input
     
-#     if to_clone != []:
-
-#         blocks2clone = sorted(to_clone, key = getLevel)
-
-#         for b in blocks2clone:
-#             blocks_dict = clone(b,blocks_dict)
-#             #print blocks_dict
-    
     if blocks_dict and stack_info:
         blocks = sorted(blocks_dict.values(), key = getKey)
         for block in blocks:
@@ -1382,10 +1366,6 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                
         for rule in rbr_blocks.values():# _blocks.values():
             for r in rule:
-#                r.set_bc(bc_in_use)
-                # print "REGLA"
-                # print r.get_Id()
-                # print "START UPDATING"
                 component_update_fields(r,component_of)
 #                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
 #                r.set_global_vars(max_field_list)
@@ -1402,14 +1382,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                     l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
                     r.set_call_to_info((f,bc,l))
 
-                r.update_calls()
-
-        # for r in rule_c:
-        #     r.set_bc(bc_in_use)
-        #     r.set_global_vars(max_field_list)
-        #     r.set_args_local(current_local_var)
-        #     rbr_blocks[r.get_rule_name()]=[r]
-        
+                r.update_rule()
+                
         rbr = sorted(rbr_blocks.values(),key = orderRBR)
         write_rbr(rbr,exe,contract_name)
         
