@@ -1,4 +1,4 @@
-pragma solidity 0.4.8;
+pragma solidity ^0.4.8;
 contract ERC20TokenInterface {
     function totalSupply() constant returns (uint256 supply);
     function balanceOf(address _owner) constant public returns (uint256 balance);
