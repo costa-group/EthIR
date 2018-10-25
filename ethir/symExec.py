@@ -214,6 +214,15 @@ def initGlobalVars():
 
     global procesed_indirect_jumps
     procesed_indirect_jumps = {}
+
+    global patron
+    patron = ["JUMPDEST","PUSH1 0x00","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","PUSH1 0x1f","ADD","PUSH1 0x20","DUP1","SWAP2","DIV","MUL","PUSH1 0x20","ADD","PUSH1 0x40","MLOAD","SWAP1","DUP2","ADD","PUSH1 0x40","MSTORE","DUP1","SWAP3","SWAP2","SWAP1","DUP2","DUP2","MSTORE","PUSH1 0x20","ADD","DUP3","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","ISZERO"]
+    
+    global name
+    name = ""
+
+    global tacas_ex
+    tacas_ex = ""
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -444,6 +453,7 @@ def construct_bb():
     global edges
     global stack_h
     global calldataload_values
+    global string_getter
     
     sorted_addresses = sorted(instructions.keys())
     size = len(sorted_addresses)
@@ -463,8 +473,40 @@ def construct_bb():
         block.set_block_type(jump_type[key])
         vertices[key] = block
         edges[key] = []
+        ins_aux = block.get_instructions()[:-2]
 
+        if len(ins_aux)>=len(patron):
+            ins = map(lambda x: x.strip(),ins_aux)
+            # print ins
+            # print patron
+            p = check_patron(ins)
+            if p :
+                block.activate_string_getter()
+                #write_patron(key,name)
+    
+def check_patron(instructions):
+    pat = False
+    if instructions[0] == patron[0]:
+        i = 1
+        correct = True
+        while(i<len(instructions) and instructions[i]!="DUP1"):
+            if instructions[i].split()[0][:-1]!="PUSH":
+                correct = False
+            i = i+1
+        if correct:
+            pat = instructions[i:] == patron[2:]
+    return pat
 
+def write_patron(key,cname):
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+        
+
+    name = "/tmp/costabs/patron.patron"
+    with open(name,"a") as f:
+        string = tacas_ex+" "+cname+" "+str(key)+"\n"
+        f.write(string)
+    f.close()
 def construct_static_edges():
     add_falls_to()  # these edges are static
 
@@ -2615,7 +2657,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2624,13 +2666,18 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     global debug_info
     global vertices
     global stack_h
-    
+    global name
+    global tacas_ex
+                            
     g_disasm_file = disasm_file
     g_source_file = source_file
     g_src_map = source_map
 
     initGlobalVars()
-     
+
+    name = cname
+    if t_exs != None:
+        tacas_ex = t_exs
     if hashes != None:
         f_hashes = hashes
 
@@ -2657,6 +2704,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
 
     
     compute_cloning(blocks_to_clone,vertices,stack_h)
+    # for e in vertices.values():
+    #     e.display()
+    #     print e.get_comes_from()
     
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
