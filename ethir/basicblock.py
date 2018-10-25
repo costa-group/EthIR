@@ -27,6 +27,7 @@ class BasicBlock:
         self.comes_from = []
         self.depth = -1
         self.clone = False
+        self.string_getter = False
         
     def get_start_address(self):
         return self.start
@@ -302,6 +303,14 @@ class BasicBlock:
     def set_stack_info_pos(self,value,pos):
         self.stack_info[pos] = value
 
+    def get_string_getter(self):
+        return self.string_getter
+        
+    def set_string_getter(self,val):
+        self.string_getter = val
+
+    def activate_string_getter(self):
+        self.string_getter = True
 
     def copy(self):
         
@@ -323,6 +332,7 @@ class BasicBlock:
         new_obj.set_depth_level(self.depth)
         new_obj.set_stack_info(list(self.stack_info))
         new_obj.set_cloning(self.clone)
+        new_obj.set_string_getter(self.string_getter)
         
         return new_obj
 
