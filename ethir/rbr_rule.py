@@ -17,7 +17,7 @@ Each rule contains:
 '''
 
 class RBRRule:
-    def __init__(self,blockId,typeBlock):
+    def __init__(self,blockId,typeBlock,getter=False):
         self.blockId = blockId
 
         if typeBlock == "block":
@@ -35,6 +35,7 @@ class RBRRule:
         self.fresh_index = 0
         self.call_to = -1
         self.call_to_info = None
+        self.string_getter = getter
     
     def get_guard(self):
         return self.guard
@@ -105,6 +106,12 @@ class RBRRule:
     def get_fresh_index(self):
         return self.fresh_index
 
+    def get_string_getter(self):
+        return self.string_getter
+
+    def set_string_getter(self,s):
+        self.string_getter = s
+    
     def get_call_to(self):
         return self.call_to
 
@@ -201,6 +208,27 @@ class RBRRule:
             instructions.append(new_instr)
         self.instr = instructions
 
+
+    def update_rule(self):
+        self.update_calls()
+        if self.string_getter:
+            self.include_string_getter()
+        
+    def include_string_getter(self):
+        #Patter defined in symExec.py
+        #Pattern identified by Oyente
+        evm = filter(lambda x: x.split("(")[0] != "nop",self.instr)
+        instr1 = evm[-17] #by definition of the pattern. It corresponds to s(x) = g(y)
+        instr2_aux = evm[-22] #by definition of the pattern. It corresponds to l(z) = s(w)
+        field = instr1.split("=")[1].strip()
+
+        instr2 = instr2_aux.split("=")[0]+"= "+field #We replace in the second instr the element s(w) by the corresponding field g(y)
+
+        instr = self.instr[::-1]
+        idx = instr.index("nop(DUP1)")
+        new_instr = instr[:idx]+[instr1,instr2]+instr[idx:]
+        self.instr = new_instr[::-1]
+        
     '''
     It returns a string that contains the variables specified in types.
     '''
