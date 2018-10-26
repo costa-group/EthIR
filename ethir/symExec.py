@@ -474,11 +474,8 @@ def construct_bb():
         vertices[key] = block
         edges[key] = []
         ins_aux = block.get_instructions()[:-2]
-
         if len(ins_aux)>=len(patron):
             ins = map(lambda x: x.strip(),ins_aux)
-            # print ins
-            # print patron
             p = check_patron(ins)
             if p :
                 block.activate_string_getter()
@@ -631,7 +628,6 @@ def get_init_global_state(path_conditions_and_vars):
 # Added by Pablo Gordillo
 def update_stack_heigh(block,h,pos):
     global stack_h
-
     l = stack_h[block]
     if(l[pos]>h):
         l.pop(pos)
@@ -681,14 +677,12 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     analysis = params.analysis
     calls = params.calls
 
-    # print ("\nBLOCK "+ str(block))
-    # print path
     
     if debug_info:
         print ("\nBLOCK "+ str(block))
-        print "PATH"
-        print path
-    
+        print ("PATH")
+        print (path)
+
     update_stack_heigh(block,len(stack),0)
     Edge = namedtuple("Edge", ["v1", "v2"]) # Factory Function for tuples is used as dictionary key
     if block < 0:
@@ -2588,7 +2582,7 @@ def analyze():
     def timeout_cb():
         if global_params.DEBUG_MODE:
             traceback.print_exc()
-            print "Timeout reached"
+            print ("Timeout reached")
 
     run_build_cfg_and_analyze(timeout_cb=timeout_cb)
 
