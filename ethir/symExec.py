@@ -648,6 +648,9 @@ def full_sym_exec():
     global_state = get_init_global_state(path_conditions_and_vars)
     analysis = init_analysis()
     params = Parameter(path_conditions_and_vars=path_conditions_and_vars, global_state=global_state, analysis=analysis)
+
+    vertices[0].set_cost(vertices[0].get_block_gas())
+    
     return sym_exec_block(params, 0, 0, 0, -1, 0,[(0,0)])
 
 
@@ -742,7 +745,11 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     if (function_info[0] and jump_type[block] == "conditional"):
         name = function_info[1]
-        function_block_map[name]=vertices[block].get_jump_target()
+
+        s = vertices[block].get_block_gas()+vertices[pre_block].get_cost()
+        vertices[block].set_cost(s)
+        
+        function_block_map[name]=(vertices[block].get_jump_target(),s)
         function_info = (False,"")
     
     # Go to next Basic Block(s)
@@ -2632,7 +2639,7 @@ def generate_saco_config_file(cname):
     else:
         name = "/tmp/costabs/"+cname+".config"
     with open(name,"w") as f:
-        elems = map(lambda (x,y): "("+str(x)+";"+str(y)+")", function_block_map.items())
+        elems = map(lambda (x,y): "("+str(x)+";"+str(y[0])+")", function_block_map.items())
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
