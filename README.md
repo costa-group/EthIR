@@ -1,5 +1,6 @@
 EthIR
 =====
+[![License: GPL v3][license-badge]][license-badge-url]
 
 
 A framework for high-level Analysis of Ethereum Bytecode.
@@ -202,3 +203,6 @@ Other high-level analyzers that work on intermediate forms like Integer transiti
 If you are interesting in using EthIR jointly with [SACO](http://costa.fdi.ucm.es/saco/web/) contact [SACO](http://costa.fdi.ucm.es/saco/web/) developers through a pull-request or a new issue.
 
 You can try a first prototype [here](http://costa.fdi.ucm.es/ethir). SACO infers an upper-bound of the gas involved in each transaction.
+
+[license-badge]: https://img.shields.io/badge/License-GPL%20v3-blue.svg?style=flat-square
+[license-badge-url]: ./LICENSE
