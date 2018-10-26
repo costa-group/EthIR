@@ -431,3 +431,9 @@ def update_map(m,key,val):
     l.append(val)
     m[key]=l
     return m
+
+def store_times(oyente_time,ethir_time):
+    f = open("/tmp/costabs/times.csv","a")
+    fp = csv.writer(f, delimiter=',')
+    fp.writerow(["Oyente",oyente_time,"EthIR",ethir_time])
+    f.close()

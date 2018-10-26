@@ -3,7 +3,7 @@
 from rbr_rule import RBRRule
 import opcodes
 from basicblock import Tree
-from utils import getKey, orderRBR, getLevel
+from utils import getKey, orderRBR, getLevel, store_times
 import os
 import saco
 from timeit import default_timer as dtimer
@@ -1342,7 +1342,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None, component = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0):
     global rbr_blocks
     global stack_index
 
@@ -1388,7 +1388,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         write_rbr(rbr,exe,contract_name)
         
         end = dtimer()
-        print("Build RBR: "+str(end-begin)+"s")
+        ethir_time = end-begin
+        print("Build RBR: "+str(ethir_time)+"s")
+
+        store_times(oyente_time,ethir_time)
         
         if saco_rbr:
             saco.rbr2saco(rbr,exe,contract_name)

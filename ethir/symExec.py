@@ -2713,13 +2713,15 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     begin1 = dtimer()
     compute_component_of_cfg()
         
-    end = dtimer()
+    # end = dtimer()
     # print("Component performance: "+str(end-begin1)+"s")
     
     end = dtimer()
-    print("OYENTE tool: "+str(end-begin)+"s")
-    
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks)
+    oyente_t = end-begin
+    print("OYENTE tool: "+str(oyente_t)+"s")
+
+
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create, nop_opcodes = nop,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
