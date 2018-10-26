@@ -666,6 +666,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global ls_cont
     global potential_jump
     global procesed_indirect_jumps
+    global function_info
+    
     visited = params.visited
     stack = params.stack
     stack_old = list(params.stack)
@@ -738,7 +740,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     update_stack_heigh(block,len(stack),1)
 
-
+    if (function_info[0] and jump_type[block] == "conditional"):
+        name = function_info[1]
+        function_block_map[name]=vertices[block].get_jump_target()
+        function_info = (False,"")
     
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
@@ -1965,10 +1970,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     branch_expression = True
             else:
                 branch_expression = (flag != 0)
-            if (function_info[0]):
-                name = function_info[1]
-                function_block_map[name]=target_address
-                function_info = (False,"")
+            # if (function_info[0]):
+            #     name = function_info[1]
+            #     function_block_map[name]=target_address
+            #     function_info = (False,"")
             vertices[block].set_branch_expression(branch_expression)
             if target_address not in edges[block]:
                 edges[block].append(target_address)
@@ -2004,7 +2009,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
         if f_hashes and hs in f_hashes :
             name = f_hashes[hs]
             function_info = (True,name)
-#           function_block_map[name]=block
+            
+
         
         pushed_value = int(instr_parts[1], 16)
         stack.insert(0, pushed_value)
