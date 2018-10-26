@@ -1,5 +1,6 @@
 import six
 from dot_tree import Tree
+from opcodes import get_ins_cost
 
 class BasicBlock:
     def __init__(self, start_address, end_address):
@@ -353,6 +354,11 @@ class BasicBlock:
                 return False
         else:
             return False
+    def get_block_gas(self):
+        s = 0
+        for e in self.instructions:
+            s = s+get_ins_cost(e.strip())
+        return s
         
     def display(self):
         six.print_("================")
