@@ -29,6 +29,7 @@ class BasicBlock:
         self.depth = -1
         self.clone = False
         self.string_getter = False
+        self.cost = 0
         
     def get_start_address(self):
         return self.start
@@ -359,6 +360,12 @@ class BasicBlock:
         for e in self.instructions:
             s = s+get_ins_cost(e.strip())
         return s
+
+    def set_cost(self,s):
+        self.cost = s
+
+    def get_cost(self):
+        return self.cost
         
     def display(self):
         six.print_("================")
