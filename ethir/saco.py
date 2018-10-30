@@ -115,89 +115,6 @@ def call_instruction(instr):
 
     new_instr = instr[:pos_head+1]+new_vars_string+"))"
     return new_instr
-
-# def call_instruction(rule,instr):
-
-#     pos_head = instr.find("(",5) #It is a call. It starts with call(__( 
-#     pos0 = instr.find("s(0)",0)
-#     pos1 = instr.find("g(",0)
-    
-#     if pos1 != -1:
-#         if rule.get_call_to_info() == None:
-#             gv = get_field_vars(rule)
-#         else:
-#             gv_aux =  rule.get_call_to_info()[0]
-#             gv = map(lambda x: "field("+x.replace("(","").replace(")","")+")",gv_aux)
-
-#         fv = ", ".join(gv)
-            
-#     else:
-#         fv = ""
-        
-#     cv_aux = get_contract_vars(rule) if rule.get_call_to_info()==None else rule.get_call_to_info()[1]
-#     if len(cv_aux)>0 :
-#         if type(cv_aux) == type([]):
-#             cv =", ".join(cv_aux)
-#         else:
-#             cv = map(lambda x: "l("+x.strip()+")",cv_aux.split(","))
-#             cv = ", ".join(cv)
-#     else:
-#         cv = ""
-
-#     local_vars = rule.build_local_vars() if rule.get_call_to_info() == None else rule.get_call_to_info()[2]
-#     local_vars_string = ", ".join(local_vars)
-
-
-#     #It generates the secuence of variables
-#     if fv != "":
-#         if pos0 != -1:
-#             if local_vars_string != "":
-#                 new = instr[:pos0+4]+", "+fv+", "+local_vars_string
-
-#             else:
-#                 new = instr[:pos0+4]+", "+fv
-                
-#             if cv!="":
-#                 new = new +", "+cv+"))"
-#             else:
-#                 new = new+"))"
-#         else:
-#             if local_vars_string != "":
-#                 new = instr[:pos_head+1]+fv+", "+local_vars_string
-
-#             else:
-#                 new = instr[:pos_head+1]+fv
-            
-#             if cv!="":
-#                 new = new + ", " + cv + "))"
-#             else:
-#                 new = new + "))"
-#     else:
-#         if pos0 != -1: #there is a
-
-#             if local_vars_string != "":
-#                 new = instr[:pos0+4]+","+local_vars_string
-
-#             else:
-#                 new = instr[:pos0+4]
-            
-#             if cv!="":
-#                 new = new + ", "+cv+"))"
-#             else:
-#                 new = new + "))"
-#         else:
-
-#             if local_vars_string != "" and cv != "":
-#                 new = instr[:pos_head+1] + local_vars_string+", "+cv+"))"
-#             elif local_vars_string != "" and cv == "":
-#                 new = instr[:pos_head+1] + local_vars_string+"))"
-
-#             elif local_vars_string == "" and cv != "":
-#                 new = instr[:pos_head+1] +cv+"))"
-#             else:
-#                 new = instr[:pos_head+1]+"))"
-
-#     return new
     
 def process_instructions(rule):
     cont = rule.get_fresh_index()+1
@@ -269,6 +186,18 @@ def process_instructions(rule):
             pos = instr.find("=",0)
             new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
+        elif instr.find("*")!=-1:
+            nop = new_instructions[-1].strip(")")
+            idx = nop.find("nop(PUSH")
+            if(idx !=-1 and int(nop[idx+8:])<10):
+                posEq = instr.find("=")
+                var = instr[:posEq].strip()
+                limit = int(new_instructions[-2].split("=")[1].strip())
+                s_list = [var for i in range(limit)]
+                new_aux = "+".join(s_list)
+                new = var+" = "+new_aux
+            else:
+                new = instr
         elif len(instr.split("=")) > 1:
             slices = instr.split("=")
             name = slices[1].strip()
@@ -278,8 +207,10 @@ def process_instructions(rule):
                 new = instr
         elif instr.find("skip")!=-1:
             new = ""
+            
         else:
             new = instr
+            
         new_instructions.append(new)
 
     return new_instructions
