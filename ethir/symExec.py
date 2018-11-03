@@ -215,8 +215,8 @@ def initGlobalVars():
     global procesed_indirect_jumps
     procesed_indirect_jumps = {}
 
-    global patron
-    patron = ["JUMPDEST","PUSH1 0x00","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","PUSH1 0x1f","ADD","PUSH1 0x20","DUP1","SWAP2","DIV","MUL","PUSH1 0x20","ADD","PUSH1 0x40","MLOAD","SWAP1","DUP2","ADD","PUSH1 0x40","MSTORE","DUP1","SWAP3","SWAP2","SWAP1","DUP2","DUP2","MSTORE","PUSH1 0x20","ADD","DUP3","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","ISZERO"]
+    global pattern
+    pattern = ["JUMPDEST","PUSH1 0x00","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","PUSH1 0x1f","ADD","PUSH1 0x20","DUP1","SWAP2","DIV","MUL","PUSH1 0x20","ADD","PUSH1 0x40","MLOAD","SWAP1","DUP2","ADD","PUSH1 0x40","MSTORE","DUP1","SWAP3","SWAP2","SWAP1","DUP2","DUP2","MSTORE","PUSH1 0x20","ADD","DUP3","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","ISZERO"]
     
     global name
     name = ""
@@ -474,16 +474,16 @@ def construct_bb():
         vertices[key] = block
         edges[key] = []
         ins_aux = block.get_instructions()[:-2]
-        if len(ins_aux)>=len(patron):
+        if len(ins_aux)>=len(pattern):
             ins = map(lambda x: x.strip(),ins_aux)
-            p = check_patron(ins)
+            p = check_pattern(ins)
             if p :
                 block.activate_string_getter()
-                #write_patron(key,name)
+                #write_pattern(key,name)
     
-def check_patron(instructions):
+def check_pattern(instructions):
     pat = False
-    if instructions[0] == patron[0]:
+    if instructions[0] == pattern[0]:
         i = 1
         correct = True
         while(i<len(instructions) and instructions[i]!="DUP1"):
@@ -491,15 +491,15 @@ def check_patron(instructions):
                 correct = False
             i = i+1
         if correct:
-            pat = instructions[i:] == patron[2:]
+            pat = instructions[i:] == pattern[2:]
     return pat
 
-def write_patron(key,cname):
+def write_pattern(key,cname):
     if "costabs" not in os.listdir("/tmp/"):
         os.mkdir("/tmp/costabs/")
         
 
-    name = "/tmp/costabs/patron.patron"
+    name = "/tmp/costabs/pattern.pattern"
     with open(name,"a") as f:
         string = tacas_ex+" "+cname+" "+str(key)+"\n"
         f.write(string)
