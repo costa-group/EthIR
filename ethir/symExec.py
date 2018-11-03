@@ -649,7 +649,7 @@ def full_sym_exec():
     analysis = init_analysis()
     params = Parameter(path_conditions_and_vars=path_conditions_and_vars, global_state=global_state, analysis=analysis)
 
-    vertices[0].set_cost(vertices[0].get_block_gas())
+    #vertices[0].set_cost(vertices[0].get_block_gas())
     
     return sym_exec_block(params, 0, 0, 0, -1, 0,[(0,0)])
 
@@ -742,14 +742,17 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     depth += 1
 
     update_stack_heigh(block,len(stack),1)
-
+    if block == 0:
+        s0 = vertices[block].get_block_gas()
+        vertices[block].set_cost(s0)
+        
     if (function_info[0] and jump_type[block] == "conditional"):
         name = function_info[1]
-
         s = vertices[block].get_block_gas()+vertices[pre_block].get_cost()
         vertices[block].set_cost(s)
         
         function_block_map[name]=(vertices[block].get_jump_target(),s)
+#        function_block_map[name]=vertices[block].get_jump_target()
         function_info = (False,"")
     
     # Go to next Basic Block(s)
@@ -2639,7 +2642,7 @@ def generate_saco_config_file(cname):
     else:
         name = "/tmp/costabs/"+cname+".config"
     with open(name,"w") as f:
-        elems = map(lambda (x,y): "("+str(x)+";"+str(y[0])+")", function_block_map.items())
+        elems = map(lambda (x,y): "("+str(x)+";"+str(y[0])+";"+str(y[1])+")", function_block_map.items())
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
@@ -2700,12 +2703,6 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
 
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
-
-    # print "BLOCKS TO CLONE"
-    # print blocks_to_clone[0].get_start_address()
-    # for v in vertices.values():
-    #     v.display()
-    #     print v.get_comes_from()
     
     check_cfg_option(cfg,cname,execution)
 
