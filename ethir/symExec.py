@@ -796,12 +796,12 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 else:
             
                     potential_jump = False
-                    # if not(vertices[successor].is_direct_block()):
-                    #     #print "ENTRARIA con"+str(successor)
-                    #     if stack[indirect_jump[successor]] not in proc:
-                    #         path.append((block,successor))
-                    #         sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-                    #         path.pop()
+                    if not(vertices[successor].is_direct_block()):
+                        #print "ENTRARIA con"+str(successor)
+                        if stack[indirect_jump[successor]] not in proc:
+                            path.append((block,successor))
+                            sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                            path.pop()
                     #if stack[indirect_jump[successor]] not in proc:
                     
         else:
@@ -1954,8 +1954,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 # vertices[block].display()
                 # print stack_first
                 try:
-                        idx = stack_first.index(target_address)
-                        indirect_jump[block] = idx
+                    idx = stack_first.index(target_address)
+                    indirect_jump[block] = idx
                 except:
                     #the push is generated in this block
                     pass
