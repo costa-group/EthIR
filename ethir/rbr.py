@@ -582,7 +582,7 @@ def translateOpcodes50(opcode, value, index_variables,block):
         v1, updated_variables = get_new_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            instr = v1+ " = " + "l("+str(l_idx)+")"
+            instr = v1+ " = " + "l(l"+str(l_idx)+")"
             update_local_variables(l_idx,block)
         except ValueError:
             instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
@@ -592,7 +592,7 @@ def translateOpcodes50(opcode, value, index_variables,block):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            instr = "l("+str(l_idx)+") = "+ v1
+            instr = "l(l"+str(l_idx)+") = "+ v1
             update_local_variables(l_idx,block)
         except ValueError:
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
@@ -601,7 +601,7 @@ def translateOpcodes50(opcode, value, index_variables,block):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            instr = "l("+str(l_idx)+") = "+ v1
+            instr = "l(l"+str(l_idx)+") = "+ v1
         except ValueError:
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
     elif opcode == "SLOAD":

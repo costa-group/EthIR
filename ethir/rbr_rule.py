@@ -155,7 +155,7 @@ class RBRRule:
         local_vars = []
         ordered = sorted(self.arg_local)[::-1]
         for i in ordered:
-            var = "l("+str(i)+")"
+            var = "l(l"+str(i)+")"
             local_vars.append(var)
         return local_vars
 
