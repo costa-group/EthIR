@@ -198,6 +198,138 @@ def process_instructions(rule):
                 new = var+" = "+new_aux
             else:
                 new = instr
+        elif instr.find("nop(MLOAD)")!=-1:
+            top = new_instructions.pop()
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                new = "'$acquire'(noncu,"+val+"+32)"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new_instructions.append(top)
+                new = instr
+        elif instr.find("nop(MSTORE)")!=-1:
+            top = new_instructions.pop()
+            val = top.split("=")
+            val_1 = val[0].strip()
+            val_2 = val[1].strip()
+            if val_1.startswith("l(ls") and val_2.startswith("s("):
+                new = "'$acquire'(noncu,"+val_2+"+32)"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new_instructions.append(top)
+                new = instr
+            elif not val_1.startswith("l(ls"):
+                index = new_instructions[-2]
+                val = index.split("=")[0].strip()
+                new = "'$acquire'(noncu,"+val+"+32)"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new_instructions.append(top)
+                new = instr
+        elif instr.find("nop(MSTORE8)")!=-1:
+            top = new_instructions.pop()
+            val = top.split("=")
+            val_1 = val[0].strip()
+            val_2 = val[1].strip()
+            if val_1.startswith("l(ls") and val_2.startswith("s("):
+                new = "'$acquire'(noncu,"+val_2+"+1)"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new_instructions.append(top)
+                new = instr
+            elif not val_1.startswith("l(ls"):
+                index = new_instructions[-2]
+                val = index.split("=")[0].strip()
+                new = "'$acquire'(noncu,"+val+"+1)"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new_instructions.append(top)
+                new = instr
+        elif instr.find("nop(SHA3)")!=-1:
+            top = new_instructions.pop()
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                num = val.split("(")[1].strip(")")
+                num_var = int(num)
+                exp = "s("+str(num_var+1)+")+"+val
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new_instructions.append(top)
+                new = instr
+        elif instr.find("nop(CALLDATACOPY)")!=-1 or instr.find("nop(CODECOPY)")!=-1 or instr.find("nop(RETURNDATACOPY)")!=-1:
+            top = new_instructions[-3]
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                num = val.split("(")[1].strip(")")
+                num_var = int(num)
+                exp = "s("+str(num_var-2)+")+"+val
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new = instr
+        elif instr.find("nop(EXTCODECOPY)")!=-1:
+            top = new_instructions[-3]
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                num = val.split("(")[1].strip(")")
+                num_var = int(num)
+                exp = "s("+str(num_var-1)+")+"+"s("+str(num_var-3)+")"
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new = instr
+        elif instr.find("nop(LOG1)")!=-1 or instr.find("nop(LOG2)")!=-1 or instr.find("nop(LOG3)")!=-1 or instr.find("nop(LOG4)")!=-1:
+            top = new_instructions[-3]
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                num = val.split("(")[1].strip(")")
+                num_var = int(num)
+                exp = "s("+str(num_var-1)+")+"+val
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new = instr
+        elif instr.find("nop(RETURN)")!=-1 or instr.find("nop(REVERT)")!=-1:
+            top = new_instructions[-3]
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                num = val.split("(")[1].strip(")")
+                num_var = int(num)
+                exp = "s("+str(num_var-1)+")+"+val
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new = instr
+        elif instr.find("nop(CALL)")!=-1:
+            top = new_instructions[-3]
+            val = top.split("=")[0].strip()
+            if val.startswith("s("):
+                num = val.split("(")[1].strip(")")
+                num_var = int(num)
+                exp = "s("+str(num_var-3)+")+"+"s("+str(num_var-4)+")"
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                exp = "s("+str(num_var-5)+")+"+"s("+str(num_var-6)+")"
+                new = "'$acquire'(noncu,"+exp+")"
+                new_instructions.append(new)
+                new = "'$release'(noncu)"
+                new_instructions.append(new)
+                new = instr
+
+                
         elif len(instr.split("=")) > 1:
             slices = instr.split("=")
             name = slices[1].strip()
