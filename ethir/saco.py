@@ -193,9 +193,12 @@ def process_instructions(rule):
                 posEq = instr.find("=")
                 var = instr[:posEq].strip()
                 limit = int(new_instructions[-2].split("=")[1].strip())
-                s_list = [var for i in range(limit)]
-                new_aux = "+".join(s_list)
-                new = var+" = "+new_aux
+                if limit < 1000:
+                    s_list = [var for i in range(limit)]
+                    new_aux = "+".join(s_list)
+                    new = var+" = "+new_aux
+                else:
+                    new = instr
             else:
                 new = instr
         elif instr.find("nop(MLOAD)")!=-1:
