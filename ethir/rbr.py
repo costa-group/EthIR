@@ -1000,8 +1000,12 @@ It creates the call to next block when the type of the current one is falls_to.
 def process_falls_to_blocks(index_variables, falls_to):
     top = get_stack_index(falls_to)[0]
     stack_variables = get_stack_variables(index_variables)[:top]
-    p_vars = ",".join(stack_variables)
-    instr = "call(block"+str(falls_to)+"("+p_vars+",globals, bc))"
+    if(len(stack_variables)!=0):
+        p_vars = ",".join(stack_variables)+","
+    else:
+        p_vars = ""
+        
+    instr = "call(block"+str(falls_to)+"("+p_vars+"globals, bc))"
     return instr
 
 '''
@@ -1034,7 +1038,7 @@ def create_uncond_jump(block_id,variables,jumps):
         stack_variables = stack_variables[:top]
         head = "block"+str(jumps[0])
         rule1 = rule2 = None
-        
+
     if (len(stack_variables)!=0):
         p_vars = ",".join(stack_variables)+","
     else:
