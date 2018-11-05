@@ -202,7 +202,7 @@ def process_instructions(rule):
             top = new_instructions.pop()
             val = top.split("=")[0].strip()
             if val.startswith("s("):
-                new = "'$acquire'(noncu,"+val+"+32)"
+                new = "'$acquire'(noncu,("+val+"+32)/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -214,7 +214,7 @@ def process_instructions(rule):
             val_1 = val[0].strip()
             val_2 = val[1].strip()
             if val_1.startswith("l(ls") and val_2.startswith("s("):
-                new = "'$acquire'(noncu,"+val_2+"+32)"
+                new = "'$acquire'(noncu,("+val_2+"+32)/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -223,7 +223,7 @@ def process_instructions(rule):
             elif not val_1.startswith("l(ls"):
                 index = new_instructions[-2]
                 val = index.split("=")[0].strip()
-                new = "'$acquire'(noncu,"+val+"+32)"
+                new = "'$acquire'(noncu,("+val+"+32)/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -235,7 +235,7 @@ def process_instructions(rule):
             val_1 = val[0].strip()
             val_2 = val[1].strip()
             if val_1.startswith("l(ls") and val_2.startswith("s("):
-                new = "'$acquire'(noncu,"+val_2+"+1)"
+                new = "'$acquire'(noncu,("+val_2+"+1)/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -244,7 +244,7 @@ def process_instructions(rule):
             elif not val_1.startswith("l(ls"):
                 index = new_instructions[-2]
                 val = index.split("=")[0].strip()
-                new = "'$acquire'(noncu,"+val+"+1)"
+                new = "'$acquire'(noncu,("+val+"+1)/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -257,7 +257,7 @@ def process_instructions(rule):
                 num = val.split("(")[1].strip(")")
                 num_var = int(num)
                 exp = "s("+str(num_var+1)+")+"+val
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -270,7 +270,7 @@ def process_instructions(rule):
                 num = val.split("(")[1].strip(")")
                 num_var = int(num)
                 exp = "s("+str(num_var-2)+")+"+val
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -282,7 +282,7 @@ def process_instructions(rule):
                 num = val.split("(")[1].strip(")")
                 num_var = int(num)
                 exp = "s("+str(num_var-1)+")+"+"s("+str(num_var-3)+")"
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -294,7 +294,7 @@ def process_instructions(rule):
                 num = val.split("(")[1].strip(")")
                 num_var = int(num)
                 exp = "s("+str(num_var-1)+")+"+val
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -306,7 +306,7 @@ def process_instructions(rule):
                 num = val.split("(")[1].strip(")")
                 num_var = int(num)
                 exp = "s("+str(num_var-1)+")+"+val
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
@@ -318,12 +318,12 @@ def process_instructions(rule):
                 num = val.split("(")[1].strip(")")
                 num_var = int(num)
                 exp = "s("+str(num_var-3)+")+"+"s("+str(num_var-4)+")"
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
                 exp = "s("+str(num_var-5)+")+"+"s("+str(num_var-6)+")"
-                new = "'$acquire'(noncu,"+exp+")"
+                new = "'$acquire'(noncu,("+exp+")/32)"
                 new_instructions.append(new)
                 new = "'$release'(noncu)"
                 new_instructions.append(new)
