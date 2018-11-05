@@ -70,7 +70,11 @@ def build_tree(block,visited,block_input,condTrue = "t"):
     start = block.get_start_address()   
     falls_to = block.get_falls_to()
     list_jumps = block.get_list_jumps()
-
+    # print "BUILD TREE"
+    # print start
+    # print falls_to
+    # print list_jumps
+    
     type_block = block.get_block_type()
 
     if condTrue == "u":
