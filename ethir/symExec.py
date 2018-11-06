@@ -221,6 +221,9 @@ def initGlobalVars():
     global name
     name = ""
 
+    global param_abs
+    param_abs = ("","")
+    
     global tacas_ex
     tacas_ex = ""
     
@@ -670,6 +673,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global potential_jump
     global procesed_indirect_jumps
     global function_info
+    global param_abs
     
     visited = params.visited
     stack = params.stack
@@ -681,7 +685,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     path_conditions_and_vars = params.path_conditions_and_vars
     analysis = params.analysis
     calls = params.calls
-
+    param_abs = ("","")
     
     if debug_info:
         print ("\nBLOCK "+ str(block))
@@ -933,6 +937,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
     global function_info
     global potential_jump
     global indirect_jump
+    global param_abs
     
     stack = params.stack
     mem = params.mem
@@ -1544,8 +1549,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     param_idx = (position - 4) // 32
                     new_var_name = params_list[param_idx]
                     g_src_map.var_names.append(new_var_name)
+                    param_abs = (block,new_var_name)
                 else:
-                    new_var_name = gen.gen_data_var(position)
+                    if param_abs[1] != "":
+                        new_var_name = param_abs[1]
+                    else:
+                        new_var_name = gen.gen_data_var(position)
             else:
                 new_var_name = gen.gen_data_var(position)
             if new_var_name in path_conditions_and_vars:
