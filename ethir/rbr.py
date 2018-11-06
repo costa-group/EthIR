@@ -622,7 +622,7 @@ def translateOpcodes50(opcode, value, index_variables,block):
             instr = "g(" + value + ") = " + v1
             update_field_index(value,block)
         except ValueError:
-            instr = ["gs(1) = "+ v1, "gs(2) = "+v0]
+            instr = ["gs(1) = "+ v0, "gs(2) = "+v1]
     # elif opcode == "JUMP":
     #     pass
     # elif opcode == "JUMPI":
