@@ -125,17 +125,62 @@ def process_instructions(rule):
         if instr.find("call(",0)!=-1:
             new = call_instruction(instr)
         elif instr.find("and",0)!=-1:
-            pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
-            cont+=1
+            nop_top = new_instructions[-1]
+            top = new_instructions[-2]
+            number = top.split("=")[1].strip()
+            
+            try:
+                number = int(number)
+                bin_num = bin(number)
+                l = filter(lambda x: x!="1",bin_num)
+                if l == "0b":
+                    number = "1"
+                elif l == "0b0":
+                    number = "0"
+                else:
+                    number = "none"
+            except:
+                number = "none"
+            finally:
+                one = False
+                if number == "1":
+                    one = True
+                elif number == "0":
+                    var = " 0"
+                else:
+                    var = " s("+str(cont)+")"
+                    cont+=1
+                if one:
+                    new = ""
+                else:
+                    pos = instr.find("=")
+                    new = instr[:pos+1]+var
+            
+            # pos = instr.find("=")
+            # var = " s("+str(cont)+")"
+            # new = instr[:pos+1]+var
         elif instr.find("or",0)!=-1:
             pos = instr.find("=")
             new = instr[:pos+1]+" s("+str(cont)+")"
             cont+=1
         elif instr.find("not",0)!=-1:
+            nop_top = new_instructions[-1]
+            top = new_instructions[-2]
+            if nop_top.startswith("nop(PUSH"):
+                number = top.split("=")[1].strip()
+                if number == " 1":
+                    var = "0"
+                elif number == "0":
+                    var = " 1"
+                else:
+                    var = " s("+str(cont)+")"
+                    cont+=1
+            else:
+                var = " s("+str(cont)+")"
+                cont+=1
+                 
             pos = instr.find("=")
-            new = instr[:pos+1]+" s("+str(cont)+")"
-            cont+=1
+            new = instr[:pos+1]+var
         elif instr.find("xor",0)!=-1:
             pos = instr.find("=")
             new = instr[:pos+1]+" s("+str(cont)+")"
@@ -316,6 +361,7 @@ def process_instructions(rule):
                 new = instr
         elif instr.find("nop(CALL)")!=-1:
             top = new_instructions[-3]
+            last = new_instructions.pop()
             val = top.split("=")[0].strip()
             if val.startswith("s("):
                 num = val.split("(")[1].strip(")")
