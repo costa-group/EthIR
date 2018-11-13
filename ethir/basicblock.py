@@ -30,6 +30,9 @@ class BasicBlock:
         self.clone = False
         self.string_getter = False
         self.cost = 0
+        self.unknown_mstore = False
+        self.transitive_mstore = False
+
         
     def get_start_address(self):
         return self.start
@@ -278,7 +281,10 @@ class BasicBlock:
                 new_instr = instr + " " + self._get_concrete_value("mload",mload)
                 mload +=1
             elif instr[:6] == "MSTORE": #MSTORE8
-                new_instr = instr + " " + self._get_concrete_value("mstore",mstore)
+                val = self._get_concrete_value("mstore",mstore)
+                if val == "?":
+                    self.unknown_mstore = True
+                new_instr = instr + " " + val
                 mstore+=1
             elif instr == "SLOAD":
                 new_instr = instr + " " + self._get_concrete_value("sload",sload)
@@ -296,6 +302,21 @@ class BasicBlock:
         
         self.instructions = new_instructions
 
+    def is_mstore_unknown(self):
+        return self.unknown_mstore
+
+    def set_unknown_mstore(self,val):
+        self.unknown_mstore = val
+        
+    def act_trans_mstore(self):
+        self.transitive_mstore = True
+
+    def get_trans_mstore(self):
+        return self.transitive_mstore
+
+    def set_trans_mstore(self,val):
+        self.transitive_mstore = val
+        
     def get_stack_info(self):
         return self.stack_info
 
@@ -335,7 +356,8 @@ class BasicBlock:
         new_obj.set_stack_info(list(self.stack_info))
         new_obj.set_cloning(self.clone)
         new_obj.set_string_getter(self.string_getter)
-        
+        new_obj.set_unknown_mstore(self.unknown_mstore)
+        new_obj.set_trans_mstore(self.transitive_mstore)
         return new_obj
 
     def is_direct_block(self):

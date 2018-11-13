@@ -217,7 +217,20 @@ def initGlobalVars():
 
     global pattern
     pattern = ["JUMPDEST","PUSH1 0x00","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","PUSH1 0x1f","ADD","PUSH1 0x20","DUP1","SWAP2","DIV","MUL","PUSH1 0x20","ADD","PUSH1 0x40","MLOAD","SWAP1","DUP2","ADD","PUSH1 0x40","MSTORE","DUP1","SWAP3","SWAP2","SWAP1","DUP2","DUP2","MSTORE","PUSH1 0x20","ADD","DUP3","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","ISZERO"]
-    
+
+    global sub_pattern
+    sub_pattern = ["PUSH1 0x01",
+                   "DUP2",
+                   "PUSH1 0x01",
+                   "AND",
+                   "ISZERO",
+                   "PUSH2 0x0100",
+                   "MUL",
+                   "SUB",
+                   "AND",
+                   "PUSH1 0x02",
+                   "SWAP1",
+                   "DIV"]
     global name
     name = ""
 
@@ -299,6 +312,57 @@ def update_block_info():
         block.set_stack_info(stack_h[block.get_start_address()])
         block.update_instr()
 
+def compute_transitive_mstore_value():
+    for block in vertices.values():
+        spawn_unknown_mstore(block)
+        
+        
+def spawn_unknown_mstore(block):
+    if block.is_mstore_unknown():
+        t = block.get_block_type()
+        if t == "conditional":
+            jump = block.get_jump_target()
+            falls = block.get_falls_to()
+            l = [jump]
+            propagate_mstore_unknown(jump,l)
+            propagate_mstore_unknown(falls,l)
+        elif  t == "unconditional":
+            jump = block.get_jump_target()
+            propagate_mstore_unknown(jump,[jump])
+        elif t == "falls_to":
+            falls = block.get_falls_to()
+            propagate_mstore_unknown(falls,[falls])
+            
+def propagate_mstore_unknown(block_addr,visited):
+    block = vertices[block_addr]
+    block.act_trans_mstore()
+    if block.get_block_type() == "terminal":
+        visited.append(block)
+    elif block.get_block_type() == "conditional":
+        jump = block.get_jump_target()
+        if jump not in visited:
+            visited.append(jump)
+            propagate_mstore_unknown(jump,visited)
+
+        falls = block.get_falls_to()
+        if falls not in visited:
+            visited.append(falls)
+            propagate_mstore_unknown(falls,visited)
+            
+    elif block.get_block_type() == "unconditional":
+        jump = block.get_jump_target()
+        if jump not in visited:
+            visited.append(jump)
+            propagate_mstore_unknown(jump,visited)
+
+    elif block.get_block_type() == "falls_to":
+        falls = block.get_falls_to()
+        if falls not in visited:
+            visited.append(falls)
+            propagate_mstore_unknown(falls,visited)
+
+
+        
 #Added by Pablo Gordillo
 def print_cfg():
     vert = sorted(vertices.values(), key = getKey)
@@ -2676,7 +2740,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2715,7 +2779,6 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     
     check_cfg_option(cfg,cname,execution)
 
-    
     compute_cloning(blocks_to_clone,vertices,stack_h)
     # for e in vertices.values():
     #     e.display()
@@ -2725,7 +2788,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
     
     begin1 = dtimer()
     compute_component_of_cfg()
-        
+
+    
+    compute_transitive_mstore_value()
     # end = dtimer()
     # print("Component performance: "+str(end-begin1)+"s")
     
