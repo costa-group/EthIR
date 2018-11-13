@@ -211,7 +211,7 @@ class RBRRule:
 
     def update_rule(self):
         self.update_calls()
-        self.fresh_index = max(self.fresh_index,self.arg_input)
+#        self.fresh_index = max(self.fresh_index,self.arg_input)
         if self.string_getter:
             self.include_string_getter()
         
