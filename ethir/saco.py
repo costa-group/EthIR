@@ -193,6 +193,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         pos = instr.find("=")
         var = " s("+str(cont)+")"
         new = instr[:pos+1]+var
+        cont+=1
     elif instr.find("or",0)!=-1:
         pos = instr.find("=")
         new = instr[:pos+1]+" s("+str(cont)+")"
@@ -412,6 +413,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             new_instructions.append(new)
             new = "'$release'(noncu)"
             new_instructions.append(new)
+            new_instructions.append(last)
             new = instr
 
                 
