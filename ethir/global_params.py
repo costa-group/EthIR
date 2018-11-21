@@ -18,7 +18,7 @@ TIMEOUT = 100
 UNIT_TEST = 0
 
 # timeout to run symbolic execution (in secs)
-GLOBAL_TIMEOUT = 120
+GLOBAL_TIMEOUT = 180
 
 # timeout to run symbolic execution (in secs) for testing
 GLOBAL_TIMEOUT_TEST = 2
