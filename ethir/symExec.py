@@ -248,7 +248,7 @@ def compare_storage_and_gas_unit_test(global_state, analysis):
     test_status = unit_test.compare_with_symExec_result(global_state, analysis)
     exit(test_status)
 
-def change_format():
+def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
         file_contents = disasm_file.readlines()
         i = 0
@@ -261,7 +261,10 @@ def change_format():
             line = line.replace(':', '')
             lineParts = line.split(' ')
             try: # removing initial zeroes
-                lineParts[0] = str(int(lineParts[0]))
+                if evm_version:
+                    lineParts[0] = str(int(lineParts[0],16))
+                else:
+                    lineParts[0] = str(int(lineParts[0]))
 
             except:
                 lineParts[0] = lineParts[0]
@@ -282,8 +285,8 @@ def change_format():
         disasm_file.write("\n".join(file_contents))
 
         
-def build_cfg_and_analyze():
-    change_format()
+def build_cfg_and_analyze(evm_version):
+    change_format(evm_version)
     with open(g_disasm_file, 'r') as disasm_file:
         disasm_file.readline()  # Remove first line
         tokens = tokenize.generate_tokens(disasm_file.readline)
@@ -2630,7 +2633,7 @@ class Timeout:
 def do_nothing():
     pass
 
-def run_build_cfg_and_analyze(timeout_cb=do_nothing):
+def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
@@ -2638,7 +2641,7 @@ def run_build_cfg_and_analyze(timeout_cb=do_nothing):
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
-            build_cfg_and_analyze()
+            build_cfg_and_analyze(evm_v)
         log.debug('Done Symbolic execution')
     except TimeoutError:
         g_timeout = True
@@ -2667,13 +2670,13 @@ def get_recipients(disasm_file, contract_address):
         'timeout': g_timeout
     }
 
-def analyze():
+def analyze(evm_version):
     def timeout_cb():
         if global_params.DEBUG_MODE:
             traceback.print_exc()
             print ("Timeout reached")
 
-    run_build_cfg_and_analyze(timeout_cb=timeout_cb)
+    run_build_cfg_and_analyze(evm_v = evm_version,timeout_cb=timeout_cb)
 
 def delete_uncalled():
     global vertices
@@ -2740,7 +2743,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2772,7 +2775,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, nop = Non
         
     begin = dtimer()
 
-    analyze()
+    analyze(evm_version)
 
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
