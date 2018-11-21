@@ -29,6 +29,8 @@ def compare_versions(version1, version2):
         return (version1 > version2) - (version1 < version2)
 
 def has_dependencies_installed():
+    global evm_version_modifications
+    evm_version_modifications = False
     try:
         import z3
         import z3.z3util
@@ -47,8 +49,9 @@ def has_dependencies_installed():
         cmd = "evm --version"
         out = run_command(cmd).strip()
         evm_version = re.findall(r"evm version (\d*.\d*.\d*)", out)[0]
-        tested_evm_version = '1.7.3'
+        tested_evm_version = '1.8.10'
         if compare_versions(evm_version, tested_evm_version) > 0:
+            evm_version_modifications = True
             logging.warning("You are using evm version %s. The supported version is %s" % (evm_version, tested_evm_version))
 
     if not cmd_exists("solc"):
@@ -58,7 +61,7 @@ def has_dependencies_installed():
         cmd = "solc --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
-        tested_solc_version = '0.4.19'
+        tested_solc_version = '0.4.24'
         if compare_versions(solc_version, tested_solc_version) > 0:
             logging.warning("You are using solc version %s, The latest supported version is %s" % (solc_version, tested_solc_version))
 
@@ -80,7 +83,7 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
     
-    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,debug = args.debug)
+    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -95,7 +98,7 @@ def analyze_bytecode():
     y = dtimer()
     print("Compilation time: "+str(y-x)+"s")
     
-    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,debug = args.debug)
+    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
     helper.rm_tmp_files()
 
     if global_params.WEB:
@@ -111,7 +114,7 @@ def run_solidity_analysis(inputs,hashes):
     if len(inputs) == 1:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug)
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications)
         if return_code == 1:
             exit_code = 1
     else:
@@ -119,7 +122,7 @@ def run_solidity_analysis(inputs,hashes):
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications)
             i+=1
             try:
                 c_source = inp['c_source']
@@ -202,8 +205,8 @@ def main():
     #parser.add_argument("-t",   "--timeout",        help="Timeout for Z3 in ms.", action="store", type=int)
     #parser.add_argument("-gl",  "--gaslimit",       help="Limit Gas", action="store", dest="gas_limit", type=int)
     #parser.add_argument("-rp",   "--root-path",     help="Root directory path used for the online version", action="store", dest="root_path", type=str)
-    parser.add_argument("-ll",  "--looplimit",      help="Limit number of loops", action="store", dest="loop_limit", type=int)
-    parser.add_argument("-dl",  "--depthlimit",     help="Limit DFS depth", action="store", dest="depth_limit", type=int)
+    # parser.add_argument("-ll",  "--looplimit",      help="Limit number of loops", action="store", dest="loop_limit", type=int)
+    # parser.add_argument("-dl",  "--depthlimit",     help="Limit DFS depth", action="store", dest="depth_limit", type=int)
     #parser.add_argument("-ap",  "--allow-paths",    help="Allow a given path for imports", action="store", dest="allow_paths", type=str)
     parser.add_argument("-glt", "--global-timeout", help="Timeout for symbolic execution", action="store", dest="global_timeout", type=int)
 
@@ -257,12 +260,12 @@ def main():
     global_params.GENERATE_TEST_CASES = 0#1 if args.generate_test_cases else 0
     global_params.PARALLEL = 0#1 if args.parallel else 0
 
-    if args.depth_limit:
-        global_params.DEPTH_LIMIT = args.depth_limit
-    # if args.gas_limit:
-    #     global_params.GAS_LIMIT = args.gas_limit
-    if args.loop_limit:
-        global_params.LOOP_LIMIT = args.loop_limit
+    # if args.depth_limit:
+    #     global_params.DEPTH_LIMIT = args.depth_limit
+    # # if args.gas_limit:
+    # #     global_params.GAS_LIMIT = args.gas_limit
+    # if args.loop_limit:
+    #     global_params.LOOP_LIMIT = args.loop_limit
     # if global_params.WEB:
     #     if args.global_timeout and args.global_timeout < global_params.GLOBAL_TIMEOUT:
     #         global_params.GLOBAL_TIMEOUT = args.global_timeout
