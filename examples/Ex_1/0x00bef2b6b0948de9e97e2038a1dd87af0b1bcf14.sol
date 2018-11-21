@@ -443,46 +443,5 @@ contract CommonCrowdsale is Ownable, LockableChanges {
     alienToken.transfer(wallet, token.balanceOf(this));
   }
 
-}
-
-contract Deployer is Ownable {
-
-  Presale public presale;  
-
-  GENSharesToken public token;
-
-  function deploy() public onlyOwner {
-    owner = 0x379264aF7df7CF8141a23bC989aa44266DDD2c62;  
-      
-    token = new GENSharesToken();
-    
-    presale = new Presale();
-    presale.setToken(token);
-    token.setSaleAgent(presale);
-    presale.setMinInvestedLimit(100000000000000000);  
-    presale.setPrice(250000000000000000000);
-    presale.setBountyTokensPercent(4);
-    presale.setAdvisorsTokensPercent(2);
-    presale.setDevTokensPercent(10);
-    presale.setSoftcap(40000000000000000000);
-    presale.setHardcap(50000000000000000000000);
-    presale.addBonus(7,50);
-    presale.addBonus(7,40);
-    presale.addBonus(100,35);
-    presale.setStart(1511571600);
-    presale.setEnd(1514156400);    
-    presale.setDevLimit(6000000000000000000);
-    presale.setWallet(0x4bB656423f5476FeC4AA729aB7B4EE0fc4d0B314);
-    presale.setBountyTokensWallet(0xcACBE5d8Fb017407907026804Fe8BE64B08511f4);
-    presale.setDevTokensWallet(0xa20C62282bEC52F9dA240dB8cFFc5B2fc8586652);
-    presale.setAdvisorsTokensWallet(0xD3D85a495c7E25eAd39793F959d04ACcDf87e01b);
-    presale.setDevWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-
-
-    presale.lockChanges();
- 
-    presale.transferOwnership(owner);
-    token.transferOwnership(owner);
-  }
 
 }

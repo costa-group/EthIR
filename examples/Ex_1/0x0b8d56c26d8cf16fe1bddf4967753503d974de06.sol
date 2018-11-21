@@ -51,9 +51,9 @@ contract GavCoin {
     event Refund(address indexed buyer, uint indexed price, uint indexed amount);
     event NewTranch(uint indexed price);
     
-    modifier when_owns(address _owner, uint _amount) { if (accounts[_owner].balance < _amount) return; _ }
-    modifier when_has_allowance(address _owner, address _spender, uint _amount) { if (accounts[_owner].allowanceOf[_spender] < _amount) return; _ }
-    modifier when_have_active_receipt(uint _price, uint _units) { if (accounts[msg.sender].receipt[_price].units < _units || now < accounts[msg.sender].receipt[_price].activation) return; _ }
+    modifier when_owns(address _owner, uint _amount) { if (accounts[_owner].balance < _amount) return; _; }
+    modifier when_has_allowance(address _owner, address _spender, uint _amount) { if (accounts[_owner].allowanceOf[_spender] < _amount) return; _; }
+    modifier when_have_active_receipt(uint _price, uint _units) { if (accounts[msg.sender].receipt[_price].units < _units || now < accounts[msg.sender].receipt[_price].activation) return; _; }
 
     function balanceOf(address _who) constant returns (uint) { return accounts[_who].balance; }
     
