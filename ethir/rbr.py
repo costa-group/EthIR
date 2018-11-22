@@ -767,8 +767,15 @@ def translateOpcodesF(opcode, index_variables, addr):
     elif opcode == "ASSERTFAIL":
         instr = ""
         updated_variables = index_variables
-    # elif opcode == "DELEGATECALL":
-    #     pass
+    elif opcode == "DELEGATECALL":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1 +" = 1"
     # elif opcode == "BREAKPOINT":
     #     pass
     # elif opcode == "RNGSEED":
