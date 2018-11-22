@@ -2637,7 +2637,7 @@ def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 60
+        global_params.GLOBAL_TIMEOUT = 240
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
