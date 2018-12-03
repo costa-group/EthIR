@@ -1335,20 +1335,20 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             else:
                 first = to_symbolic(first)
                 second = to_symbolic(second)
-                solver.push()
-                solver.add( Not( Or(first >= 32, first < 0 ) ) )
-                if check_sat(solver) == unsat:
-                    computed = second
-                else:
-                    signbit_index_from_right = 8 * first + 7
-                    solver.push()
-                    solver.add(second & (1 << signbit_index_from_right) == 0)
-                    if check_sat(solver) == unsat:
-                        computed = second | (2 ** 256 - (1 << signbit_index_from_right))
-                    else:
-                        computed = second & ((1 << signbit_index_from_right) - 1)
-                    solver.pop()
-                solver.pop()
+                # solver.push()
+                # solver.add( Not( Or(first >= 32, first < 0 ) ) )
+                # if check_sat(solver) == unsat:
+                #     computed = second
+                # else:
+                signbit_index_from_right = 8 * first + 7
+                    # solver.push()
+                    # solver.add(second & (1 << signbit_index_from_right) == 0)
+                    # if check_sat(solver) == unsat:
+                    #     computed = second | (2 ** 256 - (1 << signbit_index_from_right))
+                    # else:
+                computed = second & ((1 << signbit_index_from_right) - 1)
+                #     solver.pop()
+                # solver.pop()
             computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
