@@ -49,7 +49,7 @@ def has_dependencies_installed():
         cmd = "evm --version"
         out = run_command(cmd).strip()
         evm_version = re.findall(r"evm version (\d*.\d*.\d*)", out)[0]
-        tested_evm_version = '1.8.10'
+        tested_evm_version = '1.8.18'
         if compare_versions(evm_version, tested_evm_version) > 0:
             evm_version_modifications = True
             logging.warning("You are using evm version %s. The supported version is %s" % (evm_version, tested_evm_version))
@@ -61,7 +61,7 @@ def has_dependencies_installed():
         cmd = "solc --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
-        tested_solc_version = '0.4.24'
+        tested_solc_version = '0.4.25'
         if compare_versions(solc_version, tested_solc_version) > 0:
             logging.warning("You are using solc version %s, The latest supported version is %s" % (solc_version, tested_solc_version))
 
@@ -114,7 +114,12 @@ def run_solidity_analysis(inputs,hashes):
     if len(inputs) == 1:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications)
+        try:
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications)
+        except:
+            result = []
+            return_code = -1
+            print ("\n Exception \n")
         if return_code == 1:
             exit_code = 1
     else:
@@ -122,7 +127,12 @@ def run_solidity_analysis(inputs,hashes):
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications)
+            try:
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications)
+            except:
+                result = []
+                return_code = -1
+                print ("\n Exception \n")
             i+=1
             try:
                 c_source = inp['c_source']
