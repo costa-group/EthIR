@@ -261,11 +261,11 @@ def change_format(evm_version):
             line = line.replace(':', '')
             lineParts = line.split(' ')
             try: # removing initial zeroes
-                if evm_version:
-                    lineParts[0] = str(int(lineParts[0],16))
-                else:
-                    lineParts[0] = str(int(lineParts[0]))
-
+                # if evm_version:
+                #     lineParts[0] = str(int(lineParts[0],16))
+                # else:
+                #     lineParts[0] = str(int(lineParts[0]))
+                lineParts[0] = str(int(lineParts[0],16))
             except:
                 lineParts[0] = lineParts[0]
             lineParts[-1] = lineParts[-1].strip('\n')
