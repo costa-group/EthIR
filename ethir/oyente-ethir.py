@@ -160,9 +160,9 @@ def analyze_solidity(input_type='solidity'):
     hashes = process_hashes(args.source)
     
     y = dtimer()
-    print("**************************************************************")
+    print("*************************************************************")
     print("Compilation time: "+str(y-x)+"s")
-    print("**************************************************************")
+    print("*************************************************************")
     results, exit_code = run_solidity_analysis(inputs,hashes)
     helper.rm_tmp_files()
 
