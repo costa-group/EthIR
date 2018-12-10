@@ -2631,7 +2631,7 @@ class Timeout:
        raise TimeoutError(self.error_message)
 
 def do_nothing():
-    pass
+    raise Exception("Oyente Timeout")
 
 def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
@@ -2675,7 +2675,8 @@ def analyze(evm_version):
         if global_params.DEBUG_MODE:
             traceback.print_exc()
             print ("Timeout reached")
-
+        raise Exception("Oyente Timeout")
+    
     run_build_cfg_and_analyze(evm_v = evm_version,timeout_cb=timeout_cb)
 
 def delete_uncalled():
