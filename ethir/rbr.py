@@ -1426,10 +1426,11 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         end = dtimer()
         ethir_time = end-begin
         print("Build RBR: "+str(ethir_time)+"s")
-
         store_times(oyente_time,ethir_time)
         
         if saco_rbr:
             saco.rbr2saco(rbr,exe,contract_name)
+        else:
+            print("*************************************************************")
     else :
         print ("Error, you have to provide the CFG associated with the solidity file analyzed")
