@@ -354,32 +354,7 @@ contract Minter {
         token.transferFrom(token, msg.sender, token.allowance(token, this));
     }
 
-    function () public payable onlyDuringTokensale onlyNotPaused onlyWhiteList
-                checkLimitsToBuyTokens {
-        uint256 tokensNumber = tokensNumberForBuy();
-
-        uint256 aviableTokensNumber =
-            token.balanceOf(token).min(token.allowance(token, this));
-
-        uint256 restCoins = 0;
-
-        if(tokensNumber >= aviableTokensNumber) {
-            uint256 restTokensNumber = tokensNumber.sub(aviableTokensNumber);
-
-            restCoins =
-                restTokensNumber.mul(tokenSale.tokensCost)
-                                .div(10 ** uint256(token.decimals()));
-
-            tokensNumber = aviableTokensNumber;
-        }
-
-        token.transferFrom(token, msg.sender, tokensNumber);
-
-        msg.sender.transfer(restCoins);
-
-        manager.transfer(msg.value.sub(restCoins));
-    }
-
+    
     function minterState() private constant returns(MinterState) {
         if(tokenSale.startTime > now) {
             return MinterState.tokenSaleWait;

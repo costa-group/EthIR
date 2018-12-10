@@ -56,7 +56,7 @@ contract Token {
         address _from,
         address _to,
         uint256 _amount
-    ) returns (bool success) {
+      ) returns (bool success) {
         if (balances[_from] >= _amount
             && allowed[_from][msg.sender] >= _amount
             && _amount > 0
