@@ -83,7 +83,7 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
     
-    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
+    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -98,7 +98,7 @@ def analyze_bytecode():
     y = dtimer()
     print("Compilation time: "+str(y-x)+"s")
     
-    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
+    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
     helper.rm_tmp_files()
 
     if global_params.WEB:
@@ -115,7 +115,7 @@ def run_solidity_analysis(inputs,hashes):
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications)
         except:
             result = []
             return_code = -1
@@ -128,7 +128,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,nop = args.evm_opcodes,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications)
             except:
                 result = []
                 return_code = -1
@@ -240,7 +240,7 @@ def main():
     parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
     parser.add_argument( "-d", "--debug",                   help="Display the status of the stack after each opcode", action = "store_true")
     parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", action="store_true")
-    parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
+    # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()

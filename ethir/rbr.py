@@ -956,7 +956,7 @@ They are remove when displaying.
 -nop is True when generating nop annotations with the opcode. False otherwise.
 -index_variables refers to the top stack index. int.
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,cond,nop):
+def compile_instr(rule,evm_opcode,variables,list_jumps,cond):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -1013,9 +1013,8 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,nop):
         index_variables = variables
         rule.add_instr(value)
 
-    if nop :
-        rule.add_instr("nop("+opcode_name+")")
-        
+    rule.add_instr("nop("+opcode_name+")")
+    
     return index_variables
 
 
@@ -1127,9 +1126,9 @@ It translates the jumpi instruction.
  are rule_rbr instances corresponding to the guarded jump rules,
  and instr is the called instruction to the jump rule generated.
 '''
-def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop,guard = None):
+def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,guard = None):
 
-    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard)
+    rule1, rule2 = create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard)
     consume = 1 if l_instr[0] == "ISZERO" else 2
     stack_variables = get_stack_variables(variables)
 
@@ -1157,7 +1156,7 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,nop,guard = None)
  it he top variable is equal to 1.
 - rule1 and rule2 are rbr_rule instances containing the jump rules.
 '''
-def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,nop,guard):
+def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
     if guard:
         guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
     else:
@@ -1209,7 +1208,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block,nop):
+def compile_block(block):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1232,11 +1231,11 @@ def compile_block(block,nop):
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
-                                                  block.get_falls_to(),nop,True)
+                                                  block.get_falls_to(),True)
             rule.add_instr(instr)
-            if nop:
-                for elem in l_instr[cont:]:
-                    rule.add_instr("nop("+elem.split()[0]+")")
+            
+            for elem in l_instr[cont:]:
+                rule.add_instr("nop("+elem.split()[0]+")")
                     
 
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
@@ -1246,13 +1245,12 @@ def compile_block(block,nop):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(),
                              l_instr[cont:], index_variables,
                              block.get_list_jumps(),
-                             block.get_falls_to(),nop)
+                             block.get_falls_to())
 
             rule.add_instr(instr)
 
-            if nop:
-                for elem in l_instr[cont:]:
-                    rule.add_instr("nop("+elem.split()[0]+")")
+            for elem in l_instr[cont:]:
+                rule.add_instr("nop("+elem.split()[0]+")")
                     
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
@@ -1267,11 +1265,10 @@ def compile_block(block,nop):
                 
             rule.add_instr(instr)
 
-            if nop:
-                rule.add_instr("nop(JUMP)")
+            rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),True,nop)        
+                                                   index_variables,block.get_list_jumps(),True)        
         cont+=1
 
     if(block.get_block_type()=="falls_to"):
@@ -1376,7 +1373,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None, nop_opcodes = None,saco_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0):
     global rbr_blocks
     global stack_index
     global vertices
@@ -1394,7 +1391,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         blocks = sorted(blocks_dict.values(), key = getKey)
         for block in blocks:
             #if block.get_start_address() not in to_clone:
-                rule = compile_block(block,nop_opcodes)
+                rule = compile_block(block)
                 rbr_blocks[rule.get_rule_name()]=[rule]
             
 
