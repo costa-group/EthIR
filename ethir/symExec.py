@@ -27,6 +27,7 @@ import global_params
 import rbr
 from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map
+from opcodes import get_opcode
 
 log = logging.getLogger(__name__)
 
@@ -800,13 +801,30 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     #Added by PG
     ls_cont = [0,0,0,0]
+
+    #Access to array
+    fake_stack = []
+    sha_identify = False
+    result = False
+    
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call,stack_old)
+        if sha_identify and not result:
+           result =  access_array_sim(instr.strip(),fake_stack)
+
+        if instr.startswith("SHA3",0):
+            sha_identify = True
+            fake_stack.insert(0,1)
+
         if debug_info:
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
             # print len(stack)
 
+    if result:
+        pass
+        # print "SI"
+        # print pre_block
     #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
     visited.append(block)
@@ -2337,6 +2355,48 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
         #     log.critical("Unknown instruction: %s" % opcode)
         #     exit(UNKNOWN_INSTRUCTION)
         raise Exception('UNKNOWN INSTRUCTION: ' + opcode)
+
+
+def access_array_sim(opcode,fake_stack):
+    end = False
+    
+    if opcode.startswith("ADD",0):
+        if len(fake_stack)>1:
+            elem1 = fake_stack.pop(0)
+            elem2 = fake_stack.pop(0)
+        else:
+            elem1 = fake_stack.pop(0)
+            elem2 = 0
+        if elem1 == 1 or elem2 == 1:
+            fake_stack.insert(0,1)
+            end = True
+        else:
+            fake_stack.insert(0,0)
+            
+    elif opcode.startswith("DUP",0):
+        position = int(opcode[3:], 10) - 1
+        if len(fake_stack) > position:
+            duplicate = fake_stack[position]
+            fake_stack.insert(0, duplicate)
+        else:
+            fake_stack.insert(0,0)
+    
+    elif opcode.startswith("SWAP",0):
+        position = int(opcode[4:], 10)
+        if len(fake_stack) > position:
+            temp = fake_stack[position]
+            fake_stack[position] = fake_stack[0]
+            fake_stack[0] = temp
+        else:
+            #I lose the top
+            fake_stack[0] = 0 
+    else:
+        ret = get_opcode(opcode)
+        for _ in range(0,ret[1]):
+            fake_stack.pop(0)
+        fake_stack.insert(0,0)
+        
+    return end
 
 # Detect if a money flow depends on the timestamp
 def detect_time_dependency():
