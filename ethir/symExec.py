@@ -822,10 +822,24 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             # print len(stack)
 
     if result:
-        pass
         # print "SI"
-        # print pre_block
-    #old_stack_h = len(stack)
+#        print pre_block
+        falls = vertices[pre_block].get_falls_to()
+        jump = vertices[pre_block].get_jump_target()
+        # print falls
+        # print jump
+        if jump != block:
+            ins = vertices[jump].get_instructions()
+        else: #falls_to
+            # print "AQUI"
+            ins = vertices[falls].get_instructions()
+            # print ins
+        if "ASSERTFAIL " in ins:
+            # print block
+            vertices[block].activate_access_array()
+            # print "BIIIIIEEEENNN"
+
+        #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
     visited.append(block)
     depth += 1
@@ -2391,7 +2405,8 @@ def access_array_sim(opcode,fake_stack):
             #I lose the top
             fake_stack[0] = 0 
     else:
-        ret = get_opcode(opcode)
+        op = opcode.split(" ")[0]
+        ret = get_opcode(op)
         for _ in range(0,ret[1]):
             fake_stack.pop(0)
         fake_stack.insert(0,0)
@@ -2843,10 +2858,13 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     
     check_cfg_option(cfg,cname,execution)
 
+    for e in vertices.values():
+        a = e.get_access_array()
+        if a:
+            print e.get_start_address()
+    
     compute_cloning(blocks_to_clone,vertices,stack_h)
-    # for e in vertices.values():
-    #     e.display()
-    #     print e.get_comes_from()
+    
     
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
