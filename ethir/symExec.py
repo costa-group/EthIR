@@ -2830,7 +2830,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2892,7 +2892,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     print("OYENTE tool: "+str(oyente_t)+"s")
 
 
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t)
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)

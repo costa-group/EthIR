@@ -83,7 +83,7 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
     
-    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
+    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -98,7 +98,7 @@ def analyze_bytecode():
     y = dtimer()
     print("Compilation time: "+str(y-x)+"s")
     
-    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications)
+    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
     helper.rm_tmp_files()
 
     if global_params.WEB:
@@ -115,7 +115,7 @@ def run_solidity_analysis(inputs,hashes):
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
         except:
             result = []
             return_code = -1
@@ -127,12 +127,13 @@ def run_solidity_analysis(inputs,hashes):
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            try:
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications)
-            except:
-                result = []
-                return_code = -1
-                print ("\n Exception \n")
+            # try:
+            #     result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile)
+            # except:
+            #     result = []
+            #     return_code = -1
+            #     print ("\n Exception \n")
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile)
             i+=1
             try:
                 c_source = inp['c_source']
@@ -208,40 +209,19 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument("-s",  "--source",    type=str, help="local source file name. Solidity by default. Use -b to process evm instead. Use stdin to read from stdin.")
-    # group.add_argument("-ru", "--remoteURL", type=str, help="Get contract from remote URL. Solidity by default. Use -b to process evm instead.", dest="remote_URL")
 
     parser.add_argument("--version", action="version", version="oyente version 0.2.7 - Commonwealth")
-
-    #parser.add_argument("-t",   "--timeout",        help="Timeout for Z3 in ms.", action="store", type=int)
-    #parser.add_argument("-gl",  "--gaslimit",       help="Limit Gas", action="store", dest="gas_limit", type=int)
-    #parser.add_argument("-rp",   "--root-path",     help="Root directory path used for the online version", action="store", dest="root_path", type=str)
-    # parser.add_argument("-ll",  "--looplimit",      help="Limit number of loops", action="store", dest="loop_limit", type=int)
-    # parser.add_argument("-dl",  "--depthlimit",     help="Limit DFS depth", action="store", dest="depth_limit", type=int)
-    #parser.add_argument("-ap",  "--allow-paths",    help="Allow a given path for imports", action="store", dest="allow_paths", type=str)
     parser.add_argument("-glt", "--global-timeout", help="Timeout for symbolic execution", action="store", dest="global_timeout", type=int)
-
     parser.add_argument( "-e",   "--evm",                    help="Do not remove the .evm file.", action="store_true")
-    #parser.add_argument( "-w",   "--web",                    help="Run Oyente for web service", action="store_true")
-    #parser.add_argument( "-j",   "--json",                   help="Redirect results to a json file.", action="store_true")
-    #parser.add_argument( "-p",   "--paths",                  help="Print path condition information.", action="store_true")
-    #parser.add_argument( "-db",  "--debug",                  help="Display debug information", action="store_true")
-    #parser.add_argument( "-st",  "--state",                  help="Get input state from state.json", action="store_true")
-    #parser.add_argument( "-r",   "--report",                 help="Create .report file.", action="store_true")
-    #parser.add_argument( "-v",   "--verbose",                help="Verbose output, print everything.", action="store_true")
-    #parser.add_argument( "-pl",  "--parallel",               help="Run Oyente in parallel. Note: The performance may depend on the contract", action="store_true")
     parser.add_argument( "-b",   "--bytecode",               help="read bytecode in source instead of solidity file", action="store_true")
-    #parser.add_argument( "-a",   "--assertion",              help="Check assertion failures.", action="store_true")
-    #parser.add_argument( "-sj",  "--standard-json",          help="Support Standard JSON input", action="store_true")
-    #parser.add_argument( "-gb",  "--globalblockchain",       help="Integrate with the global ethereum blockchain", action="store_true")
-    #parser.add_argument( "-gtc", "--generate-test-cases",    help="Generate test cases each branch of symbolic execution tree", action="store_true")
-    #parser.add_argument( "-sjo",  "--standard-json-output",  help="Support Standard JSON output", action="store_true")
-
+    
     #Added by Pablo Gordillo
     parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
     parser.add_argument( "-d", "--debug",                   help="Display the status of the stack after each opcode", action = "store_true")
     parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
+    parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
 
