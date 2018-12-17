@@ -810,7 +810,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call,stack_old)
         if sha_identify and not result:
-           result =  access_array_sim(instr.strip(),fake_stack)
+            result =  access_array_sim(instr.strip(),fake_stack)
 
         if instr.startswith("SHA3",0):
             sha_identify = True
@@ -838,7 +838,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             # print block
             vertices[block].activate_access_array()
             # print "BIIIIIEEEENNN"
-
+    
         #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
     visited.append(block)
@@ -2373,7 +2373,6 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
 
 def access_array_sim(opcode,fake_stack):
     end = False
-    
     if opcode.startswith("ADD",0):
         if len(fake_stack)>1:
             elem1 = fake_stack.pop(0)
@@ -2402,15 +2401,15 @@ def access_array_sim(opcode,fake_stack):
             fake_stack[position] = fake_stack[0]
             fake_stack[0] = temp
         else:
-            #I lose the top
-            fake_stack[0] = 0 
+            for _ in range(position):
+                fake_stack.insert(0,0) 
     else:
         op = opcode.split(" ")[0]
         ret = get_opcode(op)
         for _ in range(0,ret[1]):
             fake_stack.pop(0)
         fake_stack.insert(0,0)
-        
+
     return end
 
 # Detect if a money flow depends on the timestamp
@@ -2858,10 +2857,10 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     
     check_cfg_option(cfg,cname,execution)
 
-    for e in vertices.values():
-        a = e.get_access_array()
-        if a:
-            print e.get_start_address()
+    # for e in vertices.values():
+    #     a = e.get_access_array()
+    #     if a:
+    #         print e.get_start_address()
     
     compute_cloning(blocks_to_clone,vertices,stack_h)
     
