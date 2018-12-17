@@ -32,6 +32,7 @@ class BasicBlock:
         self.cost = 0
         self.unknown_mstore = False
         self.transitive_mstore = False
+        self.access_array = False
 
         
     def get_start_address(self):
@@ -335,6 +336,15 @@ class BasicBlock:
     def activate_string_getter(self):
         self.string_getter = True
 
+    def get_access_array(self):
+        return self.access_array
+
+    def set_access_array(self,val):
+        self.access_array = val
+
+    def activate_access_array(self):
+        self.access_array = True
+        
     def copy(self):
         
         new_obj =  BasicBlock(self.start, self.end)
@@ -358,6 +368,7 @@ class BasicBlock:
         new_obj.set_string_getter(self.string_getter)
         new_obj.set_unknown_mstore(self.unknown_mstore)
         new_obj.set_trans_mstore(self.transitive_mstore)
+        new_obj.set_access_array(self.access_array)
         return new_obj
 
     def is_direct_block(self):
