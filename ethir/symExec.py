@@ -813,6 +813,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             result =  access_array_sim(instr.strip(),fake_stack)
 
         if instr.startswith("SHA3",0):
+            # print block
             sha_identify = True
             fake_stack.insert(0,1)
 
@@ -826,14 +827,14 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 #        print pre_block
         falls = vertices[pre_block].get_falls_to()
         jump = vertices[pre_block].get_jump_target()
-        # print falls
-        # print jump
-        if jump != block:
+        if jump != block and jump != None:
             ins = vertices[jump].get_instructions()
-        else: #falls_to
+        elif falls != None: #falls_to
             # print "AQUI"
             ins = vertices[falls].get_instructions()
             # print ins
+        else:
+            ins = []
         if "ASSERTFAIL " in ins:
             # print block
             vertices[block].activate_access_array()
@@ -2373,6 +2374,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
 
 def access_array_sim(opcode,fake_stack):
     end = False
+    # print "BEGIN"
+    # print opcode
+    # print fake_stack
     if opcode.startswith("ADD",0):
         if len(fake_stack)>1:
             elem1 = fake_stack.pop(0)
@@ -2403,13 +2407,21 @@ def access_array_sim(opcode,fake_stack):
         else:
             for _ in range(position):
                 fake_stack.insert(0,0) 
+
     else:
         op = opcode.split(" ")[0]
         ret = get_opcode(op)
-        for _ in range(0,ret[1]):
-            fake_stack.pop(0)
-        fake_stack.insert(0,0)
+        consume = ret[1]
+        gen = ret[2]
+        if len(fake_stack)>=consume:
+            for _ in range(0,consume):
+                fake_stack.pop(0)
+        else:
+            fake_stack = []
+        if gen == 1:
+            fake_stack.insert(0,0)
 
+    # print fake_stack
     return end
 
 # Detect if a money flow depends on the timestamp
