@@ -33,7 +33,6 @@ def rbr2saco(rbr,execution,cname):
     write(new_rules,execution,cname)
     end = dtimer()
     print("SACO RBR: "+str(end-begin)+"s")
-    print("*************************************************************")
 
     
 def build_head(rule):

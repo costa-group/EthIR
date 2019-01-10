@@ -40,7 +40,6 @@ def rbr2c(rbr,execution,cname):
     write_main(execution,cname)
     end = dtimer()
     print("C RBR: "+str(end-begin)+"s")
-    print("*************************************************************")
 
 
 def unbox_variable(var):
