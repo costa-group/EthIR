@@ -519,6 +519,8 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
     
 
 def write_init(rules,execution,cname):
+    s = "\n"
+    
     if execution == None:
         name = "/tmp/costabs/rbr.c"
     elif cname == None:
@@ -537,9 +539,16 @@ def write_init(rules,execution,cname):
         fields = map(lambda x: "int g"+str(x),fields_id)
         l_vars = map(lambda x: "int l"+str(x),locals_vars)
         bc = map(lambda x: "int "+x,bc_data)
-        s = "\n"+";\n".join(fields)+";\n"
-        s = s+";\n".join(l_vars)+";\n"
-        s = s+";\n".join(bc)+";\n"
+        
+        
+        if fields != []:
+            s = s+";\n".join(fields)+";\n"
+
+        if l_vars != []:
+            s = s+";\n".join(l_vars)+";\n"
+
+        if bc != []:
+            s = s+";\n".join(bc)+";\n"
         
         f.write(s)
         
