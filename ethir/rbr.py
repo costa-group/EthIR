@@ -1428,9 +1428,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         
         if saco_rbr:
             saco.rbr2saco(rbr,exe,contract_name)
-        elif c_rbr:
+        if c_rbr:
             c_translation.rbr2c(rbr,exe,contract_name)
-        else:
+
+        if ((not saco_rbr) and (not c_rbr)):
             print("*************************************************************")
     else :
         print ("Error, you have to provide the CFG associated with the solidity file analyzed")
