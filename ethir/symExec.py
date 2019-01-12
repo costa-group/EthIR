@@ -2775,6 +2775,7 @@ def delete_uncalled():
     for b in uncalled:
             vertices.pop(b)
             stack_h.pop(b)
+            edges.pop(b)
             calldataload_values.pop(b)
 
 def update_edges(blocks,edges):
