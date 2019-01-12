@@ -21,7 +21,7 @@ pattern = ["PUSH1",
                    "SWAP1",
                    "DIV"]
 
-def rbr2c(rbr,execution,cname):
+def rbr2c(rbr,execution,cname,scc):
     begin = dtimer()
     heads = "\n"
     new_rules = []
