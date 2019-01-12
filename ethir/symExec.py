@@ -2784,7 +2784,6 @@ def update_edges(blocks,edges):
     for b in blocks.keys():
         if b not in e_keys:
             old_block = int(b.split("_")[0])
-            print edges
             edges.pop(old_block,-1)
             block = blocks[b]
 
