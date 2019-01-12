@@ -2776,6 +2776,46 @@ def delete_uncalled():
             vertices.pop(b)
             stack_h.pop(b)
             calldataload_values.pop(b)
+
+def update_edges(blocks,edges):
+    b_keys = blocks.keys()
+    e_keys = edges.keys()
+    
+    for b in blocks.keys():
+        if b not in e_keys:
+            old_block = int(b.split("_")[0])
+            print edges
+            edges.pop(old_block,-1)
+            block = blocks[b]
+
+            edges[b] = []
+            jump = block.get_jump_target()
+            falls = block.get_falls_to()
+            if jump != 0:
+                edges[b].append(jump)
+            if falls != None:
+                edges[b].append(falls)
+
+        else: #Although ir appears in edges, the successor may have changed.
+            block = blocks[b]
+
+            jump = block.get_jump_target()
+            falls = block.get_falls_to()
+            if jump != 0 :
+                parts = str(jump).split("_")
+                if len(parts) > 1:
+                    b_old = int(parts[0])
+                    idx = edges[b].index(b_old)
+                    edges[b].pop(idx)
+                    edges[b].append(jump)
+
+            if falls != None:
+                parts = str(falls).split("_")
+                if len(parts) > 1:
+                    b_old = int(parts[0])
+                    idx = edges[b].index(b_old)
+                    edges[b].pop(idx)
+                    edges[b].append(jump)
                 
 def compute_component_of_cfg():
     global component_of_blocks
@@ -2891,6 +2931,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     oyente_t = end-begin
     print("OYENTE tool: "+str(oyente_t)+"s")
 
+    update_edges(vertices, edges)
 
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t)
 
