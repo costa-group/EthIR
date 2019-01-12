@@ -28,6 +28,8 @@ import rbr
 from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map
 from opcodes import get_opcode
+from graph_scc import Graph_SCC
+
 
 log = logging.getLogger(__name__)
 
@@ -2932,7 +2934,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     print("OYENTE tool: "+str(oyente_t)+"s")
 
     update_edges(vertices, edges)
-
+    g = Graph_SCC(edges)
+    scc = g.getSCCs()
+    
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
