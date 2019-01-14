@@ -8,6 +8,7 @@ import os
 import saco
 import c_translation
 from timeit import default_timer as dtimer
+from graph_scc import get_entry_scc
 
 '''
 It initialize the globals variables. 
@@ -1425,6 +1426,13 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         ethir_time = end-begin
         print("Build RBR: "+str(ethir_time)+"s")
         store_times(oyente_time,ethir_time)
+
+
+        # n_scc = filter(lambda x: len(x)>1,scc)
+        # print n_scc
+        # for s in n_scc:
+        #     a = get_entry_scc(s, vertices)
+        #     print a
         
         if saco_rbr:
             saco.rbr2saco(rbr,exe,contract_name)
