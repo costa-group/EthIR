@@ -151,8 +151,8 @@ def process_jumps(rules):
     stack = map(lambda x: "int "+x,stack_variables)
     s_head = ", ".join(stack)
 
-    head_c = jump1.get_rule_name()+"("+s_head+");\n"
-    head = jump1.get_rule_name()+"("+s_head+"){\n"
+    head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
+    head = "void " + jump1.get_rule_name()+"("+s_head+"){\n"
 
     guard = jump1.get_guard()
     instructions1 = jump1.get_instructions()
@@ -178,8 +178,8 @@ def process_rule_c(rule):
     stack = map(lambda x: "int "+x,stack_variables)
     s_head = ", ".join(stack)
 
-    head_c = rule.get_rule_name()+"("+s_head+");\n"
-    head = rule.get_rule_name()+"("+s_head+"){\n"
+    head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+    head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
 
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
