@@ -96,3 +96,23 @@ class Graph_SCC:
         sccs = self.getSCCs()
         print sccs
     
+
+
+def get_entry_scc(scc,blocks):
+    entry = ""
+    i = 0
+    found = False
+
+    while i<len(scc) and not found:
+        entry = scc[i]
+        b = blocks[entry]
+        comes_from = b.get_comes_from()
+        l = filter(lambda x: x not in scc,comes_from)
+        if len(l) == 1:
+            found = True
+
+        i=i+1
+        
+    return entry
+
+    
