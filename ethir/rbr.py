@@ -111,6 +111,9 @@ def init_globals():
     global unknown_mstore
     unknown_mstore = False
 
+    global blockhash_cont
+    blockhash_cont = 0
+
 '''
 Given a block it returns a list containingn the height of its
 stack when arriving and leaving the block.
@@ -541,11 +544,14 @@ corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes40(opcode, index_variables,block):
+    global blockhash_cont
+    
     if opcode == "BLOCKHASH":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = blockhash("+v0+")"
-        update_bc_in_use("blockhash",block)
+        instr = v1+" = blockhash_"+str(blockhash_cont)
+        update_bc_in_use("blockhash_"+str(blockhash_cont),block)
+        blockhash_cont +=1
     elif opcode == "COINBASE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = coinbase"
