@@ -68,7 +68,7 @@ def has_dependencies_installed():
     return True
 
 def clean_dir():
-    ext = ["rbr","cfg","txt","config","dot","csv"]
+    ext = ["rbr","cfg","txt","config","dot","csv","c"]
     if "costabs" in os.listdir("/tmp/"):
         for elem in os.listdir("/tmp/costabs/"):
             last = elem.split(".")[-1]
