@@ -377,10 +377,13 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg12_aux = elems[1].strip()[1:-1]
         arg12 = arg12_aux.split(",")
 
+        print "ARG12"
+        print arg12
+        
         arg1 = arg12[0].strip()
         var1 = unbox_variable(arg1)
 
-        arg2 = arg12[2].strip()
+        arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
         new = var0+" = "+ var1 +" < "+var2
@@ -397,7 +400,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg1 = arg12[0].strip()
         var1 = unbox_variable(arg1)
 
-        arg2 = arg12[2].strip()
+        arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
         new = var0+" = "+ var1 +" > "+var2
