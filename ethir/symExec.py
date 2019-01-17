@@ -242,6 +242,9 @@ def initGlobalVars():
     
     global tacas_ex
     tacas_ex = ""
+
+    global scc_unary
+    scc_unary = []
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -714,6 +717,22 @@ def updateCallDataValues(block,var_name):
     l = laux+[var_name]
     calldataload_values[block] = l
 
+
+def compute_loop_scc(block):
+    b = vertices[block]
+
+    r = False
+    
+    jump_to = b.get_jump_target()
+    falls = b.get_falls_to()
+
+    if jump_to != 0:
+        r = block == jump_to
+
+    if falls != None:
+        r = r or (block == falls)
+
+    return r
     
 def full_sym_exec():
     # executing, starting from beginning
@@ -744,6 +763,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global procesed_indirect_jumps
     global function_info
     global param_abs
+    global scc_unary
     
     visited = params.visited
     stack = params.stack
@@ -840,7 +860,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if "ASSERTFAIL " in ins:
             # print block
             vertices[block].activate_access_array()
-            # print "BIIIIIEEEENNN"
     
         #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
@@ -1023,7 +1042,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         visited_edges.update({current_edge: updated_count_number})
         raise Exception('Unknown Jump-Type')
 
-
+    r = compute_loop_scc(block)
+    if r and block not in scc_unary:
+        scc_unary.append(block)
+    
 # Symbolically executing an instruction
 def sym_exec_ins(params, block, instr, func_call,stack_first):
     global MSIZE
@@ -2935,8 +2957,12 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
 
     update_edges(vertices, edges)
     g = Graph_SCC(edges)
-    scc = g.getSCCs()
-    
+    scc_multiple = g.getSCCs()
+
+    scc = {}
+    scc["unary"] = scc_unary
+    scc["multiple"] = scc_multiple
+
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
