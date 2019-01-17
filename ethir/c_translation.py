@@ -21,7 +21,14 @@ pattern = ["PUSH1",
                    "SWAP1",
                    "DIV"]
 
+global svcomp
+svcomp = False
+
+
 def rbr2c(rbr,execution,cname,scc,svc_labels):
+    global svcomp
+    svcomp = svc_labels
+
     begin = dtimer()
     heads = "\n"
     new_rules = []
@@ -566,8 +573,10 @@ def initialize_global_variables(rules):
 def write_init(rules,execution,cname):
     s = "\n"
 
-    s = add_svcomp_labels()
-    s = s+"\n"
+    if svcomp:
+        s = add_svcomp_labels()
+        s = s+"\n"
+        
     if execution == None:
         name = "/tmp/costabs/rbr.c"
     elif cname == None:
@@ -612,7 +621,8 @@ def write_main(execution,cname,init):
     with open(name,"a") as f:
         
         s = "\nint main(){\n"
-        s = s+"\n"+init+"\n"
+        if svcomp :
+            s = s+"\n"+init+"\n"
         s = s+"\tblock0();\n"
         s = s+"\treturn 0;\n}"
         f.write(s)
