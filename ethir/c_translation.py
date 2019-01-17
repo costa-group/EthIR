@@ -520,6 +520,13 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
     return cont
     
 
+def add_svcomp_labels():
+    labels = "";
+    labels = labels+"extern int __VERIFIER_nondet_int();\n"
+    labels = labels + "extern void __VERIFIER_error();\n"
+
+    return labels
+
 def write_init(rules,execution,cname):
     s = "\n"
     
