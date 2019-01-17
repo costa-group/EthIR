@@ -1212,6 +1212,16 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
     return rule1, rule2
 
 '''
+It returns true if the opcode ASSERTFAIL appears in the list of
+intructions of the block
+'''
+def block_has_invalid(instr):
+    if "ASSERTFAIL" in instr:
+        return True
+    else:
+        return False
+
+'''
 It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
@@ -1285,6 +1295,11 @@ def compile_block(block):
         rule.add_instr(instr)
 
     rule.set_fresh_index(top_index)
+
+    inv = block_has_invalid(l_instr)
+    if inv:
+        rule.activate_invalid()
+
     return rule
 
 

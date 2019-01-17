@@ -36,7 +36,8 @@ class RBRRule:
         self.call_to = -1
         self.call_to_info = None
         self.string_getter = getter
-    
+        self.invalid_address = False
+        
     def get_guard(self):
         return self.guard
 
@@ -123,6 +124,16 @@ class RBRRule:
 
     def set_call_to_info(self, info):
         self.call_to_info = info
+
+    def has_invalid(self):
+        return self.invalid_address
+
+    #It is activated if ASSERTFAIL is detected in the block
+    def activate_invalid(self):
+        self.invalid_address = True
+
+    def set_invalid_address(self,val):
+        self.invalid_address = val
         
     '''
     It generates the stack variables using the arg_input attribute. 
