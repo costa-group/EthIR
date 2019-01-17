@@ -246,7 +246,11 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        new = var0+" = "+ var1 +" & "+var2
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = "+ var1 +" & "+var2
+
         check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("or(",0)!=-1:
@@ -263,7 +267,11 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        new = var0+" = "+ var1 +" | "+var2
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = "+ var1 +" | "+var2
+            
         check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("not(",0)!=-1:
@@ -274,7 +282,11 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg1 = elems[1].strip()[1:-1]
         var1 = unbox_variable(arg1)
 
-        new = var0+" = ~"+ var1
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = ~"+ var1
+
         check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("xor(",0)!=-1:
@@ -291,7 +303,11 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        new = var0+" = "+ var1 +" ^ "+var2
+        if svcomp:
+            new = var0+" = "+ get_nondet_svcomp_label()
+        else:
+            new = var0+" = "+ var1 +" ^ "+var2
+
         check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("gs(",0)!=-1:
@@ -331,9 +347,12 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             var0 = var0_aux[1:]
 
             if instr[pos_eq+1:].strip().startswith("fresh("):
-                new = var0+" = s"+str(cont)
-                check_declare_variable("s"+str(cont),vars_to_declare)
-                cont+=1
+                if svcomp:
+                    new = var0+" = "+get_nondet_svcomp_label()
+                else:
+                    new = var0+" = s"+str(cont)
+                    check_declare_variable("s"+str(cont),vars_to_declare)
+                    cont+=1
             else:
                 arg1 = instr[pos_eq+1:].strip()
                 var1 = unbox_variable(arg1)
@@ -357,9 +376,13 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         pos = instr.find("=")
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
-        new = var0+" = s"+str(cont)
-        check_declare_variable("s"+str(cont),vars_to_declare)
-        cont+=1
+
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
         
     elif instr.find("= eq(",0)!=-1:
         elems = instr.split("= eq")
@@ -385,9 +408,6 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
 
         arg12_aux = elems[1].strip()[1:-1]
         arg12 = arg12_aux.split(",")
-
-        print "ARG12"
-        print arg12
         
         arg1 = arg12[0].strip()
         var1 = unbox_variable(arg1)
@@ -433,25 +453,38 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         pos = instr.find("=",0)
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
-        new = var0+" = s"+str(cont)
-        check_declare_variable("s"+str(cont),vars_to_declare)
-        cont+=1
+
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
 
         
     elif instr.find("byte",0)!=-1: # upper bound-> 255
         pos = instr.find("=",0)
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
-        new = var0+" = 255"
+
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = 255"
+
         check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("sha",0)!=-1:
         pos = instr.find("=",0)
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
-        new = var0+" = s"+str(cont)
-        check_declare_variable("s"+str(cont),vars_to_declare)
-        cont+=1
+
+        if svcomp:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
         
     elif instr.find("+")!=-1:
         elems = instr.split("+")
@@ -480,6 +513,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         var2 = unbox_variable(arg2)
 
         new = var0+" = "+var1+" - "+var2
+
     elif instr.find("*")!=-1:
         elems = instr.split("*")
         arg01 = elems[0].split("=")
@@ -493,6 +527,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         var2 = unbox_variable(arg2)
 
         new = var0+" = "+var1+" * "+var2
+
     elif instr.find("/")!=-1:
         elems = instr.split("/")
         arg01 = elems[0].split("=")
