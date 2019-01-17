@@ -37,7 +37,9 @@ def rbr2c(rbr,execution,cname,scc):
     
     write_init(rbr,execution,cname)
     write(heads,new_rules,execution,cname)
-    write_main(execution,cname)
+
+    init = initialize_global_variables(rbr)
+    write_main(execution,cname,init)
     end = dtimer()
     print("C RBR: "+str(end-begin)+"s")
 
@@ -527,9 +529,40 @@ def add_svcomp_labels():
 
     return labels
 
+def initialize_global_variables(rules):
+
+    s = ""
+    
+    if(len(rules)>1):
+        r = rules[1][0]
+    else:
+        r = rules[0][0]
+            
+    fields_id = r.get_global_arg()[::-1]
+    bc_data = r.get_bc()
+    locals_vars = sorted(r.get_args_local())[::-1]
+
+    
+    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",fields_id)
+    l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
+    bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_int()",bc_data)
+
+    if fields != []:
+        s = s+";\n".join(fields)+";\n"
+
+    if l_vars != []:
+        s = s+";\n".join(l_vars)+";\n"
+
+    if bc != []:
+        s = s+";\n".join(bc)+";\n"
+        
+    return s
+        
 def write_init(rules,execution,cname):
     s = "\n"
-    
+
+    s = add_svcomp_labels()
+    s = s+"\n"
     if execution == None:
         name = "/tmp/costabs/rbr.c"
     elif cname == None:
@@ -563,16 +596,18 @@ def write_init(rules,execution,cname):
         
     f.close()
 
-def write_main(execution,cname):
+def write_main(execution,cname,init):
     if execution == None:
         name = "/tmp/costabs/rbr.c"
     elif cname == None:
         name = "/tmp/costabs/rbr"+str(execution)+".c"
     else:
         name = "/tmp/costabs/"+cname+".c"
+
     with open(name,"a") as f:
         
         s = "\nint main(){\n"
+        s = s+"\n"+init+"\n"
         s = s+"\tblock0();\n"
         s = s+"\treturn 0;\n}"
         f.write(s)
