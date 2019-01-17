@@ -92,7 +92,7 @@ def analyze_disasm_bytecode():
 
     r = check_c_dependency()
     if r:
-        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
     else:
         exit_code = -1
         print("Option Error: --verify option is only applied to c translation.\n")
@@ -112,7 +112,7 @@ def analyze_bytecode():
 
     r = check_c_dependency()
     if r:
-        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -133,7 +133,7 @@ def run_solidity_analysis(inputs,hashes):
         function_names = hashes[inp["c_name"]]
         try:
 
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
             
         except:
             result = []
@@ -147,7 +147,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
 
             except:
                 result = []
