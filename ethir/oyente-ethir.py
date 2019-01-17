@@ -76,14 +76,26 @@ def clean_dir():
                 os.remove("/tmp/costabs/"+elem)
 
 
+def check_c_dependency():
+    if args.cfile == False:
+        return not args.verify
+    else:
+        return True
+    
+                
 #Added by Pablo Gordillo 
 '''
 We believe that source is a dissasembly evm file
 '''
 def analyze_disasm_bytecode():
     global args
-    
-    result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+
+    r = check_c_dependency()
+    if r:
+        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+    else:
+        exit_code = -1
+        print("Option Error: --verify option is only applied to c translation.\n")
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -97,10 +109,14 @@ def analyze_bytecode():
     inp = helper.get_inputs()[0]
     y = dtimer()
     print("Compilation time: "+str(y-x)+"s")
-    
-    result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
-    helper.rm_tmp_files()
 
+    r = check_c_dependency()
+    if r:
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+        helper.rm_tmp_files()
+    else:
+        exit_code = -1
+        print("Option Error: --verify option is only applied to c translation.\n")
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -111,24 +127,28 @@ def run_solidity_analysis(inputs,hashes):
     exit_code = 0
 
     i = 0
-    if len(inputs) == 1:
+    r = check_c_dependency()
+    if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
         try:
+
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile)
+            
         except:
             result = []
             return_code = -1
             print ("\n Exception \n")
         if return_code == 1:
             exit_code = 1
-    else:
+    elif len(inputs)>1 and r:
         for inp in inputs:
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            try:
+            try:            
                 result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile)
+
             except:
                 result = []
                 return_code = -1
@@ -144,6 +164,10 @@ def run_solidity_analysis(inputs,hashes):
 
             if return_code == 1:
                 exit_code = 1
+    else:
+        exit_code = -1
+        print("Option Error: --verify option is only applied to c translation.\n")
+        
     return results, exit_code
 
 def analyze_solidity(input_type='solidity'):
@@ -210,7 +234,7 @@ def main():
 
     group.add_argument("-s",  "--source",    type=str, help="local source file name. Solidity by default. Use -b to process evm instead. Use stdin to read from stdin.")
 
-    parser.add_argument("--version", action="version", version="oyente version 0.2.7 - Commonwealth")
+    # parser.add_argument("--version", action="version", version="EthIR version 1.0.7 - Commonwealth")
     parser.add_argument("-glt", "--global-timeout", help="Timeout for symbolic execution", action="store", dest="global_timeout", type=int)
     parser.add_argument( "-e",   "--evm",                    help="Do not remove the .evm file.", action="store_true")
     parser.add_argument( "-b",   "--bytecode",               help="read bytecode in source instead of solidity file", action="store_true")
@@ -222,6 +246,7 @@ def main():
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
+    parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Use with -c flag", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
 
