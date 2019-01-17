@@ -21,7 +21,7 @@ pattern = ["PUSH1",
                    "SWAP1",
                    "DIV"]
 
-def rbr2c(rbr,execution,cname,scc):
+def rbr2c(rbr,execution,cname,scc,svc_labels):
     begin = dtimer()
     heads = "\n"
     new_rules = []
@@ -520,7 +520,12 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             
     new_instructions.append(new+";")
     return cont
-    
+
+def get_nondet_svcomp_label():
+    return "__VERIFIER_nondet_int()"
+
+def get_error_svcomp_label():
+    return "__VERIFIER_error()"
 
 def add_svcomp_labels():
     labels = "";
