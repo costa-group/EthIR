@@ -211,7 +211,8 @@ def process_rule_c(rule):
 
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
-    new_instructions,variables = process_body_c(instructions,cont)
+    has_string_pattern = rule.get_string_getter()
+    new_instructions,variables = process_body_c(instructions,cont,has_string_pattern)
 
 
     
@@ -259,13 +260,30 @@ def abstract_integer(var):
         
     return new_var
         
+def compute_string_pattern(new_instructions):
+    nop_inst = map(lambda x: "nop("+x+")",pattern)
+    new_instructions = new_instructions+nop_inst
+    return new_instructions
 
-def process_body_c(instructions,cont):
+def process_body_c(instructions,cont,has_string_pattern):
     new_instructions = []
     variables = []
-    instructions = filter(lambda x: x!= "", instructions)
-    for instr in instructions:
-        cont = process_instruction(instr,new_instructions,variables,cont)
+    #    instructions = filter(lambda x: x!= "", instructions)
+    idx_loop = 0
+    len_ins = len(instructions)
+    
+    #for instr in instructions:
+    while(idx_loop<len_ins):
+        instr = instructions[idx_loop]
+
+        if idx_loop == 8 and has_string_pattern:
+            new_instructions = compute_string_pattern(new_instructions)
+            idx_loop = idx_loop+26
+        else:
+            cont = process_instruction(instr,new_instructions,variables,cont)
+            idx_loop = idx_loop+1
+
+    new_instructions = filter(lambda x: x!= "", new_instructions)
     return new_instructions,variables
 
 
