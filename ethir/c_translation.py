@@ -234,6 +234,32 @@ def process_rule_c(rule):
     
     return head_c,rule_c
 
+
+def is_number(var):
+    try:
+        r = int(var)
+        b = True
+    except:
+        r = -1
+        b = False
+        
+    return b,r
+
+def abstract_integer(var):
+    b,r = is_number(var)
+    new_var = ""
+    
+    if b and r>4294967296:
+        new_var = "4294967296"
+
+    elif b and r<=4294967296:
+        new_var = str(r)
+    else:
+        new_var = var
+        
+    return new_var
+        
+
 def process_body_c(instructions,cont):
     new_instructions = []
     variables = []
@@ -573,6 +599,8 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg1 = slices[0].strip()
         arg2 = slices[1].strip()
 
+        arg2 = abstract_integer(arg2)
+        
         var1 = unbox_variable(arg1)
         var2 = unbox_variable(arg2)
 
