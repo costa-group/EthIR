@@ -32,6 +32,13 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
     begin = dtimer()
     heads = "\n"
     new_rules = []
+
+    scc_unit = scc["unary"]
+    scc_multiple = scc["multiple"]
+
+    scc_r = filter(lambda x: len(x)>1,scc_multiple)
+    scc_r = scc_r+scc_unit
+    
     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
        
         if len(rules) == 2:
