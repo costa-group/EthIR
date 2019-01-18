@@ -45,7 +45,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
             head,new_rule = process_jumps(rules)
         else:
             head,new_rule = process_rule_c(rules[0])
-            
+                
         heads = heads+head
         new_rules.append(new_rule)
     
@@ -211,8 +211,14 @@ def process_rule_c(rule):
     
     new_instructions = map(lambda x: "\t"+x,new_instructions)
     body = "\n".join(new_instructions)
+
+    if rule.has_invalid() and svcomp:
+        label = get_error_svcomp_label()+";\n"
+    else:
+        label = ""
+        
     end ="\n}\n"
-    rule_c = head+var_declarations+body+end
+    rule_c = head+var_declarations+body+label+end
     
     return head_c,rule_c
 
@@ -574,7 +580,7 @@ def get_nondet_svcomp_label():
     return "__VERIFIER_nondet_int()"
 
 def get_error_svcomp_label():
-    return "__VERIFIER_error()"
+    return "ERROR: __VERIFIER_error()"
 
 def add_svcomp_labels():
     labels = "";
