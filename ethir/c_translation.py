@@ -24,6 +24,18 @@ pattern = ["PUSH1",
 global svcomp
 svcomp = False
 
+global exit_tag
+exit_tag = 0
+
+global init_loop
+init_loop = 0
+
+global end_loop
+end_loop = 0
+
+global end_function
+end_function = 0
+
 
 def rbr2c(rbr,execution,cname,scc,svc_labels):
     global svcomp
