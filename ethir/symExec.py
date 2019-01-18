@@ -28,7 +28,7 @@ import rbr
 from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map
 from opcodes import get_opcode
-from graph_scc import Graph_SCC
+from graph_scc import Graph_SCC, get_entry_all
 
 
 log = logging.getLogger(__name__)
@@ -2958,6 +2958,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     update_edges(vertices, edges)
     g = Graph_SCC(edges)
     scc_multiple = g.getSCCs()
+#    scc_multiple = get_entry_all(scc_multiple,vertices)
 
     scc = {}
     scc["unary"] = scc_unary
