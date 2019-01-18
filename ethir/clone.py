@@ -61,8 +61,9 @@ def compute_push_blocks(pre_block,address,blocks_input):
             push_address = filter(lambda x: x in numbers,address)
             if push_address != []:
                 push_blocks[b]=numbers
-            else:
-                print("ERROR")
+            # else:
+            #     print pre_block
+            #     print("ERROR while cloning")
     return push_blocks
     
 def get_push_block(m_blocks,address):
