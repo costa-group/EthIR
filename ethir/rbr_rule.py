@@ -37,6 +37,12 @@ class RBRRule:
         self.call_to_info = None
         self.string_getter = getter
         self.invalid_address = False
+
+    def __eq__(self,other):
+        eq = False
+        if (isinstance(other,RBRRule)):
+            eq=(self.blockId==other.get_Id())
+      return igualdad
         
     def get_guard(self):
         return self.guard
