@@ -42,7 +42,7 @@ class RBRRule:
         eq = False
         if (isinstance(other,RBRRule)):
             eq=(self.blockId==other.get_Id())
-      return igualdad
+        return igualdad
         
     def get_guard(self):
         return self.guard
