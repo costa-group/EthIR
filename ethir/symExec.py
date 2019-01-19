@@ -2956,9 +2956,11 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     print("OYENTE tool: "+str(oyente_t)+"s")
 
     update_edges(vertices, edges)
+
     g = Graph_SCC(edges)
     scc_multiple = g.getSCCs()
-#    scc_multiple = get_entry_all(scc_multiple,vertices)
+    scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
+    scc_multiple = get_entry_all(scc_multiple,vertices)
 
     scc = {}
     scc["unary"] = scc_unary
