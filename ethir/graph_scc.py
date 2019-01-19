@@ -117,6 +117,6 @@ def get_entry_all(scc,blocks):
     scc_entry = {}
     for s in scc:
         entry = get_entry_scc(s,blocks)
-        scc_entry[entry] = scc
+        scc_entry[entry] = s
 
     return scc_entry
