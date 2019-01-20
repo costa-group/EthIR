@@ -30,12 +30,6 @@ exit_tag = 0
 global init_loop
 init_loop = 0
 
-global end_loop
-end_loop = 0
-
-global end_function
-end_function = 0
-
 
 def rbr2c(rbr,execution,cname,scc,svc_labels):
     global svcomp
@@ -112,7 +106,6 @@ def compute_sccs_unary(rbr,scc_unit):
     return heads, rules
 
 def translate_jump_scc(r,scc,id_loop):
-    global init_loop
 
     jump1 = r[0]
     jump2 = r[1]
@@ -177,21 +170,74 @@ def translate_block_scc(rule,id_loop):
     return head_c,rule_c
 
 def compute_sccs_multiple(rbr,scc):
+    global init_loop
+    global exit_tag
+    
     rules = {}
     head = {}
     rbr_scc = filter_scc_multiple(rbr,scc.values())
-
+    body = ""
+    
     for s in scc:
         entry = get_rule_from_scc(s,rbr_scc)
+        head, entry_part= translate_block_scc(entry,init_loop)
 
-def get_rule_from_scc(blockId,rbr_scc,jump=False):
+        next_idx = get_rule_from_scc(s,rbr_scc,True,True)
+        entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
+        # while(next_rule!=entry):
+        #     part = translate_scc_multiple(next_rule,rbr_scc)
+
+        init_label = "\t goto init_loop_"+str(init_loop)+";\n"
+        exit_label = "  end_loop_"+str(init_loop)+": \n"
+        body = entry_part+"\n"+entry_jump+"\nCOSAS\n"+init_label+"\n"+exit_label+"\t"+exit_block+";\n}"
+        
+        init_loop+=1
+
+def translate_entry_jump(next_idx,scc):
+    jump1 = scc[next_idx]
+    jump2 = scc[next_idx+1]
+
+    instructions1 = jump1.get_instructions()
+    instructions2 = jump2.get_instructions()
+
+    call_if = filter_call(instructions1[0])
+    call_else = filter_call(instructions2[0])
+
+    if_id = get_called_block(call_if)
+    else_id = get_called_block(call_else)
+    
+    if if_id in scc:
+        guard = jump2.get_guard()
+        cond = translate_conditions(guard)
+        call_instr = call_else
+        next_block = if_id
+
+    else:
+        guard = jump1.get_guard()
+        cond = translate_conditions(guard)
+        call_instr = call_if
+        next_block = else_id
+        
+    label = "goto end_loop_"+str(init_loop)
+
+    body = "\tif("+cond+"){\n"
+    body = body+"\t\t"+label+"; }\n"
+
+    return body,call_instr,next_block
+                                        
+                                          
+def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
     if jump:
         r_aux = RBRRule(blockId,"jump")
     else:
         r_aux = RBRRule(blockId,"block")
-        
+
     idx = rbr_scc.index(r_aux)
-    return rbr_scc[idx]
+    
+    if idx_r:
+        return idx
+    else:
+        return rbr_scc[idx]
 
 def filter_scc_multiple(rbr,scc):
     l = []
@@ -792,12 +838,6 @@ def get_current_initloop():
         return init_loop
     else:
         return init_loop-1
-
-def get_current_endloop():
-    if end_loop == 0:
-        return end_loop
-    else:
-        return end_loop-1 
 
 def get_nondet_svcomp_label():
     return "__VERIFIER_nondet_int()"
