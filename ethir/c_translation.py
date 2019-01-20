@@ -176,9 +176,23 @@ def translate_block_scc(rule,id_loop):
     
     return head_c,rule_c
 
-def compute_sccs_multiple(rbr,scc_unit):
-    pass
+def compute_sccs_multiple(rbr,scc):
+    rbr_scc = filter_scc_multiple(rbr,scc.values())
 
+
+def filter_scc_multiple(rbr,scc):
+    l = []
+    rules = []
+    for i in range(len(scc)):
+        l = l+scc[i]
+
+    for r in rbr:
+        rule = r[0]
+        rid = rule.get_Id()
+        if rid in l:
+            rules = rules+r
+
+    return rules
 
 def unbox_variable(var):
     open_pos = var.find("(")
