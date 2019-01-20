@@ -42,7 +42,7 @@ class RBRRule:
         eq = False
         if (isinstance(other,RBRRule)):
             eq=(self.rule_name==other.get_rule_name())
-        return igualdad
+        return eq
         
     def get_guard(self):
         return self.guard
