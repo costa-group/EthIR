@@ -50,6 +50,9 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
 
 #    scc_r = filter(lambda x: len(x)>1,scc_multiple)
 #    scc_r = scc_r+scc_unit
+
+
+    scc_unary_rules = compute_sccs_unary(rbr,scc_unit)
     
     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
        
@@ -69,6 +72,102 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
     end = dtimer()
     print("C RBR: "+str(end-begin)+"s")
 
+
+def compute_sccs_unary(rbr,scc_unit):
+    global init_loop
+    
+    rules = {}
+    l = len(rbr)
+    i = 0
+    while i < l:
+        r = rbr[i]
+        if len(r) == 2:
+            rid = r[0].get_Id()
+            if rid in scc_unit:
+                part_jump = translate_jump_scc(r,scc_unit,init_loop)
+                i =i+1
+                rule_main = rbr[i][0]
+                head, part_main = translate_block_scc(rule_main,init_loop)
+                init_loop+=1
+                rule = part_main+"\n"+part_jump+"}"
+                rules[rid] = rule
+        else:
+            rid = r[0].get_Id()
+            if rid in scc_unit:
+                head, part_main = translate_block_scc(r[0],init_loop)
+                i+=1
+                rule_jump = rbr[i]
+                part_jump = translate_jump_scc(rule_jump,scc_unit,init_loop)
+                init_loop+=1
+                rule = part_main+"\n"+part_jump+"}"
+                rules[rid] = rule
+
+        i=i+1
+        
+def translate_jump_scc(r,scc,id_loop):
+    global init_loop
+
+    jump1 = r[0]
+    jump2 = r[1]
+
+    instructions1 = jump1.get_instructions()
+    instructions2 = jump2.get_instructions()
+
+    call_if = filter_call(instructions1[0])
+    call_else = filter_call(instructions2[0])
+
+    if_id = get_called_block(call_if)
+
+    if if_id in scc:
+        guard = jump1.get_guard()
+        cond = translate_conditions(guard)
+        call_instr = call_else
+
+    else:
+        guard = jump2.get_guard()
+        cond = translate_conditions(guard)
+        call_instr = call_if
+        
+    label = "goto init_loop_"+str(id_loop)
+
+    body = "\tif("+cond+"){\n"
+    body = body+"\t\t"+label+"; }\n"
+    body = body+"\t"+call_instr+";\n"
+
+    return body
+
+def translate_block_scc(rule,id_loop):
+    stack_variables = get_input_variables(rule.get_index_invars())
+    stack = map(lambda x: "int "+x,stack_variables)
+    s_head = ", ".join(stack)
+
+    head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+    head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+
+    cont = rule.get_fresh_index()+1
+    instructions = rule.get_instructions()
+    has_string_pattern = rule.get_string_getter()
+    new_instructions,variables = process_body_c(instructions,cont,has_string_pattern)
+    
+    variables_d = get_variables_to_be_declared(stack_variables,variables)
+    var_declarations = "\n"+variables_d+"\n"
+    
+    #To delete skip instructions
+    new_instructions = filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions)
+
+    new_instructions = new_instructions[:-1] #To delete the call instructions. It is always the last one.
+    new_instructions = map(lambda x: "\t"+x,new_instructions)
+    body = "\n".join(new_instructions)
+
+    init_loop_label = "  init_loop_"+str(id_loop)+":\n"
+    if rule.has_invalid() and svcomp:
+        label = get_error_svcomp_label()+";\n"
+    else:
+        label = ""
+        
+    rule_c = head+var_declarations+init_loop_label+body+label
+    
+    return head_c,rule_c
 
 def unbox_variable(var):
     open_pos = var.find("(")
@@ -170,7 +269,20 @@ def filter_call(call_instruction):
     s_string = ", ".join(s_vars)
     call = block[:pos_open]+"("+s_string+")"
     return call
-    
+
+
+def get_called_block(call_instruction):
+    block = call_instruction.strip()[5:-1].strip()
+    pos_open = block.find("(")
+    block_id = block[:pos_open].strip()
+
+    try:
+        return int(block_id)
+
+    except:
+        return block_id
+
+
 def process_jumps(rules):
     jump1 = rules[0]
     jump2 = rules[1]
@@ -213,8 +325,6 @@ def process_rule_c(rule):
     instructions = rule.get_instructions()
     has_string_pattern = rule.get_string_getter()
     new_instructions,variables = process_body_c(instructions,cont,has_string_pattern)
-
-
     
     variables_d = get_variables_to_be_declared(stack_variables,variables)
     var_declarations = "\n"+variables_d+"\n"
@@ -290,6 +400,7 @@ def process_body_c(instructions,cont,has_string_pattern):
 def process_instruction(instr,new_instructions,vars_to_declare,cont):        
     if instr.find("nop(")!=-1:
         new = instr
+        
     elif instr.find("call(",0)!=-1:
         call_block = instr[5:-1].strip()
         pos_open = call_block.find("(")
@@ -301,6 +412,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         variables = map(lambda x : unbox_variable(x.strip()),stack_variables)
         new_variables = ", ".join(variables)
         new = block+"("+new_variables+")"
+
     elif instr.find("and(",0)!=-1:
         elems = instr.split("= and")
         arg0 = elems[0].strip()
@@ -399,6 +511,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
     #     var1 = unbox_variable(arg1)
         
     #     new = var0 +" = " var1
+
     elif instr.find("l(l")!=-1:
         pos_local = instr.find("l(l")
         pos_eq = instr.find("=")
@@ -441,6 +554,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
     # elif instr.find("ll =",0)!=-1:
     #     pos = instr.find("=")
     #     new = "l("+instr[:pos].strip()+") "+instr[pos:]        
+
     elif instr.find("fresh",0)!=-1:
         pos = instr.find("=")
         arg0 = instr[:pos].strip()
@@ -633,6 +747,19 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             
     new_instructions.append(new+";")
     return cont
+
+
+def get_current_initloop():
+    if init_loop == 0:
+        return init_loop
+    else:
+        return init_loop-1
+
+def get_current_endloop():
+    if end_loop == 0:
+        return end_loop
+    else:
+        return end_loop-1 
 
 def get_nondet_svcomp_label():
     return "__VERIFIER_nondet_int()"
