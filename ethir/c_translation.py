@@ -53,6 +53,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
 
 
     scc_unary_rules = compute_sccs_unary(rbr,scc_unit)
+    scc_multiple_rules = compute_sccs_multiple(rbr,scc_multiple)
     
     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
        
@@ -77,6 +78,8 @@ def compute_sccs_unary(rbr,scc_unit):
     global init_loop
     
     rules = {}
+    heads = []
+    
     l = len(rbr)
     i = 0
     while i < l:
@@ -91,6 +94,7 @@ def compute_sccs_unary(rbr,scc_unit):
                 init_loop+=1
                 rule = part_main+"\n"+part_jump+"}"
                 rules[rid] = rule
+                heads.append(head)
         else:
             rid = r[0].get_Id()
             if rid in scc_unit:
@@ -101,9 +105,12 @@ def compute_sccs_unary(rbr,scc_unit):
                 init_loop+=1
                 rule = part_main+"\n"+part_jump+"}"
                 rules[rid] = rule
+                heads.append(head)
 
         i=i+1
-        
+
+    return heads, rules
+
 def translate_jump_scc(r,scc,id_loop):
     global init_loop
 
@@ -168,6 +175,10 @@ def translate_block_scc(rule,id_loop):
     rule_c = head+var_declarations+init_loop_label+body+label
     
     return head_c,rule_c
+
+def compute_sccs_multiple(rbr,scc_unit):
+    pass
+
 
 def unbox_variable(var):
     open_pos = var.find("(")
