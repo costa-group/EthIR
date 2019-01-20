@@ -1,4 +1,4 @@
-import rbr_rule
+from rbr_rule import RBRRule
 import os
 from timeit import default_timer as dtimer
 
@@ -78,7 +78,7 @@ def compute_sccs_unary(rbr,scc_unit):
     global init_loop
     
     rules = {}
-    heads = []
+    heads = {}
     
     l = len(rbr)
     i = 0
@@ -94,7 +94,7 @@ def compute_sccs_unary(rbr,scc_unit):
                 init_loop+=1
                 rule = part_main+"\n"+part_jump+"}"
                 rules[rid] = rule
-                heads.append(head)
+                heads[rid] = head
         else:
             rid = r[0].get_Id()
             if rid in scc_unit:
@@ -105,7 +105,7 @@ def compute_sccs_unary(rbr,scc_unit):
                 init_loop+=1
                 rule = part_main+"\n"+part_jump+"}"
                 rules[rid] = rule
-                heads.append(head)
+                heads[rid] = head
 
         i=i+1
 
@@ -177,8 +177,21 @@ def translate_block_scc(rule,id_loop):
     return head_c,rule_c
 
 def compute_sccs_multiple(rbr,scc):
+    rules = {}
+    head = {}
     rbr_scc = filter_scc_multiple(rbr,scc.values())
 
+    for s in scc:
+        entry = get_rule_from_scc(s,rbr_scc)
+
+def get_rule_from_scc(blockId,rbr_scc,jump=False):
+    if jump:
+        r_aux = RBRRule(blockId,"jump")
+    else:
+        r_aux = RBRRule(blockId,"block")
+        
+    idx = rbr_scc.index(r_aux)
+    return rbr_scc[idx]
 
 def filter_scc_multiple(rbr,scc):
     l = []
