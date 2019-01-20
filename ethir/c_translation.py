@@ -175,23 +175,48 @@ def compute_sccs_multiple(rbr,scc):
     
     rules = {}
     head = {}
-    rbr_scc = filter_scc_multiple(rbr,scc.values())
+    exit_t = False
     body = ""
-    
+    exit_label = ""
+    part_block = ""
+    rbr_scc = filter_scc_multiple(rbr,scc.values())
+
+    # for e in rbr_scc:
+    #     print e.get_rule_name()    
     for s in scc:
         entry = get_rule_from_scc(s,rbr_scc)
         head, entry_part= translate_block_scc(entry,init_loop)
 
         next_idx = get_rule_from_scc(s,rbr_scc,True,True)
         entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
-        # while(next_rule!=entry):
-        #     part = translate_scc_multiple(next_rule,rbr_scc)
+        next_rule = get_rule_from_scc(next_block,rbr_scc)
+        while(next_rule!=entry):
+            vars_d, part, next_id,ex_t = translate_scc_multiple(next_rule,rbr_scc)
+            exit_t = exit_t or ex_t
+            part_block = part_block+part
+            next_rule = get_rule_from_scc(next_id,rbr_scc)
 
-        init_label = "\t goto init_loop_"+str(init_loop)+";\n"
-        exit_label = "  end_loop_"+str(init_loop)+": \n"
-        body = entry_part+"\n"+entry_jump+"\nCOSAS\n"+init_label+"\n"+exit_label+"\t"+exit_block+";\n}"
+        init_label = "\tgoto init_loop_"+str(init_loop)+";\n"
+        end_label = "  end_loop_"+str(init_loop)+": \n"
+
+        body = entry_part+"\n"
+        body = body+entry_jump+part_block
+        body = body+init_label+"\n"
+        body = body+end_label
         
+        if exit_t:
+            exit_label = "  exit_"+str(exit_tag)+":\n"
+            exit_tag+=1
+            exit_t = False
+            
+        
+        body = body+"\t"+exit_block+";\n"+exit_label+"}"
+        # print entry_part
+        # print entry_jump
+        print body
         init_loop+=1
+        exit_label = ""
+        part_block = ""
 
 def translate_entry_jump(next_idx,scc):
     jump1 = scc[next_idx]
@@ -224,8 +249,75 @@ def translate_entry_jump(next_idx,scc):
     body = body+"\t\t"+label+"; }\n"
 
     return body,call_instr,next_block
-                                        
-                                          
+
+def translate_scc_multiple(rule,rbr_scc):
+
+    exit_t = False
+    
+    stack_variables = get_input_variables(rule.get_index_invars())
+
+    cont = rule.get_fresh_index()+1
+    instructions = rule.get_instructions()
+    has_string_pattern = rule.get_string_getter()
+    new_instructions,variables = process_body_c(instructions,cont,has_string_pattern)
+    
+    variables_d = get_variables_to_be_declared(stack_variables,variables)
+    var_declarations = "\n"+variables_d+"\n"
+    
+    #To delete skip instructions
+    new_instructions = filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions)
+
+    called_instructions = new_instructions[-1]
+    called_is_jump = called_instructions.startswith("j")
+
+    if called_is_jump:
+        jump_idx = get_rule_from_scc(rule.get_Id(),rbr_scc,True,True)
+        part, next_block, exit_t = translate_jump_scc_multiple(jump_idx,rbr_scc)
+    else:
+        part = ""
+        next_block = get_called_block(called_instructions)
+    new_instructions = new_instructions[:-1] #To delete the call instructions. It is always the last one.
+    new_instructions = map(lambda x: "\t"+x,new_instructions)
+    body = "\n".join(new_instructions)
+    body = body+"\n"+part
+    
+    return var_declarations, body, next_block,exit_t
+
+def translate_jump_scc_multiple(idx,scc):
+    jump1 = scc[idx]
+    jump2 = scc[idx+1]
+
+    instructions1 = jump1.get_instructions()
+    instructions2 = jump2.get_instructions()
+
+    call_if = filter_call(instructions1[0])
+    call_else = filter_call(instructions2[0])
+
+    if_id = get_called_block(call_if)
+    else_id = get_called_block(call_else)
+
+    if_b = get_rule_from_scc(if_id,scc)
+    
+    if if_b in scc:
+        guard = jump2.get_guard()
+        cond = translate_conditions(guard)
+        call_instr = call_else
+        next_block = if_id
+
+    else:
+        guard = jump1.get_guard()
+        cond = translate_conditions(guard)
+        call_instr = call_if
+        next_block = else_id
+        
+    label = "goto exit_"+str(exit_tag)
+
+    body = "\tif("+cond+"){\n"
+    body = body+"\t\t"+call_instr+";\n"
+    body = body+"\t\t"+label+"; }\n"
+
+    return body,next_block,True
+
 def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
     if jump:
         r_aux = RBRRule(blockId,"jump")
