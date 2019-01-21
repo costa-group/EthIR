@@ -43,11 +43,15 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos):
     else:
         heads, new_rules = rbr2c_recur(rbr)
 
+    head_c , rule = initialize_globals(rbr)
+
+    heads = "\n"+head_c+heads
+    new_rules.append(rule)
+    
     write_init(rbr,execution,cname)
     write(heads,new_rules,execution,cname)
 
-    init = initialize_global_variables(rbr)
-    write_main(execution,cname,init)
+    write_main(execution,cname)
     end = dtimer()
     print("C RBR: "+str(end-begin)+"s")
         
@@ -1007,6 +1011,15 @@ def add_svcomp_labels():
 
     return labels
 
+def initialize_globals(rules):
+    head_c = "void init_globals();"
+    head = "void init_globals(){\n"
+    
+    vars_init = initialize_global_variables(rules)
+    method = head+vars_init+"}\n"
+
+    return head_c, method
+    
 def initialize_global_variables(rules):
 
     s = ""
@@ -1076,7 +1089,7 @@ def write_init(rules,execution,cname):
         
     f.close()
 
-def write_main(execution,cname,init):
+def write_main(execution,cname):
     if execution == None:
         name = "/tmp/costabs/rbr.c"
     elif cname == None:
@@ -1085,6 +1098,7 @@ def write_main(execution,cname,init):
         name = "/tmp/costabs/"+cname+".c"
 
     with open(name,"a") as f:
+        init = "\tinit_globals();"
         
         s = "\nint main(){\n"
         if svcomp :
