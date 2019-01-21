@@ -32,19 +32,32 @@ global init_loop
 init_loop = 0
 
 
-def rbr2c(rbr,execution,cname,scc,svc_labels):
+def rbr2c(rbr,execution,cname,scc,svc_labels,gotos):
     global svcomp
     svcomp = svc_labels
 
     begin = dtimer()
+    
+    if gotos:
+        heads, new_rules = rbr2c_gotos(rbr,scc)
+    else:
+        heads, new_rules = rbr2c_recur(rbr)
+
+    write_init(rbr,execution,cname)
+    write(heads,new_rules,execution,cname)
+
+    init = initialize_global_variables(rbr)
+    write_main(execution,cname,init)
+    end = dtimer()
+    print("C RBR: "+str(end-begin)+"s")
+        
+
+def rbr2c_gotos(rbr,scc):
     heads = "\n"
     new_rules = []
 
     scc_unit = scc["unary"]
     scc_multiple = scc["multiple"]
-
-#    scc_r = filter(lambda x: len(x)>1,scc_multiple)
-#    scc_r = scc_r+scc_unit
 
     scc_ids = scc_unit+get_scc_labels(scc_multiple.values())
     
@@ -71,14 +84,72 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
                 
             heads = heads+head
             new_rules.append(new_rule)
-    
-    write_init(rbr,execution,cname)
-    write(heads,new_rules,execution,cname)
+            
+    return heads, new_rules
 
-    init = initialize_global_variables(rbr)
-    write_main(execution,cname,init)
-    end = dtimer()
-    print("C RBR: "+str(end-begin)+"s")
+def rbr2c_recur(rbr):
+    heads = "\n"
+    new_rules = []
+    
+    for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
+
+        if len(rules) == 2:
+            head,new_rule = process_jumps(rules)
+        else:
+            head,new_rule = process_rule_c(rules[0])
+                
+        heads = heads+head
+        new_rules.append(new_rule)
+
+    return heads,new_rules
+
+# def rbr2c(rbr,execution,cname,scc,svc_labels):
+#     global svcomp
+#     svcomp = svc_labels
+
+#     begin = dtimer()
+#     heads = "\n"
+#     new_rules = []
+
+#     scc_unit = scc["unary"]
+#     scc_multiple = scc["multiple"]
+
+# #    scc_r = filter(lambda x: len(x)>1,scc_multiple)
+# #    scc_r = scc_r+scc_unit
+
+#     scc_ids = scc_unit+get_scc_labels(scc_multiple.values())
+    
+#     heads_u, scc_unary_rules = compute_sccs_unary(rbr,scc_unit)
+#     heads_m, scc_multiple_rules = compute_sccs_multiple(rbr,scc_multiple)
+    
+#     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
+#         getId = rules[0].get_Id()
+#         type_rule = rules[0].get_type()
+
+#         if getId in scc_ids :
+#             if (heads_u.get(getId,-1)!=-1) and (type_rule == "block") :
+#                 heads = heads+heads_u[getId]
+#                 new_rules.append(scc_unary_rules[getId])
+
+#             elif (heads_m.get(getId,-1)!=-1) and (type_rule == "block"):
+#                 heads = heads+heads_m[getId]
+#                 new_rules.append(scc_multiple_rules[getId])
+#         else:
+#             if len(rules) == 2:
+#                 head,new_rule = process_jumps(rules)
+#             else:
+#                 head,new_rule = process_rule_c(rules[0])
+                
+#             heads = heads+head
+#             new_rules.append(new_rule)
+    
+#     write_init(rbr,execution,cname)
+#     write(heads,new_rules,execution,cname)
+
+#     init = initialize_global_variables(rbr)
+#     write_main(execution,cname,init)
+#     end = dtimer()
+#     print("C RBR: "+str(end-begin)+"s")
 
 
 def compute_sccs_unary(rbr,scc_unit):
