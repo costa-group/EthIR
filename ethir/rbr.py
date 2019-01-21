@@ -1396,7 +1396,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None):
     global rbr_blocks
     global stack_index
     global vertices
@@ -1451,7 +1451,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         if saco_rbr:
             saco.rbr2saco(rbr,exe,contract_name)
         if c_rbr:
-            c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels)
+            c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos)
 
         print("*************************************************************")
 
