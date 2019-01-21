@@ -31,22 +31,34 @@ exit_tag = 0
 global init_loop
 init_loop = 0
 
+global init_globals
+init_globals = False
 
-def rbr2c(rbr,execution,cname,scc,svc_labels,gotos):
+global blocks2init
+blocks2init = []
+
+def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global svcomp
+    global init_globals
+    global blocks2init
+    
     svcomp = svc_labels
 
     begin = dtimer()
+
+    if fbm != []:
+        init_globals = True
+        blocks2init = fbm
     
     if gotos:
         heads, new_rules = rbr2c_gotos(rbr,scc)
     else:
         heads, new_rules = rbr2c_recur(rbr)
 
-    head_c , rule = initialize_globals(rbr)
-
-    heads = "\n"+head_c+heads
-    new_rules.append(rule)
+    if svcomp:
+        head_c , rule = initialize_globals(rbr)
+        heads = "\n"+head_c+heads
+        new_rules.append(rule)
     
     write_init(rbr,execution,cname)
     write(heads,new_rules,execution,cname)
@@ -563,7 +575,7 @@ def process_rule_c(rule):
 
     head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
     head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
-
+    
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
     has_string_pattern = rule.get_string_getter()
@@ -584,7 +596,12 @@ def process_rule_c(rule):
         label = ""
         
     end ="\n}\n"
-    rule_c = head+var_declarations+body+label+end
+
+    if (rule.get_Id() in blocks2init) and (svcomp):
+        init = "\tinit_globals();\n"
+        rule_c = head+var_declarations+init+body+label+end
+    else:
+        rule_c = head+var_declarations+body+label+end
     
     return head_c,rule_c
 
