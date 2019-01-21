@@ -75,8 +75,19 @@ def clean_dir():
             if last in ext:
                 os.remove("/tmp/costabs/"+elem)
 
+'''
+The flag -v has to be used with the flag -c
+'''
+def check_cv_dependency():
+    if args.cfile == False:
+        return not args.verify
+    else:
+        return True
 
-def check_c_dependency():
+'''
+The flag -g has to be used with the flag -c
+'''    
+def check_cg_dependency():
     if args.cfile == False:
         return not args.verify
     else:
@@ -90,9 +101,9 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
 
-    r = check_c_dependency()
+    r = check_cv_dependency()
     if r:
-        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
+        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
     else:
         exit_code = -1
         print("Option Error: --verify option is only applied to c translation.\n")
@@ -110,9 +121,9 @@ def analyze_bytecode():
     y = dtimer()
     print("Compilation time: "+str(y-x)+"s")
 
-    r = check_c_dependency()
+    r = check_cv_dependency()
     if r:
-        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -127,13 +138,13 @@ def run_solidity_analysis(inputs,hashes):
     exit_code = 0
 
     i = 0
-    r = check_c_dependency()
+    r = check_cv_dependency()
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
         try:
 
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
             
         except:
             result = []
@@ -146,14 +157,14 @@ def run_solidity_analysis(inputs,hashes):
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify)
+            # try:            
+            #     result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
 
-            except:
-                result = []
-                return_code = -1
-                print ("\n Exception \n")
-            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile)
+            # except:
+            #     result = []
+            #     return_code = -1
+            #     print ("\n Exception \n")
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
             i+=1
             try:
                 c_source = inp['c_source']
@@ -247,6 +258,7 @@ def main():
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Use with -c flag", action="store_true")
+    parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
 
