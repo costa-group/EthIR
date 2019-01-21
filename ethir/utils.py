@@ -320,6 +320,13 @@ def orderRBR(rbr):
     return rbr[0].get_Id()
 
 
+def delete_dup(l):
+    r = []
+    for e in l:
+        if e not in r:
+            r.append(e)
+    return r
+
 def get_function_names(i,lineas):
     delimiter = "======"
     names = {}
