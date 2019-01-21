@@ -2894,7 +2894,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None,svc = None):
+def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None):
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -2966,7 +2966,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     scc["unary"] = scc_unary
     scc["multiple"] = scc_multiple
 
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc)
+    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go)
 
     if saco != None and hashes != None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
