@@ -46,19 +46,31 @@ def rbr2c(rbr,execution,cname,scc,svc_labels):
 #    scc_r = filter(lambda x: len(x)>1,scc_multiple)
 #    scc_r = scc_r+scc_unit
 
-
-    scc_unary_rules = compute_sccs_unary(rbr,scc_unit)
-    scc_multiple_rules = compute_sccs_multiple(rbr,scc_multiple)
+    scc_ids = scc_unit+get_scc_labels(scc_multiple.values())
+    
+    heads_u, scc_unary_rules = compute_sccs_unary(rbr,scc_unit)
+    heads_m, scc_multiple_rules = compute_sccs_multiple(rbr,scc_multiple)
     
     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
-       
-        if len(rules) == 2:
-            head,new_rule = process_jumps(rules)
+        getId = rules[0].get_Id()
+        type_rule = rules[0].get_type()
+
+        if getId in scc_ids :
+            if (heads_u.get(getId,-1)!=-1) and (type_rule == "block") :
+                heads = heads+heads_u[getId]
+                new_rules.append(scc_unary_rules[getId])
+
+            elif (heads_m.get(getId,-1)!=-1) and (type_rule == "block"):
+                heads = heads+heads_m[getId]
+                new_rules.append(scc_multiple_rules[getId])
         else:
-            head,new_rule = process_rule_c(rules[0])
+            if len(rules) == 2:
+                head,new_rule = process_jumps(rules)
+            else:
+                head,new_rule = process_rule_c(rules[0])
                 
-        heads = heads+head
-        new_rules.append(new_rule)
+            heads = heads+head
+            new_rules.append(new_rule)
     
     write_init(rbr,execution,cname)
     write(heads,new_rules,execution,cname)
@@ -180,7 +192,7 @@ def compute_sccs_multiple(rbr,scc):
     global exit_tag
     
     rules = {}
-    head = {}
+    heads = {}
     exit_t = False
     body = ""
     exit_label = ""
@@ -221,12 +233,16 @@ def compute_sccs_multiple(rbr,scc):
             
         
         body = body+"\t"+exit_block+";\n"+exit_label+"}"
+        rules[s] = body
+        heads[s] = head
         # print entry_part
         # print entry_jump
-        print body
+        #print body
         init_loop+=1
         exit_label = ""
         part_block = ""
+    return heads,rules
+        
 
 def translate_entry_jump(next_idx,scc):
     jump1 = scc[next_idx]
@@ -341,11 +357,16 @@ def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
     else:
         return rbr_scc[idx]
 
-def filter_scc_multiple(rbr,scc):
+def get_scc_labels(scc):
     l = []
-    rules = []
     for i in range(len(scc)):
         l = l+scc[i]
+    return l
+    
+def filter_scc_multiple(rbr,scc):
+    rules = []
+    
+    l = get_scc_labels(scc)
 
     for r in rbr:
         rule = r[0]
