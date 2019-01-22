@@ -18,13 +18,13 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  sudo cp source/solc /usr/bin/
  sudo chmod 755 /usr/bin/solc
  ```
-    You can test it with the following command:
+   You can test it with the following command:
  
  ```
  solc --version
  ```
  
-    In case you want to install the latest version:
+   In case you want to install the latest version:
  
  ```
  sudo add-apt-repository ppa:ethereum/ethereum
@@ -40,12 +40,13 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  sudo cp source/evm /usr/bin/
  sudo chmod 755 /usr/bin/evm
  ```
- You can test it with the following command:
+ 
+   You can test it with the following command:
  
  ```
  evm --version
  ```
-  In case you want to install the latest version:
+   In case you want to install the latest version:
   
 ```
  sudo apt-get install software-properties-common
