@@ -1,0 +1,18 @@
+#!/bin/csh
+
+#set files = `ls ../../examples/`
+
+set COSTABSHOME = /home/tacas19/costabs/bin/saco
+set ETHIRPATH = /home/tacas19/EthIR/ethir
+
+#set files = `ls /home/tacas19/Desktop/examples/tacas19_examples/`
+#set names = `echo $files:q | sed 's/ /  /g'`
+
+
+rm /home/tacas19/Desktop/examples/tacas19/*.disasm
+rm /home/tacas19/Desktop/examples/tacas19/*.evm
+
+                    
+         python $ETHIRPATH/test/exec_all.py
+
+

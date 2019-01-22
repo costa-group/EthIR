@@ -1,0 +1,19 @@
+#!/bin/csh
+
+set COSTABSHOME = /home/tacas19/costabs/bin/saco
+set ETHIRPATH = /home/tacas19/EthIR/ethir
+set size = ${#argv}
+
+
+if ($size == 0) then
+    set file_name = /home/tacas19/Desktop/examples/pot_tacas19.sol
+
+
+    python $ETHIRPATH/oyente-ethir.py -s $file_name -cfg -eop -saco
+    python $ETHIRPATH/test/exec_contract.py
+    
+else
+    echo "Incorrect number of arguments."
+    echo "The format required is ./running_example"
+    
+endif

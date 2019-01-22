@@ -1,0 +1,22 @@
+#!/bin/csh
+
+#set files = `ls ../../examples/`
+
+set size = ${#argv}
+set COSTABSHOME = /home/tacas19/costabs/bin/saco
+set ETHIRPATH = /home/tacas19/EthIR/ethir
+
+
+if ($size == 1) then
+         set solidity_name = $argv[1]
+
+	 python $ETHIRPATH/oyente-ethir.py -s $solidity_name -saco -eop -cfg
+         python $ETHIRPATH/test/exec_solidity.py $solidity_name
+else
+	echo "Incorrect number of arguments."
+        echo "The format required is ./gastap_contract /home/tacas19/Desktop/examples/pot_tacas19.sol"
+    
+endif
+
+
+
