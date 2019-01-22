@@ -849,17 +849,21 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 #        print pre_block
         falls = vertices[pre_block].get_falls_to()
         jump = vertices[pre_block].get_jump_target()
+        invalid_block = 0
         if jump != block and jump != None:
             ins = vertices[jump].get_instructions()
+            invalid_block = jump
         elif falls != None: #falls_to
             # print "AQUI"
             ins = vertices[falls].get_instructions()
+            invalid_block = falls
             # print ins
         else:
             ins = []
         if "ASSERTFAIL " in ins:
             # print block
-            vertices[block].activate_access_array()
+            #print invalid_block
+            vertices[invalid_block].activate_access_array()
     
         #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
