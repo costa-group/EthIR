@@ -8,19 +8,16 @@ A framework for high-level Analysis of Ethereum Bytecode.
 The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OYENTE](https://github.com/melonproject/oyente) builds CFGs of Ethereum bytecode and looks for different kind of vulnerabilities on the bytecode. Based on the CFG of a Ethereum bytecode, EthIR generates a *rule-based representation* (RBR) of the program. This high-level representation enables the application of existing high-level analyses to infer properties of EVM code.
 
 ## Installation (Ubuntu)
+
 1. Install Solidity compiler (last version tested 0.4.25)
 
     Download the folder source that contains a static executable of Solidity compiler.
     
-    Add it to the PATH.
+    Add it to the PATH and test that it is installed.
     
 ```
  sudo cp source/solc /usr/bin/
  sudo chmod 755 /usr/bin/solc
- ```
-   You can test it with the following command:
- 
- ```
  solc --version
  ```
  
@@ -35,17 +32,15 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
 2. Install Ethereum (last version tested 1.8.18)
 
    A static executable is provided in the folder source.
+   
+   Add ot to the PATh and test that it is installed.
  
  ```
  sudo cp source/evm /usr/bin/
  sudo chmod 755 /usr/bin/evm
- ```
- 
-   You can test it with the following command:
- 
- ```
  evm --version
  ```
+ 
    In case you want to install the latest version:
   
 ```
