@@ -9,11 +9,11 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
 
 ## Installation (Ubuntu)
 
-1. Install Solidity compiler (last version tested 0.4.25)
+### 1. Install Solidity compiler (last version tested 0.4.25)
 
-    Download the folder source that contains a static executable of Solidity compiler.
+Download the folder source that contains a static executable of Solidity compiler.
     
-    Add it to the PATH and test that it is installed.
+Add it to the PATH and test that it is installed.
     
 ```
  sudo cp source/solc /usr/bin/
@@ -21,7 +21,7 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  solc --version
  ```
  
-   In case you want to install the latest version:
+In case you want to install the latest version:
  
  ```
  sudo add-apt-repository ppa:ethereum/ethereum
@@ -29,19 +29,18 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  sudo apt-get install solc
 ```
 
-2. Install Ethereum (last version tested 1.8.18)
+### 2. Install Ethereum (last version tested 1.8.18)
 
-   A static executable is provided in the folder source.
-   
-   Add ot to the PATh and test that it is installed.
+A static executable is provided in the folder source.
+
+Add ot to the PATh and test that it is installed.
  
  ```
  sudo cp source/evm /usr/bin/
  sudo chmod 755 /usr/bin/evm
  evm --version
  ```
- 
-   In case you want to install the latest version:
+ In case you want to install the latest version:
   
 ```
  sudo apt-get install software-properties-common
@@ -50,11 +49,11 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  sudo apt-get install ethereum
 ```
 
-3. Install [Z3](https://github.com/Z3Prover/z3/releases) (last version tested 4.5.0)
+### 3. Install [Z3](https://github.com/Z3Prover/z3/releases) (last version tested 4.5.0)
 
-   Download the [source code folder](https://github.com/Z3Prover/z3/archive/z3-4.5.0.zip).
+Download the [source code folder](https://github.com/Z3Prover/z3/archive/z3-4.5.0.zip).
 
-   Decompress the folder and install it.
+Decompress the folder and install it.
 ```
  unzip z3-z3-4.5.0.zip
  cd z3-z3-4.5.0
@@ -63,23 +62,22 @@ The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OY
  make
  sudo make install
 ```
-4. Install dependencies (last pip version tested 8.1.1)
+### 4. Install dependencies (last pip version tested 8.1.1)
    
-   Use `pip install` command to install six, requests python libraries.
+Use `pip install` command to install six, requests python libraries.
 
 ```
 pip install six
 pip install requests
 ```
-
-   The above commands may fail depending on the pip version. If it is the case, run the following command instead of the   previous ones.
+The above commands may fail depending on the pip version. If it is the case, run the following command instead of the   previous ones.
 
 ```
 python -m pip install six
 python -m pip install requests
 ```
 
-   To check the version run the command `pip -V`.
+To check the version run the command `pip -V`.
 
 ## Run EthIR
 
