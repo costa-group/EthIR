@@ -1220,7 +1220,10 @@ def block_has_invalid(instr):
         return True
     else:
         return False
-
+    
+def block_access_array(block):
+    return block.get_access_array()
+    
 '''
 It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
@@ -1296,7 +1299,8 @@ def compile_block(block):
 
     rule.set_fresh_index(top_index)
 
-    inv = block_has_invalid(l_instr)
+    #    inv = block_has_invalid(l_instr)
+    inv = block_access_array(block)
     if inv:
         rule.activate_invalid()
 
