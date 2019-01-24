@@ -33,6 +33,7 @@ class BasicBlock:
         self.unknown_mstore = False
         self.transitive_mstore = False
         self.access_array = False
+        self.assertfail_in_getter = False
 
         
     def get_start_address(self):
@@ -344,6 +345,15 @@ class BasicBlock:
 
     def activate_access_array(self):
         self.access_array = True
+
+    def get_assertfail_in_getter(self):
+        return self.assertfail_in_getter
+
+    def set_assertfail_in_getter(self,val):
+        self.assertfail_in_getter = val
+
+    def activate_assertfail_in_getter(self):
+        self.assertfail_in_getter = True
         
     def copy(self):
         
@@ -369,6 +379,7 @@ class BasicBlock:
         new_obj.set_unknown_mstore(self.unknown_mstore)
         new_obj.set_trans_mstore(self.transitive_mstore)
         new_obj.set_access_array(self.access_array)
+        new_obj.set_assertfail_in_getter(self.assertfail_in_getter)
         return new_obj
 
     def is_direct_block(self):
