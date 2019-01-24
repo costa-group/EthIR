@@ -228,8 +228,6 @@ def generate_saco_hashes_file(dicc):
             new_names = "\n".join(cf_names)+"\n" if cf_names!=[] else ""
             f.write(new_names)
     f.close()
-   
-
 
 def main():
     # TODO: Implement -o switch.
@@ -239,7 +237,6 @@ def main():
     rbr_dir = "/tmp/costabs/"
     
     global args
-
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
 
@@ -257,7 +254,7 @@ def main():
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
-    parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Use with -c flag", action="store_true")
+    parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Applies abstraction depending on the verifier (CPAchecker or VeryMax). Use with -c flag", choices = ["cpa","verymax"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
