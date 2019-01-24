@@ -265,7 +265,7 @@ def compute_sccs_multiple(rbr,scc):
         body = body+end_label
         
         if exit_t:
-            exit_label = "  exit_"+str(exit_tag)+":\n"
+            exit_label = "  exit_"+str(exit_tag)+":\n\t ;\n"
             exit_tag+=1
             exit_t = False
             
