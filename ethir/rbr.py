@@ -1215,8 +1215,11 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
 It returns true if the opcode ASSERTFAIL appears in the list of
 intructions of the block
 '''
-def block_has_invalid(instr):
-    if "ASSERTFAIL" in instr:
+def block_has_invalid(block):
+    instr = block.get_instructions()
+    comes_from_getter = block.get_assertfail_in_getter()
+    
+    if "ASSERTFAIL" in instr and (not comes_from_getter):
         return True
     else:
         return False
@@ -1421,7 +1424,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 rule = compile_block(block)
 
                 if svc_labels == "cpa-all" or svc_labels == "verymax-all":
-                    inv = block_has_invalid(block.get_instructions())
+                    inv = block_has_invalid(block)
                 elif svc_labels == "cpa" or svc_labels == "verymax":
                     inv = block_access_array(block)
                 else:
