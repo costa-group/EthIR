@@ -142,14 +142,15 @@ def run_solidity_analysis(inputs,hashes):
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
-        try:
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+        # try:
 
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+        #     result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
             
-        except:
-            result = []
-            return_code = -1
-            print ("\n Exception \n")
+        # except:
+        #     result = []
+        #     return_code = -1
+        #     print ("\n Exception \n")
         if return_code == 1:
             exit_code = 1
     elif len(inputs)>1 and r:
@@ -254,7 +255,7 @@ def main():
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
-    parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Applies abstraction depending on the verifier (CPAchecker or VeryMax). Use with -c flag", choices = ["cpa","verymax"])
+    parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Applies abstraction depending on the verifier (CPAchecker or VeryMax). Use with -c flag", choices = ["cpa-all","verymax-all","cpa","verymax"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
