@@ -983,7 +983,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = elems[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp == "verymax":
+        if svcomp == "verymax" or svcomp == "verymax-all":
             new = var0+" = "+ get_nondet_svcomp_label()
         else:
             new = var0+" = "+var1+" / "+var2
