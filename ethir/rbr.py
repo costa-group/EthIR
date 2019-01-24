@@ -1299,10 +1299,10 @@ def compile_block(block):
 
     rule.set_fresh_index(top_index)
 
-    #    inv = block_has_invalid(l_instr)
-    inv = block_access_array(block)
-    if inv:
-        rule.activate_invalid()
+    # #    inv = block_has_invalid(l_instr)
+    # inv = block_access_array(block)
+    # if inv:
+    #     rule.activate_invalid()
 
     return rule
 
@@ -1419,6 +1419,17 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         for block in blocks:
             #if block.get_start_address() not in to_clone:
                 rule = compile_block(block)
+
+                if svc_labels == "cpa-all" or svc_labels == "verymax-all":
+                    inv = block_has_invalid(block.get_instructions())
+                elif svc_labels == "cpa" or svc_labels == "verymax":
+                    inv = block_access_array(block)
+                else:
+                    inv = False
+                    
+                if inv:
+                    rule.activate_invalid()
+
                 rbr_blocks[rule.get_rule_name()]=[rule]
             
 
