@@ -444,3 +444,12 @@ def store_times(oyente_time,ethir_time):
     fp = csv.writer(f, delimiter=',')
     fp.writerow(["Oyente",oyente_time,"EthIR",ethir_time])
     f.close()
+
+
+def get_public_fields(source_file,arr = True):
+    with open(source_file,"r") as f:
+        lines = f.readlines()
+        good_lines = filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines)
+        fields = map(lambda x: x.split()[-1].strip(";"),good_lines)
+    f.close()
+    return fields
