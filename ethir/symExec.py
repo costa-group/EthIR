@@ -26,7 +26,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map
+from utils import cfg_dot, write_cfg, update_map, get_public_fields
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all
 
@@ -245,6 +245,12 @@ def initGlobalVars():
 
     global scc_unary
     scc_unary = []
+
+    global public_fields
+    public_fields = []
+
+    global getter_blocks
+    getter_blocks = []
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -580,6 +586,12 @@ def write_pattern(key,cname):
         string = tacas_ex+" "+cname+" "+str(key)+"\n"
         f.write(string)
     f.close()
+
+def is_getter_function(path):
+    blocks = map(lambda x: x[0],path)
+    is_getter_function = filter(lambda x: x in blocks,getter_blocks)
+    return len(is_getter_function)>0
+
 def construct_static_edges():
     add_falls_to()  # these edges are static
 
@@ -764,6 +776,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global function_info
     global param_abs
     global scc_unary
+    global getter_blocks
     
     visited = params.visited
     stack = params.stack
@@ -861,9 +874,12 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         else:
             ins = []
         if "ASSERTFAIL " in ins:
-            # print block
+            if is_getter_function(path):
+                vertices[invalid_block].activate_assertfail_in_getter()
+            else:
+                # print block
             #print invalid_block
-            vertices[invalid_block].activate_access_array()
+                vertices[invalid_block].activate_access_array()
     
         #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
@@ -876,11 +892,16 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         vertices[block].set_cost(s0)
         
     if (function_info[0] and jump_type[block] == "conditional"):
-        name = function_info[1]
+        signature = function_info[1]
+        open_idx = signature.find("(")
+        name = signature[:open_idx]
+        ch_block = vertices[block].get_jump_target()
+        if name in public_fields and ch_block not in getter_blocks:
+            getter_blocks.append(ch_block)
         s = vertices[block].get_block_gas()+vertices[pre_block].get_cost()
         vertices[block].set_cost(s)
         
-        function_block_map[name]=(vertices[block].get_jump_target(),s)
+        function_block_map[signature]=(ch_block,s)
 #        function_block_map[name]=vertices[block].get_jump_target()
         function_info = (False,"")
     
@@ -2909,6 +2930,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     global stack_h
     global name
     global tacas_ex
+    global public_fields
                             
     g_disasm_file = disasm_file
     g_source_file = source_file
@@ -2929,6 +2951,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
         debug_info = debug
         
     begin = dtimer()
+
+    if svc:
+        public_fields = get_public_fields(source_file)
 
     analyze(evm_version)
 
