@@ -620,10 +620,10 @@ def abstract_integer(var):
     b,r = is_number(var)
     new_var = ""
     
-    if b and r>4294967296:
-        new_var = "4294967296"
+    if b and r>=4294967296:
+        new_var = "4294967295"
 
-    elif b and r<=4294967296:
+    elif b and r<4294967296:
         new_var = str(r)
     else:
         new_var = var
