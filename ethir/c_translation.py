@@ -987,6 +987,23 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             new = var0+" = "+ get_nondet_svcomp_label()
         else:
             new = var0+" = "+var1+" / "+var2
+
+    elif instr.find("%")!=-1:
+        elems = instr.split("%")
+        arg01 = elems[0].split("=")
+        arg0 = arg01[0].strip()
+        var0 = unbox_variable(arg0)
+
+        arg1 = arg01[1].strip()
+        var1 = unbox_variable(arg1)
+
+        arg2 = elems[1].strip()
+        var2 = unbox_variable(arg2)
+
+        if svcomp == "verymax" or svcomp == "verymax-all":
+            new = var0+" = "+ get_nondet_svcomp_label()
+        else:
+            new = var0+" = "+var1+" % "+var2
                 
     elif len(instr.split("=")) > 1:
         slices = instr.split("=")
