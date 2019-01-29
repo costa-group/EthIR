@@ -93,6 +93,9 @@ class BasicBlock:
     def set_depth_level(self, l):
         if self.depth == -1:
             self.depth = l
+        else:
+            if self.depth < l:
+                self.depth = l
 
     def get_depth_level(self):
         return self.depth
