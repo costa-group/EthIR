@@ -693,8 +693,30 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             new = var0+" = "+ var1 +" & "+var2
 
         check_declare_variable(var0,vars_to_declare)
+
+    elif instr.find("xor(",0)!=-1:
+        elems = instr.split("= xor")
+        arg0 = elems[0].strip()
+        var0 = unbox_variable(arg0)
+
+        arg12_aux = elems[1].strip()[1:-1]
+        arg12 = arg12_aux.split(",")
+
+        arg1 = arg12[0].strip()
+        var1 = unbox_variable(arg1)
+
+        arg2 = arg12[1].strip()
+        var2 = unbox_variable(arg2)
+
+        if svcomp:
+            new = var0+" = "+ get_nondet_svcomp_label()
+        else:
+            new = var0+" = "+ var1 +" ^ "+var2
+
+        check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("or(",0)!=-1:
+        
         elems = instr.split("= or")
         arg0 = elems[0].strip()
         var0 = unbox_variable(arg0)
@@ -727,27 +749,6 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = ~"+ var1
-
-        check_declare_variable(var0,vars_to_declare)
-        
-    elif instr.find("xor(",0)!=-1:
-        elems = instr.split("= xor")
-        arg0 = elems[0].strip()
-        var0 = unbox_variable(arg0)
-
-        arg12_aux = elems[1].strip()[1:-1]
-        arg12 = arg12_aux.split(",")
-
-        arg1 = arg12[0].strip()
-        var1 = unbox_variable(arg1)
-
-        arg2 = arg12[1].strip()
-        var2 = unbox_variable(arg2)
-
-        if svcomp:
-            new = var0+" = "+ get_nondet_svcomp_label()
-        else:
-            new = var0+" = "+ var1 +" ^ "+var2
 
         check_declare_variable(var0,vars_to_declare)
         
