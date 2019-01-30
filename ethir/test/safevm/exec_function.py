@@ -36,17 +36,22 @@ def cpa(name, block):
     return result.split(".")[0]
 
 
-def verymax(name, block):
+def verymax(name):
     
     FNULL = open(os.devnull, 'w')
-    cmd = "/home/cav/Systems/verymax" + "/tmp/costabs/"+name
+    cmd = "/home/pablo/Descargas/verymax-safety "+"/tmp/costabs/"+name+".c" 
     result = subprocess.Popen([cmd], stdout = subprocess.PIPE,stderr = FNULL, shell = True)
     a = result.communicate()[0].decode()
     lines = a.split("\n")
-    for l in lines:
-        if l.startswith("Verification result:"):
-            result = l
-    print result
+    for l in lines[-8:]:
+        if l.startswith("<result"):
+            result = l.split()[1]
+    if result == "yes":
+        result = "TRUE"
+    else:
+        result = "FALSE"
+        
+    return result
     
 if __name__ == '__main__':
 
@@ -73,7 +78,8 @@ if __name__ == '__main__':
                     print "\t"+r+"\n"
         else:
             print "Starting SAFEVM with VeryMax\n"
-            print "AQUI VeryMax"
+            r = verymax(cname)
+            print "Verification result: "+r
     else:
         print "Error during the decompilation process"
 
