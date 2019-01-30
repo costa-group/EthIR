@@ -42,23 +42,28 @@ else if ($size == 6) then
     set file_name = $argv[1]
     set verifier = $argv[2]
     set contract = $argv[4]
-    set function = $arv[6]
+    set function = $argv[6]
     set v=`echo $verifier | cut -c 2-`
     # echo $file_name
     # echo $v
     # echo $contract
+    # echo $function
     #set file_name = /home/tacas19/Desktop/examples/pot_tacas19.sol
 
-    if ($v == "cpa" || $v == "cpa-all") then
-           python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -c -v $v
-           python exec_function.py $contract $v $function
+    if (($argv[3]:q == "-c") && ($argv[5]:q == "-f")) then    
+        if ($v == "cpa" || $v == "cpa-all") then
+                   python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -c -v $v
+                   python exec_function.py $contract $v $function
 
-    else if ($v == "verymax" || $v == "verymax-all") then
-           python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -g -c -v $v         
-           python exec_function.py $contract $v $function
+        else if ($v == "verymax" || $v == "verymax-all") then
+                   python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -g -c -v $v         
+                   python exec_function.py $contract $v $function
 
+        else
+                   echo "Verifier flag not supported"
+        endif
     else
-       echo "Verifier flag not supported"
+        echo "Flags "$argv[3]" or "$argv[5]" not defined. Use -c"
     endif
 else
     echo "Incorrect number of arguments."

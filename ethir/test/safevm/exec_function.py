@@ -70,14 +70,24 @@ if __name__ == '__main__':
     if decompilation_correct:
         blocks = get_num_blocks(cname)
         if verifier == "cpa" or verifier == "cpa-all":
-            print "Starting SAFEVM with CPAChecker\n"
+            print "\nStarting SAFEVM with CPAChecker\n"
             if option == "all":
                 for b in blocks:
                     print "Analyzing "+str(b[0])
                     r = cpa(cname,b[1])
                     print "\t"+r+"\n"
+            else:
+                f = option
+                bs = filter(lambda x: x[0].startswith(f+"("),blocks)
+
+                if bs == []:
+                    print "The function specified does not exist in the contract "+cname
+                else:
+                    print "Analyzing "+f
+                    r = cpa(cname,bs[0][1])
+                    print "\t"+r+"\n"
         else:
-            print "Starting SAFEVM with VeryMax\n"
+            print "\nStarting SAFEVM with VeryMax\n"
             r = verymax(cname)
             print "Verification result: "+r
     else:
