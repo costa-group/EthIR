@@ -1,0 +1,67 @@
+#!/bin/csh
+
+set ETHIRPATH = /home/pablo/Repositorios/ethereum/oyente-cost/ethir
+set size = ${#argv}
+
+if ($size == 4) then
+    set file_name = $argv[1]
+    set verifier = $argv[2]
+    set contract = $argv[4]
+
+    set v=`echo $verifier | cut -c 2-`
+    # echo $file_name
+    # echo $v
+    # echo $contract
+    #set file_name = /home/tacas19/Desktop/examples/pot_tacas19.sol
+
+    if ($argv[3]:q == "-c") then
+
+        if ($v == "cpa" || $v == "cpa-all") then
+               python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -c -v $v
+               python exec_function.py $contract $v all
+
+        else if ($v == "verymax" || $v == "verymax-all") then
+               python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -g -c -v $v         
+               python exec_function.py $contract $v all
+
+        else
+               echo "Verifier flag not supported"
+        endif
+
+    else
+        echo "Flag "$argv[3]" not defined. Use -c"
+    endif
+        
+    # if (-e /tmp/costabs/$contract_name"_saco.rbr") then
+    #         python $ETHIRPATH/test/exec_contract_user.py $file_name $contract_name"_saco.rbr"
+    # else
+    #     echo "ERROR: The solidity file does not contain the contract "$contract_name
+    # endif
+
+else if ($size == 6) then
+    set file_name = $argv[1]
+    set verifier = $argv[2]
+    set contract = $argv[4]
+    set function = $arv[6]
+    set v=`echo $verifier | cut -c 2-`
+    # echo $file_name
+    # echo $v
+    # echo $contract
+    #set file_name = /home/tacas19/Desktop/examples/pot_tacas19.sol
+
+    if ($v == "cpa" || $v == "cpa-all") then
+           python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -c -v $v
+           python exec_function.py $contract $v $function
+
+    else if ($v == "verymax" || $v == "verymax-all") then
+           python $ETHIRPATH/oyente-ethir.py -s /home/pablo/Repositorios/ethereum/oyente-cost/examples/$file_name -cfg -g -c -v $v         
+           python exec_function.py $contract $v $function
+
+    else
+       echo "Verifier flag not supported"
+    endif
+else
+    echo "Incorrect number of arguments."
+    echo "The format required is ./gastap_contract /home/tacas19/Desktop/examples/pot_tacas19.sol EthereumPot"
+    
+endif
