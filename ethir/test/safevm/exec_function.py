@@ -64,14 +64,15 @@ if __name__ == '__main__':
 
     if decompilation_correct:
         blocks = get_num_blocks(cname)
-        print "Starting SAFEVM with CPAChecker\n"
         if verifier == "cpa" or verifier == "cpa-all":
+            print "Starting SAFEVM with CPAChecker\n"
             if option == "all":
                 for b in blocks:
                     print "Analyzing "+str(b[0])
                     r = cpa(cname,b[1])
                     print "\t"+r+"\n"
         else:
+            print "Starting SAFEVM with VeryMax\n"
             print "AQUI VeryMax"
     else:
         print "Error during the decompilation process"
