@@ -12,7 +12,7 @@ import csv
 import re
 import difflib
 import six
-from z3 import *
+#from z3 import *
 #from z3.z3util import get_vars
 
 from dot_tree import Tree, build_tree
@@ -34,7 +34,9 @@ def isAllReal(*args):
 
 def to_symbolic(number):
     if isReal(number):
-        return BitVecVal(number, 256)
+        # print number
+        # print BitVecVal(number, 256)
+        return number#BitVecVal(number, 256)
     return number
 
 def to_unsigned(number):
