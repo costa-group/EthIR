@@ -34,8 +34,8 @@ class BasicBlock:
         self.transitive_mstore = False
         self.access_array = False
         self.assertfail_in_getter = False
-
-        
+        self.stacks_old = []
+    
     def get_start_address(self):
         return self.start
 
@@ -357,6 +357,16 @@ class BasicBlock:
 
     def activate_assertfail_in_getter(self):
         self.assertfail_in_getter = True
+
+
+    def add_stack(self,s):
+        s_aux = filter(lambda x: isinstance(x,int),s)
+        if not(s_aux in self.stacks_old):
+            self.stacks_old.append(s_aux)
+
+    def known_stack(self,s):
+        s_aux = filter(lambda x: isinstance(x,int),s)
+        return (s_aux in self.stacks_old)
         
     def copy(self):
         
