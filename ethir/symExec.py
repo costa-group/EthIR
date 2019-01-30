@@ -2421,12 +2421,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
         raise Exception('UNKNOWN INSTRUCTION: ' + opcode)
 
 
-def access_array_sim(opcode,fake_stack):
+def access_array_sim(opcode_ins,fake_stack):
     end = False
     # print "BEGIN"
     # print opcode
     # print fake_stack
-    if opcode.startswith("ADD",0):
+    opcode = opcode_ins.strip()
+    
+    if opcode == "ADD":
         if len(fake_stack)>1:
             elem1 = fake_stack.pop(0)
             elem2 = fake_stack.pop(0)
@@ -2772,7 +2774,7 @@ def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 60
+        global_params.GLOBAL_TIMEOUT = 360
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
