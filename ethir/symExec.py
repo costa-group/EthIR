@@ -1,5 +1,6 @@
 import tokenize
-import zlib, base64
+#import zlib, base64
+import base64
 from tokenize import NUMBER, NAME, NEWLINE
 import re
 import math
@@ -212,9 +213,6 @@ def initGlobalVars():
     global blocks_to_clone
     blocks_to_clone = []
 
-    global indirect_jump
-    indirect_jump = {}
-
     global procesed_indirect_jumps
     procesed_indirect_jumps = {}
 
@@ -309,9 +307,7 @@ def build_cfg_and_analyze(evm_version):
 
     delete_uncalled()
     update_block_info()
-#    print_cfg()
-    #print stack_h
-    #print calldataload_values
+
 
 #Added by Pablo Gordillo
 def update_block_info():
@@ -376,8 +372,6 @@ def propagate_mstore_unknown(block_addr,visited):
             visited.append(falls)
             propagate_mstore_unknown(falls,visited)
 
-
-        
 #Added by Pablo Gordillo
 def print_cfg():
     vert = sorted(vertices.values(), key = getKey)
@@ -789,6 +783,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     analysis = params.analysis
     calls = params.calls
     param_abs = ("","")
+
+    vertices[block].add_stack(list(stack))
     
     if debug_info:
         print ("\nBLOCK "+ str(block))
@@ -855,11 +851,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if debug_info:
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
-            # print len(stack)
 
     if result:
-        # print "SI"
-#        print pre_block
+
         falls = vertices[pre_block].get_falls_to()
         jump = vertices[pre_block].get_jump_target()
         invalid_block = 0
@@ -877,11 +871,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
-                # print block
-            #print invalid_block
+
                 vertices[invalid_block].activate_access_array()
     
-        #old_stack_h = len(stack)
     # Mark that this basic block in the visited blocks
     visited.append(block)
     depth += 1
@@ -930,28 +922,30 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             
             vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
             proc = procesed_indirect_jumps.get(successor,[])
+
             if ((block,successor) not in path):
-                if potential_jump:
-                    potential_jump = False
+                # if potential_jump:
+                #     potential_jump = False
                 path.append((block,successor))
                 sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
                 procesed_indirect_jumps = update_map(procesed_indirect_jumps,block,successor)
                 path.pop()
             else : #the pair is in the path
-                if not potential_jump:
-                    potential_jump = True
+                if not(vertices[successor].known_stack(list(stack))):
+                # if not potential_jump:
+                #     potential_jump = True
                     path.append((block,successor))
                     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
                     path.pop()
-                else:
+                # else:
             
-                    potential_jump = False
-                    if not(vertices[successor].is_direct_block()):
-                        #print "ENTRARIA con"+str(successor)
-                        if stack[indirect_jump[successor]] not in proc:
-                            path.append((block,successor))
-                            sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-                            path.pop()
+                #     potential_jump = False
+                #     if not(vertices[successor].is_direct_block()):
+                #         print "ENTRARIA con"+str(successor)
+                #         if stack[indirect_jump[successor]] not in proc:
+                #             path.append((block,successor))
+                #             sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                #             path.pop()
                     #if stack[indirect_jump[successor]] not in proc:
                     
         else:
@@ -1623,27 +1617,27 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             global_state["pc"] = global_state["pc"] + 1
             s0 = stack.pop(0)
             s1 = stack.pop(0)
-            if isAllReal(s0, s1):
-                # simulate the hashing of sha3
-                data = [str(x) for x in memory[s0: s0 + s1]]
-                position = ''.join(data)
-                position = re.sub('[\s+]', '', position)
-                position = zlib.compress(six.b(position), 9)
-                position = base64.b64encode(position)
-                position = position.decode()
-                if position in sha3_list:
-                    stack.insert(0, sha3_list[position])
-                else:
-                    new_var_name = gen.gen_arbitrary_var()
-                    new_var = BitVec(new_var_name, 256)
-                    sha3_list[position] = new_var
-                    stack.insert(0, new_var)
-            else:
+            # if isAllReal(s0, s1):
+            #     # simulate the hashing of sha3
+            #     data = [str(x) for x in memory[s0: s0 + s1]]
+            #     position = ''.join(data)
+            #     position = re.sub('[\s+]', '', position)
+            #     position = zlib.compress(six.b(position), 9)
+            #     position = base64.b64encode(position)
+            #     position = position.decode()
+            #     if position in sha3_list:
+            #         stack.insert(0, sha3_list[position])
+            #     else:
+            #         new_var_name = gen.gen_arbitrary_var()
+            #         new_var = BitVec(new_var_name, 256)
+            #         sha3_list[position] = new_var
+            #         stack.insert(0, new_var)
+            # else:
                 # push into the execution a fresh symbolic variable
-                new_var_name = gen.gen_arbitrary_var()
-                new_var = BitVec(new_var_name, 256)
+            new_var_name = gen.gen_arbitrary_var()
+            new_var = BitVec(new_var_name, 256)
                 # path_conditions_and_vars[new_var_name] = new_var
-                stack.insert(0, new_var)
+            stack.insert(0, new_var)
         else:
             raise ValueError('STACK underflow')
     #
@@ -2101,22 +2095,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
     elif opcode == "JUMP":
         if len(stack) > 0:
             target_address = stack.pop(0)
-            # if isSymbolic(target_address):
-            #     try:
-            #         target_address = int(str(simplify(target_address)))
-            #     except:
-            #         raise TypeError("Target address must be an integer")
+
             vertices[block].set_jump_target(target_address)
-            #print vertices[block].is_direct_block()
-            if not(vertices[block].is_direct_block()):
-                # vertices[block].display()
-                # print stack_first
-                try:
-                    idx = stack_first.index(target_address)
-                    indirect_jump[block] = idx
-                except:
-                    #the push is generated in this block
-                    pass
+
             if target_address not in edges[block]:
                 edges[block].append(target_address)
         else:
@@ -2963,15 +2944,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     print("Build CFG: "+str(end-begin)+"s")
     
     check_cfg_option(cfg,cname,execution)
-
-    # for e in vertices.values():
-    #     a = e.get_access_array()
-    #     if a:
-    #         print e.get_start_address()
-    
+        
     compute_cloning(blocks_to_clone,vertices,stack_h)
-    
-    
+ 
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
