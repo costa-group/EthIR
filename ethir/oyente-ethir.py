@@ -136,21 +136,26 @@ def analyze_bytecode():
 def run_solidity_analysis(inputs,hashes):
     results = {}
     exit_code = 0
-
+    returns = []
+    
     i = 0
     r = check_cv_dependency()
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
-        # try:
+        # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+        try:
 
-        #     result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
             
-        # except:
-        #     result = []
-        #     return_code = -1
-        #     print ("\n Exception \n")
+        except Exception as e:
+            if len(e.args)>2:
+                return_code = e.args[1]
+            else:
+                return_code = -1
+            result = []
+            #return_code = -1
+            print ("\n Exception \n")
         if return_code == 1:
             exit_code = 1
     elif len(inputs)>1 and r:
@@ -158,15 +163,21 @@ def run_solidity_analysis(inputs,hashes):
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
-            # try:            
-            #     result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
-
-            # except:
-            #     result = []
-            #     return_code = -1
-            #     print ("\n Exception \n")
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+            try:            
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+                
+            except Exception as e:
+                if len(e.args)>1:
+                    return_code = e.args[1]
+                else:
+                    return_code = -1
+                    
+                result = []
+                # return_code = -1
+                print ("\n Exception \n")
+            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
             i+=1
+            returns.append(return_code)
             try:
                 c_source = inp['c_source']
                 c_name = inp['c_name']
@@ -179,6 +190,12 @@ def run_solidity_analysis(inputs,hashes):
     else:
         exit_code = -1
         print("Option Error: --verify option is only applied to c translation.\n")
+
+
+    if (-2 in returns) and (-1 not in returns):
+        exit_code = -2
+    elif (-1 in returns) and (-2 not in returns):
+        exit_code = -1
         
     return results, exit_code
 
@@ -329,9 +346,10 @@ def main():
         
     else:
         exit_code = analyze_solidity()
-
     six.print_("The files generated by EthIR are stored in the following directory: "+rbr_dir)
+
     exit(exit_code)
+    
 
 if __name__ == '__main__':
     main()
