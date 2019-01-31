@@ -595,8 +595,6 @@ def annotate_invalid(path):
     blocks = map(lambda x: x[0], path)
     functions_blocks = function_block_map.values()
     bs = map(lambda x: x[0], functions_blocks)
-    print bs
-    print blocks
     annotate_invalids = filter(lambda x: x in bs,blocks)
 
     if len(annotate_invalids)>0 and (annotate_invalids[0] not in has_invalid):
