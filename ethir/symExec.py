@@ -1143,7 +1143,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 # both are real and we need to manually modulus with 2 ** 256
                 # if both are symbolic z3 takes care of modulus automatically
                 computed = (first + second) % (2 ** 256)
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1157,7 +1157,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             elif isSymbolic(first) and isReal(second):
                 second = BitVecVal(second, 256)
             computed = first * second & UNSIGNED_BOUND_NUMBER
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1174,7 +1174,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 computed = first - second
             else:
                 computed = (first - second) % (2 ** 256)
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1200,7 +1200,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 # else:
                 computed = UDiv(first, second)
                 #solver.pop()
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1242,7 +1242,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                         solver.pop()
                     solver.pop()
                 solver.pop()
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1272,7 +1272,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 computed = URem(first, second)
                 #solver.pop()
 
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1313,7 +1313,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = sign * (first % second)
                 solver.pop()
 
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1343,7 +1343,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = (first + second) % third
                     computed = Extract(255, 0, computed)
                 solver.pop()
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1373,7 +1373,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = URem(first * second, third)
                     computed = Extract(255, 0, computed)
                 solver.pop()
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1390,7 +1390,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 # not supported in bit-vector theory
                 new_var_name = gen.gen_arbitrary_var()
                 computed = BitVec(new_var_name, 256)
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1425,7 +1425,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                 computed = second & ((1 << signbit_index_from_right) - 1)
                 #     solver.pop()
                 # solver.pop()
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1446,7 +1446,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = 0
             else:
                 computed = If(ULT(first, second), BitVecVal(1, 256), BitVecVal(0, 256))
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1464,7 +1464,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = 0
             else:
                 computed = If(UGT(first, second), BitVecVal(1, 256), BitVecVal(0, 256))
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1482,7 +1482,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = 0
             else:
                 computed = If(first < second, BitVecVal(1, 256), BitVecVal(0, 256))
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1500,7 +1500,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = 0
             else:
                 computed = If(first > second, BitVecVal(1, 256), BitVecVal(0, 256))
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1516,7 +1516,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = 0
             else:
                 computed = If(first == second, BitVecVal(1, 256), BitVecVal(0, 256))
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1534,7 +1534,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = 0
             else:
                 computed = If(first == 0, BitVecVal(1, 256), BitVecVal(0, 256))
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1544,7 +1544,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             first = stack.pop(0)
             second = stack.pop(0)
             computed = first & second
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1555,7 +1555,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             second = stack.pop(0)
 
             computed = first | second
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
 
         else:
@@ -1567,7 +1567,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             second = stack.pop(0)
 
             computed = first ^ second
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
 
         else:
@@ -1577,7 +1577,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             computed = (~first) & UNSIGNED_BOUND_NUMBER
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -1605,7 +1605,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     computed = second & (255 << (8 * byte_index))
                     computed = computed >> (8 * byte_index)
                 #solver.pop()
-            computed = simplify(computed) if is_expr(computed) else computed
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
@@ -2749,13 +2749,13 @@ class Timeout:
        raise TimeoutError(self.error_message)
 
 def do_nothing():
-    raise Exception("Oyente Timeout")
+    raise Exception("Oyente Timeout",-2)
 
 def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 360
+        global_params.GLOBAL_TIMEOUT = 180
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
@@ -2793,7 +2793,7 @@ def analyze(evm_version):
         if global_params.DEBUG_MODE:
             traceback.print_exc()
             print ("Timeout reached")
-        raise Exception("Oyente Timeout")
+        raise Exception("Oyente Timeout",-2)
     
     run_build_cfg_and_analyze(evm_v = evm_version,timeout_cb=timeout_cb)
 
