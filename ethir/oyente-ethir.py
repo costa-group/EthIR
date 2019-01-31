@@ -152,7 +152,7 @@ def run_solidity_analysis(inputs,hashes):
             if len(e.args)>2:
                 return_code = e.args[1]
             else:
-                return_code = -1
+                return_code = 1
             result = []
             #return_code = -1
             print ("\n Exception \n")
@@ -170,7 +170,7 @@ def run_solidity_analysis(inputs,hashes):
                 if len(e.args)>1:
                     return_code = e.args[1]
                 else:
-                    return_code = -1
+                    return_code = 1
                     
                 result = []
                 # return_code = -1
@@ -188,14 +188,14 @@ def run_solidity_analysis(inputs,hashes):
             if return_code == 1:
                 exit_code = 1
     else:
-        exit_code = -1
+        exit_code = 1
         print("Option Error: --verify option is only applied to c translation.\n")
 
 
-    if (-2 in returns) and (-1 not in returns):
-        exit_code = -2
-    elif (-1 in returns) and (-2 not in returns):
-        exit_code = -1
+    if (2 in returns) and (1 not in returns):
+        exit_code = 2
+    elif (1 in returns) and (2 not in returns):
+        exit_code = 1
         
     return results, exit_code
 
