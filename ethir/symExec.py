@@ -2749,7 +2749,7 @@ class Timeout:
        raise TimeoutError(self.error_message)
 
 def do_nothing():
-    raise Exception("Oyente Timeout",-2)
+    raise Exception("Oyente Timeout",2)
 
 def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
@@ -2793,7 +2793,7 @@ def analyze(evm_version):
         if global_params.DEBUG_MODE:
             traceback.print_exc()
             print ("Timeout reached")
-        raise Exception("Oyente Timeout",-2)
+        raise Exception("Oyente Timeout",2)
     
     run_build_cfg_and_analyze(evm_v = evm_version,timeout_cb=timeout_cb)
 
