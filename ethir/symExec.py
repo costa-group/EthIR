@@ -27,7 +27,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields
+from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all
 
@@ -845,6 +845,11 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     # Execute every instruction, one at a time
     try:
         block_ins = vertices[block].get_instructions()
+        block_level = vertices[block].get_depth_level()
+        if block_level > level:
+            current_level = block_level
+        else:
+            current_level = level
         vertices[block].set_depth_level(level)
     except KeyError:
         log.debug("This path results in an exception, possibly an invalid jump address")
@@ -943,24 +948,35 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 
         
         if successor in vertices:
-            
+
             vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
             proc = procesed_indirect_jumps.get(successor,[])
 
-            if ((block,successor) not in path):
-                # if potential_jump:
-                #     potential_jump = False
+            if not(vertices[successor].known_stack(list(stack))):
                 path.append((block,successor))
-                sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+                sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
                 procesed_indirect_jumps = update_map(procesed_indirect_jumps,block,successor)
                 path.pop()
-            else : #the pair is in the path
-                if not(vertices[successor].known_stack(list(stack))):
-                # if not potential_jump:
-                #     potential_jump = True
-                    path.append((block,successor))
-                    sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-                    path.pop()
+            else:
+                if vertices[successor].get_depth_level()<(current_level+1): 
+                    vertices[successor].set_depth_level(current_level+1)
+                    update_depth_level(successor,current_level+1,[])
+                # if ((block,successor) not in path):
+            #     # if potential_jump:
+            #     #     potential_jump = False
+            #     path.append((block,successor))
+            #     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+            #     procesed_indirect_jumps = update_map(procesed_indirect_jumps,block,successor)
+            #     path.pop()
+            # else : #the pair is in the path
+            #     if not(vertices[successor].known_stack(list(stack))):
+            #     # if not potential_jump:
+            #     #     potential_jump = True
+            #         path.append((block,successor))
+            #         sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+            #         path.pop()
+                # else:
+                #     print "PASO"
                 # else:
             
                 #     potential_jump = False
@@ -978,25 +994,36 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 
     elif jump_type[block] == "falls_to":  # just follow to the next basic block
         successor = vertices[block].get_falls_to()
-        
-        vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
 
+        vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
         new_params = params.copy()
         new_params.global_state["pc"] = successor
-        if (((block,successor) not in path)):
-            if potential_jump:
-                potential_jump = False
+        if not(vertices[successor].known_stack(list(stack))):
             path.append((block,successor))
-            sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+            sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
             path.pop()
         else:
-            if not potential_jump:
-                potential_jump = True
-                path.append((block,successor))
-                sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-                path.pop()
-            else:
-                potential_jump = False
+
+            if vertices[successor].get_depth_level()<(current_level+1):
+                vertices[successor].set_depth_level(current_level+1)
+                update_depth_level(successor,current_level+1,[])
+            # if (((block,successor) not in path)):
+        #     if potential_jump:
+        #         potential_jump = False
+        #     path.append((block,successor))
+        #     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+        #     path.pop()
+        # else:
+        #     # if not potential_jump:
+        #     #     potential_jump = True
+        #     if not(vertices[successor].known_stack(list(stack))):
+        #         path.append((block,successor))
+        #         sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
+        #         path.pop()
+        #     # else:
+        #     #     print "PASO"
+        #     # else:
+        #     #     potential_jump = False
     elif jump_type[block] == "conditional":  # executing "JUMPI"
 
         # A choice point, we proceed with depth first search
@@ -1011,21 +1038,28 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         if left_branch in vertices:
             vertices[left_branch].add_origin(block) #to compute which are the blocks that leads to successor
-
-            if (((block,left_branch) not in path)):
-                if potential_jump:
-                    potential_jump = False
+            if not(vertices[left_branch].known_stack(list(stack))):
+            # if (((block,left_branch) not in path)):
+            #     if potential_jump:
+            #         potential_jump = False
                 path.append((block,left_branch))
-                sym_exec_block(new_params, left_branch, block, depth, func_call,level+1,path)
+                sym_exec_block(new_params, left_branch, block, depth, func_call,current_level+1,path)
                 path.pop()
             else:
-                if not potential_jump:
-                    potential_jump = True
-                    path.append((block,left_branch))
-                    sym_exec_block(new_params, left_branch, block, depth, func_call,level+1,path)
-                    path.pop()
-                else:
-                    potential_jump = False
+                if vertices[left_branch].get_depth_level() < (current_level+1):
+                    vertices[left_branch].set_depth_level(current_level+1)
+                    update_depth_level(left_branch,current_level+1,[])
+                # else:
+            #     # if not potential_jump:
+            #     #     potential_jump = True
+            #     if not(vertices[left_branch].known_stack(list(stack))):
+            #         path.append((block,left_branch))
+            #         sym_exec_block(new_params, left_branch, block, depth, func_call,level+1,path)
+            #         path.pop()
+            #     # else:
+            #     #     print "PASO"
+            #     # else:
+            #     #     potential_jump = False
         else:
             if left_branch not in blocks_to_create:
                 blocks_to_create.append(left_branch)
@@ -1053,22 +1087,32 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         #new_params.path_conditions_and_vars["path_condition"].append(negated_branch_expression)
         last_idx = len(new_params.path_conditions_and_vars["path_condition"]) - 1
         #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
+        # print right_branch
+        # print path
+        # print "\n"
         if right_branch in vertices:
-            vertices[right_branch].add_origin(block) #to compute which are the blocks that leads to successor
-            if ((block,right_branch) not in path):
-                if potential_jump:
-                    potential_jump = False
+            vertices[right_branch].add_origin(block)
+            # if ((block,right_branch) not in path):
+            #     if potential_jump:
+            #         potential_jump = False
+            #     path.append((block,right_branch))
+            #     sym_exec_block(new_params, right_branch, block, depth, func_call,level+1,path)
+            #     path.pop()
+            # else:
+            #     # if not potential_jump:
+            #     #     potential_jump = True
+            if not(vertices[right_branch].known_stack(list(stack))):
                 path.append((block,right_branch))
-                sym_exec_block(new_params, right_branch, block, depth, func_call,level+1,path)
+                sym_exec_block(new_params, right_branch, block, depth, func_call,current_level+1,path)
                 path.pop()
+                # else:
+                #     print "PASO"
+                # else:
+                #     potential_jump = False
             else:
-                if not potential_jump:
-                    potential_jump = True
-                    path.append((block,right_branch))
-                    sym_exec_block(new_params, right_branch, block, depth, func_call,level+1,path)
-                    path.pop()
-                else:
-                    potential_jump = False
+                if vertices[right_branch].get_depth_level < (current_level+1):
+                    vertices[right_branch].set_depth_level(current_level+1)
+                    update_depth_level(right_branch,current_level+1,[])
         else:
             if right_branch not in blocks_to_create:
                 blocks_to_create.append(right_branch)
@@ -2426,6 +2470,33 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
         #     exit(UNKNOWN_INSTRUCTION)
         raise Exception('UNKNOWN INSTRUCTION: ' + opcode)
 
+def update_depth_level(b,level,updated,list_jumps = False):
+    # print "BLOCK: "+str(b)+" LEVEL: "+str(level)
+    if b not in updated:
+        updated.append(b)
+        vertices[b].set_depth_level(level)
+        jump = vertices[b].get_jump_target()
+        falls = vertices[b].get_falls_to()
+        l_jumps = vertices[b].get_list_jumps()
+        # print "JUMP: "+str(jump)
+        # print "FALLS: "+str(falls)
+        # print "MAS: "+str(vertices[b].get_list_jumps())
+
+        if not list_jumps:
+            if jump != 0 and vertices[jump].get_depth_level()<(level+1):
+                update_depth_level(jump,level+1,updated)
+
+        else:
+            for l in l_jumps:
+                update_depth_level(l,level+1,updated)
+                    
+        if falls != None and vertices[falls].get_depth_level()<(level+1):
+
+            update_depth_level(falls,level+1,updated)
+        # if jump == 0 and falls == None:
+        #     print "TERMINAL"
+
+    
 
 def access_array_sim(opcode_ins,fake_stack):
     end = False
@@ -2990,9 +3061,20 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     print("Build CFG: "+str(end-begin)+"s")
     
     check_cfg_option(cfg,cname,execution)
+
+    # for e in blocks_to_clone:
+    #     print e.get_start_address()
+    #     print e.get_depth_level()
+
+        
+    blocks2clone = sorted(blocks_to_clone, key = getLevel)
+    for e in blocks2clone:
+        update_depth_level(e.get_start_address(),e.get_depth_level(),[],True)
         
     compute_cloning(blocks_to_clone,vertices,stack_h)
- 
+
+
+    
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
