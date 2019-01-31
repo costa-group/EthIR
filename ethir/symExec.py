@@ -249,6 +249,9 @@ def initGlobalVars():
 
     global getter_blocks
     getter_blocks = []
+
+    global has_invalid
+    has_invalid = []
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -586,6 +589,21 @@ def is_getter_function(path):
     is_getter_function = filter(lambda x: x in blocks,getter_blocks)
     return len(is_getter_function)>0
 
+def annotate_invalid(path):
+    global has_invalid
+    
+    blocks = map(lambda x: x[0], path)
+    functions_blocks = function_block_map.values()
+    bs = map(lambda x: x[0], functions_blocks)
+    annotate_invalids = filter(lambda x: x in bs,blocks)
+    if annotate_invalids[0] not in has_invalid:
+        has_invalid.append(annotate_invalids[0])
+
+def remove_getters_has_invalid():
+    global has_invalid
+
+    has_invalid = filter(lambda x: x not in getter_blocks,has_invalid)
+        
 def construct_static_edges():
     add_falls_to()  # these edges are static
 
@@ -771,6 +789,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global param_abs
     global scc_unary
     global getter_blocks
+
     
     visited = params.visited
     stack = params.stack
@@ -873,7 +892,11 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             else:
 
                 vertices[invalid_block].activate_access_array()
-    
+
+
+    if "ASSERTFAIL " in block_ins:
+        annotate_invalid(path)
+        
     # Mark that this basic block in the visited blocks
     visited.append(block)
     depth += 1
@@ -1099,6 +1122,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
     if opcode == "INVALID":
         return
     elif opcode == "ASSERTFAIL":
+        
         # if g_src_map:
         #     source_code = g_src_map.get_source_code(global_state['pc'])
         #     source_code = source_code.split("(")[0]
@@ -2882,6 +2906,27 @@ def generate_saco_config_file(cname):
         f.write(elems2write)
     f.close()
 
+def generate_verify_config_file(cname):
+    to_write = []
+    remove_getters_has_invalid()
+    if "costabs" not in os.listdir("/tmp/"):
+        os.mkdir("/tmp/costabs/")
+        
+    if cname == None:
+        name = "/tmp/costabs/config_block.config"
+    else:
+        name = "/tmp/costabs/"+cname+".config"
+    with open(name,"w") as f:
+        for elem in function_block_map.items():
+            block_fun = elem[1][0]
+            if block_fun in has_invalid:
+                to_write.append("("+str(elem[0])+";"+str(elem[1][0])+"; YES)")
+            else:
+                to_write.append("("+str(elem[0])+";"+str(elem[1][0])+"; NO)")
+        elems2write = "\n".join(to_write)
+        f.write(elems2write)
+    f.close()
+    
 def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
     if cfg and (not cloned):
         if cname == None:
@@ -2980,7 +3025,10 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
         
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks)
 
-    if saco != None and hashes != None: #Hashes is != None only if source file is solidity
+    if saco != None and hashes != None and svc == None: #Hashes is != None only if source file is solidity
         generate_saco_config_file(cname)
+
+    elif svc:
+        generate_verify_config_file(cname)
 
     return [], 0
