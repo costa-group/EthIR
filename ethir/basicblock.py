@@ -367,6 +367,9 @@ class BasicBlock:
     def known_stack(self,s):
         s_aux = filter(lambda x: isinstance(x,int),s)
         return (s_aux in self.stacks_old)
+
+    def get_stacks(self):
+        return self.stacks_old
         
     def copy(self):
         
