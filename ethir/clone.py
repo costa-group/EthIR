@@ -25,23 +25,29 @@ def init():
 #         push_per_block[bl]=numbers
 #     return push_per_block
 
-def preprocess_push(block,a,blocks_input):    
+def preprocess_push(block,addresses,blocks_input):    
     b_source = blocks_input[block]
     comes_from = b_source.get_comes_from()
+    # print "INI"
+    # print block
+    # print comes_from
+    
     for bl in comes_from:
         b = blocks_input[bl]
-        contains = check_push_block(b,a)
+        contains = check_push_block(b,addresses)
         if contains:
             return block
-        else:
-            return preprocess_push(bl,a,blocks_input)
+       
+    block = preprocess_push(comes_from[0],addresses,blocks_input)
     return block
 
-def check_push_block(block,a):
+def check_push_block(block,addresses):
     instructions = block.get_instructions()
     m = filter(lambda x: x.split()[0][:-1]=="PUSH",instructions)
     numbers = map(lambda x: int(x.split()[1],16),m)
-    if a in numbers :
+    end_list = filter(lambda x: x in numbers,addresses)
+    # if a in numbers :
+    if len(end_list)>0:
         return True
     else:
         return False
@@ -50,6 +56,8 @@ def compute_push_blocks(pre_block,address,blocks_input):
     b_source = blocks_input[pre_block]
     comes_from = b_source.get_comes_from()
     push_blocks = {}
+    #print comes_from
+    #print address
     if len(comes_from)!=len(address):
         print ("Error while looking for push blocks")
     else:
@@ -61,11 +69,31 @@ def compute_push_blocks(pre_block,address,blocks_input):
             push_address = filter(lambda x: x in numbers,address)
             if push_address != []:
                 push_blocks[b]=numbers
+
+            else:
+                n_ins = search_push_blocks(b,address,blocks_input)
+                push_blocks[b] = n_ins
             # else:
             #     print pre_block
             #     print("ERROR while cloning")
     return push_blocks
-    
+
+def search_push_blocks(pre_block,address,blocks_input):
+    b_source = blocks_input[pre_block]
+    comes_from = b_source.get_comes_from()
+
+    for b in comes_from:
+        block = blocks_input[b]
+        instructions = block.get_instructions()
+        m = filter(lambda x: x.split()[0][:-1]=="PUSH",instructions)
+        numbers = map(lambda x: int(x.split()[1],16),m)
+        push_address = filter(lambda x: x in numbers,address)
+        if push_address != []:
+            return numbers
+
+        else:
+            return search_push_blocks(b,address,blocks_input)
+
 def get_push_block(m_blocks,address):
     block = -1
     for l in m_blocks:
@@ -294,15 +322,20 @@ def clone(block, blocks_input):
     #to_delete = pred[:]
     
     address = block.get_list_jumps()
+    # print uncond_block
+    # print address
+    # print "**************"
     n_clones = len(address)
     
     #source_path = pred[-1]
 
-    b = preprocess_push(uncond_block,address[0],blocks_dict)
-    
+    b = preprocess_push(uncond_block,address,blocks_dict)
+    # print "PRE"
+    # print b
     in_blocks = compute_push_blocks(b,address,blocks_dict)
+    #print in_blocks
     #cloned_blocks = cloned_blocks+pred
-    
+    #print in_blocks
     to_delete = []
     cloned = []
     i = 0
@@ -526,6 +559,12 @@ def compute_cloning(blocks_to_clone,blocks_input,stack_info):
     stack_index = stack_info
     
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
+
+    # print "AQUI"
+    # for e in blocks2clone:
+    #     print e.get_start_address()
+    #     print e.get_depth_level()
+
     for b in blocks2clone:
         clone(b,blocks_dict)
 
