@@ -311,11 +311,15 @@ def clone(block, blocks_input):
 
         #clonar
         a = address[i]
-        # print "ESTO ES LO QUE CALCULA"
-        # print a
-        # print in_blocks
+        print "ESTO ES LO QUE CALCULA"
+        print a
+        print in_blocks
+        print "CLONANDO"
+        print uncond_block
+        print b
         push_block = get_push_block(in_blocks,a)
 
+        print push_block
         stack_in = stack_index[push_block][1]
         #print "EMPIEZA"
 
@@ -438,6 +442,7 @@ def  clone_block(block_address, push_block, end_address, blocks_input, idx, stac
        # block_dup.display()
         if block_address not in to_delete:
             to_delete.append(block_address)
+  
 
 def clone_child(block_dup,jumps_to,falls_to,idx,push_block,end_address,blocks_input,stack_out,to_delete,cloned,pred):
     t =  block_dup.get_block_type()
@@ -473,16 +478,31 @@ def clone_child(block_dup,jumps_to,falls_to,idx,push_block,end_address,blocks_in
 def clone_last_block(block_address, a, push_block, blocks_input,idx,cloned):
     global stack_index
 
+    if block_address == 16917:
+        print "\nSISISI"
+        print block_address
+        print a
+        print push_block
+        print "************\n"
+    
     block = blocks_input[block_address]
     block_dup = block.copy()
     comes_from = block.get_comes_from()
-    pred_old = comes_from[0]
+
+    if push_block in comes_from:
+        pred_old = push_block
+
+    else:
+        pred_old = comes_from[0]
+    
+    # pred_old = comes_from[0]
     if pred_old in cloned:
         pred = str(pred_old)+"_"+str(idx)
     else:
         pred = pred_old
 
-    
+    print pred
+    print "**************\n"
     stack_in = stack_index[pred][1]
     stack_out = get_stack_evol(block_dup,stack_in)
 
