@@ -311,15 +311,15 @@ def clone(block, blocks_input):
 
         #clonar
         a = address[i]
-        print "ESTO ES LO QUE CALCULA"
-        print a
-        print in_blocks
-        print "CLONANDO"
-        print uncond_block
-        print b
+        # print "ESTO ES LO QUE CALCULA"
+        # print a
+        # print in_blocks
+        # print "CLONANDO"
+        # print uncond_block
+        # print b
         push_block = get_push_block(in_blocks,a)
 
-        print push_block
+        # print push_block
         stack_in = stack_index[push_block][1]
         #print "EMPIEZA"
 
@@ -477,13 +477,6 @@ def clone_child(block_dup,jumps_to,falls_to,idx,push_block,end_address,blocks_in
 
 def clone_last_block(block_address, a, push_block, blocks_input,idx,cloned):
     global stack_index
-
-    if block_address == 16917:
-        print "\nSISISI"
-        print block_address
-        print a
-        print push_block
-        print "************\n"
     
     block = blocks_input[block_address]
     block_dup = block.copy()
@@ -501,8 +494,6 @@ def clone_last_block(block_address, a, push_block, blocks_input,idx,cloned):
     else:
         pred = pred_old
 
-    print pred
-    print "**************\n"
     stack_in = stack_index[pred][1]
     stack_out = get_stack_evol(block_dup,stack_in)
 
