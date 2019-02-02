@@ -34,6 +34,7 @@ class BasicBlock:
         self.transitive_mstore = False
         self.access_array = False
         self.assertfail_in_getter = False
+        self.div_invalid_pattern = False
         self.stacks_old = []
     
     def get_start_address(self):
@@ -358,7 +359,15 @@ class BasicBlock:
     def activate_assertfail_in_getter(self):
         self.assertfail_in_getter = True
 
+    def get_div_invalid_pattern(self):
+        return self.div_invalid_pattern
 
+    def set_div_invalid_pattern(self,val):
+        self.div_invalid_pattern = val
+
+    def activate_div_invalid_pattern(self):
+        self.div_invalid_pattern = True
+    
     def add_stack(self,s):
         s_aux = filter(lambda x: isinstance(x,int),s)
         if not(s_aux in self.stacks_old):
@@ -395,6 +404,7 @@ class BasicBlock:
         new_obj.set_unknown_mstore(self.unknown_mstore)
         new_obj.set_trans_mstore(self.transitive_mstore)
         new_obj.set_access_array(self.access_array)
+        new_obj.set_div_invalid_pattern(self.div_invalid_pattern)
         new_obj.set_assertfail_in_getter(self.assertfail_in_getter)
         return new_obj
 
