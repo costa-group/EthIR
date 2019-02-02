@@ -1226,7 +1226,9 @@ def block_has_invalid(block):
     
 def block_access_array(block):
     return block.get_access_array()
-    
+
+def block_div_invalid(block):
+    return block.get_div_invalid_pattern()
 '''
 It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
@@ -1427,6 +1429,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                     inv = block_has_invalid(block)
                 elif svc_labels == "cpa" or svc_labels == "verymax":
                     inv = block_access_array(block)
+                # elif #option:
+                #     inv = block_div_invalid(block)
                 else:
                     inv = False
                     
