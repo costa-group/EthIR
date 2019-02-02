@@ -555,12 +555,32 @@ def construct_bb():
         ins_aux = block.get_instructions()[:-2]
         if len(ins_aux)>=len(pattern):
             ins = map(lambda x: x.strip(),ins_aux)
-            p = check_pattern(ins)
+            p = check_string_pattern(ins)
             if p :
                 block.activate_string_getter()
                 #write_pattern(key,name)
+
+def check_div_invalid_pattern(block):
+    div_pattern = ["DUP2","ISZERO","ISZERO","PUSH","JUMPI"]
+    instructions = vertices[block].get_instructions()[-5:]
+    end = len(div_pattern)
+    if len(instructions)>=end:
+        pattern = True
+        for i in range(end):
+            pattern = pattern and instructions[i].startswith(div_pattern[i])
+            i = i+1
+        if pattern:
+            jump = vertices[block].get_jump_target()
+            falls = vertices[block].get_falls_to()
+
+            jumps_instr = vertices[jump].get_instructions()
+            falls_instr = vertices[falls].get_instructions()
+            
+            if (falls_instr[0].startswith("ASSERTFAIL")) and (jumps_instr[1].startswith("DIV")):
+                vertices[falls].activate_div_invalid_pattern()
     
-def check_pattern(instructions):
+                
+def check_string_pattern(instructions):
     pat = False
     if instructions[0] == pattern[0]:
         i = 1
@@ -803,7 +823,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     analysis = params.analysis
     calls = params.calls
     param_abs = ("","")
-
+    
     vertices[block].add_stack(list(stack))
     
     if debug_info:
@@ -902,6 +922,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     if "ASSERTFAIL " in block_ins:
         annotate_invalid(path)
+
+
+    check_div_invalid_pattern(block)
         
     # Mark that this basic block in the visited blocks
     visited.append(block)
