@@ -75,6 +75,17 @@ def clean_dir():
             if last in ext:
                 os.remove("/tmp/costabs/"+elem)
 
+
+'''
+The flag -i has to be used with the flag -v
+'''            
+def check_vi_dependency():
+    if args.verify == None:
+
+        return not args.invalid
+    else:
+        return True
+                
 '''
 The flag -v has to be used with the flag -c
 '''
@@ -89,11 +100,18 @@ The flag -g has to be used with the flag -c
 '''    
 def check_cg_dependency():
     if args.cfile == False:
-        return not args.verify
+        return not args.goto
     else:
         return True
-    
-                
+
+
+def check_c_translation_dependencies():
+    r = check_cv_dependency()
+    r = r and check_vi_dependency()
+    r = r and check_cg_dependency()
+
+    return r
+
 #Added by Pablo Gordillo 
 '''
 We believe that source is a dissasembly evm file
@@ -101,12 +119,19 @@ We believe that source is a dissasembly evm file
 def analyze_disasm_bytecode():
     global args
 
-    r = check_cv_dependency()
+    r = check_c_translation_dependencies()
+    
     if r:
-        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+        svc_options={}
+        if args.verify:
+            svc_options["verify"]=args.verify
+        if args.invalid:
+            svc_options["invalid"]=args.invalid
+            
+        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
     else:
         exit_code = -1
-        print("Option Error: --verify option is only applied to c translation.\n")
+        print("Option Error: --verify, --goto or --invalid options are only applied to c translation.\n")
     if global_params.WEB:
         six.print_(json.dumps(result))
 
@@ -121,9 +146,16 @@ def analyze_bytecode():
     y = dtimer()
     print("Compilation time: "+str(y-x)+"s")
 
-    r = check_cv_dependency()
+    r = check_c_translation_dependencies()
+    
     if r:
-        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+        svc_options={}
+        if args.verify:
+            svc_options["verify"]=args.verify
+        if args.invalid:
+            svc_options["invalid"]=args.invalid
+        
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -139,14 +171,20 @@ def run_solidity_analysis(inputs,hashes):
     returns = []
     
     i = 0
-    r = check_cv_dependency()
+    r = check_c_translation_dependencies()
+    svc_options={}
+    if args.verify:
+        svc_options["verify"]=args.verify
+    if args.invalid:
+        svc_options["invalid"]=args.invalid
+
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
-        # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+        # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
 
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             
         except Exception as e:
             if len(e.args)>2:
@@ -164,7 +202,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
                 
             except Exception as e:
                 if len(e.args)>1:
@@ -175,7 +213,7 @@ def run_solidity_analysis(inputs,hashes):
                 result = []
                 # return_code = -1
                 print ("\n Exception \n")
-            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=args.verify,go = args.goto)
+            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             i+=1
             returns.append(return_code)
             try:
@@ -272,7 +310,8 @@ def main():
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
-    parser.add_argument("-v", "--verify",             help="Enable sv-comp labels in C code. Applies abstraction depending on the verifier (CPAchecker or VeryMax). Use with -c flag", choices = ["cpa-all","verymax-all","cpa","verymax"])
+    parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker or VeryMax). Use with -c flag", choices = ["cpa","verymax"])
+    parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with -c flag", choices = ["array","div0","all"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
