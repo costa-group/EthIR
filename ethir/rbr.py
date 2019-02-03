@@ -1395,7 +1395,19 @@ def component_update_fields(rule,component):
         for elem_c in component[block]:
             component_update_fields_block(elem_c,(fields,bc,local))#local)
 
-    
+
+def check_invalid_options(block,invalid_options):
+    if invalid_options == "all":
+        inv = block_has_invalid(block)
+    elif invalid_options == "array":
+        inv = block_access_array(block)
+    elif invalid_options == "div":
+        inv = block_div_invalid(block)
+    else:
+        inv = False
+
+    return inv
+            
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 -blocks_input contains a list with the blocks of the CFG. basicblock.py instances.
@@ -1418,21 +1430,21 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     begin = dtimer()
     blocks_dict = blocks_input
     vertices = blocks_input
-    
+
+    if svc_labels.get("verify",False):
+        invalid_options = svc_labels.get("invalid",False)
+        if not(invalid_options):
+            invalid_options = "all"
+    else:
+        invalid_options = False
+
     if blocks_dict and stack_info:
         blocks = sorted(blocks_dict.values(), key = getKey)
         for block in blocks:
             #if block.get_start_address() not in to_clone:
                 rule = compile_block(block)
 
-                if svc_labels == "cpa-all" or svc_labels == "verymax-all":
-                    inv = block_has_invalid(block)
-                elif svc_labels == "cpa" or svc_labels == "verymax":
-                    inv = block_access_array(block)
-                # elif #option:
-                #     inv = block_div_invalid(block)
-                else:
-                    inv = False
+                inv = check_invalid_options(block,invalid_options)
                     
                 if inv:
                     rule.activate_invalid()
