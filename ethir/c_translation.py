@@ -23,7 +23,10 @@ pattern = ["PUSH1",
                    "DIV"]
 
 global svcomp
-svcomp = False
+svcomp = {}
+
+global verifier
+verifier = ""
 
 global exit_tag
 exit_tag = 0
@@ -39,11 +42,13 @@ blocks2init = []
 
 def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global svcomp
+    global verifier
     global init_globals
     global blocks2init
     
     svcomp = svc_labels
-
+    verifier = svc_labels.get("verify","")
+    
     begin = dtimer()
 
     if fbm != []:
@@ -55,7 +60,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     else:
         heads, new_rules = rbr2c_recur(rbr)
 
-    if svcomp:
+    if svcomp!={}:
         head_c , rule = initialize_globals(rbr)
         heads = "\n"+head_c+heads
         new_rules.append(rule)
@@ -214,7 +219,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
     body = "\n".join(new_instructions)
 
     init_loop_label = "  init_loop_"+str(id_loop)+":\n"
-    if rule.has_invalid() and svcomp:
+    if rule.has_invalid() and svcomp!={}:
         label = get_error_svcomp_label()+";\n"
     else:
         label = ""
@@ -590,14 +595,14 @@ def process_rule_c(rule):
     new_instructions = map(lambda x: "\t"+x,new_instructions)
     body = "\n".join(new_instructions)
 
-    if rule.has_invalid() and svcomp:
+    if rule.has_invalid() and svcomp!={}:
         label = get_error_svcomp_label()+";\n"
     else:
         label = ""
         
     end ="\n}\n"
 
-    if (rule.get_Id() in blocks2init) and (svcomp):
+    if (rule.get_Id() in blocks2init) and (svcomp!={}):
         init = "\tinit_globals();\n"
         rule_c = head+var_declarations+init+body+label+end
     else:
@@ -687,7 +692,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = "+ var1 +" & "+var2
@@ -708,7 +713,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+ get_nondet_svcomp_label()
         else:
             new = var0+" = "+ var1 +" ^ "+var2
@@ -730,7 +735,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = "+ var1 +" | "+var2
@@ -745,7 +750,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg1 = elems[1].strip()[1:-1]
         var1 = unbox_variable(arg1)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = ~"+ var1
@@ -790,7 +795,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             var0 = var0_aux[1:]
 
             if instr[pos_eq+1:].strip().startswith("fresh("):
-                if svcomp:
+                if svcomp!={}:
                     new = var0+" = "+get_nondet_svcomp_label()
                 else:
                     new = var0+" = s"+str(cont)
@@ -821,7 +826,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -898,7 +903,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -911,7 +916,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = 255"
@@ -923,7 +928,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp:
+        if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -984,7 +989,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = elems[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp == "verymax" or svcomp == "verymax-all":
+        if verifier == "verymax":
             new = var0+" = "+ get_nondet_svcomp_label()
         else:
             new = var0+" = "+var1+" / "+var2
@@ -1001,7 +1006,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = elems[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp == "verymax" or svcomp == "verymax-all":
+        if verifier == "verymax":
             new = var0+" = "+ get_nondet_svcomp_label()
         else:
             new = var0+" = "+var1+" % "+var2
@@ -1090,7 +1095,7 @@ def initialize_global_variables(rules):
 def write_init(rules,execution,cname):
     s = "\n"
 
-    if svcomp:
+    if svcomp!={}:
         s = add_svcomp_labels()
         s = s+"\n"
         
@@ -1139,7 +1144,7 @@ def write_main(execution,cname):
         init = "\tinit_globals();"
         
         s = "\nint main(){\n"
-        if svcomp :
+        if svcomp!={} :
             s = s+"\n"+init+"\n"
         s = s+"\tblock0();\n"
         s = s+"\treturn 0;\n}"
