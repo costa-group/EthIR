@@ -252,6 +252,9 @@ def initGlobalVars():
 
     global has_invalid
     has_invalid = []
+
+    global invalid_option
+    invalid_option = ""
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -560,7 +563,7 @@ def construct_bb():
                 block.activate_string_getter()
                 #write_pattern(key,name)
 
-def check_div_invalid_pattern(block):
+def check_div_invalid_pattern(block,path):
     div_pattern = ["DUP2","ISZERO","ISZERO","PUSH","JUMPI"]
     instructions = vertices[block].get_instructions()[-5:]
     end = len(div_pattern)
@@ -578,7 +581,8 @@ def check_div_invalid_pattern(block):
             
             if (falls_instr[0].startswith("ASSERTFAIL")) and (jumps_instr[1].startswith("DIV")):
                 vertices[falls].activate_div_invalid_pattern()
-    
+                if invalid_option == "div0":
+                    annotate_invalid(path)
                 
 def check_string_pattern(instructions):
     pat = False
@@ -918,13 +922,15 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             else:
 
                 vertices[invalid_block].activate_access_array()
+                if invalid_option == "array":
+                    annotate_invalid(path)
 
 
-    if "ASSERTFAIL " in block_ins:
+                
+    if invalid_option == "all" and "ASSERTFAIL " in block_ins:
         annotate_invalid(path)
 
-
-    check_div_invalid_pattern(block)
+    check_div_invalid_pattern(block,path)
         
     # Mark that this basic block in the visited blocks
     visited.append(block)
@@ -3054,6 +3060,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     global name
     global tacas_ex
     global public_fields
+    global invalid_option
                             
     g_disasm_file = disasm_file
     g_source_file = source_file
@@ -3072,10 +3079,13 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
 
     if debug :
         debug_info = debug
+
+    invalid_option = svc.get("invalid",False)
+    verify = svc.get("verify",False)
         
     begin = dtimer()
 
-    if svc:
+    if source_file != None and verify:
         public_fields = get_public_fields(source_file)
 
     analyze(evm_version)
@@ -3096,13 +3106,11 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
         
     compute_cloning(blocks_to_clone,vertices,stack_h)
 
-
-    
+   
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
     compute_component_of_cfg()
-
     
     compute_transitive_mstore_value()
     # end = dtimer()
@@ -3132,10 +3140,10 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks)
 
     if hashes != None:
-        if saco != None and not(svc): #Hashes is != None only if source file is solidity
+        if saco != None and not(verify): #Hashes is != None only if source file is solidity
             generate_saco_config_file(cname)
 
-        elif svc!= None and not(saco):
+        elif verify and not(saco):
             generate_verify_config_file(cname)
 
         ##Add when both are != None
