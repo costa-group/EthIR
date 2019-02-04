@@ -220,7 +220,8 @@ def translate_block_scc(rule,id_loop,multiple=False):
 
     init_loop_label = "  init_loop_"+str(id_loop)+":\n"
     if rule.has_invalid() and svcomp!={}:
-        label = get_error_svcomp_label()+";\n"
+        source = rule.get_invalid_source()
+        label = get_error_svcomp_label()+"; //"+source+"\n"
     else:
         label = ""
 
@@ -596,7 +597,8 @@ def process_rule_c(rule):
     body = "\n".join(new_instructions)
 
     if rule.has_invalid() and svcomp!={}:
-        label = get_error_svcomp_label()+";\n"
+        source = rule.get_invalid_source()
+        label = get_error_svcomp_label()+"; //"+source+"\n"
     else:
         label = ""
         
