@@ -25,15 +25,18 @@ def rbr2saco(rbr,execution,cname):
     begin = dtimer()
     
     new_rules = []
-    for rules in rbr:
-        for rule in rules:
-            new_rule = process_rule_saco(rule)
-            new_rules.append(new_rule)
+    try:
+        for rules in rbr:
+            for rule in rules:
+                new_rule = process_rule_saco(rule)
+                new_rules.append(new_rule)
 
-    write(new_rules,execution,cname)
-    end = dtimer()
-    print("SACO RBR: "+str(end-begin)+"s")
+        write(new_rules,execution,cname)
+        end = dtimer()
+        print("SACO RBR: "+str(end-begin)+"s")
 
+    except:
+        raise Exception("Error in SACO translation",5)
     
 def build_head(rule):
     head = rule.get_rule_name()
