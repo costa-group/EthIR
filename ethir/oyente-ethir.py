@@ -189,15 +189,15 @@ def run_solidity_analysis(inputs,hashes):
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             
         except Exception as e:
-            if len(e.args)>2:
+            if len(e.args)>1:
                 return_code = e.args[1]
             else:
                 return_code = 1
             result = []
             #return_code = -1
             print ("\n Exception \n")
-        if return_code == 1:
-            exit_code = 1
+            exit_code = return_code
+            
     elif len(inputs)>1 and r:
         for inp in inputs:
             #print hashes[inp["c_name"]]
@@ -232,11 +232,30 @@ def run_solidity_analysis(inputs,hashes):
         print("Option Error: --verify option is only applied to c translation.\n")
 
 
-    if (2 in returns) and (1 not in returns):
-        exit_code = 2
-    elif (1 in returns) and (2 not in returns):
-        exit_code = 1
+    '''
+    Exception management:
+    1- Oyente Error
+    2- Oyente TimeOut
+    3- Cloning Error
+    4- RBR generation Error
+    5- SACO Error
+    6- C Error
+    '''
         
+    if (2 in returns):
+        exit_code = 2
+    elif (1 in returns):
+        exit_code = 1
+    elif (3 in returns):
+        exit_code = 3
+    elif (4 in returns):
+        exit_code = 4
+    elif (5 in returns):
+        exit_code = 5
+    elif (6 in returns):
+        exit_code = 6
+
+#    print exit_code
     return results, exit_code
 
 def analyze_solidity(input_type='solidity'):
