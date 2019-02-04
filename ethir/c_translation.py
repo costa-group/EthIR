@@ -54,24 +54,26 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     if fbm != []:
         init_globals = True
         blocks2init = fbm
-    
-    if gotos:
-        heads, new_rules = rbr2c_gotos(rbr,scc)
-    else:
-        heads, new_rules = rbr2c_recur(rbr)
 
-    if svcomp!={}:
-        head_c , rule = initialize_globals(rbr)
-        heads = "\n"+head_c+heads
-        new_rules.append(rule)
-    
-    write_init(rbr,execution,cname)
-    write(heads,new_rules,execution,cname)
+    try:
+        if gotos:
+            heads, new_rules = rbr2c_gotos(rbr,scc)
+        else:
+            heads, new_rules = rbr2c_recur(rbr)
 
-    write_main(execution,cname)
-    end = dtimer()
-    print("C RBR: "+str(end-begin)+"s")
-        
+        if svcomp!={}:
+            head_c , rule = initialize_globals(rbr)
+            heads = "\n"+head_c+heads
+            new_rules.append(rule)
+    
+        write_init(rbr,execution,cname)
+        write(heads,new_rules,execution,cname)
+
+        write_main(execution,cname)
+        end = dtimer()
+        print("C RBR: "+str(end-begin)+"s")
+    except:
+        raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
     heads = "\n"
