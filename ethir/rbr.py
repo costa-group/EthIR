@@ -1220,15 +1220,25 @@ def block_has_invalid(block):
     comes_from_getter = block.get_assertfail_in_getter()
     
     if "ASSERTFAIL" in instr and (not comes_from_getter):
-        return True
+        t_b = block.get_access_array()
+        if t_b:
+            t = "array"
+        else:
+            t_b = block.get_div_invalid_pattern()
+            if t_b:
+                t = "div0"
+            else:
+                t = "other"
+                
+        return (True,t)
     else:
-        return False
+        return (False, "no")
     
 def block_access_array(block):
-    return block.get_access_array()
+    return (block.get_access_array(), "array")
 
 def block_div_invalid(block):
-    return block.get_div_invalid_pattern()
+    return (block.get_div_invalid_pattern(), "div0")
 '''
 It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
@@ -1404,7 +1414,7 @@ def check_invalid_options(block,invalid_options):
     elif invalid_options == "div":
         inv = block_div_invalid(block)
     else:
-        inv = False
+        inv = (False, "no")
 
     return inv
             
@@ -1446,9 +1456,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
                 inv = check_invalid_options(block,invalid_options)
                     
-                if inv:
+                if inv[0]:
                     rule.activate_invalid()
-
+                    rule.set_invalid_source(inv[1])
+                    
                 rbr_blocks[rule.get_rule_name()]=[rule]
             
 
