@@ -3107,9 +3107,11 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
     for e in blocks2clone:
         update_depth_level(e.get_start_address(),e.get_depth_level(),[],True)
-        
-    compute_cloning(blocks_to_clone,vertices,stack_h)
 
+    try:
+        compute_cloning(blocks_to_clone,vertices,stack_h)
+    except:
+        raise Exception("Error in clonning process",3)
    
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
@@ -3126,11 +3128,15 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
 
     update_edges(vertices, edges)
 
-    g = Graph_SCC(edges)
-    scc_multiple = g.getSCCs()
-    scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
-    scc_multiple = get_entry_all(scc_multiple,vertices)
 
+    try:
+        g = Graph_SCC(edges)
+        scc_multiple = g.getSCCs()
+        scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
+        scc_multiple = get_entry_all(scc_multiple,vertices)
+    except:
+        raise Exception("Error in SCC generation",7)
+    
     scc = {}
     scc["unary"] = scc_unary
     scc["multiple"] = scc_multiple
@@ -3141,8 +3147,12 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     else:
         f2blocks = []
         
-    rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks)
+    try:
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks)
 
+    except Exception as e:
+        raise e
+    
     if hashes != None:
         if saco != None and not(verify): #Hashes is != None only if source file is solidity
             generate_saco_config_file(cname)
