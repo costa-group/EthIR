@@ -41,7 +41,7 @@ def to_symbolic(number):
 
 def to_unsigned(number):
     if number < 0:
-        return number + 2**256
+        return abs(number)# + 2**256
     return number
 
 def to_signed(number):
@@ -451,7 +451,8 @@ def store_times(oyente_time,ethir_time):
 def get_public_fields(source_file,arr = True):
     with open(source_file,"r") as f:
         lines = f.readlines()
-        good_lines = filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines)
-        fields = map(lambda x: x.split()[-1].strip(";"),good_lines)
+        good_lines_aux = filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines)
+        good_lines = map(lambda x: x.split("//")[0],good_lines_aux)
+        fields = map(lambda x: x.split()[-1].strip().strip(";"),good_lines)
     f.close()
     return fields
