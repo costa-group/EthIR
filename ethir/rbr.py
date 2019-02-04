@@ -1218,17 +1218,16 @@ intructions of the block
 def block_has_invalid(block):
     instr = block.get_instructions()
     comes_from_getter = block.get_assertfail_in_getter()
+    array_access = block.get_access_array()
+    div0_invalid = block.get_div_invalid_pattern()
     
     if "ASSERTFAIL" in instr and (not comes_from_getter):
-        t_b = block.get_access_array()
-        if t_b:
+        if array_access:
             t = "array"
+        elif div0_invalid:
+            t = "div0"
         else:
-            t_b = block.get_div_invalid_pattern()
-            if t_b:
-                t = "div0"
-            else:
-                t = "other"
+            t = "other"
                 
         return (True,t)
     else:
