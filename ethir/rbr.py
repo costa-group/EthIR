@@ -9,7 +9,7 @@ import saco
 import c_translation
 from timeit import default_timer as dtimer
 from graph_scc import get_entry_scc
-
+import traceback
 '''
 It initialize the globals variables. 
 -List opcodeX contains the evm bytecodes from set X.
@@ -535,7 +535,11 @@ def translateOpcodes30(opcode, value, index_variables,block):
         instr = v1+" = extcodesize"
         update_bc_in_use("extcodesize",block)
     elif opcode == "EXTCODECOPY":
-        pass
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     elif opcode == "MCOPY":
         pass
     else:
@@ -1530,6 +1534,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
+        #traceback.print_exc()
         if len(e.args)>1:
             arg = e[1]
             if arg == 5:
