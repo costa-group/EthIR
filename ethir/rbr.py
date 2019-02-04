@@ -114,6 +114,9 @@ def init_globals():
     global blockhash_cont
     blockhash_cont = 0
 
+    global c_trans
+    c_trans = False
+
 '''
 Given a block it returns a list containingn the height of its
 stack when arriving and leaving the block.
@@ -332,8 +335,9 @@ def translateOpcodes0(opcode,index_variables):
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "^" + v2
-    # elif opcode == "SIGNEXTEND":
-    #     pass
+    elif opcode == "SIGNEXTEND":
+        _, updated_variables = get_consume_variable(index_variables)
+        instr = ""
     elif opcode == "STOP":
         instr = "skip"
         updated_variables = index_variables
@@ -497,8 +501,12 @@ def translateOpcodes30(opcode, value, index_variables,block):
             instr = v1+" = calldataload"
             update_bc_in_use("calldataload",block)
         else:
-            instr = v1+" = "+str(value).strip("_")
-            update_bc_in_use(str(value).strip("_"),block)
+            if not c_trans:
+                instr = v1+" = "+str(value).strip("_")
+                update_bc_in_use(str(value).strip("_"),block)
+            else:
+                instr = v1+" = "+str(value)
+                update_bc_in_use(str(value),block)
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
@@ -626,13 +634,27 @@ def translateOpcodes50(opcode, value, index_variables,block):
                 instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
             
     elif opcode == "MSTORE8":
-        v0 , updated_variables = get_consume_variable(index_variables)
-        v1 , updated_variables = get_consume_variable(updated_variables)
-        try:
-            l_idx = get_local_variable(value)
-            instr = "l(l"+str(l_idx)+") = "+ v1
-        except ValueError:
-            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+        if vertices[block].get_trans_mstore() == False and unknown_mstore == False:
+            v0 , updated_variables = get_consume_variable(index_variables)
+            v1 , updated_variables = get_consume_variable(updated_variables)
+            try:
+                l_idx = get_local_variable(value)
+                instr = "l(l"+str(l_idx)+") = "+ v1
+                update_local_variables(l_idx,block)
+            except ValueError:
+                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+                if vertices[block].is_mstore_unknown():
+                    unknown_mstore = True
+        else:
+            v0 , updated_variables = get_consume_variable(index_variables)
+            v1 , updated_variables = get_consume_variable(updated_variables)
+            try:
+                l_idx = get_local_variable(value)
+                instr = "l(l"+str(l_idx)+") = "+ "fresh("+str(new_fid)+")"
+                new_fid+=1
+                update_local_variables(l_idx,block)
+            except ValueError:
+                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
     elif opcode == "SLOAD":
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
@@ -1430,8 +1452,11 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global rbr_blocks
     global stack_index
     global vertices
+    global c_trans
     
     init_globals()
+    c_trans = c_rbr
+    
     stack_index = stack_info
     component_of = component
 
@@ -1447,9 +1472,11 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     else:
         invalid_options = False
 
-    if blocks_dict and stack_info:
-        blocks = sorted(blocks_dict.values(), key = getKey)
-        for block in blocks:
+
+    try:
+        if blocks_dict and stack_info:
+            blocks = sorted(blocks_dict.values(), key = getKey)
+            for block in blocks:
             #if block.get_start_address() not in to_clone:
                 rule = compile_block(block)
 
@@ -1462,42 +1489,53 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 rbr_blocks[rule.get_rule_name()]=[rule]
             
 
-        rule_c = create_blocks(block_unbuild)
+            rule_c = create_blocks(block_unbuild)
                
-        for rule in rbr_blocks.values():# _blocks.values():
-            for r in rule:
-                component_update_fields(r,component_of)
-#                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
-#                r.set_global_vars(max_field_list)
-                #r.set_args_local(current_local_var)
-                #r.display()
+            for rule in rbr_blocks.values():# _blocks.values():
+                for r in rule:
+                    component_update_fields(r,component_of)
+                    #                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
+                    #                r.set_global_vars(max_field_list)
+                    #r.set_args_local(current_local_var)
+                    #r.display()
 
-        for rule in rbr_blocks.values():
-            for r in rule:
-                jumps_to = r.get_call_to()
+            for rule in rbr_blocks.values():
+                for r in rule:
+                    jumps_to = r.get_call_to()
                 
-                if jumps_to != -1:
-                    f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
-                    bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
-                    l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
-                    r.set_call_to_info((f,bc,l))
+                    if jumps_to != -1:
+                        f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
+                        bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
+                        l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+                        r.set_call_to_info((f,bc,l))
 
-                r.update_rule()
-                
-        rbr = sorted(rbr_blocks.values(),key = orderRBR)
-        write_rbr(rbr,exe,contract_name)
+                    r.update_rule()
+
+
+            rbr = sorted(rbr_blocks.values(),key = orderRBR)
+            write_rbr(rbr,exe,contract_name)
         
-        end = dtimer()
-        ethir_time = end-begin
-        print("Build RBR: "+str(ethir_time)+"s")
-        store_times(oyente_time,ethir_time)
-        
-        if saco_rbr:
-            saco.rbr2saco(rbr,exe,contract_name)
-        if c_rbr:
-            c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
+            end = dtimer()
+            ethir_time = end-begin
+            print("Build RBR: "+str(ethir_time)+"s")
+            store_times(oyente_time,ethir_time)
+            
+            if saco_rbr:
+                saco.rbr2saco(rbr,exe,contract_name)
+            if c_rbr:
+                c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
 
-        print("*************************************************************")
+            print("*************************************************************")
 
-    else :
-        print ("Error, you have to provide the CFG associated with the solidity file analyzed")
+        else :
+            print ("Error, you have to provide the CFG associated with the solidity file analyzed")
+    except Exception as e:
+        if len(e.args)>1:
+            arg = e[1]
+            if arg == 5:
+                raise Exception("Error in SACO trnaslation",5)
+            elif arg == 6:
+                raise Exception("Error in C trnaslation",6)
+        else:
+            raise Exception("Error in RBR generation",4)
+            
