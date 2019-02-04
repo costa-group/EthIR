@@ -37,6 +37,7 @@ class RBRRule:
         self.call_to_info = None
         self.string_getter = getter
         self.invalid_address = False
+        self.invalid_source = ""
 
     def __eq__(self,other):
         eq = False
@@ -140,7 +141,16 @@ class RBRRule:
 
     def set_invalid_address(self,val):
         self.invalid_address = val
-        
+
+    def get_invalid_source(self):
+        return self.invalid_source
+
+    def set_invalid_source(self,val):
+        if val not in ["array","div0","other"]:
+            self.invalid_source = "other"
+        else:
+            self.invalid_source = val
+            
     '''
     It generates the stack variables using the arg_input attribute. 
    It returns a list with the stack variables.
