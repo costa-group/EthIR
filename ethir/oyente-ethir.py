@@ -144,7 +144,9 @@ def analyze_bytecode():
     helper = InputHelper(InputHelper.BYTECODE, source=args.source,evm = args.evm)
     inp = helper.get_inputs()[0]
     y = dtimer()
+    print("*************************************************************")
     print("Compilation time: "+str(y-x)+"s")
+    print("*************************************************************")
 
     r = check_c_translation_dependencies()
     
