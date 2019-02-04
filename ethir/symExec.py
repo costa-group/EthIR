@@ -579,11 +579,15 @@ def check_div_invalid_pattern(block,path):
             jumps_instr = vertices[jump].get_instructions()
             falls_instr = vertices[falls].get_instructions()
             
-            if (falls_instr[0].startswith("ASSERTFAIL")) and (jumps_instr[1].startswith("DIV")):
+            if (falls_instr[0].startswith("ASSERTFAIL")) and (check_div_invalid_bytecode(jumps_instr[1])):
                 vertices[falls].activate_div_invalid_pattern()
                 if invalid_option == "div0":
                     annotate_invalid(path)
-                
+
+def check_div_invalid_bytecode(instr):
+    r =  instr.startswith("DIV") or instr.startswith("MOD") or instr.startswith("SDIV") or instr.startswith("SMOD") or instr.startswith("ADDMOD") or instr.startswith("MULMOD")
+    return r
+                    
 def check_string_pattern(instructions):
     pat = False
     if instructions[0] == pattern[0]:
