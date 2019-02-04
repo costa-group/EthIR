@@ -248,13 +248,15 @@ def run_solidity_analysis(inputs,hashes):
         exit_code = 1
     elif (3 in returns):
         exit_code = 3
+    elif (7 in returns):
+        exit_code = 7
     elif (4 in returns):
         exit_code = 4
     elif (5 in returns):
         exit_code = 5
     elif (6 in returns):
         exit_code = 6
-
+    
 #    print exit_code
     return results, exit_code
 
