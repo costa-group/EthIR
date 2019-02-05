@@ -833,7 +833,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     param_abs = ("","")
     
     vertices[block].add_stack(list(stack))
-    
     if debug_info:
         print ("\nBLOCK "+ str(block))
         print ("PATH")
@@ -941,6 +940,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     depth += 1
 
     update_stack_heigh(block,len(stack),1)
+    vertices[block].add_path(path)
+    
     if block == 0:
         s0 = vertices[block].get_block_gas()
         vertices[block].set_cost(s0)
@@ -2981,6 +2982,8 @@ def update_edges(blocks,edges):
 def compute_component_of_cfg():
     global component_of_blocks
 
+    component_of_blocks = {}
+    
     for block in vertices.keys():
         comp = component_of(block)
         component_of_blocks[block] = comp
@@ -3108,11 +3111,19 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     for e in blocks2clone:
         update_depth_level(e.get_start_address(),e.get_depth_level(),[],True)
 
-    try:
-        compute_cloning(blocks_to_clone,vertices,stack_h)
-    except:
-        raise Exception("Error in clonning process",3)
-   
+
+    compute_component_of_cfg()
+    # try:
+    #     compute_cloning(blocks_to_clone,vertices,stack_h)
+    # except:
+    #     raise Exception("Error in clonning process",3)
+    
+    if len(blocks_to_clone)!=0:
+        try:
+            compute_cloning(blocks_to_clone,vertices,stack_h,component_of_blocks)
+        except:
+            raise Exception("Error in clonning process",3)
+        
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
