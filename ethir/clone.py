@@ -26,6 +26,7 @@ def init():
 #     return push_per_block
 
 def preprocess_push(block,addresses,blocks_input):    
+    #print addresses
     b_source = blocks_input[block]
     comes_from = b_source.get_comes_from()
     # print "INI"
@@ -330,8 +331,6 @@ def clone(block, blocks_input):
     #source_path = pred[-1]
 
     b = preprocess_push(uncond_block,address,blocks_dict)
-    # print "PRE"
-    # print b
     in_blocks = compute_push_blocks(b,address,blocks_dict)
     #print in_blocks
     #cloned_blocks = cloned_blocks+pred
@@ -551,7 +550,98 @@ def update_comes_from(pred_list,idx,address,cloned):
         else:
             comes_from = filter(lambda x: x == address,pred_list)
     return comes_from
-def compute_cloning(blocks_to_clone,blocks_input,stack_info):
+
+
+def get_continue_cloning(cloned,blocks):
+    addresses = map(lambda x: x.get_start_address(),blocks)
+    all_cloned_list = filter(lambda x: x not in cloned,addresses)
+    return not(len(all_cloned_list)==0)
+
+
+def choose_block_to_clone(blocks2clone, components,blocks,cloned):
+    l = len(blocks2clone)
+    i = 0
+    found = False
+    next_clone = -1
+    # print "START"
+    
+    '''
+    Clono el nodo si:
+    - ninguno de los nodos a clonar esta en mi componente (los nodos desde los que llego a mi)
+    - si lo esta, ya ha sido clonado.
+    '''
+    incidencia = []
+    while(i<l and not found):
+        b = blocks2clone[i]
+        addr = b.get_start_address()
+        if addr not in cloned:
+            my_component = components[addr]
+            blocks_dep = filter(lambda x: x.get_start_address() in my_component and x.get_start_address()!=addr, blocks2clone)
+            aa = map(lambda x: x.get_start_address(),blocks_dep)
+            # print "ADDR "+str(addr)
+            # print aa
+            if len(blocks_dep)==0:
+                next_clone = b
+                found = True
+
+            else:
+                incidencia.append((len(blocks_dep),addr))
+                already_cloned = filter(lambda x: x.get_start_address() not in cloned,blocks_dep)
+                # print "ALREADY"
+                # for e in already_cloned:
+                #     print e.get_start_address()
+                if len(already_cloned)==0:
+                    next_clone = b
+                    found = True
+        i = i+1
+
+    '''
+    Si al salir del bucle no tengo candidato es porque tengo un ciclo.
+    Cojo el que menos componentes tenga. (En teoria mas arriba esta).
+    Si hay varios iguales (deberia) cojo el de menor depth.
+    '''
+    
+    if next_clone == -1:
+        mini = float('inf')
+        for ind,_ in incidencia:
+            if ind < mini:
+                mini = ind
+
+        bs_aux = filter(lambda x: x[0] == mini, incidencia)
+        bs = map(lambda x: x[1],bs_aux)
+        
+        if len(bs)==1:
+            # print "UNO UNO"
+            next_clone = blocks[bs[0]]
+
+        
+        # Si tengo varios con menor incidencia, computo cual esta delante en el ciclo gracias a los caminos.
+        # Cojo los caminos y filtro los elementos con incidencia minima. Aque con camino minimo me lo quedo.
+        
+        
+        else:
+            mini = float('inf')
+            b = ""
+            for a in bs:
+                # print "A: "+str(a)
+                p =  map(lambda x: filter(lambda y: y in bs,x),blocks[a].get_paths())
+                # print p
+                l = len(p[0])
+                if l<mini:
+                    mini = l
+                    b = a
+                    # print "B: "+str(b)
+                # b =  map(lambda x: filter(lambda y: y in bs_aux,x),blocks[bs[1][1]].get_paths())
+            # bs_d = map(lambda x: (blocks[x].get_depth_level(),x),bs)
+            # end = sorted(bs_d)
+            
+            next_clone = blocks[b]
+
+    return next_clone
+                
+
+
+def compute_cloning(blocks_to_clone,blocks_input,stack_info,component_of):
     global stack_index
     
     init()
@@ -559,19 +649,40 @@ def compute_cloning(blocks_to_clone,blocks_input,stack_info):
     stack_index = stack_info
     
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
+    cloned = []
 
-    # print "AQUI"
-    # for e in blocks2clone:
-    #     print e.get_start_address()
-    #     print e.get_depth_level()
-
-    for b in blocks2clone:
+    continue_cloning = True
+    
+    while(continue_cloning):
+        b = choose_block_to_clone(blocks2clone,component_of,blocks_input,cloned)
+        #print b.get_start_address()
         clone(b,blocks_dict)
+        cloned.append(b.get_start_address())
+        continue_cloning = get_continue_cloning(cloned,blocks2clone)
+        #print "CLONED: "+str(cloned)+"\n"
 
-    # print "AQUI"
-    # blocks_dict['4416_1'].display()
-    # for e in blocks_dict.values():
-    #     e.display()
-    #return stack_index
+
+# def compute_cloning(blocks_to_clone,blocks_input,stack_info):
+#     global stack_index
+    
+#     init()
+#     blocks_dict = blocks_input
+#     stack_index = stack_info
+    
+#     blocks2clone = sorted(blocks_to_clone, key = getLevel)
+
+#     print "AQUI"
+#     for e in blocks2clone:
+#         print e.get_start_address()
+#         print e.get_depth_level()
+
+#     for b in blocks2clone:
+#         clone(b,blocks_dict)
+
+#     # print "AQUI"
+#     # blocks_dict['4416_1'].display()
+#     # for e in blocks_dict.values():
+#     #     e.display()
+#     #return stack_index
 
     
