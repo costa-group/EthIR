@@ -36,6 +36,7 @@ class BasicBlock:
         self.assertfail_in_getter = False
         self.div_invalid_pattern = False
         self.stacks_old = []
+        self.path = []
     
     def get_start_address(self):
         return self.start
@@ -88,8 +89,8 @@ class BasicBlock:
 
     #Added by Pablo Gordillo
 
-    def remove_node_from_path(self):
-        self.path.pop()
+    # def remove_node_from_path(self):
+    #     self.path.pop()
     
     def set_depth_level(self, l):
         if self.depth == -1:
@@ -379,6 +380,14 @@ class BasicBlock:
 
     def get_stacks(self):
         return self.stacks_old
+
+    def get_paths(self):
+        return self.path
+
+    def add_path(self,p):
+        if p not in self.path:
+            end = map(lambda x: x[1],p)
+            self.path.append(end)
         
     def copy(self):
         
