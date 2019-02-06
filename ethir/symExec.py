@@ -572,6 +572,7 @@ def check_div_invalid_pattern(block,path):
         for i in range(end):
             pattern = pattern and instructions[i].startswith(div_pattern[i])
             i = i+1
+
         if pattern:
             jump = vertices[block].get_jump_target()
             falls = vertices[block].get_falls_to()
@@ -909,6 +910,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         falls = vertices[pre_block].get_falls_to()
         jump = vertices[pre_block].get_jump_target()
         invalid_block = 0
+
         if jump != block and jump != None:
             ins = vertices[jump].get_instructions()
             invalid_block = jump
@@ -919,7 +921,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             # print ins
         else:
             ins = []
-        if "ASSERTFAIL " in ins:
+
+        if ("ASSERTFAIL " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
