@@ -1797,7 +1797,6 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
                     params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list]
                     param_idx = (position - 4) // 32
                     new_var_name = params_list[param_idx]
-                    print new_var_name
                     g_src_map.var_names.append(new_var_name)
                     param_abs = (block,new_var_name)
                 else:
