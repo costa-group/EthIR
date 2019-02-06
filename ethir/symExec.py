@@ -1438,17 +1438,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             else:
                 first = to_symbolic(first)
                 second = to_symbolic(second)
-                solver.push()
-                solver.add( Not(third == 0) )
-                if check_sat(solver) == unsat:
+                # solver.push()
+                # solver.add( Not(third == 0) )
+                if third == unsat:
                     computed = 0
                 else:
-                    first = ZeroExt(256, first)
-                    second = ZeroExt(256, second)
-                    third = ZeroExt(256, third)
+                    # first = ZeroExt(256, first)
+                    # second = ZeroExt(256, second)
+                    # third = ZeroExt(256, third)
                     computed = (first + second) % third
                     computed = Extract(255, 0, computed)
-                solver.pop()
+                #solver.pop()
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
@@ -1468,17 +1468,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             else:
                 first = to_symbolic(first)
                 second = to_symbolic(second)
-                solver.push()
-                solver.add( Not(third == 0) )
-                if check_sat(solver) == unsat:
+                if third == 0:
                     computed = 0
                 else:
-                    first = ZeroExt(256, first)
-                    second = ZeroExt(256, second)
-                    third = ZeroExt(256, third)
-                    computed = URem(first * second, third)
+                    # first = ZeroExt(256, first)
+                    # second = ZeroExt(256, second)
+                    # third = ZeroExt(256, third)
+                    computed = (first*second)%third#URem(first * second, third)
                     computed = Extract(255, 0, computed)
-                solver.pop()
+                # solver.pop()
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
@@ -3102,6 +3100,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
 
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
+
     
     check_cfg_option(cfg,cname,execution)
 
@@ -3125,8 +3124,12 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
         try:
             compute_cloning(blocks_to_clone,vertices,stack_h,component_of_blocks)
         except:
-            raise Exception("Error in clonning process",3)
+           raise Exception("Error in clonning process",3)
         
+    # for e in vertices.values():
+    #     e.display()
+
+    
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
