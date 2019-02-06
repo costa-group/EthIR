@@ -1328,26 +1328,26 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             else:
                 first = to_symbolic(first)
                 second = to_symbolic(second)
-                solver.push()
-                solver.add(Not(second == 0))
-                if check_sat(solver) == unsat:
+                # solver.push()
+                # solver.add(Not(second == 0))
+                if second == 0:
                     computed = 0
                 else:
-                    solver.push()
-                    solver.add( Not( And(first == -2**255, second == -1 ) ))
-                    if check_sat(solver) == unsat:
-                        computed = -2**255
-                    else:
-                        solver.push()
-                        solver.add(first / second < 0)
-                        sign = -1 if check_sat(solver) == sat else 1
-                        z3_abs = lambda x: If(x >= 0, x, -x)
-                        first = z3_abs(first)
-                        second = z3_abs(second)
-                        computed = sign * (first / second)
-                        solver.pop()
-                    solver.pop()
-                solver.pop()
+                    # solver.push()
+                    # solver.add( Not( And(first == -2**255, second == -1 ) ))
+                    # if check_sat(solver) == unsat:
+                    #     computed = -2**255
+                    # else:
+                    #     solver.push()
+                    #     solver.add(first / second < 0)
+                    #     sign = -1 if check_sat(solver) == sat else 1
+                    #     z3_abs = lambda x: If(x >= 0, x, -x)
+                    #     first = z3_abs(first)
+                    #     second = z3_abs(second)
+                    computed = first / second
+                #     solver.pop()
+                #     solver.pop()
+                # solver.pop()
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
