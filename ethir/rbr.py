@@ -117,6 +117,9 @@ def init_globals():
     global c_trans
     c_trans = False
 
+    global c_words
+    c_words = ["char","for"]
+
 '''
 Given a block it returns a list containingn the height of its
 stack when arriving and leaving the block.
@@ -274,8 +277,6 @@ def process_tops(top1,top2):
 
     return top1_aux, top2_aux
 
-
-    
 '''
 It simulates the execution of evm bytecodes.  It consumes or
 generates variables depending on the bytecode and returns the
@@ -500,13 +501,21 @@ def translateOpcodes30(opcode, value, index_variables,block):
         if val[0] == "Id":
             instr = v1+" = calldataload"
             update_bc_in_use("calldataload",block)
+        elif str(value).startswith("/*"):
+            val = str(value).strip("/*").strip("*/")
+            instr = v1+" = "+val
+            update_bc_in_use(val,block)
         else:
             if not c_trans:
                 instr = v1+" = "+str(value).strip("_")
                 update_bc_in_use(str(value).strip("_"),block)
             else:
-                instr = v1+" = "+str(value)
-                update_bc_in_use(str(value),block)
+                if str(value) in c_words:
+                    val_end = "_"+str(value)
+                else:
+                    val_end = str(value)
+                instr = v1+" = "+val_end
+                update_bc_in_use(val_end,block)
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
