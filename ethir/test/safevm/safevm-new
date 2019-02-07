@@ -1,0 +1,13 @@
+#!/bin/csh
+
+set size = ${#argv}
+
+if (($size <1 ) || ($size >= 9)) then
+    echo "Incorrect number of arguments."
+    echo "The format required has the following structure:"
+    echo "./safevm SolidityFile [-v {-cpa,-verymax}] [-i {all,div0,array}] [-c ContractName] [-f FunctionName]"
+
+
+else
+        python exec_safevm.py $argv
+endif
