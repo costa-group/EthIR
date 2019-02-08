@@ -38,10 +38,33 @@ def preprocess_push(block,addresses,blocks_input):
         contains = check_push_block(b,addresses)
         if contains:
             return block
-       
+        
     block = preprocess_push(comes_from[0],addresses,blocks_input)
     return block
 
+def get_relation_stack_address(addrs,stacks):
+    i = 0
+    for e in addrs:
+        l = filter(lambda x: e in x,stacks)
+        if len(l) >0:
+            i = i+1
+    return i == len(addrs)
+
+def preprocess_push2(block,addresses,blocks_input):
+    b_source = blocks_input[block]
+    comes_from = b_source.get_comes_from()
+
+    valid = True
+    for bl in comes_from:
+        b = blocks_input[bl]
+        stacks = b.get_stacks()
+        valid = valid and get_relation_stack_address(addresses,stacks)
+
+    if not valid:
+        return block
+    else:
+        return preprocess_push2(comes_from[0],addresses,blocks_input)
+    
 def check_push_block(block,addresses):
     instructions = block.get_instructions()
     m = filter(lambda x: x.split()[0][:-1]=="PUSH",instructions)
@@ -53,12 +76,42 @@ def check_push_block(block,addresses):
     else:
         return False
 
+'''
+Is correct if the number of stacks that contain each block
+(address) to clone is the same as the different address to clone. We
+get one different stack per clonning at b. (The one that spawns the
+different paths).
+
+'''    
+def is_correct_preprocess_push(b,addresses,blocks_input):
+    stacks = blocks_input[b].get_stacks()
+    num = 0
+    for e in addresses:
+        r = filter(lambda x: e in x,stacks)
+        if len(r) > 0:
+            num = num + 1
+
+    return (num == len(addresses))
+
+
+def get_address_from_stacks(addresses,stacks):
+    r = []
+    for s in stacks:
+        new = filter(lambda x: x in s,addresses)
+        if new not in r:
+            r.append(new)
+    if len(r) == 1:
+        return r[0][0]
+    else:
+        print ("Error in compute_push_blocks")
 def compute_push_blocks(pre_block,address,blocks_input):
     b_source = blocks_input[pre_block]
     comes_from = b_source.get_comes_from()
     push_blocks = {}
-    #print comes_from
-    #print address
+    # print "PREPRE"
+    # print pre_block
+    # print "STACKS"
+    # print comes_from
     if len(comes_from)!=len(address):
         print ("Error while looking for push blocks")
     else:
@@ -72,8 +125,18 @@ def compute_push_blocks(pre_block,address,blocks_input):
                 push_blocks[b]=numbers
 
             else:
-                n_ins = search_push_blocks(b,address,blocks_input)
-                push_blocks[b] = n_ins
+                # print "START"
+                # print b
+                stacks = block.get_stacks()
+                a = get_address_from_stacks(address,stacks)
+                
+                # print "SEARCH PUSH BLOCKS"
+                # print b
+                # print address
+                # n_ins = search_push_blocks(b,address,blocks_input)
+                # print "HOLA"
+                # print n_ins
+                push_blocks[b] = [a]
             # else:
             #     print pre_block
             #     print("ERROR while cloning")
@@ -82,7 +145,7 @@ def compute_push_blocks(pre_block,address,blocks_input):
 def search_push_blocks(pre_block,address,blocks_input):
     b_source = blocks_input[pre_block]
     comes_from = b_source.get_comes_from()
-
+    #print comes_from
     for b in comes_from:
         block = blocks_input[b]
         instructions = block.get_instructions()
@@ -313,6 +376,27 @@ def modify_target_block(target_block,block_cloned,last_block):
         comes_from[idx] = last_block.get_start_address()
         target_block.set_comes_from(comes_from)
 
+def clean_address(l,in_blocks,current):
+        concat = []
+        for b in in_blocks:
+            if b != current:
+                concat = concat+in_blocks[b]
+
+        for a in concat:
+            # print "IS A: "+str(a)
+            if a in l:
+                l.remove(a)
+        return l
+
+def clean_in_blocks(in_blocks,address):
+    for a in in_blocks:
+        e = in_blocks[a]
+        if len(e)>1:
+            l = filter(lambda x: x in address,e)
+            # print l
+            l = clean_address(l,in_blocks,a)
+            in_blocks[a] = l
+            
 def clone(block, blocks_input):
     global cloned_blocks
     global stack_index
@@ -331,8 +415,22 @@ def clone(block, blocks_input):
     #source_path = pred[-1]
 
     b = preprocess_push(uncond_block,address,blocks_dict)
+    v = is_correct_preprocess_push(b,address,blocks_dict)
+
+    # print "PRE"
+    # print b
+    # print blocks_dict[b].get_stacks()
+    # print address
+    # print v
+    
+    if not v:
+        b = preprocess_push2(uncond_block,address,blocks_dict)
+    # print b
+        
     in_blocks = compute_push_blocks(b,address,blocks_dict)
-    #print in_blocks
+    # print "EMPIEZA LA LIMPIEZA"
+    clean_in_blocks(in_blocks,address)
+    # print in_blocks
     #cloned_blocks = cloned_blocks+pred
     #print in_blocks
     to_delete = []
@@ -470,7 +568,7 @@ def  clone_block(block_address, push_block, end_address, blocks_input, idx, stac
         blocks_input[block_dup.get_start_address()]=block_dup
         clone_child(block_dup,jumps_to,falls_to,idx,push_block,end_address,blocks_input,stack_out,to_delete,cloned,pred)
 
-      #  block_dup.display()
+        #block_dup.display()
        # block_dup.display()
         if block_address not in to_delete:
             to_delete.append(block_address)
@@ -557,6 +655,9 @@ def get_continue_cloning(cloned,blocks):
     all_cloned_list = filter(lambda x: x not in cloned,addresses)
     return not(len(all_cloned_list)==0)
 
+def get_minimum_len(paths):
+    l = map(lambda x: len(x),paths)
+    return min(l)
 
 def choose_block_to_clone(blocks2clone, components,blocks,cloned):
     l = len(blocks2clone)
@@ -579,7 +680,7 @@ def choose_block_to_clone(blocks2clone, components,blocks,cloned):
             blocks_dep = filter(lambda x: x.get_start_address() in my_component and x.get_start_address()!=addr, blocks2clone)
             aa = map(lambda x: x.get_start_address(),blocks_dep)
             # print "ADDR "+str(addr)
-            # print aa
+#            print aa
             if len(blocks_dep)==0:
                 next_clone = b
                 found = True
@@ -587,9 +688,6 @@ def choose_block_to_clone(blocks2clone, components,blocks,cloned):
             else:
                 incidencia.append((len(blocks_dep),addr))
                 already_cloned = filter(lambda x: x.get_start_address() not in cloned,blocks_dep)
-                # print "ALREADY"
-                # for e in already_cloned:
-                #     print e.get_start_address()
                 if len(already_cloned)==0:
                     next_clone = b
                     found = True
@@ -624,9 +722,11 @@ def choose_block_to_clone(blocks2clone, components,blocks,cloned):
             b = ""
             for a in bs:
                 # print "A: "+str(a)
-                p =  map(lambda x: filter(lambda y: y in bs,x),blocks[a].get_paths())
+                # print blocks[a].get_depth_level()
+                p =  map(lambda x: filter(lambda y: y in bs and y not in cloned,x),blocks[a].get_paths())
                 # print p
-                l = len(p[0])
+                #l = len(p[0])
+                l = get_minimum_len(p)
                 if l<mini:
                     mini = l
                     b = a
@@ -652,10 +752,13 @@ def compute_cloning(blocks_to_clone,blocks_input,stack_info,component_of):
     cloned = []
 
     continue_cloning = True
-    
+    # for e in blocks_to_clone:
+    #     print e.get_start_address()
     while(continue_cloning):
+        # print blocks_input.keys()
         b = choose_block_to_clone(blocks2clone,component_of,blocks_input,cloned)
-        #print b.get_start_address()
+        # print "********************"
+        # print b.get_start_address()
         clone(b,blocks_dict)
         cloned.append(b.get_start_address())
         continue_cloning = get_continue_cloning(cloned,blocks2clone)
