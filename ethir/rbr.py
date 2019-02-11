@@ -10,6 +10,9 @@ import c_translation
 from timeit import default_timer as dtimer
 from graph_scc import get_entry_scc
 import traceback
+
+costabs_path = "/tmp/costabs/" 
+
 '''
 It initialize the globals variables. 
 -List opcodeX contains the evm bytecodes from set X.
@@ -1382,14 +1385,14 @@ for each smart contract.
 '''
 def write_rbr(rbr,executions,cname = None):
     if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+        os.mkdir(costabs_path)
 
     if executions == None:
-        name = "/tmp/costabs/rbr.rbr"
+        name = costabs_path+"rbr.rbr"
     elif cname == None:
-        name = "/tmp/costabs/rbr"+str(executions)+".rbr"
+        name = costabs_path+"rbr"+str(executions)+".rbr"
     else:
-        name = "/tmp/costabs/"+cname+".rbr"
+        name = costabs_path+cname+".rbr"
     with open(name,"w") as f:
         for rules in rbr:
             for r in rules:
