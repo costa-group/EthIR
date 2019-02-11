@@ -12,6 +12,7 @@ from graph_scc import get_entry_scc
 import traceback
 
 costabs_path = "/tmp/costabs/" 
+tmp_path = "/tmp/"
 
 '''
 It initialize the globals variables. 
@@ -1384,7 +1385,7 @@ for each smart contract.
 -executions refers to the number of smart contract that has been translated. int.
 '''
 def write_rbr(rbr,executions,cname = None):
-    if "costabs" not in os.listdir("/tmp/"):
+    if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
 
     if executions == None:

@@ -8,6 +8,7 @@ It receives a list with rbr_rule instances.
 '''
 
 costabs_path = "/tmp/costabs/"
+tmp_path = "/tmp/"
 
 global pattern
 pattern = ["PUSH1",

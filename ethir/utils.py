@@ -18,6 +18,7 @@ import six
 from dot_tree import Tree, build_tree
 
 costabs_path = "/tmp/costabs/"
+tmp_path = "/tmp/"
 
 def ceil32(x):
     return x if x % 32 == 0 else x + 32 - (x % 32)
@@ -376,7 +377,7 @@ def process_hashes(solidity_file):
 
 def write_cfg(it,vertices,name = False,cloned = False):
     vert = sorted(vertices.values(), key = getKey)
-    if "costabs" not in os.listdir("/tmp/"):
+    if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
 
     if not cloned:
@@ -412,7 +413,7 @@ def write_cfg(it,vertices,name = False,cloned = False):
 def cfg_dot(it,block_input,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
-    if "costabs" not in os.listdir("/tmp/"):
+    if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
     
     if not cloned:

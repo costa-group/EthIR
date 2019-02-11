@@ -14,8 +14,8 @@ from timeit import default_timer as dtimer
 from utils import run_command, process_hashes
 from input_helper import InputHelper
 
-global costabs_path
 costabs_path = "/tmp/costabs/"
+tmp_path = "/tmp/"
 
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
@@ -72,7 +72,7 @@ def has_dependencies_installed():
 
 def clean_dir():
     ext = ["rbr","cfg","txt","config","dot","csv","c"]
-    if "costabs" in os.listdir("/tmp/"):
+    if "costabs" in os.listdir(tmp_path):
         for elem in os.listdir(costabs_path):
             last = elem.split(".")[-1]
             if last in ext:

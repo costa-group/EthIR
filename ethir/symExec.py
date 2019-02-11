@@ -39,6 +39,8 @@ CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
 costabs_path = "/tmp/costabs/"
+tmp_path = "/tmp/"
+
 
 class Parameter:
     def __init__(self, **kwargs):
@@ -604,7 +606,7 @@ def check_string_pattern(instructions):
     return pat
 
 def write_pattern(key,cname):
-    if "costabs" not in os.listdir("/tmp/"):
+    if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
         
 
@@ -3003,7 +3005,7 @@ def component_of_aux(block,visited):
     return visited
             
 def generate_saco_config_file(cname):
-    if "costabs" not in os.listdir("/tmp/"):
+    if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
         
     if cname == None:
@@ -3019,7 +3021,7 @@ def generate_saco_config_file(cname):
 def generate_verify_config_file(cname):
     to_write = []
     remove_getters_has_invalid()
-    if "costabs" not in os.listdir("/tmp/"):
+    if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
         
     if cname == None:
