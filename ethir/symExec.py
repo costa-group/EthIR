@@ -38,6 +38,7 @@ UNSIGNED_BOUND_NUMBER = 2**256 - 1
 CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
+costabs_path = "/tmp/costabs/"
 
 class Parameter:
     def __init__(self, **kwargs):
@@ -604,10 +605,10 @@ def check_string_pattern(instructions):
 
 def write_pattern(key,cname):
     if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+        os.mkdir(costabs_path)
         
 
-    name = "/tmp/costabs/pattern.pattern"
+    name = costabs_path+"pattern.pattern"
     with open(name,"a") as f:
         string = tacas_ex+" "+cname+" "+str(key)+"\n"
         f.write(string)
@@ -3003,12 +3004,12 @@ def component_of_aux(block,visited):
             
 def generate_saco_config_file(cname):
     if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+        os.mkdir(costabs_path)
         
     if cname == None:
-        name = "/tmp/costabs/config_block.config"
+        name = costabs_path+"config_block.config"
     else:
-        name = "/tmp/costabs/"+cname+".config"
+        name = costabs_path+cname+".config"
     with open(name,"w") as f:
         elems = map(lambda (x,y): "("+str(x)+";"+str(y[0])+";"+str(y[1])+")", function_block_map.items())
         elems2write = "\n".join(elems)
@@ -3019,12 +3020,12 @@ def generate_verify_config_file(cname):
     to_write = []
     remove_getters_has_invalid()
     if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+        os.mkdir(costabs_path)
         
     if cname == None:
-        name = "/tmp/costabs/config_block.config"
+        name = costabs_path+"config_block.config"
     else:
-        name = "/tmp/costabs/"+cname+".config"
+        name = costabs_path+cname+".config"
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
@@ -3145,18 +3146,19 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
 
     update_edges(vertices, edges)
 
-
-    try:
-        g = Graph_SCC(edges)
-        scc_multiple = g.getSCCs()
-        scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
-        scc_multiple = get_entry_all(scc_multiple,vertices)
-    except:
-        raise Exception("Error in SCC generation",7)
-    
     scc = {}
-    scc["unary"] = scc_unary
-    scc["multiple"] = scc_multiple
+    if go:
+        try:
+            g = Graph_SCC(edges)
+            scc_multiple = g.getSCCs()
+            scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
+            scc_multiple = get_entry_all(scc_multiple,vertices)
+
+            scc["unary"] = scc_unary
+            scc["multiple"] = scc_multiple
+
+        except:
+            raise Exception("Error in SCC generation",7)
 
     if function_block_map != {}:
         val = function_block_map.values()
