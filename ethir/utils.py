@@ -17,6 +17,8 @@ import six
 
 from dot_tree import Tree, build_tree
 
+costabs_path = "/tmp/costabs/"
+
 def ceil32(x):
     return x if x % 32 == 0 else x + 32 - (x % 32)
 
@@ -375,23 +377,23 @@ def process_hashes(solidity_file):
 def write_cfg(it,vertices,name = False,cloned = False):
     vert = sorted(vertices.values(), key = getKey)
     if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+        os.mkdir(costabs_path)
 
     if not cloned:
         if it == None:
-            name = "/tmp/costabs/cfg_evm.cfg"
+            name = costabs_path+"cfg_evm.cfg"
         elif name == False:
-            name = "/tmp/costabs/cfg_evm"+str(it)+".cfg"
+            name = costabs_path+"cfg_evm"+str(it)+".cfg"
         else:
-            name = "/tmp/costabs/cfg_"+name+".cfg"
+            name = costabs_path+"cfg_"+name+".cfg"
 
     else:
         if it == None:
-            name = "/tmp/costabs/cfg_cloned_evm.cfg"
+            name = costabs_path+"cfg_cloned_evm.cfg"
         elif name == False:
-            name = "/tmp/costabs/cfg__cloned_evm"+str(it)+".cfg"
+            name = costabs_path+"cfg__cloned_evm"+str(it)+".cfg"
         else:
-            name = "/tmp/costabs/cfg_"+name+"_cloned.cfg"
+            name = costabs_path+"cfg_"+name+"_cloned.cfg"
         
     with open(name,"w") as f:
         for block in vert:
@@ -411,24 +413,24 @@ def cfg_dot(it,block_input,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
     if "costabs" not in os.listdir("/tmp/"):
-        os.mkdir("/tmp/costabs/")
+        os.mkdir(costabs_path)
     
     if not cloned:
 
         if it == None:
-            name = "/tmp/costabs/cfg.dot"
+            name = costabs_path+"cfg.dot"
         elif name == False:
-            name = "/tmp/costabs/cfg"+str(it)+".dot"
+            name = costabs_path+"cfg"+str(it)+".dot"
         else:
-            name = "/tmp/costabs/"+name+".dot"
+            name = costabs_path+name+".dot"
     else:
 
         if it == None:
-            name = "/tmp/costabs/cfg_cloned.dot"
+            name = costabs_path+"cfg_cloned.dot"
         elif name == False:
-            name = "/tmp/costabs/cfg_cloned_"+str(it)+".dot"
+            name = costabs_path+"cfg_cloned_"+str(it)+".dot"
         else:
-            name = "/tmp/costabs/"+name+"_cloned.dot"
+            name = costabs_path+name+"_cloned.dot"
         
     f = open(name,"wb")
     tree = build_tree(vert[0],[("st",0)],block_input)
@@ -442,7 +444,7 @@ def update_map(m,key,val):
     return m
 
 def store_times(oyente_time,ethir_time):
-    f = open("/tmp/costabs/times.csv","a")
+    f = open(costabs_path+"times.csv","a")
     fp = csv.writer(f, delimiter=',')
     fp.writerow(["Oyente",oyente_time,"EthIR",ethir_time])
     f.close()
