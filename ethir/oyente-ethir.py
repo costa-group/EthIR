@@ -198,7 +198,7 @@ def run_solidity_analysis(inputs,hashes):
                 return_code = 1
             result = []
             #return_code = -1
-            print ("\n Exception: "+return_code+"\n")
+            print ("\n Exception: "+str(return_code)+"\n")
             exit_code = return_code
             
     elif len(inputs)>1 and r:
@@ -217,7 +217,7 @@ def run_solidity_analysis(inputs,hashes):
                     
                 result = []
                 # return_code = -1
-                print ("\n Exception: "+return_code+"\n")
+                print ("\n Exception: "+str(return_code)+"\n")
             # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             i+=1
             returns.append(return_code)
