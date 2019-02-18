@@ -353,7 +353,7 @@ if __name__ == "__main__":
 
     index = 0
     i = 0
-    for f in sol_files:
+    for f in sol_dir:
 
         print "\nAnalyzing file "+str(f)
         # cmd = "python "+ethir_path+"oyente-ethir.py -s"+path+str(f)+" -cfg -saco -eop"
