@@ -3,6 +3,7 @@ import subprocess
 import os
 import csv
 import sys
+from shutil import copyfile
 
 def init_globals():
     global oyente
@@ -250,8 +251,12 @@ def get_ub_type_gas(ub):
     else:
         constant_gas = constant_gas+1
 
-def generate_report():
-    f = open("report_all.txt","w")
+def generate_report(index = None):
+    if index == None:
+        f = open("report_all.txt","w")
+    else:
+        f = open("report_all_"+str(index)+".txt","w")
+        
     total_time = oyente+ethir+size_analysis+crs_mem+crs_gas+pubs_mem+pubs_gas
     total_time = total_time/1000
     
@@ -285,7 +290,8 @@ def generate_report():
     f.write("\t Solving of gas equations (PUBS)(Memory):"+str(pubs_mem/1000)+"s\n")
     f.write("\t Solving of gas equations (PUBS)(Opcodes):"+str(pubs_gas/1000)+"s\n")
     f.write("\t Total time GASTAP:"+str(total_time)+"s\n")
-    
+
+    f.close()
 def compute_contract(cfile):
     global contracts
     global functions
@@ -318,6 +324,11 @@ def compute_contract(cfile):
 
     f.close()
 
+def copy_files(index):
+    path = "/home/pabgordi/ethereum/EthIR/ethir/test/gastap/"
+    copyfile(path+"time_all.csv",path+"time_all"+str(index)+".csv")
+    copyfile(path+"result_all.csv",path+"result_all"+str(index)+".csv")
+    
 if __name__ == "__main__":
     global files
 
@@ -339,7 +350,9 @@ if __name__ == "__main__":
 #    ethir_path = "/home/tacas19/EthIR/ethir/"	
 #    sol_files = os.listdir("/home/tacas19/Desktop/examples/tacas19/")
     files = len(sol_dir)
-    
+
+    index = 0
+    i = 0
     for f in sol_files:
 
         print "\nAnalyzing file "+str(f)
@@ -349,6 +362,11 @@ if __name__ == "__main__":
         # print a
         #python ../oyente-ethir.py -s ../../examples/code/prueba/$contract -saco -eop -cfg
         compute_contract(f)
-
+        i = i+1
+        if i%500 == 0:
+            generate_report(index)
+            copy_files(index)
+            index = index+1
+            
     generate_report()
             
