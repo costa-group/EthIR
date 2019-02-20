@@ -30,7 +30,7 @@ from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all
-
+from pattern import look_for_string_pattern
 
 log = logging.getLogger(__name__)
 
@@ -219,22 +219,6 @@ def initGlobalVars():
     global procesed_indirect_jumps
     procesed_indirect_jumps = {}
 
-    global pattern
-    pattern = ["JUMPDEST","PUSH1 0x00","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","PUSH1 0x1f","ADD","PUSH1 0x20","DUP1","SWAP2","DIV","MUL","PUSH1 0x20","ADD","PUSH1 0x40","MLOAD","SWAP1","DUP2","ADD","PUSH1 0x40","MSTORE","DUP1","SWAP3","SWAP2","SWAP1","DUP2","DUP2","MSTORE","PUSH1 0x20","ADD","DUP3","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","ISZERO"]
-
-    global sub_pattern
-    sub_pattern = ["PUSH1 0x01",
-                   "DUP2",
-                   "PUSH1 0x01",
-                   "AND",
-                   "ISZERO",
-                   "PUSH2 0x0100",
-                   "MUL",
-                   "SUB",
-                   "AND",
-                   "PUSH1 0x02",
-                   "SWAP1",
-                   "DIV"]
     global name
     name = ""
 
@@ -558,13 +542,7 @@ def construct_bb():
         block.set_block_type(jump_type[key])
         vertices[key] = block
         edges[key] = []
-        ins_aux = block.get_instructions()[:-2]
-        if len(ins_aux)>=len(pattern):
-            ins = map(lambda x: x.strip(),ins_aux)
-            p = check_string_pattern(ins)
-            if p :
-                block.activate_string_getter()
-                #write_pattern(key,name)
+        look_for_string_pattern(block)
 
 def check_div_invalid_pattern(block,path):
     div_pattern = ["DUP2","ISZERO","ISZERO","PUSH","JUMPI"]
@@ -592,30 +570,6 @@ def check_div_invalid_bytecode(instr):
     r =  instr.startswith("DIV") or instr.startswith("MOD") or instr.startswith("SDIV") or instr.startswith("SMOD") or instr.startswith("ADDMOD") or instr.startswith("MULMOD")
     return r
                     
-def check_string_pattern(instructions):
-    pat = False
-    if instructions[0] == pattern[0]:
-        i = 1
-        correct = True
-        while(i<len(instructions) and instructions[i]!="DUP1"):
-            if instructions[i].split()[0][:-1]!="PUSH":
-                correct = False
-            i = i+1
-        if correct:
-            pat = instructions[i:] == pattern[2:]
-    return pat
-
-def write_pattern(key,cname):
-    if "costabs" not in os.listdir(tmp_path):
-        os.mkdir(costabs_path)
-        
-
-    name = costabs_path+"pattern.pattern"
-    with open(name,"a") as f:
-        string = tacas_ex+" "+cname+" "+str(key)+"\n"
-        f.write(string)
-    f.close()
-
 def is_getter_function(path):
     blocks = map(lambda x: x[0],path)
     is_getter_function = filter(lambda x: x in blocks,getter_blocks)
