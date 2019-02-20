@@ -425,10 +425,14 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
     elif len(instr.split("=")) > 1:
         slices = instr.split("=")
         name = slices[1].strip()
-        if(name in contract_vars or name[:name.find("(")] in contract_vars):
-            new = slices[0]+"= l("+name+")"
+        if not name.startswith("s("):
+            if(name in contract_vars or name[:name.find("(")] in contract_vars):
+                new = slices[0]+"= l("+name+")"
+            else:
+                new = instr
         else:
             new = instr
+            
     elif instr.find("skip")!=-1:
         new = ""
             
