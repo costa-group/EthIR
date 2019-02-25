@@ -676,7 +676,9 @@ def translateOpcodes50(opcode, value, index_variables,block):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
-            idx = int(value)
+            val = value.split("_")
+            if len(val)==1:
+                idx = int(value)
             instr = v1+" = " + "g(" + value + ")"
             update_field_index(value,block)
         except ValueError:
@@ -686,7 +688,9 @@ def translateOpcodes50(opcode, value, index_variables,block):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
-            idx = int(value)
+            val = value.split("_")
+            if len(val)==1:
+                idx = int(value)
             instr = "g(" + value + ") = " + v1
             update_field_index(value,block)
         except ValueError:
@@ -1547,13 +1551,13 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         if len(e.args)>1:
             arg = e[1]
             if arg == 5:
                 raise Exception("Error in SACO trnaslation",5)
             elif arg == 6:
                 raise Exception("Error in C trnaslation",6)
-        else:
+        else:    
             raise Exception("Error in RBR generation",4)
             
