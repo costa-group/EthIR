@@ -30,7 +30,7 @@ from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all
-from pattern import look_for_string_pattern
+from pattern import look_for_string_pattern,sload_sstore_fragment,sstore_fragment
 
 log = logging.getLogger(__name__)
 
@@ -847,9 +847,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     fake_stack = []
     sha_identify = False
     result = False
-    
+    instr_index = 0
     for instr in block_ins:
-        sym_exec_ins(params, block, instr, func_call,stack_old)
+        sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
+        instr_index+=1
         if sha_identify and not result:
             result =  access_array_sim(instr.strip(),fake_stack)
 
@@ -1128,7 +1129,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         scc_unary.append(block)
     
 # Symbolically executing an instruction
-def sym_exec_ins(params, block, instr, func_call,stack_first):
+def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global MSIZE
     global visited_pcs
     global solver
@@ -2093,8 +2094,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             global_state["pc"] = global_state["pc"] + 1
             position = stack.pop(0)
 
+            p_s,v = sload_sstore_fragment(vertices[block],instr_index)
             #Added by Pablo Gordillo
-            vertices[block].add_ls_value("sload",ls_cont[2],position)
+            if p_s:
+                vertices[block].add_ls_value("sload",ls_cont[2],str(position)+"_"+str(v))
+            else:
+                vertices[block].add_ls_value("sload",ls_cont[2],position)
             ls_cont[2]+=1
             if isReal(position) and position in global_state["Ia"]:
                 value = global_state["Ia"][position]
@@ -2143,7 +2148,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first):
             stored_value = stack.pop(0)
 
             #Added by Pablo Gordillo
-            vertices[block].add_ls_value("sstore",ls_cont[3],stored_address)
+            p_s, v = sstore_fragment(vertices[block],instr_index)
+            if p_s:
+                vertices[block].add_ls_value("sstore",ls_cont[3],str(stored_address)+"_"+str(v))
+            else:
+                vertices[block].add_ls_value("sstore",ls_cont[3],stored_address)
             ls_cont[3]+=1
             if isReal(stored_address):
                 # note that the stored_value could be unknown
