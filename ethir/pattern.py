@@ -1,7 +1,6 @@
-global pattern
+
 pattern = ["JUMPDEST","PUSH1 0x00","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","PUSH1 0x1f","ADD","PUSH1 0x20","DUP1","SWAP2","DIV","MUL","PUSH1 0x20","ADD","PUSH1 0x40","MLOAD","SWAP1","DUP2","ADD","PUSH1 0x40","MSTORE","DUP1","SWAP3","SWAP2","SWAP1","DUP2","DUP2","MSTORE","PUSH1 0x20","ADD","DUP3","DUP1","SLOAD","PUSH1 0x01","DUP2","PUSH1 0x01","AND","ISZERO","PUSH2 0x0100","MUL","SUB","AND","PUSH1 0x02","SWAP1","DIV","DUP1","ISZERO"]
 
-global sub_pattern
 sub_pattern = ["PUSH1 0x01",
                "DUP2",
                "PUSH1 0x01",
@@ -15,6 +14,9 @@ sub_pattern = ["PUSH1 0x01",
                "SWAP1",
                "DIV"]
 
+
+pre_pattern_sstore = ["PUSH","DUP","PUSH","EXP","DUP"]
+post_pattern_sstore = ["DUP","PUSH","MUL","NOT","AND","SWAP","DUP","PUSH","AND","MUL","OR","SWAP"]
 
 ## String Pattern
     
@@ -56,3 +58,19 @@ def write_pattern(key,cname):
 
 ## Fragment fields
 
+def sload_sstore_fragment(block,i):
+       
+    instructions = block.get_instructions()
+    prev_ins = instructions[:i]
+    post_ins = instructions[i+1:]
+
+    if len(prev_ins)< 5:
+        return False
+
+    if len(post_ins)< 12:
+        return False
+
+    cmp_prev_ins = prev_ins[len(prev_ins)-len(pre_pattern_sstore):]
+    for e in range(len(cmp_prev_ins):
+                   
+        
