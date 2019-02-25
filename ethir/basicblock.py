@@ -206,9 +206,15 @@ class BasicBlock:
         self.ret_val = val
 
     def _is_numerical(self,elem):
+        fragment = str(elem).split("_")
         try:
-            int(elem)
-            val = elem
+            if len(fragment) == 2:
+                int(fragment[0])
+                int(fragment[1])
+                val = elem
+            else:
+                int(elem)
+                val = elem
         except:
             val = "?"
         return val
