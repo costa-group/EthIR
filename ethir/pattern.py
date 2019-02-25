@@ -18,6 +18,8 @@ sub_pattern = ["PUSH1 0x01",
 pre_pattern_sstore = ["PUSH","DUP","PUSH","EXP","DUP"]
 post_pattern_sstore = ["DUP","PUSH","MUL","NOT","AND","SWAP","DUP","PUSH","AND","MUL","OR","SWAP"]
 
+pre_pattern_sload = ["PUSH","PUSH","SWAP",]
+post_pattern_sload = ["SWAP","PUSH","EXP","SWAP","DIV","PUSH","AND"]
 ## String Pattern
     
 def look_for_string_pattern(block):
@@ -65,12 +67,85 @@ def sload_sstore_fragment(block,i):
     post_ins = instructions[i+1:]
 
     if len(prev_ins)< 5:
-        return False
+        return False,-1
 
     if len(post_ins)< 12:
-        return False
+        return False,-1
 
     cmp_prev_ins = prev_ins[len(prev_ins)-len(pre_pattern_sstore):]
-    for e in range(len(cmp_prev_ins):
+
+    p = True
+
+    first = cmp_prev_ins.pop(0)
+    val = -1
+
+    p = p and first.startswith(pre_pattern_sstore[0])
+    
+    if p:
+        second = cmp_prev_ins.pop(0)
+        if (not second.startswith("DUP")) and (not second.startswith("PUSH")):
+            p = False
+            
+        else:
+
+            if second.startswith("PUSH"):
+                val = int(second.split()[-1],16)
+            elif second.startswith("DUP"):
+                val = int(first.split()[-1],16)
+
+            i = 2
+            while i <len(cmp_prev_ins) and p:
+                current = cmp_prev_ins.pop(0)
+                p = p and current.startswith(pre_pattern_sstore[i])
+                i+=1
+
+            i = 0
+            while i < len(post_pattern_sstore) and p:
+                current = post_ins[i]
+                p = p and current.startswith(post_pattern_sstore[i])
+                i+=1
+                
+    return p, val
+
+def sstore_fragment(block,i):
+    instructions = block.get_instructions()
+    prev_ins = instructions[:i]
+    if len(prev_ins)<18:
+        return False, -1
+
+    start_index = len(prev_ins)-(len(pre_pattern_sstore)+len(post_pattern_sstore)+1) #The patterns don't take into account the SLOAD
+    ins = prev_ins[start_index:]
+    
+    p = True
+    
+    p = p and ins[0].startswith(pre_pattern_sstore[0])
+    second_p = ins[1].startswith(pre_pattern_sstore[1]) or ins[1].startswith("PUSH")
+    p = p and second_p
+    i = 2
+    
+    while i<len(pre_pattern_sstore) and p:
+        p = p and ins[i].startswith(pre_pattern_sstore[i])
+        i+=1
+
+    p = p and ins[i].startswith("SLOAD")
+    i+=1
+
+    idx = i
+    while i<len(post_pattern_sstore) and p:
+        p = p and ins[i].startswith(post_pattern_sstore[i-idx])
+        i+=1
+    
+    if p:
+        first = ins[0]
+        second = ins[1]
+        if second.startswith("PUSH"):
+            val = int(second.split()[-1],16)
+        else: #DUP case because p = True
+            val = int(first.split()[-1],16)
+    else:
+        val = -1
+
+    return p,val
                    
-        
+def sload_fragment(block,i):
+    pass
