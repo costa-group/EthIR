@@ -19,7 +19,7 @@ pre_pattern_sstore = ["PUSH","DUP","PUSH","EXP","DUP"]
 post_pattern_sstore = ["DUP","PUSH","MUL","NOT","AND","SWAP","DUP","PUSH","AND","MUL","OR","SWAP"]
 
 pre_pattern_sload = ["PUSH","PUSH","SWAP",]
-post_pattern_sload = ["SWAP","PUSH","EXP","SWAP","DIV","PUSH","AND"]
+post_pattern_sload = ["SWAP","PUSH","EXP","SWAP","DIV","PUSH"]
 ## String Pattern
     
 def look_for_string_pattern(block):
@@ -148,4 +148,47 @@ def sstore_fragment(block,i):
     return p,val
                    
 def sload_fragment(block,i):
-    pass
+    instructions = block.get_instructions()
+    prev_ins = instructions[:i]
+    post_ins = instructions[i+1:]
+
+    if len(prev_ins) < 3:
+        return False,-1
+
+    if len(post_ins) < 7:
+        return False,-1
+
+    cmp_prev_ins = prev_ins[len(prev_ins)-len(pre_pattern_sload):]
+
+    p = True
+
+    first = cmp_prev_ins.pop(0)
+    val = -1
+
+    is_first = first.startswith(pre_pattern_sstore[0]) or first.startswith("DUP")
+    p = p and is_first
+    
+    if p:
+        second = cmp_prev_ins.pop(0)
+
+        if not second.startswith("PUSH"): #second element of pattern
+            p = False
+        else:
+            val = int(second.split()[-1],16)
+
+    p = p and cmp_prev_ins.pop(0).startswith(pre_pattern_sload[2])
+
+    i = 0
+    while p and i<len(post_pattern_sload):
+        p = p and post_ins[i].startswith(post_pattern_sload[i])
+        i+=1
+
+    return p,val
+
+def check_sload_fragment_pattern(block,i):
+    p_s,v = sload_sstore_fragment(block,i)
+
+    if not p_s:
+        p_s,v = sload_fragment(block,i)
+    return p_s,v
+
