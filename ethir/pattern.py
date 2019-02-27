@@ -100,6 +100,14 @@ def sload_sstore_fragment(block,i):
                 i+=1
 
             i = 0
+            try:
+                s_ext = post_ins.index("SIGNEXTEND ")
+            except:
+                s_ext = -1
+
+            if s_ext !=-1:
+                post_ins = post_ins[:s_ext-1]+post_ins[s_ext+1:]
+                
             while i < len(post_pattern_sstore) and p:
                 current = post_ins[i]
                 p = p and current.startswith(post_pattern_sstore[i])
@@ -112,8 +120,17 @@ def sstore_fragment(block,i):
     prev_ins = instructions[:i]
     if len(prev_ins)<18:
         return False, -1
+    try:
+        prev_ins.index("SIGNEXTEND ")
+        s_ext = True
+    except:
+        s_ext = False
 
-    start_index = len(prev_ins)-(len(pre_pattern_sstore)+len(post_pattern_sstore)+1) #The patterns don't take into account the SLOAD
+    if s_ext:
+        start_index = len(prev_ins)-(len(pre_pattern_sstore)+len(post_pattern_sstore)+3) #The patterns don't take into account the SLOAD
+    else:
+        start_index = len(prev_ins)-(len(pre_pattern_sstore)+len(post_pattern_sstore)+1)
+        
     ins = prev_ins[start_index:]
     
     p = True
@@ -132,6 +149,9 @@ def sstore_fragment(block,i):
 
     idx = i
     while i<len(post_pattern_sstore) and p:
+        if ins[i].startswith("PUSH") and ins[i+1].startswith("SIGNEXTEND"):
+            i+=2
+        
         p = p and ins[i].startswith(post_pattern_sstore[i-idx])
         i+=1
     
