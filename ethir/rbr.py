@@ -385,18 +385,18 @@ def translateOpcodes10(opcode, index_variables,cond):
         v2, updated_variables = get_consume_variable(updated_variables)
         v3 , updated_variables = get_new_variable(updated_variables)
         if cond :
-            instr = v3+ " = lt(" + v1 + ", "+v2+")"
+            instr = v3+ " = slt(" + v1 + ", "+v2+")"
         else :
-            instr = "lt(" + v1 + ", "+v2+")"
+            instr = "slt(" + v1 + ", "+v2+")"
 
     elif opcode == "SGT":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3 , updated_variables = get_new_variable(updated_variables)
         if cond :
-            instr = v3+ " = gt(" + v1 + ", "+v2+")"
+            instr = v3+ " = sgt(" + v1 + ", "+v2+")"
         else :
-            instr = "gt(" + v1 + ", "+v2+")"
+            instr = "sgt(" + v1 + ", "+v2+")"
 
     elif opcode == "EQ":
         v1, updated_variables = get_consume_variable(index_variables)
