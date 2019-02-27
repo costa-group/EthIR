@@ -30,7 +30,7 @@ from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all
-from pattern import look_for_string_pattern,sload_sstore_fragment,sstore_fragment
+from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
 
 log = logging.getLogger(__name__)
 
@@ -2094,7 +2094,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             position = stack.pop(0)
 
-            p_s,v = sload_sstore_fragment(vertices[block],instr_index)
+            p_s,v = check_sload_fragment_pattern(vertices[block],instr_index)
             #Added by Pablo Gordillo
             if p_s:
                 vertices[block].add_ls_value("sload",ls_cont[2],str(position)+"_"+str(v))
