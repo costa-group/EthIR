@@ -314,7 +314,11 @@ def getKey(block):
     return block.get_start_address()
 
 def toInt(a):
-    return int(a)
+    elem = a.split("_")
+    if len(elem)>1:
+        return int(elem[0])
+    else:
+        return int(a)
 
 def getLevel(block):
     return block.get_depth_level()
