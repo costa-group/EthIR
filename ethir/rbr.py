@@ -1551,7 +1551,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         if len(e.args)>1:
             arg = e[1]
             if arg == 5:
