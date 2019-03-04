@@ -342,7 +342,9 @@ def translateOpcodes0(opcode,index_variables):
         instr = v3+" = " + v1 + "^" + v2
     elif opcode == "SIGNEXTEND":
         _, updated_variables = get_consume_variable(index_variables)
-        instr = ""
+        v0, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = "+v0
     elif opcode == "STOP":
         instr = "skip"
         updated_variables = index_variables
