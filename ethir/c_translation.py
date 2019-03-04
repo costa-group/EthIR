@@ -646,7 +646,7 @@ def abstract_integer(var):
                 right_h = hexadec[-8:]
 
             fs = filter(lambda x: x!="f",left_h)
-            print fs
+            
             if len(fs)!= 0 and svcomp!={}:
                 new_var = get_nondet_svcomp_label()
             elif len(fs)!= 0 and svcomp=={}:
