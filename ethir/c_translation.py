@@ -443,7 +443,7 @@ def get_stack_variables(variables,l=False):
     stack_variables = filter(lambda x: x.startswith("s"),variables)
     idx_list = map(lambda x: int(x.strip()[1:]),stack_variables)
     sorted_idx = sorted(idx_list)
-    rebuild_stack_variables = map(lambda x: "int s"+str(x)+";\n",sorted_idx)
+    rebuild_stack_variables = map(lambda x: "unsigned s"+str(x)+";\n",sorted_idx)
     s_vars = "\t".join(rebuild_stack_variables)
 
     if l:
@@ -454,7 +454,7 @@ def get_stack_variables(variables,l=False):
 def get_rest_variables(variables,l=False):
     r_variables = filter(lambda x: not(x.startswith("s")),variables)
     sorted_variables = sorted(r_variables)
-    rebuild_rvariables = map(lambda x: "int "+x+";\n",sorted_variables)
+    rebuild_rvariables = map(lambda x: "unsigned "+x+";\n",sorted_variables)
     r_vars = "\t".join(rebuild_rvariables)
 
     if l:
@@ -490,6 +490,12 @@ def translate_conditions(instr):
         var1 = unbox_variable(arg1[3:])
         var2 = unbox_variable(arg2[:-1])
         instr = var1+" > "+var2
+    elif instr.startswith("sgt"):
+        arg1 = instr.split(",")[0].strip()
+        arg2 = instr.split(",")[1].strip()
+        var1 = unbox_variable(arg1[3:])
+        var2 = unbox_variable(arg2[:-1])
+        instr = "(int)"+var1+" > "+"(int)"+var2
     elif instr.startswith("geq"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
@@ -502,6 +508,12 @@ def translate_conditions(instr):
         var1 = unbox_variable(arg1[3:])
         var2 = unbox_variable(arg2[:-1])
         instr = var1+" < "+var2
+    elif instr.startswith("slt"):
+        arg1 = instr.split(",")[0].strip()
+        arg2 = instr.split(",")[1].strip()
+        var1 = unbox_variable(arg1[3:])
+        var2 = unbox_variable(arg2[:-1])
+        instr = "(int)"+var1+" < "+"(int)"+var2
     elif instr.startswith("leq"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
@@ -549,13 +561,12 @@ def get_called_block(call_instruction):
     except:
         return block_id
 
-
 def process_jumps(rules):
     jump1 = rules[0]
     jump2 = rules[1]
 
     stack_variables = get_input_variables(jump1.get_index_invars())
-    stack = map(lambda x: "int "+x,stack_variables)
+    stack = map(lambda x: "unsigned "+x,stack_variables)
     s_head = ", ".join(stack)
 
     head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
@@ -582,7 +593,7 @@ def process_jumps(rules):
     
 def process_rule_c(rule):
     stack_variables = get_input_variables(rule.get_index_invars())
-    stack = map(lambda x: "int "+x,stack_variables)
+    stack = map(lambda x: "unsigned "+x,stack_variables)
     s_head = ", ".join(stack)
 
     head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
@@ -693,7 +704,77 @@ def process_body_c(instructions,cont,has_string_pattern):
 
 
 def process_instruction(instr,new_instructions,vars_to_declare,cont):        
-    if instr.find("nop(")!=-1:
+    if instr.find("nop(SGT")!=-1:
+        pre_instr = new_instructions.pop()
+        if pre_instr.find("=")!=-1 and pre_instr.find(">")!=-1:
+            args = pre_instr.split("=")
+            arg0 = args[0].strip()
+            args12 = args[1].split(">")
+            arg1 = args12[0].strip()
+            arg2 = args12[1].strip()
+
+            new_pre = arg0+" = "+"(int)"+arg1+" > "+" (int)"+arg2
+            new_instructions.append(new_pre)
+            new = instr
+        else:
+            new_instructions.append(pre_instr)
+            new = instr
+
+    elif instr.find("nop(SLT")!=-1:
+        pre_instr = new_instructions.pop()
+        if pre_instr.find("=")!=-1 and pre_instr.find("<")!=-1:
+            args = pre_instr.split("=")
+            arg0 = args[0].strip()
+            args12 = args[1].split("<")
+            arg1 = args12[0].strip()
+            arg2 = args12[1].strip()
+
+            new_pre = arg0+" = "+"(int)"+arg1+" < "+" (int)"+arg2
+            new_instructions.append(new_pre)
+            new = instr
+        else:
+            new_instructions.append(pre_instr)
+            new = instr
+
+    elif instr.find("nop(SDIV")!=-1:
+        pre_instr = new_inctructions.pop()
+        args = pre_instr.split("=")
+        arg0 = args[0].strip()
+        arg12 = args[1].split("/")
+        arg1 = args12[0].strip()
+        arg2 = args12[1].strip()
+
+        new_pre = arg0+" = "+"(int)"+arg1+" / "+"(int)"+arg2
+        new_instructions.append(new_pre)
+
+        new = instr
+        
+    elif instr.find("nop(SMOD")!=-1:
+        pre_instr = new_instructions.pop()
+        args = pre_instr.split("=")
+        arg0 = args[0].strip()
+        arg12 = args[1].split("%")
+        arg1 = args12[0].strip()
+        arg2 = args12[1].strip()
+
+        new_pre = arg0+" = "+"(int)"+arg1+" % "+"(int)"+arg2
+        new_instructions.append(new_pre)
+
+        new = instr
+
+    # elif instr.find("nop(SIGNEXTEND")!=-1:
+    #     pre_instr = new_instructions.pop()
+    #     args = pre_instr.split("=")
+    #     arg0 = args[0].strip()
+    #     arg1 = args[1].strip()
+    #     pos = arg1[1:]
+    #     pre_pos = int(pos)-1
+    #     arg_bits = "s"+str(pre_pos)
+
+    #     new_pre = "if( "+arg_bits+" >= 4){\n"
+    #     new_pre = new_pre+"\t"+arg0+" = "+
+
+    elif instr.find("nop(")!=-1:
         new = instr
         
     elif instr.find("call(",0)!=-1:
@@ -896,9 +977,43 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
 
         new = var0+" = "+ var1 +" < "+var2
         check_declare_variable(var0,vars_to_declare)
+
+    elif instr.find("= slt(",0)!=-1:
+        elems = instr.split("= slt")
+        arg0 = elems[0].strip()
+        var0 = unbox_variable(arg0)
+
+        arg12_aux = elems[1].strip()[1:-1]
+        arg12 = arg12_aux.split(",")
+        
+        arg1 = arg12[0].strip()
+        var1 = unbox_variable(arg1)
+
+        arg2 = arg12[1].strip()
+        var2 = unbox_variable(arg2)
+
+        new = var0+" = "+ var1 +" < "+var2
+        check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("= gt(",0)!=-1:
         elems = instr.split("= gt")
+        arg0 = elems[0].strip()
+        var0 = unbox_variable(arg0)
+
+        arg12_aux = elems[1].strip()[1:-1]
+        arg12 = arg12_aux.split(",")
+
+        arg1 = arg12[0].strip()
+        var1 = unbox_variable(arg1)
+
+        arg2 = arg12[1].strip()
+        var2 = unbox_variable(arg2)
+
+        new = var0+" = "+ var1 +" > "+var2
+        check_declare_variable(var0,vars_to_declare)
+
+    elif instr.find("= sgt(",0)!=-1:
+        elems = instr.split("= sgt")
         arg0 = elems[0].strip()
         var0 = unbox_variable(arg0)
 
@@ -1144,9 +1259,9 @@ def write_init(rules,execution,cname):
         bc_data = r.get_bc()
         locals_vars = sorted(r.get_args_local())[::-1]
                                 
-        fields = map(lambda x: "int g"+str(x),fields_id)
-        l_vars = map(lambda x: "int l"+str(x),locals_vars)
-        bc = map(lambda x: "int "+x,bc_data)
+        fields = map(lambda x: "unsigned g"+str(x),fields_id)
+        l_vars = map(lambda x: "unsigned l"+str(x),locals_vars)
+        bc = map(lambda x: "unsigned "+x,bc_data)
         
         
         if fields != []:
