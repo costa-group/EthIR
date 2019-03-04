@@ -187,15 +187,18 @@ def sload_fragment(block,i):
 
     is_first = first.startswith(pre_pattern_sstore[0]) or first.startswith("DUP")
     p = p and is_first
-    
+
     if p:
         second = cmp_prev_ins.pop(0)
 
-        if not second.startswith("PUSH"): #second element of pattern
+        if (not second.startswith("PUSH")) and (not second.startswith("DUP")): #second element of pattern
             p = False
         else:
-            val = int(second.split()[-1],16)
-
+            if second.startswith("PUSH"):
+                val = int(second.split()[-1],16)
+            else:
+                val = int(first.split()[-1],16)
+    
     p = p and cmp_prev_ins.pop(0).startswith(pre_pattern_sload[2])
 
     i = 0
