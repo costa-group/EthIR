@@ -981,10 +981,10 @@ def get_opposite_guard(guard):
         opposite = "leq"+guard[2:]
     elif guard[:3] == "geq":
         opposite = "lt"+guard[3:]
-        # elif guard == "SLT":
-        #     pass
-        # elif guard == "SGT":
-        #     pass
+    elif guard == "slt":
+        opposite = "geq"+guard[3:]
+    elif guard == "sgt":
+        opposite = "leq"+guard[3:]
     elif guard[:2] == "eq":
         opposite = "neq"+guard[2:]
     elif guard[:3] == "neq":
