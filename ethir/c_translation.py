@@ -43,6 +43,12 @@ init_globals = False
 global blocks2init
 blocks2init = []
 
+global exp_function
+exp_function = False
+
+global signextend_function
+signextend_function = False
+
 def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global svcomp
     global verifier
@@ -68,7 +74,17 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
             head_c , rule = initialize_globals(rbr)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
-    
+
+        if exp_function:
+            head, f = def_exp_function()
+            heads = heads+head
+            new_rules.append(f)
+
+        if signextend_function:
+            head, f = def_signextend_function()
+            heads = heads+head
+            new_rules.append(f)
+            
         write_init(rbr,execution,cname)
         write(heads,new_rules,execution,cname)
 
@@ -443,7 +459,7 @@ def get_stack_variables(variables,l=False):
     stack_variables = filter(lambda x: x.startswith("s"),variables)
     idx_list = map(lambda x: int(x.strip()[1:]),stack_variables)
     sorted_idx = sorted(idx_list)
-    rebuild_stack_variables = map(lambda x: "unsigned s"+str(x)+";\n",sorted_idx)
+    rebuild_stack_variables = map(lambda x: "int s"+str(x)+";\n",sorted_idx)
     s_vars = "\t".join(rebuild_stack_variables)
 
     if l:
@@ -454,7 +470,7 @@ def get_stack_variables(variables,l=False):
 def get_rest_variables(variables,l=False):
     r_variables = filter(lambda x: not(x.startswith("s")),variables)
     sorted_variables = sorted(r_variables)
-    rebuild_rvariables = map(lambda x: "unsigned "+x+";\n",sorted_variables)
+    rebuild_rvariables = map(lambda x: "int "+x+";\n",sorted_variables)
     r_vars = "\t".join(rebuild_rvariables)
 
     if l:
@@ -566,7 +582,7 @@ def process_jumps(rules):
     jump2 = rules[1]
 
     stack_variables = get_input_variables(jump1.get_index_invars())
-    stack = map(lambda x: "unsigned "+x,stack_variables)
+    stack = map(lambda x: "int "+x,stack_variables)
     s_head = ", ".join(stack)
 
     head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
@@ -593,7 +609,7 @@ def process_jumps(rules):
     
 def process_rule_c(rule):
     stack_variables = get_input_variables(rule.get_index_invars())
-    stack = map(lambda x: "unsigned "+x,stack_variables)
+    stack = map(lambda x: "int "+x,stack_variables)
     s_head = ", ".join(stack)
 
     head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
@@ -649,22 +665,24 @@ def abstract_integer(var):
         if len(hexadec)<=10:
             new_var = str(r)
         else:
-            if hexadec[-1]=="L":
-                left_h = hexadec[2:-9]
-                right_h = hexadec[-9:-1]
-            else:
-                left_h = hexadec[2:-8]
-                right_h = hexadec[-8:]
-
-            fs = filter(lambda x: x!="f",left_h)
+            new_var = get_nondet_svcomp_label()
             
-            if len(fs)!= 0 and svcomp!={}:
-                new_var = get_nondet_svcomp_label()
-            elif len(fs)!= 0 and svcomp=={}:
-                new_var = "4294967295"
-            else:
-                aux = "0x"+right_h
-                new_var = str(int(aux,16))
+            # if hexadec[-1]=="L":
+            #     left_h = hexadec[2:-9]
+            #     right_h = hexadec[-9:-1]
+            # else:
+            #     left_h = hexadec[2:-8]
+            #     right_h = hexadec[-8:]
+
+            # fs = filter(lambda x: x!="f",left_h)
+            
+            # if len(fs)!= 0 and svcomp!={}:
+            #     new_var = get_nondet_svcomp_label()
+            # elif len(fs)!= 0 and svcomp=={}:
+            #     new_var = "4294967295"
+            # else:
+            #     aux = "0x"+right_h
+            #     new_var = str(int(aux,16))
             
     # if b and r>=4294967296:
     #     new_var = "4294967295"
@@ -703,77 +721,24 @@ def process_body_c(instructions,cont,has_string_pattern):
     return new_instructions,variables
 
 
-def process_instruction(instr,new_instructions,vars_to_declare,cont):        
-    if instr.find("nop(SGT")!=-1:
+def process_instruction(instr,new_instructions,vars_to_declare,cont):
+    global signextend_function
+    global exp_function
+    
+    if instr.find("nop(SIGNEXTEND")!=-1:
         pre_instr = new_instructions.pop()
-        if pre_instr.find("=")!=-1 and pre_instr.find(">")!=-1:
-            args = pre_instr.split("=")
-            arg0 = args[0].strip()
-            args12 = args[1].split(">")
-            arg1 = args12[0].strip()
-            arg2 = args12[1].strip()
-
-            new_pre = arg0+" = "+"(int)"+arg1+" > "+" (int)"+arg2
-            new_instructions.append(new_pre)
-            new = instr
-        else:
-            new_instructions.append(pre_instr)
-            new = instr
-
-    elif instr.find("nop(SLT")!=-1:
-        pre_instr = new_instructions.pop()
-        if pre_instr.find("=")!=-1 and pre_instr.find("<")!=-1:
-            args = pre_instr.split("=")
-            arg0 = args[0].strip()
-            args12 = args[1].split("<")
-            arg1 = args12[0].strip()
-            arg2 = args12[1].strip()
-
-            new_pre = arg0+" = "+"(int)"+arg1+" < "+" (int)"+arg2
-            new_instructions.append(new_pre)
-            new = instr
-        else:
-            new_instructions.append(pre_instr)
-            new = instr
-
-    elif instr.find("nop(SDIV")!=-1:
-        pre_instr = new_inctructions.pop()
         args = pre_instr.split("=")
         arg0 = args[0].strip()
-        arg12 = args[1].split("/")
-        arg1 = args12[0].strip()
-        arg2 = args12[1].strip()
+        arg1 = args[1].strip()[:-1]
+        pos = arg1[1:]
+        pre_pos = int(pos)+1
+        arg_bits = "s"+str(pre_pos)
 
-        new_pre = arg0+" = "+"(int)"+arg1+" / "+"(int)"+arg2
+        new_pre = arg0+" = signextend_eth("+arg1+", "+arg_bits+");"
         new_instructions.append(new_pre)
-
+        signextend_function = True
         new = instr
         
-    elif instr.find("nop(SMOD")!=-1:
-        pre_instr = new_instructions.pop()
-        args = pre_instr.split("=")
-        arg0 = args[0].strip()
-        arg12 = args[1].split("%")
-        arg1 = args12[0].strip()
-        arg2 = args12[1].strip()
-
-        new_pre = arg0+" = "+"(int)"+arg1+" % "+"(int)"+arg2
-        new_instructions.append(new_pre)
-
-        new = instr
-
-    # elif instr.find("nop(SIGNEXTEND")!=-1:
-    #     pre_instr = new_instructions.pop()
-    #     args = pre_instr.split("=")
-    #     arg0 = args[0].strip()
-    #     arg1 = args[1].strip()
-    #     pos = arg1[1:]
-    #     pre_pos = int(pos)-1
-    #     arg_bits = "s"+str(pre_pos)
-
-    #     new_pre = "if( "+arg_bits+" >= 4){\n"
-    #     new_pre = new_pre+"\t"+arg0+" = "+
-
     elif instr.find("nop(")!=-1:
         new = instr
         
@@ -803,10 +768,13 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp!={}:
-            new = var0+" = "+get_nondet_svcomp_label()
-        else:
+        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
             new = var0+" = "+ var1 +" & "+var2
+        else:
+        #if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        # else:
+        #     new = var0+" = "+ var1 +" & "+var2
 
         check_declare_variable(var0,vars_to_declare)
 
@@ -824,10 +792,17 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp!={}:
-            new = var0+" = "+ get_nondet_svcomp_label()
-        else:
+
+        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
             new = var0+" = "+ var1 +" ^ "+var2
+        else:
+        #if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        # #if svcomp!={}:
+        #     new = var0+" = "+ get_nondet_svcomp_label()
+
+        # else:
+        #     new = var0+" = "+ var1 +" ^ "+var2
 
         check_declare_variable(var0,vars_to_declare)
         
@@ -846,10 +821,14 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if svcomp!={}:
-            new = var0+" = "+get_nondet_svcomp_label()
-        else:
+        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
             new = var0+" = "+ var1 +" | "+var2
+        else:
+            new = var0+" = "+get_nondet_svcomp_label()
+        # if svcomp!={}:
+        #     new = var0+" = "+get_nondet_svcomp_label()
+        # else:
+        #     new = var0+" = "+ var1 +" | "+var2
             
         check_declare_variable(var0,vars_to_declare)
         
@@ -861,10 +840,15 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg1 = elems[1].strip()[1:-1]
         var1 = unbox_variable(arg1)
 
-        if svcomp!={}:
-            new = var0+" = "+get_nondet_svcomp_label()
-        else:
+        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
             new = var0+" = ~"+ var1
+        else:
+            new = var0+" = "+get_nondet_svcomp_label()
+
+        # if svcomp!={}:
+        #     new = var0+" = "+get_nondet_svcomp_label()
+        # else:
+        #     new = var0+" = ~"+ var1
 
         check_declare_variable(var0,vars_to_declare)
         
@@ -1048,12 +1032,21 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
-            new = var0+" = "+get_nondet_svcomp_label()
-        else:
-            new = var0+" = s"+str(cont)
-            check_declare_variable("s"+str(cont),vars_to_declare)
-            cont+=1
+        arg12 = instr[pos+1:].strip().split("^")
+        arg1 = arg12[0].strip()
+        var1 = unbox_variable(arg1)
+        
+        arg2 = arg12[1].strip()
+        var2 = unbox_variable(arg2)
+
+        new = var0+" = exp_eth("+var1+", "+var2+")"
+        exp_function = True
+        # if svcomp!={}:
+        #     new = var0+" = "+get_nondet_svcomp_label()
+        # else:
+        #     new = var0+" = s"+str(cont)
+        #     check_declare_variable("s"+str(cont),vars_to_declare)
+        #     cont+=1
 
         
     elif instr.find("byte",0)!=-1: # upper bound-> 255
@@ -1187,14 +1180,14 @@ def get_current_initloop():
         return init_loop-1
 
 def get_nondet_svcomp_label():
-    return "__VERIFIER_nondet_int()"
+    return "__VERIFIER_nondet_uint()"
 
 def get_error_svcomp_label():
     return "ERROR: __VERIFIER_error()"
 
 def add_svcomp_labels():
     labels = "";
-    labels = labels+"extern int __VERIFIER_nondet_int();\n"
+    labels = labels+"extern int __VERIFIER_nondet_uint();\n"
     labels = labels + "extern void __VERIFIER_error();\n"
 
     return labels
@@ -1222,9 +1215,9 @@ def initialize_global_variables(rules):
     locals_vars = sorted(r.get_args_local())[::-1]
 
     
-    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",fields_id)
-    l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
-    bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_int()",bc_data)
+    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_uint()",fields_id)
+    l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_uint()",locals_vars)
+    bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_uint()",bc_data)
 
     if fields != []:
         s = s+";\n".join(fields)+";\n"
@@ -1236,7 +1229,7 @@ def initialize_global_variables(rules):
         s = s+";\n".join(bc)+";\n"
         
     return s
-        
+
 def write_init(rules,execution,cname):
     s = "\n"
 
@@ -1259,9 +1252,9 @@ def write_init(rules,execution,cname):
         bc_data = r.get_bc()
         locals_vars = sorted(r.get_args_local())[::-1]
                                 
-        fields = map(lambda x: "unsigned g"+str(x),fields_id)
-        l_vars = map(lambda x: "unsigned l"+str(x),locals_vars)
-        bc = map(lambda x: "unsigned "+x,bc_data)
+        fields = map(lambda x: "int g"+str(x),fields_id)
+        l_vars = map(lambda x: "int l"+str(x),locals_vars)
+        bc = map(lambda x: "int "+x,bc_data)
         
         
         if fields != []:
@@ -1276,6 +1269,50 @@ def write_init(rules,execution,cname):
         f.write(s)
         
     f.close()
+
+def def_signextend_function():
+    head = "int signextend_eth(int v0, int v1);\n"
+
+    f = "int signextend_eth(int v0, int v1){\n"
+    f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
+    f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
+    f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
+    f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
+    f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
+    f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
+    f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
+    if svcomp.get("verify",-1) != -1:
+        f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
+    else:
+        f = f+"else {\n"+"\t\tint v2;\n \t\treturn v2;\n"+"\t}\n"
+        
+    f = f+"}\n"
+
+    return head,f
+
+def def_exp_function():
+    head = "int exp_eth (int v0, int v1);\n"
+
+    f = "int exp_eth (int v0, int v1) {\n"
+
+    f = f+"\tif (v1 == 0) return 1;\n"
+    f = f+"\tif (v1 == 1) return v0;\n"
+    f = f+"\tif (v1 == 2) return v0*v0;\n"
+    f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
+    f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
+
+    f = f+"\tint res = 1\n;"
+    f = f+"\tfor (int i = 0; i < v1; i ++) {\n"
+    f = f+"\t\tres = res * v0;\n"
+    f = f+"\t}\n"
+    f = f+"\treturn res;\n"
+    f = f+"}"
+
+    return head,f
 
 def write_main(execution,cname):
     if execution == None:
