@@ -459,7 +459,7 @@ def get_stack_variables(variables,l=False):
     stack_variables = filter(lambda x: x.startswith("s"),variables)
     idx_list = map(lambda x: int(x.strip()[1:]),stack_variables)
     sorted_idx = sorted(idx_list)
-    rebuild_stack_variables = map(lambda x: "unsigned s"+str(x)+";\n",sorted_idx)
+    rebuild_stack_variables = map(lambda x: "unsigned int s"+str(x)+";\n",sorted_idx)
     s_vars = "\t".join(rebuild_stack_variables)
 
     if l:
@@ -470,7 +470,7 @@ def get_stack_variables(variables,l=False):
 def get_rest_variables(variables,l=False):
     r_variables = filter(lambda x: not(x.startswith("s")),variables)
     sorted_variables = sorted(r_variables)
-    rebuild_rvariables = map(lambda x: "unsigned "+x+";\n",sorted_variables)
+    rebuild_rvariables = map(lambda x: "unsigned int "+x+";\n",sorted_variables)
     r_vars = "\t".join(rebuild_rvariables)
 
     if l:
@@ -582,7 +582,7 @@ def process_jumps(rules):
     jump2 = rules[1]
 
     stack_variables = get_input_variables(jump1.get_index_invars())
-    stack = map(lambda x: "unsigned "+x,stack_variables)
+    stack = map(lambda x: "unsigned int "+x,stack_variables)
     s_head = ", ".join(stack)
 
     head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
@@ -609,7 +609,7 @@ def process_jumps(rules):
     
 def process_rule_c(rule):
     stack_variables = get_input_variables(rule.get_index_invars())
-    stack = map(lambda x: "unsigned "+x,stack_variables)
+    stack = map(lambda x: "unsigned int "+x,stack_variables)
     s_head = ", ".join(stack)
 
     head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
@@ -1247,7 +1247,7 @@ def get_error_svcomp_label():
 
 def add_svcomp_labels():
     labels = "";
-    labels = labels+"extern unsigned __VERIFIER_nondet_uint();\n"
+    labels = labels+"extern unsigned int __VERIFIER_nondet_uint();\n"
     labels = labels + "extern void __VERIFIER_error();\n"
 
     return labels
@@ -1312,9 +1312,9 @@ def write_init(rules,execution,cname):
         bc_data = r.get_bc()
         locals_vars = sorted(r.get_args_local())[::-1]
                                 
-        fields = map(lambda x: "unsigned g"+str(x),fields_id)
-        l_vars = map(lambda x: "unsigned l"+str(x),locals_vars)
-        bc = map(lambda x: "unsigned "+x,bc_data)
+        fields = map(lambda x: "unsigned int g"+str(x),fields_id)
+        l_vars = map(lambda x: "unsigned int l"+str(x),locals_vars)
+        bc = map(lambda x: "unsigned int "+x,bc_data)
         
         
         if fields != []:
@@ -1331,9 +1331,9 @@ def write_init(rules,execution,cname):
     f.close()
 
 def def_signextend_function():
-    head = "unsigned signextend_eth(unsigned v0, unsigned v1);\n"
+    head = "unsigned int signextend_eth(unsigned int v0, unsigned int v1);\n"
 
-    f = "unsigned signextend_eth(unsigned v0, unsigned v1){\n"
+    f = "unsigned int signextend_eth(unsigned int v0, unsigned int v1){\n"
     f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
     f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
     f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
@@ -1344,16 +1344,16 @@ def def_signextend_function():
     if svcomp.get("verify",-1) != -1:
         f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
     else:
-        f = f+"else {\n"+"\t\tunsigned v2;\n \t\treturn v2;\n"+"\t}\n"
+        f = f+"else {\n"+"\t\tunsigned int v2;\n \t\treturn v2;\n"+"\t}\n"
         
     f = f+"}\n"
 
     return head,f
 
 def def_exp_function():
-    head = "unsigned exp_eth (unsigned v0, unsigned v1);\n"
+    head = "unsigned int exp_eth (unsigned int v0, unsigned int v1);\n"
 
-    f = "unsigned exp_eth (unsigned v0, unsigned v1) {\n"
+    f = "unsigned int exp_eth (unsigned int v0, unsigned int v1) {\n"
 
     f = f+"\tif (v1 == 0) return 1;\n"
     f = f+"\tif (v1 == 1) return v0;\n"
@@ -1365,8 +1365,8 @@ def def_exp_function():
     f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
     f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
-    f = f+"\tunsigned res = 1\n;"
-    f = f+"\tfor (unsigned i = 0; i < v1; i ++) {\n"
+    f = f+"\tunsigned int res = 1\n;"
+    f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
     f = f+"\t\tres = res * v0;\n"
     f = f+"\t}\n"
     f = f+"\treturn res;\n"
