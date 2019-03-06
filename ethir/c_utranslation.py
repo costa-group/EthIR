@@ -1365,11 +1365,13 @@ def def_exp_function():
     f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
     f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
-    f = f+"\tunsigned int res = 1\n;"
-    f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
-    f = f+"\t\tres = res * v0;\n"
-    f = f+"\t}\n"
-    f = f+"\treturn res;\n"
+    f = f+"\n\tunsigned int res;\n"
+    f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
+    # f = f+"\tunsigned int res = 1\n;"
+    # f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
+    # f = f+"\t\tres = res * v0;\n"
+    # f = f+"\t}\n"
+    # f = f+"\treturn res;\n"
     f = f+"}"
 
     return head,f
