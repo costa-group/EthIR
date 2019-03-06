@@ -665,8 +665,10 @@ def abstract_integer(var):
         if len(hexadec)<=10:
             new_var = str(r)
         else:
-            new_var = get_nondet_svcomp_label()
-            
+            if svcomp!={}:
+                new_var = get_nondet_svcomp_label()
+            else:
+                new_var = "4294967295"
             # if hexadec[-1]=="L":
             #     left_h = hexadec[2:-9]
             #     right_h = hexadec[-9:-1]
