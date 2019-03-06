@@ -1247,7 +1247,7 @@ def get_error_svcomp_label():
 
 def add_svcomp_labels():
     labels = "";
-    labels = labels+"extern int __VERIFIER_nondet_uint();\n"
+    labels = labels+"extern unsigned __VERIFIER_nondet_uint();\n"
     labels = labels + "extern void __VERIFIER_error();\n"
 
     return labels
