@@ -1216,9 +1216,12 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = slices[1].strip()
 
         arg2 = abstract_integer(arg2)
-        
+
         var1 = unbox_variable(arg1)
-        var2 = unbox_variable(arg2)
+        if arg2.find("nondet")==-1:
+            var2 = unbox_variable(arg2)
+        else:
+            var2 = arg2
 
         new = var1+" = "+var2
         check_declare_variable(var1,vars_to_declare)
