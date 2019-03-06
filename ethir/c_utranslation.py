@@ -1374,7 +1374,7 @@ def def_exp_function():
     # f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
     # f = f+"\t\tres = res * v0;\n"
     # f = f+"\t}\n"
-    # f = f+"\treturn res;\n"
+    f = f+"\treturn res;\n"
     f = f+"}"
 
     return head,f
