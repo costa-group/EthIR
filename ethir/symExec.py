@@ -2975,12 +2975,33 @@ def generate_saco_config_file(cname):
         name = costabs_path+"config_block.config"
     else:
         name = costabs_path+cname+".config"
+
     with open(name,"w") as f:
-        elems = map(lambda (x,y): "("+str(x)+";"+str(y[0])+";"+str(y[1])+")", function_block_map.items())
+        elems = map(lambda (x,y): "("+process_argument_function(x)+";"+str(y[0])+";"+str(y[1])+")", function_block_map.items())
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
 
+def process_argument_function(arg):
+    posInit = arg.find("(")
+    posEnd = arg.find(")")
+    args_string = arg[posInit+1:posEnd]
+    args = args_string.split(",")
+    new_args = []
+    for e in args:
+        pos = e.find("storage")
+        if pos !=-1:
+            new_args.append(e[:pos].strip())
+
+        else:
+            pos = e.find("memory")
+            if pos !=-1:
+                new_args.append(e[:pos].strip())
+            else:
+                new_args.append(e)
+                
+    return arg[:posInit+1]+",".join(new_args)+")"
+    
 def generate_verify_config_file(cname):
     to_write = []
     remove_getters_has_invalid()
