@@ -1216,9 +1216,12 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = slices[1].strip()
 
         arg2 = abstract_integer(arg2)
-        
+
         var1 = unbox_variable(arg1)
-        var2 = unbox_variable(arg2)
+        if arg2.find("nondet")==-1:
+            var2 = unbox_variable(arg2)
+        else:
+            var2 = arg2
 
         new = var1+" = "+var2
         check_declare_variable(var1,vars_to_declare)
@@ -1365,10 +1368,12 @@ def def_exp_function():
     f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
     f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
-    f = f+"\tunsigned int res = 1\n;"
-    f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
-    f = f+"\t\tres = res * v0;\n"
-    f = f+"\t}\n"
+    f = f+"\n\tunsigned int res;\n"
+    f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
+    # f = f+"\tunsigned int res = 1\n;"
+    # f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
+    # f = f+"\t\tres = res * v0;\n"
+    # f = f+"\t}\n"
     f = f+"\treturn res;\n"
     f = f+"}"
 

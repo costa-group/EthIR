@@ -167,7 +167,7 @@ def sstore_fragment(block,i):
 
     return p,val
                    
-def sload_fragment(block,i):
+def sload_fragment(block,i,stack):
     instructions = block.get_instructions()
     prev_ins = instructions[:i]
     post_ins = instructions[i+1:]
@@ -196,11 +196,17 @@ def sload_fragment(block,i):
         else:
             if second.startswith("PUSH"):
                 val = int(second.split()[-1],16)
-            else:
-                val = int(first.split()[-1],16)
+            else: #it is dup
+                if first.startswith(pre_pattern_sstore[0]): #first =  push
+                    val = int(first.split()[-1],16)
     
-    p = p and cmp_prev_ins.pop(0).startswith(pre_pattern_sload[2])
+    third = cmp_prev_ins.pop(0)                
+    p = p and third.startswith(pre_pattern_sload[2])
 
+    if p and val == -1:
+        pos = int(third.strip()[-1],10)
+        val = stack[pos]
+    
     i = 0
     while p and i<len(post_pattern_sload):
         p = p and post_ins[i].startswith(post_pattern_sload[i])
@@ -208,10 +214,10 @@ def sload_fragment(block,i):
 
     return p,val
 
-def check_sload_fragment_pattern(block,i):
+def check_sload_fragment_pattern(block,i,stack):
     p_s,v = sload_sstore_fragment(block,i)
 
     if not p_s:
-        p_s,v = sload_fragment(block,i)
+        p_s,v = sload_fragment(block,i,stack)
     return p_s,v
 

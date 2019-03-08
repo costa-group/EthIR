@@ -2092,9 +2092,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     elif opcode == "SLOAD":
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
+
+            p_s,v = check_sload_fragment_pattern(vertices[block],instr_index,stack)
+            
             position = stack.pop(0)
 
-            p_s,v = check_sload_fragment_pattern(vertices[block],instr_index)
             #Added by Pablo Gordillo
             if p_s:
                 vertices[block].add_ls_value("sload",ls_cont[2],str(position)+"_"+str(v))
