@@ -1109,7 +1109,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         #     cont+=1
 
         
-    elif instr.find("byte",0)!=-1: # upper bound-> 255
+    elif instr.find("byte",0)!=-1:
         pos = instr.find("=",0)
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
@@ -1117,7 +1117,9 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         if svcomp!={}:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
-            new = var0+" = 255"
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
 
         check_declare_variable(var0,vars_to_declare)
         
@@ -1328,7 +1330,12 @@ def write_init(rules,execution,cname):
 
         if bc != []:
             s = s+";\n".join(bc)+";\n"
-        
+
+        print "HOLA"
+        print svcomp
+        if svcomp == {}:
+            f.write("#include <stdio.h>\n\n")
+            
         f.write(s)
         
     f.close()
@@ -1347,7 +1354,7 @@ def def_signextend_function():
     if svcomp.get("verify",-1) != -1:
         f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
     else:
-        f = f+"else {\n"+"\t\tunsigned int v2;\n \t\treturn v2;\n"+"\t}\n"
+        f = f+"else {\n"+"\t\tunsigned int v0;\n \t\treturn v0;\n"+"\t}\n"
         
     f = f+"}\n"
 
@@ -1369,7 +1376,11 @@ def def_exp_function():
     f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
     f = f+"\n\tunsigned int res;\n"
-    f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
+    
+    if svcomp.get("verify",-1) != -1:
+        f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
+    else:
+        f = f+"\tunsigned int v2;\n\tres = v2;\n"
     # f = f+"\tunsigned int res = 1\n;"
     # f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
     # f = f+"\t\tres = res * v0;\n"
