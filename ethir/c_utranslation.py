@@ -1331,8 +1331,6 @@ def write_init(rules,execution,cname):
         if bc != []:
             s = s+";\n".join(bc)+";\n"
 
-        print "HOLA"
-        print svcomp
         if svcomp == {}:
             f.write("#include <stdio.h>\n\n")
             
