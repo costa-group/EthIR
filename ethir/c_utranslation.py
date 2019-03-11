@@ -43,9 +43,6 @@ init_globals = False
 global blocks2init
 blocks2init = []
 
-global exp_function
-exp_function = False
-
 global signextend_function
 signextend_function = False
 
@@ -84,11 +81,6 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
             head_c , rule = initialize_globals(rbr)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
-
-        if exp_function:
-            head, f = def_exp_function()
-            heads = heads+head
-            new_rules.append(f)
 
         if signextend_function:
             head, f = def_signextend_function()
@@ -766,7 +758,6 @@ def process_body_c(instructions,cont,has_string_pattern):
 
 def process_instruction(instr,new_instructions,vars_to_declare,cont):
     global signextend_function
-    global exp_function
     
     if instr.find("nop(SGT")!=-1:
         pre_instr = new_instructions.pop()
@@ -872,7 +863,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
+        if (svcomp == {}):# or (svcomp["verify"] == "cpa"):
             new = var0+" = "+ var1 +" & "+var2
         else:
         #if svcomp!={}:
@@ -897,7 +888,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         var2 = unbox_variable(arg2)
 
 
-        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
+        if (svcomp == {}): #or (svcomp["verify"] == "cpa"):
             new = var0+" = "+ var1 +" ^ "+var2
         else:
         #if svcomp!={}:
@@ -925,7 +916,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
+        if (svcomp == {}):# or (svcomp["verify"] == "cpa"):
             new = var0+" = "+ var1 +" | "+var2
         else:
             new = var0+" = "+get_nondet_svcomp_label()
@@ -944,7 +935,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg1 = elems[1].strip()[1:-1]
         var1 = unbox_variable(arg1)
 
-        if (svcomp == {}) or (svcomp["verify"] == "cpa"):
+        if (svcomp == {}):# or (svcomp["verify"] == "cpa"):
             new = var0+" = ~"+ var1
         else:
             new = var0+" = "+get_nondet_svcomp_label()
@@ -1143,14 +1134,14 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
 
-        new = var0+" = exp_eth("+var1+", "+var2+")"
-        exp_function = True
-        # if svcomp!={}:
-        #     new = var0+" = "+get_nondet_svcomp_label()
-        # else:
-        #     new = var0+" = s"+str(cont)
-        #     check_declare_variable("s"+str(cont),vars_to_declare)
-        #     cont+=1
+        # new = var0+" = exp_eth("+var1+", "+var2+")"
+        # exp_function = True
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
 
         
     elif instr.find("byte",0)!=-1:
@@ -1410,41 +1401,41 @@ def def_signextend_function():
 
     return head,f
 
-def def_exp_function():
-    if goto:
-        head = "unsigned int exp_eth (unsigned int w0, unsigned int w1);\n"
+# def def_exp_function():
+#     if goto:
+#         head = "unsigned int exp_eth (unsigned int w0, unsigned int w1);\n"
 
-        f = "unsigned int exp_eth (unsigned int w0, unsigned int w1) {\n"
-        f = f+"\tunsigned int v0 = w0;\n"
-        f = f+"\tunsigned int v1 = w1;\n"
-    else:
-        head = "unsigned int exp_eth (unsigned int v0, unsigned int v1);\n"
-        f = "unsigned int exp_eth (unsigned int v0, unsigned int v1) {\n"
+#         f = "unsigned int exp_eth (unsigned int w0, unsigned int w1) {\n"
+#         f = f+"\tunsigned int v0 = w0;\n"
+#         f = f+"\tunsigned int v1 = w1;\n"
+#     else:
+#         head = "unsigned int exp_eth (unsigned int v0, unsigned int v1);\n"
+#         f = "unsigned int exp_eth (unsigned int v0, unsigned int v1) {\n"
         
-    f = f+"\tif (v1 == 0) return 1;\n"
-    f = f+"\tif (v1 == 1) return v0;\n"
-    f = f+"\tif (v1 == 2) return v0*v0;\n"
-    f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
-    f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
+#     f = f+"\tif (v1 == 0) return 1;\n"
+#     f = f+"\tif (v1 == 1) return v0;\n"
+#     f = f+"\tif (v1 == 2) return v0*v0;\n"
+#     f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
+#     f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
+#     f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
+#     f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
+#     f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
+#     f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
-    f = f+"\n\tunsigned int res;\n"
+#     f = f+"\n\tunsigned int res;\n"
     
-    if svcomp.get("verify",-1) != -1:
-        f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
-    else:
-        f = f+"\tunsigned int v2;\n\tres = v2;\n"
-    # f = f+"\tunsigned int res = 1\n;"
-    # f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
-    # f = f+"\t\tres = res * v0;\n"
-    # f = f+"\t}\n"
-    f = f+"\treturn res;\n"
-    f = f+"}"
+#     if svcomp.get("verify",-1) != -1:
+#         f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
+#     else:
+#         f = f+"\tunsigned int v2;\n\tres = v2;\n"
+#     # f = f+"\tunsigned int res = 1\n;"
+#     # f = f+"\tfor (unsigned int i = 0; i < v1; i ++) {\n"
+#     # f = f+"\t\tres = res * v0;\n"
+#     # f = f+"\t}\n"
+#     f = f+"\treturn res;\n"
+#     f = f+"}"
 
-    return head,f
+#     return head,f
 
 def update_stack_vars_global(vs):
     global stack_vars_global
