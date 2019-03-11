@@ -49,11 +49,18 @@ exp_function = False
 global signextend_function
 signextend_function = False
 
+global stack_vars_global
+stack_vars_global = []
+
+global goto
+goto= False
+
 def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global svcomp
     global verifier
     global init_globals
     global blocks2init
+    global goto
     
     svcomp = svc_labels
     verifier = svc_labels.get("verify","")
@@ -66,10 +73,13 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
 
     try:
         if gotos:
+            goto = True
             heads, new_rules = rbr2c_gotos(rbr,scc)
         else:
             heads, new_rules = rbr2c_recur(rbr)
 
+        #AQUI
+        
         if svcomp!={}:
             head_c , rule = initialize_globals(rbr)
             heads = "\n"+head_c+heads
@@ -92,7 +102,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -184,7 +194,7 @@ def compute_sccs_unary(rbr,scc_unit):
     return heads, rules
 
 def translate_jump_scc(r,scc,id_loop):
-
+    
     jump1 = r[0]
     jump2 = r[1]
 
@@ -215,12 +225,17 @@ def translate_jump_scc(r,scc,id_loop):
     return body
 
 def translate_block_scc(rule,id_loop,multiple=False):
+    
     stack_variables = get_input_variables(rule.get_index_invars())
     stack = map(lambda x: "int "+x,stack_variables)
     s_head = ", ".join(stack)
 
-    head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
-    head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+    
+    # head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+    # head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+
+    head_c = "void " + rule.get_rule_name()+"();\n"
+    head = "void " + rule.get_rule_name()+"(){\n"
 
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
@@ -247,8 +262,12 @@ def translate_block_scc(rule,id_loop,multiple=False):
     else:
         label = ""
 
+    update_stack_vars_global(stack_variables)
+    update_stack_vars_global(variables)
+        
     if not multiple:
-        rule_c = head+var_declarations+init_loop_label+body+label
+        #rule_c = head+var_declarations+init_loop_label+body+label
+        rule_c = head+init_loop_label+body+label
         return head_c,rule_c
     else:
         return head_c,[head,init_loop_label+body+label],variables_d
@@ -287,7 +306,8 @@ def compute_sccs_multiple(rbr,scc):
         vars_declaration = delete_dup(vars_declaration)
         varsd_string = "\t".join(vars_declaration)
         
-        body = entry_part[0]+"\n\t"+varsd_string+"\n"+entry_part[1]+"\n"
+        #body = entry_part[0]+"\n\t"+varsd_string+"\n"+entry_part[1]+"\n"
+        body = entry_part[0]+entry_part[1]+"\n"
         body = body+entry_jump+part_block
         body = body+init_label+"\n"
         body = body+end_label
@@ -372,6 +392,9 @@ def translate_scc_multiple(rule,rbr_scc):
     new_instructions = map(lambda x: "\t"+x,new_instructions)
     body = "\n".join(new_instructions)
     body = body+"\n"+part
+
+    update_stack_vars_global(stack_variables)
+    update_stack_vars_global(variables)
     
     return variables_d, body, next_block,exit_t
 
@@ -562,7 +585,10 @@ def filter_call(call_instruction):
     s_vars = map(lambda x: unbox_variable(x.strip()),s_vars)
     
     s_string = ", ".join(s_vars)
-    call = block[:pos_open]+"("+s_string+")"
+    if goto:
+        call = block[:pos_open]+"()"
+    else:
+        call = block[:pos_open]+"("+s_string+")"
     return call
 
 
@@ -585,8 +611,12 @@ def process_jumps(rules):
     stack = map(lambda x: "unsigned int "+x,stack_variables)
     s_head = ", ".join(stack)
 
-    head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
-    head = "void " + jump1.get_rule_name()+"("+s_head+"){\n"
+    if goto:
+        head_c ="void " + jump1.get_rule_name()+"();\n"
+        head = "void " + jump1.get_rule_name()+"(){\n"
+    else:
+        head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
+        head = "void " + jump1.get_rule_name()+"("+s_head+"){\n"
 
     guard = jump1.get_guard()
     instructions1 = jump1.get_instructions()
@@ -612,8 +642,12 @@ def process_rule_c(rule):
     stack = map(lambda x: "unsigned int "+x,stack_variables)
     s_head = ", ".join(stack)
 
-    head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
-    head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+    if goto:
+        head_c = "void " + rule.get_rule_name()+"();\n"
+        head = "void " + rule.get_rule_name()+"(){\n"
+    else:
+        head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+        head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
     
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
@@ -637,11 +671,18 @@ def process_rule_c(rule):
         
     end ="\n}\n"
 
+    if goto:
+        update_stack_vars_global(stack_variables)
+        update_stack_vars_global(variables)
+        rule_c = head
+    else:
+        rule_c = head+var_declarations
+        
     if (rule.get_Id() in blocks2init) and (svcomp!={}):
         init = "\tinit_globals();\n"
-        rule_c = head+var_declarations+init+body+label+end
+        rule_c = rule_c+init+body+label+end
     else:
-        rule_c = head+var_declarations+body+label+end
+        rule_c = rule_c+body+label+end
     
     return head_c,rule_c
 
@@ -812,7 +853,10 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         stack_variables = filter(lambda x: x.startswith("s("),vars_aux)
         variables = map(lambda x : unbox_variable(x.strip()),stack_variables)
         new_variables = ", ".join(variables)
-        new = block+"("+new_variables+")"
+        if goto:
+            new = block+"()"
+        else:
+            new = block+"("+new_variables+")"
 
     elif instr.find("and(",0)!=-1:
         elems = instr.split("= and")
@@ -1292,7 +1336,11 @@ def initialize_global_variables(rules):
 
     if bc != []:
         s = s+";\n".join(bc)+";\n"
-        
+
+    if goto:
+        for e in stack_vars_global:
+            s = s+"\t"+e+" = __VERIFIER_nondet_uint();\n"
+    
     return s
 
 def write_init(rules,execution,cname):
@@ -1333,7 +1381,11 @@ def write_init(rules,execution,cname):
 
         if svcomp == {}:
             f.write("#include <stdio.h>\n\n")
-            
+
+        if goto:
+            s_vars = get_stack_variables(stack_vars_global,True)
+            r_vars = get_rest_variables(stack_vars_global,True)    
+            s = s+"".join(s_vars)+"".join(r_vars)
         f.write(s)
         
     f.close()
@@ -1359,10 +1411,16 @@ def def_signextend_function():
     return head,f
 
 def def_exp_function():
-    head = "unsigned int exp_eth (unsigned int v0, unsigned int v1);\n"
+    if goto:
+        head = "unsigned int exp_eth (unsigned int w0, unsigned int w1);\n"
 
-    f = "unsigned int exp_eth (unsigned int v0, unsigned int v1) {\n"
-
+        f = "unsigned int exp_eth (unsigned int w0, unsigned int w1) {\n"
+        f = f+"\tunsigned int v0 = w0;\n"
+        f = f+"\tunsigned int v1 = w1;\n"
+    else:
+        head = "unsigned int exp_eth (unsigned int v0, unsigned int v1);\n"
+        f = "unsigned int exp_eth (unsigned int v0, unsigned int v1) {\n"
+        
     f = f+"\tif (v1 == 0) return 1;\n"
     f = f+"\tif (v1 == 1) return v0;\n"
     f = f+"\tif (v1 == 2) return v0*v0;\n"
@@ -1387,6 +1445,14 @@ def def_exp_function():
     f = f+"}"
 
     return head,f
+
+def update_stack_vars_global(vs):
+    global stack_vars_global
+
+    for v in vs:
+        if v.strip() not in stack_vars_global:
+            stack_vars_global.append(v.strip())
+            
 
 def write_main(execution,cname):
     if execution == None:
