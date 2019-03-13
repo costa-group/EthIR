@@ -94,7 +94,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -286,7 +286,6 @@ def compute_sccs_multiple(rbr,scc):
         next_idx = get_rule_from_scc(s,rbr_scc,True,True)
         entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
         next_rule = get_rule_from_scc(next_block,rbr_scc)
-        print next_rule.get_Id()
         while(next_rule!=entry):
             if next_rule.get_Id() in scc:
                 inner_scc.append(next_rule.get_Id())
