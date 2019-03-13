@@ -29,7 +29,7 @@ import rbr
 from clone import compute_cloning
 from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel
 from opcodes import get_opcode
-from graph_scc import Graph_SCC, get_entry_all
+from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
 
 log = logging.getLogger(__name__)
@@ -3045,6 +3045,20 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
+def get_scc(edges):
+    g = Graph_SCC(edges)
+    scc_multiple = g.getSCCs()
+    scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
+    scc_multiple = get_entry_all(scc_multiple,vertices)
+
+    if scc_multiple == {}:
+        return scc_multiple
+    else:
+        new_edges = filter_nested_scc(edges,scc_multiple)
+        scc = get_scc(new_edges)
+        scc_multiple.update(scc)
+        return scc_multiple
+    
 def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None):
     global g_disasm_file
     global g_source_file
@@ -3137,15 +3151,19 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     scc = {}
     if go:
         try:
-            g = Graph_SCC(edges)
-            scc_multiple = g.getSCCs()
-            scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
-            scc_multiple = get_entry_all(scc_multiple,vertices)
-
+            scc_multiple = get_scc(edges)
             scc["unary"] = scc_unary
             scc["multiple"] = scc_multiple
+            # g = Graph_SCC(edges)
+            # scc_multiple = g.getSCCs()
+            # scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
+            # scc_multiple = get_entry_all(scc_multiple,vertices)
 
+            # scc["unary"] = scc_unary
+            # scc["multiple"] = scc_multiple
+            
         except:
+            traceback.print_exc()
             raise Exception("Error in SCC generation",7)
 
     if function_block_map != {}:
