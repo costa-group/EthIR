@@ -120,3 +120,15 @@ def get_entry_all(scc,blocks):
         scc_entry[entry] = s
 
     return scc_entry
+
+def filter_nested_scc(edges,scc):
+    new_map = {}
+    for entry in scc.keys():
+        values = scc[entry]
+        for v in values:
+            if v!=entry:
+                e = edges[v]
+                new_map[v] = e
+            else:
+                new_map[v] = []
+    return new_map
