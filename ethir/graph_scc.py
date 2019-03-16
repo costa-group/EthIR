@@ -32,7 +32,7 @@ class Graph_SCC:
         # Mark the current node as visited  
         visited[v]= True
         #Recur for all the vertices adjacent to this vertex 
-        for i in self.graph[v]:
+        for i in self.graph.get(v,[]):
 
             if visited.get(i,False)==False: 
                 self.fillOrder(i, visited, stack)
