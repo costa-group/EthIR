@@ -303,7 +303,7 @@ def compute_sccs_multiple(rbr,scc):
             part_block = part_block+part
             vars_declaration = vars_declaration+vars_d
             next_rule = get_rule_from_scc(next_id,rbr_scc)
-            print next_rule.get_Id()
+
         init_label = "\tgoto init_loop_"+str(init_loop)+";\n"
         end_label = "  end_loop_"+str(init_loop)+": \n"
 
