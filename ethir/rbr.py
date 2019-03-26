@@ -122,7 +122,7 @@ def init_globals():
     c_trans = False
 
     global c_words
-    c_words = ["char","for"]
+    c_words = ["char","for","index"]
 
 '''
 Given a block it returns a list containingn the height of its
