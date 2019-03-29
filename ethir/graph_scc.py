@@ -32,7 +32,7 @@ class Graph_SCC:
         # Mark the current node as visited  
         visited[v]= True
         #Recur for all the vertices adjacent to this vertex 
-        for i in self.graph[v]:
+        for i in self.graph.get(v,[]):
 
             if visited.get(i,False)==False: 
                 self.fillOrder(i, visited, stack)
@@ -120,3 +120,15 @@ def get_entry_all(scc,blocks):
         scc_entry[entry] = s
 
     return scc_entry
+
+def filter_nested_scc(edges,scc):
+    new_map = {}
+    for entry in scc.keys():
+        values = scc[entry]
+        for v in values:
+            if v!=entry:
+                e = edges[v]
+                new_map[v] = e
+            else:
+                new_map[v] = []
+    return new_map

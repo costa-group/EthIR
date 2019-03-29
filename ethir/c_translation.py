@@ -253,12 +253,15 @@ def translate_block_scc(rule,id_loop,multiple=False):
     else:
         return head_c,[head,init_loop_label+body+label],variables_d
 
+
+    
 def compute_sccs_multiple(rbr,scc):
     global init_loop
     global exit_tag
     
     rules = {}
     heads = {}
+    inner_scc = []
     exit_t = False
     body = ""
     exit_label = ""
@@ -275,7 +278,18 @@ def compute_sccs_multiple(rbr,scc):
         entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
         next_rule = get_rule_from_scc(next_block,rbr_scc)
         while(next_rule!=entry):
-            vars_d, part, next_id,ex_t = translate_scc_multiple(next_rule,rbr_scc)
+            if next_rule.get_Id() in scc:
+                inner_scc.append(next_rule.get_Id())
+                part = "\tblock"+str(next_rule.get_Id())+"();\n"
+                ex_t = True
+                vars_d = []
+                if_id,else_id = get_next_from_rule(next_rule.get_Id(),rbr_scc)
+                if if_id in scc[next_rule.get_Id()]:
+                    next_id = else_id
+                else:
+                    next_id = if_id
+            else:
+                vars_d, part, next_id,ex_t = translate_scc_multiple(next_rule,rbr_scc)
             exit_t = exit_t or ex_t
             part_block = part_block+part
             vars_declaration = vars_declaration+vars_d
@@ -287,7 +301,8 @@ def compute_sccs_multiple(rbr,scc):
         vars_declaration = delete_dup(vars_declaration)
         varsd_string = "\t".join(vars_declaration)
         
-        body = entry_part[0]+"\n\t"+varsd_string+"\n"+entry_part[1]+"\n"
+        #body = entry_part[0]+"\n\t"+varsd_string+"\n"+entry_part[1]+"\n"
+        body = entry_part[0]+entry_part[1]+"\n"
         body = body+entry_jump+part_block
         body = body+init_label+"\n"
         body = body+end_label
@@ -297,7 +312,9 @@ def compute_sccs_multiple(rbr,scc):
             exit_tag+=1
             exit_t = False
             
-        
+        if s in inner_scc:
+            exit_block = ""
+            
         body = body+"\t"+exit_block+";\n"+exit_label+"}"
         rules[s] = body
         heads[s] = head
@@ -308,6 +325,23 @@ def compute_sccs_multiple(rbr,scc):
         exit_label = ""
         part_block = ""
     return heads,rules
+        
+
+def get_next_from_rule(ruleId,scc):
+    next_idx = get_rule_from_scc(ruleId,scc,True,True)
+    jump1 = scc[next_idx]
+    jump2 = scc[next_idx+1]
+
+    instructions1 = jump1.get_instructions()
+    instructions2 = jump2.get_instructions()
+
+    call_if = filter_call(instructions1[0])
+    call_else = filter_call(instructions2[0])
+
+    if_id = get_called_block(call_if)
+    else_id = get_called_block(call_else)
+
+    return if_id,else_id
         
 
 def translate_entry_jump(next_idx,scc):
@@ -1265,7 +1299,12 @@ def write_init(rules,execution,cname):
 
         if bc != []:
             s = s+";\n".join(bc)+";\n"
-        
+
+        print "HOLA"
+        print svcomp
+        if svcomp == {}:
+            f.write("#include <stdio.h\n\n")
+            
         f.write(s)
         
     f.close()
