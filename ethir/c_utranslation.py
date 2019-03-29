@@ -52,12 +52,18 @@ stack_vars_global = []
 global goto
 goto= False
 
+global potential_uncalled
+potential_uncalled = []
+
 def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global svcomp
     global verifier
     global init_globals
     global blocks2init
     global goto
+    global potential_uncalled
+
+    potential_uncalled = []
     
     svcomp = svc_labels
     verifier = svc_labels.get("verify","")
@@ -129,8 +135,28 @@ def rbr2c_gotos(rbr,scc):
                 
             heads = heads+head
             new_rules.append(new_rule)
-            
+
+    ll = filter(lambda x: heads.find("void "+x)==-1,potential_uncalled)
+    heads = heads+build_headers(ll,rbr)
     return heads, new_rules
+
+
+def build_headers(l,rbr):
+    rbr_aux = [item for sublist in rbr for item in sublist]
+    heads = ""
+    for e in l:
+        idx = e.find("(")
+        b_id = e[5:idx]
+
+        r = RBRRule(b_id,"block")
+        i = rbr_aux.index(r)
+        rule = rbr_aux[i]
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int "+x,stack_variables)
+        s_head = ", ".join(stack) 
+        head_c ="void " + rule.get_rule_name()+"();\n"
+        heads = heads+head_c
+    return heads
 
 def rbr2c_recur(rbr):
     heads = "\n"
@@ -422,6 +448,8 @@ def translate_scc_multiple(rule,rbr_scc):
     return variables_d, body, next_block,exit_t
 
 def translate_jump_scc_multiple(idx,scc):
+    global potential_uncalled
+    
     jump1 = scc[idx]
     jump2 = scc[idx+1]
 
@@ -453,7 +481,9 @@ def translate_jump_scc_multiple(idx,scc):
     body = "\tif("+cond+"){\n"
     body = body+"\t\t"+call_instr+";\n"
     body = body+"\t\t"+label+"; }\n"
-
+    if call_instr not in potential_uncalled:
+        potential_uncalled.append(call_instr)
+        
     return body,next_block,True
 
 def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
