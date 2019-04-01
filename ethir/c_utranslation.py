@@ -137,8 +137,8 @@ def rbr2c_gotos(rbr,scc):
             heads = heads+head
             new_rules.append(new_rule)
 
-    ll = filter(lambda x: heads.find("void "+x)==-1,potential_uncalled)
-    heads = heads+build_headers(ll,rbr)
+    # ll = filter(lambda x: heads.find("void "+x)==-1,potential_uncalled)
+    # heads = heads+build_headers(ll,rbr)
     return heads, new_rules
 
 
@@ -317,25 +317,26 @@ def compute_sccs_multiple(rbr,scc):
         entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
         next_rule = get_rule_from_scc(next_block,rbr_scc)
 
-        while(next_rule!=entry):
-            if next_rule.get_Id() in scc:
-                inner_scc.append(next_rule.get_Id())
-                part = "\tblock"+str(next_rule.get_Id())+"();\n"
-                ex_t = True
-                vars_d = []
-                if_id,else_id = get_next_from_rule(next_rule.get_Id(),rbr_scc)
-                if if_id in scc[next_rule.get_Id()]:
-                    next_id = else_id
-                else:
-                    next_id = if_id
+        part_block,exit_t,vars_declaration =  process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+        # while(next_rule!=entry):
+        #     if next_rule.get_Id() in scc:
+        #         inner_scc.append(next_rule.get_Id())
+        #         part = "\tblock"+str(next_rule.get_Id())+"();\n"
+        #         ex_t = True
+        #         vars_d = []
+        #         if_id,else_id = get_next_from_rule(next_rule.get_Id(),rbr_scc)
+        #         if if_id in scc[next_rule.get_Id()]:
+        #             next_id = else_id
+        #         else:
+        #             next_id = if_id
                 
-            else:
-                vars_d, part, next_id,ex_t = translate_scc_multiple(next_rule,rbr_scc)
+        #     else:
+        #         vars_d, part, next_id,ex_t = translate_scc_multiple(next_rule,rbr_scc)
           
-            exit_t = exit_t or ex_t
-            part_block = part_block+part
-            vars_declaration = vars_declaration+vars_d
-            next_rule = get_rule_from_scc(next_id,rbr_scc)
+        #     exit_t = exit_t or ex_t
+        #     part_block = part_block+part
+        #     vars_declaration = vars_declaration+vars_d
+        #     next_rule = get_rule_from_scc(next_id,rbr_scc)
 
         init_label = "\tgoto init_loop_"+str(init_loop)+";\n"
         end_label = "  end_loop_"+str(init_loop)+": \n"
@@ -368,6 +369,71 @@ def compute_sccs_multiple(rbr,scc):
     return heads,rules
         
 
+def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
+
+#    print next_rule.get_Id()
+    
+    if (next_rule == entry):
+        return "",False,[]
+    
+    else:#(next_rule!=entry):
+        if next_rule.get_Id() in scc:
+            inner_scc.append(next_rule.get_Id())
+            part = "\tblock"+str(next_rule.get_Id())+"();\n"
+            ex_t = True
+            vars_d = []
+            if_id,else_id = get_next_from_rule(next_rule.get_Id(),rbr_scc)
+
+            if if_id in scc[next_rule.get_Id()]:
+                next_id = else_id
+            else:
+                next_id = if_id
+                
+            next_rule = get_rule_from_scc(next_id,rbr_scc)
+            part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+
+            part_block = part+part_block_aux
+            exit_result = exit_t or ex_t
+            vars_declaration = vars_declaration+vars_d
+        
+        else:
+            vars_d, part, next_id, ex_t ,both= translate_scc_multiple(next_rule,rbr_scc,scc[entry.get_Id()])
+            if both:
+                if_id = next_id[0]
+                next_rule = get_rule_from_scc(if_id,rbr_scc)
+                part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+
+                part_block1 = tab_block(part_block_aux)
+                exit_result = ex_t or exit_t
+                vars_declaration = vars_declaration+vars_d
+                
+                else_id = next_id[1]
+                next_rule = get_rule_from_scc(else_id,rbr_scc)
+                part_block_aux,exit_t, vars_d = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+
+                part_block2 = tab_block(part_block_aux)
+                exit_result = exit_result or exit_t
+                vars_declaration = vars_declaration+vars_d
+                
+                part_block = part+part_block1+"}\n\telse {\n"+part_block2+"\t}\n"
+                
+            else:
+                
+                next_rule = get_rule_from_scc(next_id,rbr_scc)
+                part_block_aux,exit_t,vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+                part_block = part+part_block_aux
+                exit_result = exit_t or ex_t
+                vars_declaration = vars_declaration+vars_d
+                
+        return part_block,exit_result,vars_declaration
+
+
+def tab_block(chain):
+    lines = chain.split("\n")
+    new_lines = map(lambda x: "\t"+x,lines)
+    result = "\n".join(new_lines)
+    return result
+    
 def get_next_from_rule(ruleId,scc):
     next_idx = get_rule_from_scc(ruleId,scc,True,True)
     jump1 = scc[next_idx]
@@ -419,7 +485,9 @@ def translate_entry_jump(next_idx,scc):
 
     return body,call_instr,next_block
 
-def translate_scc_multiple(rule,rbr_scc):
+
+def translate_scc_multiple(rule,rbr_scc,scc):
+
     exit_t = False
     
     stack_variables = get_input_variables(rule.get_index_invars())
@@ -440,11 +508,12 @@ def translate_scc_multiple(rule,rbr_scc):
 
     if called_is_jump:
         jump_idx = get_rule_from_scc(rule.get_Id(),rbr_scc,True,True)
-        part, next_block, exit_t = translate_jump_scc_multiple(jump_idx,rbr_scc)
+        part, next_block, exit_t, both = translate_jump_scc_multiple(jump_idx,rbr_scc,scc)
     else:
         part = ""
+        both = False
         next_block = get_called_block(called_instructions)
-        
+
     new_instructions = new_instructions[:-1] #To delete the call instructions. It is always the last one.
     new_instructions = map(lambda x: "\t"+x,new_instructions)
     body = "\n".join(new_instructions)
@@ -452,14 +521,16 @@ def translate_scc_multiple(rule,rbr_scc):
 
     update_stack_vars_global(stack_variables)
     update_stack_vars_global(variables)
-
-    return variables_d, body, next_block,exit_t
-
-def translate_jump_scc_multiple(idx,scc):
-    global potential_uncalled
     
-    jump1 = scc[idx]
-    jump2 = scc[idx+1]
+    return variables_d, body, next_block,exit_t, both
+
+def translate_jump_scc_multiple(idx,rule_scc,scc):
+    global potential_uncalled
+
+    both = False
+    
+    jump1 = rule_scc[idx]
+    jump2 = rule_scc[idx+1]
 
     instructions1 = jump1.get_instructions()
     instructions2 = jump2.get_instructions()
@@ -470,28 +541,119 @@ def translate_jump_scc_multiple(idx,scc):
     if_id = get_called_block(call_if)
     else_id = get_called_block(call_else)
 
-    r_aux = RBRRule(if_id,"block")
-    if r_aux in scc:
-        guard = jump2.get_guard()
-        cond = translate_conditions(guard)
-        call_instr = call_else
-        next_block = if_id
+    if_b = get_rule_from_scc(if_id,rule_scc)
+    
 
-    else:
+    if if_id in scc and else_id in scc:
+        both = True
+        
         guard = jump1.get_guard()
         cond = translate_conditions(guard)
-        call_instr = call_if
-        next_block = else_id
+        body = "\tif("+cond+"){\n"
+        next_block = (if_id,else_id)
+        exit_t = False
+        # print "BOTH"
+        # print if_id
+        # print else_id
 
-    label = "goto exit_"+str(exit_tag)
+    else:    
+        exit_t = True
+        if if_b in rule_scc:
+            guard = jump2.get_guard()
+            cond = translate_conditions(guard)
+            call_instr = call_else
+            next_block = if_id
 
-    body = "\tif("+cond+"){\n"
-    body = body+"\t\t"+call_instr+";\n"
-    body = body+"\t\t"+label+"; }\n"
-    if call_instr not in potential_uncalled:
-        potential_uncalled.append(call_instr)
+        else:
+            guard = jump1.get_guard()
+            cond = translate_conditions(guard)
+            call_instr = call_if
+            next_block = else_id
         
-    return body,next_block,True
+        label = "goto exit_"+str(exit_tag)
+
+        body = "\tif("+cond+"){\n"
+        body = body+"\t\t"+call_instr+";\n"
+        body = body+"\t\t"+label+"; }\n"
+        
+        if call_instr not in potential_uncalled:
+            potential_uncalled.append(call_instr)
+        
+    return body,next_block,exit_t,both
+
+# def translate_scc_multiple(rule,rbr_scc):
+#     exit_t = False
+    
+#     stack_variables = get_input_variables(rule.get_index_invars())
+
+#     cont = rule.get_fresh_index()+1
+#     instructions = rule.get_instructions()
+#     has_string_pattern = rule.get_string_getter()
+#     new_instructions,variables = process_body_c(instructions,cont,has_string_pattern)
+    
+#     variables_d = get_variables_to_be_declared(stack_variables,variables,True)
+#     #var_declarations = "\n"+variables_d+"\n"
+    
+#     #To delete skip instructions
+#     new_instructions = filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions)
+
+#     called_instructions = new_instructions[-1]
+#     called_is_jump = called_instructions.startswith("j")
+
+#     if called_is_jump:
+#         jump_idx = get_rule_from_scc(rule.get_Id(),rbr_scc,True,True)
+#         part, next_block, exit_t = translate_jump_scc_multiple(jump_idx,rbr_scc)
+#     else:
+#         part = ""
+#         next_block = get_called_block(called_instructions)
+        
+#     new_instructions = new_instructions[:-1] #To delete the call instructions. It is always the last one.
+#     new_instructions = map(lambda x: "\t"+x,new_instructions)
+#     body = "\n".join(new_instructions)
+#     body = body+"\n"+part
+
+#     update_stack_vars_global(stack_variables)
+#     update_stack_vars_global(variables)
+
+#     return variables_d, body, next_block,exit_t
+
+# def translate_jump_scc_multiple(idx,scc):
+#     global potential_uncalled
+    
+#     jump1 = scc[idx]
+#     jump2 = scc[idx+1]
+
+#     instructions1 = jump1.get_instructions()
+#     instructions2 = jump2.get_instructions()
+
+#     call_if = filter_call(instructions1[0])
+#     call_else = filter_call(instructions2[0])
+
+#     if_id = get_called_block(call_if)
+#     else_id = get_called_block(call_else)
+
+#     r_aux = RBRRule(if_id,"block")
+#     if r_aux in scc:
+#         guard = jump2.get_guard()
+#         cond = translate_conditions(guard)
+#         call_instr = call_else
+#         next_block = if_id
+
+#     else:
+#         guard = jump1.get_guard()
+#         cond = translate_conditions(guard)
+#         call_instr = call_if
+#         next_block = else_id
+
+#     label = "goto exit_"+str(exit_tag)
+
+#     body = "\tif("+cond+"){\n"
+#     body = body+"\t\t"+call_instr+";\n"
+#     body = body+"\t\t"+label+"; }\n"
+#     if call_instr not in potential_uncalled:
+#         potential_uncalled.append(call_instr)
+        
+#     return body,next_block,True
 
 def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
     if jump:
