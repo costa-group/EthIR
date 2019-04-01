@@ -194,6 +194,7 @@ def run_solidity_analysis(inputs,hashes):
             
         except Exception as e:
             #traceback.print_exc()
+
             if len(e.args)>1:
                 return_code = e.args[1]
             else:
@@ -212,6 +213,7 @@ def run_solidity_analysis(inputs,hashes):
                 result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
                 
             except Exception as e:
+                traceback.print_exc()
                 if len(e.args)>1:
                     return_code = e.args[1]
                 else:
