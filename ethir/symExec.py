@@ -3017,10 +3017,11 @@ def generate_verify_config_file(cname):
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
+            fun_arg = process_argument_function(elem[0])
             if block_fun in has_invalid:
-                to_write.append("("+str(elem[0])+";"+str(elem[1][0])+"; YES)")
+                to_write.append("("+fun_arg+";"+str(elem[1][0])+"; YES)")
             else:
-                to_write.append("("+str(elem[0])+";"+str(elem[1][0])+"; NO)")
+                to_write.append("("+fun_arg+";"+str(elem[1][0])+"; NO)")
         elems2write = "\n".join(to_write)
         f.write(elems2write)
     f.close()
