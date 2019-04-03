@@ -311,6 +311,7 @@ def compute_sccs_multiple(rbr,scc):
     #for s in scc:
     s = get_next_scc(scc,to_translate)
     while(s!=-1):
+        print scc[s]
         rbr_scc = filter_scc_multiple(rbr,scc[s])
         entry = get_rule_from_scc(s,rbr_scc)
 
@@ -321,7 +322,7 @@ def compute_sccs_multiple(rbr,scc):
         entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
         next_rule = get_rule_from_scc(next_block,rbr_scc)
 
-        part_block,exit_t,vars_declaration =  process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+        part_block,exit_t,vars_declaration =  process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr)
         
         # while(next_rule!=entry):
         #     if next_rule.get_Id() in scc:
@@ -397,7 +398,7 @@ def check_candidate(s,scc,to_translate):
     return candidate
         
                 
-def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
+def process_goto(next_rule,entry,rbr_scc, scc,inner_scc,rbr):
 
 #    print next_rule.get_Id()
     
@@ -421,8 +422,9 @@ def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
             print if_id
             print else_id
             print next_id
+            next_id = check_next_id(next_id,scc[entry.get_Id()],rbr)
             next_rule = get_rule_from_scc(next_id,rbr_scc)
-            part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+            part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr)
 
             part_block = part+part_block_aux
             exit_result = exit_t or ex_t
@@ -433,7 +435,7 @@ def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
             if both:
                 if_id = next_id[0]
                 next_rule = get_rule_from_scc(if_id,rbr_scc)
-                part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+                part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr)
 
                 part_block1 = tab_block(part_block_aux)
                 exit_result = ex_t or exit_t
@@ -441,7 +443,7 @@ def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
                 
                 else_id = next_id[1]
                 next_rule = get_rule_from_scc(else_id,rbr_scc)
-                part_block_aux,exit_t, vars_d = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+                part_block_aux,exit_t, vars_d = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr)
 
                 part_block2 = tab_block(part_block_aux)
                 exit_result = exit_result or exit_t
@@ -452,14 +454,22 @@ def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
             else:
                 
                 next_rule = get_rule_from_scc(next_id,rbr_scc)
-                part_block_aux,exit_t,vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+                part_block_aux,exit_t,vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr)
                 part_block = part+part_block_aux
                 exit_result = exit_t or ex_t
                 vars_declaration = vars_declaration+vars_d
                 
         return part_block,exit_result,vars_declaration
 
-
+#For inner scc it checks if the id returned is a valid one (is in the
+#scc). If not it means that the inner and outter scc share some nodes.
+def check_next_id(next_id, scc, rbr):
+    if next_id in scc:
+        return next_id
+    else:
+        # it has to find the next_id
+        
+    
 def tab_block(chain):
     lines = chain.split("\n")
     new_lines = map(lambda x: "\t"+x,lines)
