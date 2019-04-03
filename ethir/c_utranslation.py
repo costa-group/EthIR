@@ -305,8 +305,12 @@ def compute_sccs_multiple(rbr,scc):
     #rbr_scc = filter_scc_multiple(rbr,scc.values())
 
     # for e in rbr_scc:
-    #     print e.get_rule_name()    
-    for s in scc:
+    #     print e.get_rule_name()
+    
+    to_translate = scc.keys()
+    #for s in scc:
+    s = get_next_scc(scc,to_translate)
+    while(s!=-1):
         rbr_scc = filter_scc_multiple(rbr,scc[s])
         entry = get_rule_from_scc(s,rbr_scc)
 
@@ -318,6 +322,7 @@ def compute_sccs_multiple(rbr,scc):
         next_rule = get_rule_from_scc(next_block,rbr_scc)
 
         part_block,exit_t,vars_declaration =  process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
+        
         # while(next_rule!=entry):
         #     if next_rule.get_Id() in scc:
         #         inner_scc.append(next_rule.get_Id())
@@ -366,9 +371,32 @@ def compute_sccs_multiple(rbr,scc):
         init_loop+=1
         exit_label = ""
         part_block = ""
+        
+        s = get_next_scc(scc,to_translate)
     return heads,rules
         
+def get_next_scc(scc,to_translate):
+    if to_translate == []:
+        return -1
+    else:
+        for s in scc:
+            if s in to_translate:
+                r = check_candidate(s,scc,to_translate)
+                if r:
+                    i = to_translate.index(s)
+                    to_translate.pop(i)
+                    return s
 
+def check_candidate(s,scc,to_translate):
+    candidate = True
+    scc_aux = filter(lambda x: x in to_translate,scc.keys())
+    for e in scc_aux:
+        if s != e:
+            l = scc[e]
+            candidate = candidate and (s not in l)
+    return candidate
+        
+                
 def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
 
 #    print next_rule.get_Id()
@@ -388,7 +416,11 @@ def process_goto(next_rule,entry,rbr_scc, scc,inner_scc):
                 next_id = else_id
             else:
                 next_id = if_id
-                
+            print next_rule.get_Id()
+            print scc[next_rule.get_Id()]
+            print if_id
+            print else_id
+            print next_id
             next_rule = get_rule_from_scc(next_id,rbr_scc)
             part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc)
 
