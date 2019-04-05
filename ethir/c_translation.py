@@ -1108,18 +1108,38 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             cont+=1
         
     elif instr.find("+")!=-1:
-        elems = instr.split("+")
-        arg01 = elems[0].split("=")
-        arg0 = arg01[0].strip()
-        var0 = unbox_variable(arg0)
+        if instr.find("%")!=-1:#mulmod
+            elems = instr.split("%")
+            arg012 = elems[0].split("=")
+            arg0 = arg012[0].strip()
+            var0 = unbox_variable(arg0)
 
-        arg1 = arg01[1].strip()
-        var1 = unbox_variable(arg1)
+            arg12_aux = arg012[1].strip().lstrip("(")
+            arg12 = arg12_aux[:-1].split("+")
+            arg1 = arg12[0].strip()
+            var1 = unbox_variable(arg1)
 
-        arg2 = elems[1].strip()
-        var2 = unbox_variable(arg2)
+            arg2 = arg12[1].strip()
+            var2 = unbox_variable(arg2)
 
-        new = var0+" = "+var1+" + "+var2
+            arg3 = elems[1].strip()
+            var3 = unbox_variable(arg3)
+
+            new = var0+" = ("+var1+" + "+var2+") % "+var3
+
+        else:
+            elems = instr.split("+")
+            arg01 = elems[0].split("=")
+            arg0 = arg01[0].strip()
+            var0 = unbox_variable(arg0)
+
+            arg1 = arg01[1].strip()
+            var1 = unbox_variable(arg1)
+
+            arg2 = elems[1].strip()
+            var2 = unbox_variable(arg2)
+
+            new = var0+" = "+var1+" + "+var2
         
     elif instr.find("-")!=-1:
         elems = instr.split("-")
@@ -1136,18 +1156,38 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         new = var0+" = "+var1+" - "+var2
 
     elif instr.find("*")!=-1:
-        elems = instr.split("*")
-        arg01 = elems[0].split("=")
-        arg0 = arg01[0].strip()
-        var0 = unbox_variable(arg0)
+        if instr.find("%")!=-1:#mulmod
+            elems = instr.split("%")
+            arg012 = elems[0].split("=")
+            arg0 = arg012[0].strip()
+            var0 = unbox_variable(arg0)
 
-        arg1 = arg01[1].strip()
-        var1 = unbox_variable(arg1)
+            arg12_aux = arg012[1].strip().lstrip("(")
+            arg12 = arg12_aux[:-1].split("*")
+            arg1 = arg12[0].strip()
+            var1 = unbox_variable(arg1)
 
-        arg2 = elems[1].strip()
-        var2 = unbox_variable(arg2)
+            arg2 = arg12[1].strip()
+            var2 = unbox_variable(arg2)
 
-        new = var0+" = "+var1+" * "+var2
+            arg3 = elems[1].strip()
+            var3 = unbox_variable(arg3)
+
+            new = var0+" = ("+var1+" * "+var2+") % "+var3
+
+        else:
+            elems = instr.split("*")
+            arg01 = elems[0].split("=")
+            arg0 = arg01[0].strip()
+            var0 = unbox_variable(arg0)
+
+            arg1 = arg01[1].strip()
+            var1 = unbox_variable(arg1)
+
+            arg2 = elems[1].strip()
+            var2 = unbox_variable(arg2)
+
+            new = var0+" = "+var1+" * "+var2
 
     elif instr.find("/")!=-1:
         elems = instr.split("/")
