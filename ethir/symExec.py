@@ -1750,7 +1750,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
                     params_list = params.split(",")
-                    params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list]
+                    params_list_aux = []
+                    for param in params_list:
+                        comments = param.split("\n")
+                        params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
+
+                    params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
                     param_idx = (position - 4) // 32
                     new_var_name = params_list[param_idx]
                     g_src_map.var_names.append(new_var_name)
