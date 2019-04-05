@@ -122,7 +122,7 @@ def init_globals():
     c_trans = False
 
     global c_words
-    c_words = ["char","for","index"]
+    c_words = ["char","for","index","y1","log","rindex","round","exp"]
 
 '''
 Given a block it returns a list containingn the height of its
@@ -517,7 +517,7 @@ def translateOpcodes30(opcode, value, index_variables,block):
                 update_bc_in_use(str(value).strip("_"),block)
             else:
                 if str(value) in c_words:
-                    val_end = "_"+str(value)
+                    val_end = str(value)+"_sol"
                 else:
                     val_end = str(value)
                 instr = v1+" = "+val_end
