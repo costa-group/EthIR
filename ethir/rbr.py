@@ -632,7 +632,7 @@ def translateOpcodes50(opcode, value, index_variables,block):
                 new_fid+=1
         else:
             _ , updated_variables = get_consume_variable(index_variables)
-            v1 , updated_variables = get_consume_variable(updated_variables)
+            v1, updated_variables = get_new_variable(updated_variables)
             
             instr = v1 + " = "+ "fresh("+str(new_fid)+")"
             new_fid+=1
@@ -1562,7 +1562,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         if len(e.args)>1:
             arg = e[1]
             if arg == 5:
