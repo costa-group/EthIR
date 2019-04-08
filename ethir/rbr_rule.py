@@ -135,6 +135,12 @@ class RBRRule:
     def has_invalid(self):
         return self.invalid_address
 
+    def is_conditional(self):
+        new_instructions = filter(lambda x: not(x.strip().startswith("nop(")),self.instr)
+        called_instructions = new_instructions[-1]
+        called_is_jump = called_instructions.find("jump")
+        return called_is_jump!=-1
+    
     #It is activated if ASSERTFAIL is detected in the block
     def activate_invalid(self):
         self.invalid_address = True
