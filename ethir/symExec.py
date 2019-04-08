@@ -1754,7 +1754,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     for param in params_list:
                         comments = param.split("\n")
                         params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
-
+                    params_list_aux = filter(lambda x: x.strip() != "",params_list_aux)
+                  
                     params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
                     param_idx = (position - 4) // 32
                     new_var_name = params_list[param_idx]
