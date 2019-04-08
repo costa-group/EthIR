@@ -1770,8 +1770,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                             else:
                                 params.append(e)
                         params = ",".join(params)
-
-                    print params
+                        
                     params_list = params.split(",")
                     params_list_aux = []
                     for param in params_list:
