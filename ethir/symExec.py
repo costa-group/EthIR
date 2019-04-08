@@ -1746,14 +1746,35 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             if g_src_map:
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
                 if source_code.startswith("function") and isReal(position):
+                    #Delete commment blocks
+                    idx1_cb = source_code.find("/*")
+                    idx2_cb = source_code.find("*/")
+                    
+                    if idx1_cb !=-1 and idx2_cb != -1:
+                        source_code = source_code[:idx1_cb]+source_code[idx2_cb+3:]
+                    
                     idx1 = source_code.index("(") + 1
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
+
+                    if params.find("//")!=-1:
+                        p = params.split("\n")
+                        params = []
+                        for e in p:
+                            idx = e.find("//")
+                            if idx != -1:
+                                params.append(e[:idx])
+                                
+                            else:
+                                params.append(e)
+                        params = ",".join(params)
+
                     params_list = params.split(",")
                     params_list_aux = []
                     for param in params_list:
                         comments = param.split("\n")
                         params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
+
                     params_list_aux = filter(lambda x: x.strip() != "",params_list_aux)
                   
                     params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
