@@ -1751,8 +1751,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     idx2_cb = source_code.find("*/")
                     
                     if idx1_cb !=-1 and idx2_cb != -1:
-                        source_code = source_code[:idx1_cb]+source_code[idx2_cb+3:]
-                    
+                        source_code = source_code[:idx1_cb]+source_code[idx2_cb+2:]
+                        print source_code
                     idx1 = source_code.index("(") + 1
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
@@ -1769,6 +1769,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                                 params.append(e)
                         params = ",".join(params)
 
+                    print params
                     params_list = params.split(",")
                     params_list_aux = []
                     for param in params_list:
