@@ -77,8 +77,6 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
             heads, new_rules = rbr2c_gotos(rbr,scc)
         else:
             heads, new_rules = rbr2c_recur(rbr)
-
-        #AQUI
         
         if svcomp!={}:
             head_c , rule = initialize_globals(rbr)
@@ -97,7 +95,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
