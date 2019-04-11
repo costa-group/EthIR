@@ -31,9 +31,6 @@ svcomp = {}
 global verifier
 verifier = ""
 
-global exit_tag
-exit_tag = 0
-
 global init_loop
 init_loop = 0
 
@@ -100,7 +97,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -112,9 +109,13 @@ def rbr2c_gotos(rbr,scc):
     l = scc_multiple.values()
     scc_ids_multiple = [x for y in l for x in y]
     scc_ids = scc_unit+scc_ids_multiple#get_scc_labels(scc_multiple.values())
-    
-    heads_u, scc_unary_rules = compute_sccs_unary(rbr,scc_unit)
-    heads_m, scc_multiple_rules = compute_sccs_multiple(rbr,scc_multiple)
+
+    out_in = {}
+
+    #It computes first the scc_multiple to identify if any unary scc is nested.
+    heads_m, scc_multiple_rules = compute_sccs_multiple(rbr,scc_multiple,scc_unit,out_in)
+    heads_u, scc_unary_rules = compute_sccs_unary(rbr,scc_unit,out_in)
+
     
     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
         getId = rules[0].get_Id()
@@ -140,7 +141,6 @@ def rbr2c_gotos(rbr,scc):
     # ll = filter(lambda x: heads.find("void "+x)==-1,potential_uncalled)
     # heads = heads+build_headers(ll,rbr)
     return heads, new_rules
-
 
 def build_headers(l,rbr):
     rbr_aux = [item for sublist in rbr for item in sublist]
@@ -175,7 +175,10 @@ def rbr2c_recur(rbr):
 
     return heads,new_rules
 
-def compute_sccs_unary(rbr,scc_unit):
+
+#If an id its in out_in means that this scc is nested and the continue
+#block has been translated in the outer scc.
+def compute_sccs_unary(rbr,scc_unit,out_in):
     global init_loop
     
     rules = {}
@@ -184,11 +187,16 @@ def compute_sccs_unary(rbr,scc_unit):
     l = len(rbr)
     i = 0
     while i < l:
+        nested = False
         r = rbr[i]
         if len(r) == 2:
             rid = r[0].get_Id()
             if rid in scc_unit:
-                part_jump = translate_jump_scc(r,scc_unit,init_loop)
+
+                if out_in.get(rid,-1)!=-1:
+                    nested = True
+            
+                part_jump = translate_jump_scc(r,scc_unit,init_loop,nested)
                 i =i+1
                 rule_main = rbr[i][0]
                 head, part_main = translate_block_scc(rule_main,init_loop)
@@ -199,10 +207,14 @@ def compute_sccs_unary(rbr,scc_unit):
         else:
             rid = r[0].get_Id()
             if rid in scc_unit:
+
+                if out_in.get(rid,-1)!=-1:
+                    nested = True
+                
                 head, part_main = translate_block_scc(r[0],init_loop)
                 i+=1
                 rule_jump = rbr[i]
-                part_jump = translate_jump_scc(rule_jump,scc_unit,init_loop)
+                part_jump = translate_jump_scc(rule_jump,scc_unit,init_loop,nested)
                 init_loop+=1
                 rule = part_main+"\n"+part_jump+"}"
                 rules[rid] = rule
@@ -212,7 +224,9 @@ def compute_sccs_unary(rbr,scc_unit):
 
     return heads, rules
 
-def translate_jump_scc(r,scc,id_loop):
+
+#If scc is nested, the exit block is translated in the outer scc.
+def translate_jump_scc(r,scc,id_loop,nested = False):
     
     jump1 = r[0]
     jump2 = r[1]
@@ -239,9 +253,11 @@ def translate_jump_scc(r,scc,id_loop):
 
     body = "\tif("+cond+"){\n"
     body = body+"\t\t"+label+"; }\n"
-    body = body+"\t"+call_instr+";\n"
+    if not nested:
+        body = body+"\t"+call_instr+";\n"
 
     return body
+
 
 def translate_block_scc(rule,id_loop,multiple=False):
     
@@ -291,20 +307,54 @@ def translate_block_scc(rule,id_loop,multiple=False):
     else:
         return head_c,[head,init_loop_label+body+label],variables_d
 
-def compute_sccs_multiple(rbr,scc):
+
+    
+def translate_scc_blocks(next_rule,entry_rule,rbr_scc,scc,all_scc_ids,inner,rbr,out_in,outer_id):
+    if outer_id !=-1:
+        part_block,vars_declaration =  process_goto(next_rule,entry_rule,rbr_scc,scc,all_scc_ids,inner,rbr,out_in,scc[outer_id])
+    else:
+        part_block,vars_declaration =  process_goto(next_rule,entry_rule,rbr_scc,scc,all_scc_ids,inner,rbr,out_in)
+
+    return part_block,vars_declaration
+
+
+def compone_blocks_common_scc(code_blocks,next_idx,rbr_scc):
+    code_if = code_blocks[0]
+    code_else = code_blocks[1]
+
+    jump1 = rbr_scc[next_idx]
+
+    guard = jump1.get_guard()
+    cond = translate_conditions(guard)
+
+    code_if_aux = code_if.split("\n")
+    code_if_aux = map(lambda x: "\t"+x,code_if_aux)
+    code_if = "\n".join(code_if_aux)
+
+    code_else_aux = code_else.split("\n")
+    code_else_aux = map(lambda x: "\t"+x,code_else_aux)
+    code_else = "\n".join(code_else_aux)
+    
+    body = "\tif("+cond+"){\n"
+    body = body+code_if+"\n\t}else{\n"
+    body = body+code_else+"\n\t}\n"
+
+    return body
+
+
+def compute_sccs_multiple(rbr,scc,scc_unit_keys,out_in):
     global init_loop
-    global exit_tag
     
     rules = {}
     heads = {}
     inner_scc = []
-    out_in = {}
-    exit_t = False
     body = ""
     exit_label = ""
     part_block = ""
      
     to_translate = scc.keys()
+
+    scc_ids = to_translate+scc_unit_keys
     
     s = get_next_scc(scc,to_translate)
     while(s!=-1):
@@ -312,21 +362,46 @@ def compute_sccs_multiple(rbr,scc):
         entry = get_rule_from_scc(s,rbr_scc)
 
         head, entry_part,vars_declaration = translate_block_scc(entry,init_loop,True)
-
-        next_idx = get_rule_from_scc(s,rbr_scc,True,True)
         outer_id = out_in.get(s,-1)
-        if s in inner_scc:
-            entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc,scc[outer_id])
-        else:
-            entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
 
-        next_rule = get_rule_from_scc(next_block,rbr_scc)
+        #if entry is unconditional, it gets the next block and call to
+        #translate.  if entry is conditional it checks if both jumps
+        #are inside the scc. If they are, it translates each block
+        #separately and compone the results.  If not, it computes
+        #which is the next block (the one that is inside the scc) and
+        #continue the process with it.
+        if entry.is_conditional():
+            id1, id2 = get_next_from_rule(s,rbr_scc)
+            next_idx = get_rule_from_scc(s,rbr_scc,True,True)
+            
+            if id1 in scc[s] and id2 in scc[s]:
+                next_rule = get_rule_from_scc(id1,rbr_scc)
+                part_block1,vars_declaration1 = translate_scc_blocks(next_rule,entry,rbr_scc,scc,scc_ids,inner_scc,rbr,out_in,outer_id)
 
-        if outer_id !=-1:
-            print scc[outer_id]
-            part_block,exit_t,vars_declaration =  process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr,out_in,scc[outer_id])
+                next_rule = get_rule_from_scc(id2,rbr_scc)
+                part_block2,vars_declaration2 = translate_scc_blocks(next_rule,entry,rbr_scc,scc,scc_ids,inner_scc,rbr,out_in,outer_id)
+
+                entry_jump = ""
+                part_block = compone_blocks_common_scc((part_block1,part_block2),next_idx,rbr_scc)
+                
+                vars_declaration = vars_declaration1+vars_declaration2
+            else:
+                
+                if s in inner_scc:
+                    entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc,scc[outer_id])
+                    
+                else:
+                    entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc)
+               
+                next_rule = get_rule_from_scc(next_block,rbr_scc)
+                part_block,vars_declaration = translate_scc_blocks(next_rule,entry,rbr_scc,scc,scc_ids,inner_scc,rbr,out_in,outer_id)
+
         else:
-            part_block,exit_t,vars_declaration =  process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr,out_in)
+            entry_jump=""
+            next_block = entry.get_call_to()
+            next_rule = get_rule_from_scc(next_block,rbr_scc)
+            part_block,vars_declaration = translate_scc_blocks(next_rule,entry,rbr_scc,scc,scc_ids,inner_scc,rbr,out_in,outer_id)
+            
 
         init_label = "\tgoto init_loop_"+str(init_loop)+";\n"
         end_label = "  end_loop_"+str(init_loop)+": \n"
@@ -334,32 +409,26 @@ def compute_sccs_multiple(rbr,scc):
         vars_declaration = delete_dup(vars_declaration)
         varsd_string = "\t".join(vars_declaration)
         
-        #body = entry_part[0]+"\n\t"+varsd_string+"\n"+entry_part[1]+"\n"
         body = entry_part[0]+entry_part[1]+"\n"
         body = body+entry_jump+part_block
         body = body+init_label+"\n"
         body = body+end_label
-        if exit_t:
-            exit_label = "  exit_"+str(exit_tag)+":\n\t ;\n"
-            exit_tag+=1
-            exit_t = False
             
         if s in inner_scc:
             exit_block = ""
-            
-        body = body+"\t"+exit_block+";\n"+exit_label+"}"
+
+        body = body+"\t ;\n}"
+
         rules[s] = body
         heads[s] = head
-        # print entry_part
-        # print entry_jump
-        #print body
         init_loop+=1
         exit_label = ""
         part_block = ""
         
         s = get_next_scc(scc,to_translate)
     return heads,rules
-        
+
+
 def get_next_scc(scc,to_translate):
     if to_translate == []:
         return -1
@@ -382,53 +451,52 @@ def check_candidate(s,scc,to_translate):
     return candidate
         
                 
-def process_goto(next_rule,entry,rbr_scc, scc,inner_scc,rbr,out_in,outer_scc=[]):
-    
+def process_goto(next_rule,entry,rbr_scc, scc, all_scc_ids,inner_scc,rbr,out_in,outer_scc=[]):
     if (next_rule == entry):
-        return "",False,[]
+        return "",[]
     
     else:#(next_rule!=entry):
-        if next_rule.get_Id() in scc:
+        if next_rule.get_Id() in all_scc_ids:
             out_in[next_rule.get_Id()] = entry.get_Id()
             inner_scc.append(next_rule.get_Id())
             part = "\tblock"+str(next_rule.get_Id())+"();\n"
-            ex_t = True
             vars_d = []
             if_id,else_id = get_next_from_rule(next_rule.get_Id(),rbr_scc)
-
-            #the next rule has to be in the outer scc and not in the inner one
-            if if_id in scc[next_rule.get_Id()]:
+            
+            #the next rule has to be in the outer scc and not in the
+            #inner one. If get_Id is in all_scc_ids but it is not in
+            #scc means that it is a unitary scc and the value of
+            #scc_list is [Id]
+            scc_list = scc.get(next_rule.get_Id(),[next_rule.get_Id()])
+            if if_id in scc_list:
                 candidate = if_id
                 next_id = else_id
             else:
                 next_id = if_id
                 candidate = else_id
-            next_id = check_next_id((next_id,candidate),scc[entry.get_Id()],scc[next_rule.get_Id()],rbr_scc)
+            next_id = check_next_id((next_id,candidate),scc[entry.get_Id()],scc_list,rbr_scc)
             #print next_id
             next_rule = get_rule_from_scc(next_id,rbr_scc)
-            part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr,out_in,outer_scc)
+            part_block_aux, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,all_scc_ids,inner_scc,rbr,out_in,outer_scc)
 
             part_block = part+part_block_aux
-            exit_result = exit_t or ex_t
             vars_declaration = vars_declaration+vars_d
         
         else:
-            vars_d, part, next_id, ex_t ,both= translate_scc_multiple(next_rule,rbr_scc,scc[entry.get_Id()],outer_scc)
+            vars_d, part, next_id ,both= translate_scc_multiple(next_rule,rbr_scc,scc[entry.get_Id()],outer_scc)
             if both:
                 if_id = next_id[0]
                 next_rule = get_rule_from_scc(if_id,rbr_scc)
-                part_block_aux,exit_t, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr,out_in,outer_scc)
+                part_block_aux, vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,all_scc_ids,inner_scc,rbr,out_in,outer_scc)
 
                 part_block1 = tab_block(part_block_aux)
-                exit_result = ex_t or exit_t
                 vars_declaration = vars_declaration+vars_d
                 
                 else_id = next_id[1]
                 next_rule = get_rule_from_scc(else_id,rbr_scc)
-                part_block_aux,exit_t, vars_d = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr,out_in,outer_scc)
+                part_block_aux, vars_d = process_goto(next_rule,entry,rbr_scc,scc,all_scc_ids,inner_scc,rbr,out_in,outer_scc)
 
                 part_block2 = tab_block(part_block_aux)
-                exit_result = exit_result or exit_t
                 vars_declaration = vars_declaration+vars_d
                 
                 part_block = part+part_block1+"}\n\telse {\n"+part_block2+"\t}\n"
@@ -436,12 +504,11 @@ def process_goto(next_rule,entry,rbr_scc, scc,inner_scc,rbr,out_in,outer_scc=[])
             else:
                 
                 next_rule = get_rule_from_scc(next_id,rbr_scc)
-                part_block_aux,exit_t,vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,inner_scc,rbr,out_in,outer_scc)
+                part_block_aux,vars_declaration = process_goto(next_rule,entry,rbr_scc,scc,all_scc_ids,inner_scc,rbr,out_in,outer_scc)
                 part_block = part+part_block_aux
-                exit_result = exit_t or ex_t
                 vars_declaration = vars_declaration+vars_d
                 
-        return part_block,exit_result,vars_declaration
+        return part_block,vars_declaration
 
 #For inner scc it checks if the id returned is a valid one (is in the
 #scc). If not it means that the inner and outer scc share some nodes.
@@ -471,21 +538,26 @@ def tab_block(chain):
     return result
     
 def get_next_from_rule(ruleId,scc):
-    next_idx = get_rule_from_scc(ruleId,scc,True,True)
-    jump1 = scc[next_idx]
-    jump2 = scc[next_idx+1]
+    try:
+        next_idx = get_rule_from_scc(ruleId,scc,True,True)
+        jump1 = scc[next_idx]
+        jump2 = scc[next_idx+1]
 
-    instructions1 = jump1.get_instructions()
-    instructions2 = jump2.get_instructions()
+        instructions1 = jump1.get_instructions()
+        instructions2 = jump2.get_instructions()
 
-    call_if = filter_call(instructions1[0])
-    call_else = filter_call(instructions2[0])
+        call_if = filter_call(instructions1[0])
+        call_else = filter_call(instructions2[0])
 
-    if_id = get_called_block(call_if)
-    else_id = get_called_block(call_else)
+        if_id = get_called_block(call_if)
+        else_id = get_called_block(call_else)
 
-    return if_id,else_id
-    
+        return if_id,else_id
+
+    except: #it is not an conditional jump
+        rule = get_rule_from_scc(ruleId,scc)
+        next_id = rule.get_call_to()
+        return next_id, next_id
 
 #If outer_scc != [] is a inner_scc
 def translate_entry_jump(next_idx,scc,outer_scc = []):
@@ -523,9 +595,9 @@ def translate_entry_jump(next_idx,scc,outer_scc = []):
             label = "goto end_loop_"+str(init_loop)
         else:
             body_call = "\t\tblock"+str(exit_block)+"();"
-            label = "goto exit_"+str(exit_tag)
+            label = "goto end_loop_"+str(init_loop)
     else:
-        body_call = ""
+        body_call = "\t\t"+call_instr+";"
         label = "goto end_loop_"+str(init_loop)
 
     body = "\tif("+cond+"){\n"
@@ -536,8 +608,6 @@ def translate_entry_jump(next_idx,scc,outer_scc = []):
 
 
 def translate_scc_multiple(rule,rbr_scc,scc,outer_scc):
-
-    exit_t = False
     
     stack_variables = get_input_variables(rule.get_index_invars())
 
@@ -557,7 +627,8 @@ def translate_scc_multiple(rule,rbr_scc,scc,outer_scc):
 
     if called_is_jump:
         jump_idx = get_rule_from_scc(rule.get_Id(),rbr_scc,True,True)
-        part, next_block, exit_t, both = translate_jump_scc_multiple(jump_idx,rbr_scc,scc,outer_scc)
+        part, next_block, both = translate_jump_scc_multiple(jump_idx,rbr_scc,scc,outer_scc)
+       
     else:
         part = ""
         both = False
@@ -567,11 +638,11 @@ def translate_scc_multiple(rule,rbr_scc,scc,outer_scc):
     new_instructions = map(lambda x: "\t"+x,new_instructions)
     body = "\n".join(new_instructions)
     body = body+"\n"+part
-
+    
     update_stack_vars_global(stack_variables)
     update_stack_vars_global(variables)
     
-    return variables_d, body, next_block,exit_t, both
+    return variables_d, body, next_block, both
 
 def translate_jump_scc_multiple(idx,rule_scc,scc,outer_scc):
     global potential_uncalled
@@ -600,13 +671,8 @@ def translate_jump_scc_multiple(idx,rule_scc,scc,outer_scc):
         cond = translate_conditions(guard)
         body = "\tif("+cond+"){\n"
         next_block = (if_id,else_id)
-        exit_t = False
-        # print "BOTH"
-        # print if_id
-        # print else_id
 
     else:    
-        exit_t = True
         if if_id in scc:
             guard = jump2.get_guard()
             cond = translate_conditions(guard)
@@ -629,9 +695,9 @@ def translate_jump_scc_multiple(idx,rule_scc,scc,outer_scc):
                 label = "goto end_loop_"+str(init_loop)
             else:
                 body = body+"\t\t"+call_instr+";\n"
-                label = "goto exit_"+str(exit_tag)
+                label = "goto end_loop_"+str(init_loop)
         else:
-            label = "goto exit_"+str(exit_tag)
+            label = "goto end_loop_"+str(init_loop)
             body = body+"\t\t"+call_instr+";\n"
 
         body = body+"\t\t"+label+"; }\n"
@@ -639,7 +705,8 @@ def translate_jump_scc_multiple(idx,rule_scc,scc,outer_scc):
         if call_instr not in potential_uncalled:
             potential_uncalled.append(call_instr)
         
-    return body,next_block,exit_t,both
+    return body,next_block,both
+
 
 def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
     if jump:
@@ -653,13 +720,15 @@ def get_rule_from_scc(blockId,rbr_scc,jump=False,idx_r=False):
     else:
         return rbr_scc[idx]
 
+    
 def get_scc_labels(scc):
     l = []
     for i in range(len(scc)):
         #l = l+scc[i]
         l.append(scc[i])
     return l
-    
+
+
 def filter_scc_multiple(rbr,scc):
     rules = []
     
@@ -673,6 +742,7 @@ def filter_scc_multiple(rbr,scc):
 
     return rules
 
+
 def unbox_variable(var):
     open_pos = var.find("(")
     close_pos = var.find(")")
@@ -682,10 +752,12 @@ def unbox_variable(var):
         new_var = var
     return new_var
 
+
 def check_declare_variable(var,variables):
     if var not in variables:
         variables.append(var)
 
+        
 def get_stack_variables(variables,l=False):
     stack_variables = filter(lambda x: x.startswith("s"),variables)
     idx_list = map(lambda x: int(x.strip()[1:]),stack_variables)
@@ -698,6 +770,7 @@ def get_stack_variables(variables,l=False):
     else:
         return s_vars
 
+    
 def get_rest_variables(variables,l=False):
     r_variables = filter(lambda x: not(x.startswith("s")),variables)
     sorted_variables = sorted(r_variables)
@@ -708,6 +781,7 @@ def get_rest_variables(variables,l=False):
         return rebuild_rvariables
     else:
         return r_vars
+
     
 def get_variables_to_be_declared(stack_variables,variables,l=False):
     vd = []
@@ -721,6 +795,7 @@ def get_variables_to_be_declared(stack_variables,variables,l=False):
         return s_vars+r_vars
     else:
         return "\t"+s_vars+"\t"+r_vars
+
     
 def get_input_variables(idx):
     in_vars = []
@@ -728,6 +803,7 @@ def get_input_variables(idx):
         var = "s"+str(i)
         in_vars.append(var)
     return in_vars
+
 
 def translate_conditions(instr):
 
@@ -783,6 +859,7 @@ def translate_conditions(instr):
         instr = "Error in guard translation"
 
     return instr
+
 
 def filter_call(call_instruction):
     block = call_instruction.strip()[5:-1].strip()
@@ -905,6 +982,7 @@ def is_number(var):
         
     return b,r
 
+
 def abstract_integer(var):
     b,r = is_number(var)
     new_var = ""
@@ -944,11 +1022,13 @@ def abstract_integer(var):
         new_var = var
         
     return new_var
-        
+
+
 def compute_string_pattern(new_instructions):
     nop_inst = map(lambda x: "nop("+x+")",pattern)
     new_instructions = new_instructions+nop_inst
     return new_instructions
+
 
 def process_body_c(instructions,cont,has_string_pattern):
     new_instructions = []
@@ -1008,10 +1088,10 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             new = instr
 
     elif instr.find("nop(SDIV")!=-1:
-        pre_instr = new_inctructions.pop()
+        pre_instr = new_instructions.pop()
         args = pre_instr.split("=")
         arg0 = args[0].strip()
-        arg12 = args[1].split("/")
+        args12 = args[1].split("/")
         arg1 = args12[0].strip()
         arg2 = args12[1].strip()
 
@@ -1641,17 +1721,18 @@ def def_signextend_function():
     head = "unsigned int signextend_eth(unsigned int v0, unsigned int v1);\n"
 
     f = "unsigned int signextend_eth(unsigned int v0, unsigned int v1){\n"
-    # f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
-    # f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
-    # f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
-    # f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
-    # f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
-    # f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
-    # f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
+    f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
+    f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
+    f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
+    f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
+    f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
+    f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
+    f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
     if svcomp.get("verify",-1) != -1:
         f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
     else:
-        f = f+"else {\n"+"\t\tunsigned int v0;\n \t\treturn v0;\n"+"\t}\n"
+        f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
+        #f = f+"else {\n"+"\t\tunsigned int v0;\n \t\treturn v0;\n"+"\t}\n"
         
     f = f+"}\n"
 
