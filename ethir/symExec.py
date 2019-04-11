@@ -2916,6 +2916,18 @@ def get_recipients(disasm_file, contract_address):
         'timeout': g_timeout
     }
 
+
+def update_scc_unary(scc_unary,blocks):
+    blocks_ids = blocks.keys()
+    new_scc_unary = []
+    for e in scc_unary:
+        if e not in blocks_ids:
+            l = filter(lambda x: str(x).startswith(str(e)),blocks)
+            new_scc_unary +=l
+        else:
+            new_scc_unary.append(e)
+    return new_scc_unary
+
 def analyze(evm_version):
     def timeout_cb():
         if global_params.DEBUG_MODE:
@@ -3182,7 +3194,9 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
     if go:
         try:
             scc_multiple = get_scc(edges)
-            scc["unary"] = scc_unary
+            scc_unary_new = update_scc_unary(scc_unary,vertices)
+
+            scc["unary"] = scc_unary_new
             scc["multiple"] = scc_multiple
             # g = Graph_SCC(edges)
             # scc_multiple = g.getSCCs()
