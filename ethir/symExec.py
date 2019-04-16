@@ -3207,7 +3207,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
             # scc["multiple"] = scc_multiple
             
         except:
-            traceback.print_exc()
+            #traceback.print_exc()
             raise Exception("Error in SCC generation",7)
 
     if function_block_map != {}:
