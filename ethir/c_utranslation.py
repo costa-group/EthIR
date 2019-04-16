@@ -95,7 +95,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -384,7 +384,7 @@ def compute_sccs_multiple(rbr,scc,scc_unit_keys,out_in):
                 
                 vars_declaration = vars_declaration1+vars_declaration2
             else:
-                
+
                 if s in inner_scc:
                     entry_jump,exit_block,next_block = translate_entry_jump(next_idx,rbr_scc,scc[outer_id])
                     
@@ -455,6 +455,9 @@ def process_goto(next_rule,entry,rbr_scc, scc, all_scc_ids,inner_scc,rbr,out_in,
     
     else:#(next_rule!=entry):
         if next_rule.get_Id() in all_scc_ids:
+            print "***************"
+            print entry.get_Id()
+            print next_rule.get_Id()
             out_in[next_rule.get_Id()] = entry.get_Id()
             inner_scc.append(next_rule.get_Id())
             part = "\tblock"+str(next_rule.get_Id())+"();\n"
@@ -1086,28 +1089,32 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             new = instr
 
     elif instr.find("nop(SDIV")!=-1:
-        pre_instr = new_instructions.pop()
-        args = pre_instr.split("=")
-        arg0 = args[0].strip()
-        args12 = args[1].split("/")
-        arg1 = args12[0].strip()
-        arg2 = args12[1].strip()
 
-        new_pre = arg0+" = "+"(int)"+arg1+" / "+"(int)"+arg2
-        new_instructions.append(new_pre)
+        if verifier != "verymax":
+            pre_instr = new_instructions.pop()
+            args = pre_instr.split("=")
+            arg0 = args[0].strip()
+            args12 = args[1].split("/")
+            arg1 = args12[0].strip()
+            arg2 = args12[1].strip()
+
+            new_pre = arg0+" = "+"(int)"+arg1+" / "+"(int)"+arg2
+            new_instructions.append(new_pre)
 
         new = instr
         
     elif instr.find("nop(SMOD")!=-1:
-        pre_instr = new_instructions.pop()
-        args = pre_instr.split("=")
-        arg0 = args[0].strip()
-        arg12 = args[1].split("%")
-        arg1 = args12[0].strip()
-        arg2 = args12[1].strip()
 
-        new_pre = arg0+" = "+"(int)"+arg1+" % "+"(int)"+arg2
-        new_instructions.append(new_pre)
+        if verifier != "verymax":
+            pre_instr = new_instructions.pop()
+            args = pre_instr.split("=")
+            arg0 = args[0].strip()
+            arg12 = args[1].split("%")
+            arg1 = args12[0].strip()
+            arg2 = args12[1].strip()
+
+            new_pre = arg0+" = "+"(int)"+arg1+" % "+"(int)"+arg2
+            new_instructions.append(new_pre)
 
         new = instr
 
