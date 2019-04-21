@@ -95,7 +95,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -1726,16 +1726,16 @@ def def_signextend_function():
     head = "unsigned int signextend_eth(unsigned int v0, unsigned int v1);\n"
 
     f = "unsigned int signextend_eth(unsigned int v0, unsigned int v1){\n"
-    f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
-    f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
-    f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
-    f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
-    f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
-    f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
-    f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
     if svcomp.get("verify",-1) != -1:
         f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
     else:
+        f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
+        f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
+        f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
+        f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
+        f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
+        f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
+        f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
         f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
         #f = f+"else {\n"+"\t\tunsigned int v0;\n \t\treturn v0;\n"+"\t}\n"
         
