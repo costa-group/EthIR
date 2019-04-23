@@ -620,22 +620,31 @@ def translateOpcodes50(opcode, value, index_variables,block):
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":
-        if vertices[block].get_trans_mstore() == False and unknown_mstore == False:
-            _ , updated_variables = get_consume_variable(index_variables)
-            v1, updated_variables = get_new_variable(updated_variables)
-            try:
-                l_idx = get_local_variable(value)
-                instr = v1+ " = " + "l(l"+str(l_idx)+")"
-                update_local_variables(l_idx,block)
-            except ValueError:
-                instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
-                new_fid+=1
-        else:
-            _ , updated_variables = get_consume_variable(index_variables)
-            v1, updated_variables = get_new_variable(updated_variables)
-            
-            instr = v1 + " = "+ "fresh("+str(new_fid)+")"
+        _ , updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        try:
+            l_idx = get_local_variable(value)
+            instr = v1+ " = " + "l(l"+str(l_idx)+")"
+            update_local_variables(l_idx,block)
+        except ValueError:
+            instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
+        # if vertices[block].get_trans_mstore() == False and unknown_mstore == False:
+        #     _ , updated_variables = get_consume_variable(index_variables)
+        #     v1, updated_variables = get_new_variable(updated_variables)
+        #     try:
+        #         l_idx = get_local_variable(value)
+        #         instr = v1+ " = " + "l(l"+str(l_idx)+")"
+        #         update_local_variables(l_idx,block)
+        #     except ValueError:
+        #         instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
+        #         new_fid+=1
+        # else:
+        #     _ , updated_variables = get_consume_variable(index_variables)
+        #     v1, updated_variables = get_new_variable(updated_variables)
+            
+        #     instr = v1 + " = "+ "fresh("+str(new_fid)+")"
+        #     new_fid+=1
             
              
     elif opcode == "MSTORE":
