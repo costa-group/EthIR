@@ -1654,18 +1654,20 @@ def write_init(rules,execution,cname):
 
 def def_signextend_function():
     head = "int signextend_eth(int v0, int v1);\n"
-
     f = "int signextend_eth(int v0, int v1){\n"
-    f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
-    f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
-    f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
-    f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
-    f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
-    f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
-    f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
+    
     if svcomp.get("verify",-1) != -1:
-        f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_int();\n"+"\t}\n"
+        f = f+"\t\treturn __VERIFIER_nondet_int();\n"
+
     else:
+
+        f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
+        f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
+        f = f+"else if (v1 == 1 && v0 <= 0x7FFF){\n"+"\t\treturn v0;\n"+"\t}"
+        f = f+"else if (v1 == 1 && v0 >  0x7FFF)  {\n"+"\t\treturn v0 | 0xFFFF0000;\n"+"\t}"
+        f = f+"else if (v1 == 2 && v0 <= 0x7FFFFF) {\n"+"\t\treturn v0;\n"+"\t}"
+        f = f+"else if (v1 == 2 && v0 >  0x7FFFFF) {\n"+"\t\treturn v0 | 0xFF000000;\n"+"\t}"
+        f = f+"else if (v1 == 3) {\n"+"\t\treturn v0;\n"+"\t}"
         f = f+"else {\n"+"\t\tint v2;\n \t\treturn v2;\n"+"\t}\n"
         
     f = f+"}\n"
