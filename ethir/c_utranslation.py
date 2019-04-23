@@ -455,9 +455,6 @@ def process_goto(next_rule,entry,rbr_scc, scc, all_scc_ids,inner_scc,rbr,out_in,
     
     else:#(next_rule!=entry):
         if next_rule.get_Id() in all_scc_ids:
-            print "***************"
-            print entry.get_Id()
-            print next_rule.get_Id()
             out_in[next_rule.get_Id()] = entry.get_Id()
             inner_scc.append(next_rule.get_Id())
             part = "\tblock"+str(next_rule.get_Id())+"();\n"
@@ -1727,7 +1724,7 @@ def def_signextend_function():
 
     f = "unsigned int signextend_eth(unsigned int v0, unsigned int v1){\n"
     if svcomp.get("verify",-1) != -1:
-        f = f+"else {\n"+"\t\treturn __VERIFIER_nondet_uint();\n"+"\t}\n"
+        f = f+"\t\treturn __VERIFIER_nondet_uint();\n"
     else:
         f = f+"\tif (v1 == 0 && v0 <= 0x7F){\n"+"\t\treturn v0;\n"+ "\t}"
         f = f+"else if (v1 == 0 && v0 >  0x7F){\n"+"\t\treturn v0 | 0xFFFFFF00;\n"+"\t}"
