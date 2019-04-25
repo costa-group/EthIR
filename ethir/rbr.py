@@ -6,7 +6,7 @@ from basicblock import Tree
 from utils import getKey, orderRBR, getLevel, store_times
 import os
 import saco
-import c_utranslation
+import c_translation
 from timeit import default_timer as dtimer
 from graph_scc import get_entry_scc
 import traceback
@@ -1564,7 +1564,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr:
-                c_utranslation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
+                c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
 
             print("*************************************************************")
 
