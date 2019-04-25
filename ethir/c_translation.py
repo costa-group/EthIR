@@ -1466,7 +1466,10 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             arg3 = elems[1].strip()
             var3 = unbox_variable(arg3)
 
-            new = var0+" = ("+var1+" * "+var2+") % "+var3
+            if verifier == "verymax":
+                new = var0+" = "+ get_nondet_svcomp_label()
+            else:
+                new = var0+" = ("+var1+" * "+var2+") % "+var3
 
         else:
             elems = instr.split("*")
@@ -1480,7 +1483,10 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             arg2 = elems[1].strip()
             var2 = unbox_variable(arg2)
 
-            new = var0+" = "+var1+" * "+var2
+            if verifier == "verymax":
+                new = var0+" = "+ get_nondet_svcomp_label()
+            else:
+                new = var0+" = "+var1+" * "+var2
 
     elif instr.find("/")!=-1:
         elems = instr.split("/")
