@@ -1679,21 +1679,24 @@ def def_exp_function():
 
     f = "int exp_eth (int v0, int v1) {\n"
 
-    f = f+"\tif (v1 == 0) return 1;\n"
-    f = f+"\tif (v1 == 1) return v0;\n"
-    f = f+"\tif (v1 == 2) return v0*v0;\n"
-    f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
-    f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
-    f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
+    if verifier == "verymax":
+        f = f+"\treturn __VERIFIER_nondet_int();\n"
+    else:
+        f = f+"\tif (v1 == 0) return 1;\n"
+        f = f+"\tif (v1 == 1) return v0;\n"
+        f = f+"\tif (v1 == 2) return v0*v0;\n"
+        f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
+        f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
+        f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
+        f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
+        f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
+        f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
-    f = f+"\tint res = 1\n;"
-    f = f+"\tfor (int i = 0; i < v1; i ++) {\n"
-    f = f+"\t\tres = res * v0;\n"
-    f = f+"\t}\n"
-    f = f+"\treturn res;\n"
+        f = f+"\tint res = 1\n;"
+        f = f+"\tfor (int i = 0; i < v1; i ++) {\n"
+        f = f+"\t\tres = res * v0;\n"
+        f = f+"\t}\n"
+        f = f+"\treturn res;\n"
     f = f+"}"
 
     return head,f
