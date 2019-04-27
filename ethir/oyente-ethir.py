@@ -94,7 +94,7 @@ def check_vi_dependency():
 The flag -v has to be used with the flag -c
 '''
 def check_cv_dependency():
-    if args.cfile == False:
+    if args.cfile == None:
         return not args.verify
     else:
         return True
@@ -103,7 +103,7 @@ def check_cv_dependency():
 The flag -g has to be used with the flag -c
 '''    
 def check_cg_dependency():
-    if args.cfile == False:
+    if args.cfile == None:
         return not args.goto
     else:
         return True
@@ -236,7 +236,7 @@ def run_solidity_analysis(inputs,hashes):
                 exit_code = 1
     else:
         exit_code = 1
-        print("Option Error: --verify option is only applied to c translation.\n")
+        print("Option Error: --verify option is only applied to c translation. Use -c flag\n")
 
 
     '''
@@ -335,7 +335,7 @@ def main():
     parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
-    parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
+    parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", choices = ["int","uint"])
     parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker or VeryMax). Use with -c flag", choices = ["cpa","verymax"])
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with -c flag", choices = ["array","div0","all"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
