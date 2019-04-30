@@ -4,7 +4,7 @@ pragma solidity ^ 0.4.17;
 library SafeMath {
     function mul(uint a, uint b) pure internal returns(uint) {
         uint c = a * b;
-        assert(a == 0 || c / a == b); // SAFEVM SAFEMATH
+        assert(a == 0 || c / a == b); // SAFEVM Integer Semantics
         return c;
     }
 
