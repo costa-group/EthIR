@@ -325,7 +325,7 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
 
     // allows execution only when transfers aren't disabled
     modifier transfersAllowed {
-        assert(transfersEnabled);   // SAFEVM CLASS INVARIANT. Could be require?
+        assert(transfersEnabled);   // SAFEVM Call dependency
         _;
     }
 
@@ -752,7 +752,7 @@ contract StoxSmartTokenSale is Ownable {
     function distributePartnerTokens() external onlyOwner {
         require(!isDistributed);
 
-        assert(tokensSold == 0); // SAFEVM CLASS INVARIANT
+        assert(tokensSold == 0); // SAFEVM Call dependency
         assert(stox.totalSupply() == 0); // SAFEVM Method result
 
         // Distribute strategic tokens to partners. Please note, that this address doesn't represent a single entity or
@@ -809,7 +809,7 @@ contract StoxSmartTokenSale is Ownable {
         require(_recipient != address(0));
         require(msg.value > 0);
 
-        assert(isDistributed); // SAFEVM CLASS INVARIANT
+        assert(isDistributed); // SAFEVM Call dependency
 
         uint256 tokens = SaferMath.min256(msg.value.mul(EXCHANGE_RATE), TOKEN_SALE_CAP.sub(tokensSold));
         uint256 contribution = tokens.div(EXCHANGE_RATE);
