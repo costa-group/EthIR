@@ -231,7 +231,7 @@ contract BnsPresale {
 
     // don`t accept transactions with value less than allowed minimum
     modifier notTooSmallAmountOnly(){
-        assert(msg.value >= MIN_ACCEPTED_AMOUNT); // SAFEVM Call dependency
+        assert(msg.value >= MIN_ACCEPTED_AMOUNT); // SAFEVM TYPE
         _;
     }
 
@@ -239,7 +239,7 @@ contract BnsPresale {
     //prevents reentrancy attacs
     bool private locked = false;
     modifier noReentrancy() {
-        assert(!locked); // SAFEVM CLASS INVARIANT
+        assert(!locked); // SAFEVM Call dependency
         locked = true;
         _;
         locked = false;
