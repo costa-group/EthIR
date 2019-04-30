@@ -2,7 +2,7 @@ pragma solidity ^0.4.13;
 
 library SafeMath {
   function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a); // SAFEVM SAFEMATH
+    assert(b <= a); // SAFEVM Integer Semantics
     return a - b;
   }
   function add(uint a, uint b) internal returns (uint) {
