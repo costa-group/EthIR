@@ -476,7 +476,7 @@ contract Ownable {
 library SaferMath {
     function mul(uint256 a, uint256 b) internal returns (uint256) {
         uint256 c = a * b;
-        assert(a == 0 || c / a == b);  // SAFEVM Not used
+        assert(a == 0 || c / a == b);  // SAFEVM SAFEMATH
         return c;
     }
 
@@ -488,13 +488,13 @@ library SaferMath {
     }
 
     function sub(uint256 a, uint256 b) internal returns (uint256) {
-        assert(b <= a); // SAFEVM Not used
+        assert(b <= a); // SAFEVM FAFEMATH
         return a - b;
     }
 
     function add(uint256 a, uint256 b) internal returns (uint256) {
         uint256 c = a + b;
-        assert(c >= a); // SAFEVM Not used
+        assert(c >= a); // SAFEVM Integer semantics
         return c;
     }
 
