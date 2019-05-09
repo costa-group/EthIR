@@ -11,8 +11,9 @@ It receives a list with rbr_rule instances.
 costabs_path = "/tmp/costabs/"
 tmp_path = "/tmp/"
 
-global pattern
-pattern = ["PUSH1",
+def init_global_vars():
+    global pattern
+    pattern = ["PUSH1",
                    "DUP2",
                    "PUSH1",
                    "AND",
@@ -25,32 +26,32 @@ pattern = ["PUSH1",
                    "SWAP1",
                    "DIV"]
 
-global svcomp
-svcomp = {}
+    global svcomp
+    svcomp = {}
 
-global verifier
-verifier = ""
+    global verifier
+    verifier = ""
 
-global init_loop
-init_loop = 0
+    global init_loop
+    init_loop = 0
 
-global init_globals
-init_globals = False
+    global init_globals
+    init_globals = False
 
-global blocks2init
-blocks2init = []
+    global blocks2init
+    blocks2init = []
 
-global signextend_function
-signextend_function = False
+    global signextend_function
+    signextend_function = False
 
-global stack_vars_global
-stack_vars_global = []
+    global stack_vars_global
+    stack_vars_global = []
 
-global goto
-goto= False
+    global goto
+    goto= False
 
-global potential_uncalled
-potential_uncalled = []
+    global potential_uncalled
+    potential_uncalled = []
 
 def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global svcomp
@@ -60,6 +61,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm):
     global goto
     global potential_uncalled
 
+    init_global_vars()
     potential_uncalled = []
     
     svcomp = svc_labels
