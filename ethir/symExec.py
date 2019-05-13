@@ -296,6 +296,7 @@ def build_cfg_and_analyze(evm_version):
         collect_vertices(tokens)
         construct_bb()
         construct_static_edges()
+        #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
 
     delete_uncalled()
@@ -777,6 +778,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global scc_unary
     global getter_blocks
 
+
     
     visited = params.visited
     stack = params.stack
@@ -848,6 +850,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     sha_identify = False
     result = False
     instr_index = 0
+
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
         instr_index+=1
@@ -1830,6 +1833,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stack.insert(0, code_size)
     elif opcode == "CODECOPY":
         if len(stack) > 2:
+           
             global_state["pc"] = global_state["pc"] + 1
             mem_location = stack.pop(0)
             code_from = stack.pop(0)
@@ -1854,7 +1858,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     start = code_from * 2
                     end = start + no_bytes * 2
                     code = evm[start: end]
-                mem[mem_location] = int(code, 16)
+
+                if code != '':
+                    mem[mem_location] = int(code, 16)
             else:
                 new_var_name = gen.gen_code_var("Ia", code_from, no_bytes)
                 if new_var_name in path_conditions_and_vars:
@@ -1933,7 +1939,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 start = code_from * 2
                 end = start + no_bytes * 2
                 code = evm[start: end]
-                mem[mem_location] = int(code, 16)
+                if code != '':
+                    mem[mem_location] = int(code, 16)
             else:
                 new_var_name = gen.gen_code_var(address, code_from, no_bytes)
                 if new_var_name in path_conditions_and_vars:
@@ -3169,7 +3176,8 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
         try:
             compute_cloning(blocks_to_clone,vertices,stack_h,component_of_blocks)
         except:
-           raise Exception("Error in clonning process",3)
+            #traceback.print_exc()
+            raise Exception("Error in clonning process",3)
         
     # for e in vertices.values():
     #     e.display()
