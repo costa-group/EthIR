@@ -27,10 +27,11 @@ class SourceMap:
     sources = {}
     ast_helper = None
 
-    def __init__(self, cname, parent_filename, input_type, root_path=""):
+    def __init__(self, cname, parent_filename, input_type, root_path="",runtime=True):
         self.root_path = root_path
         self.cname = cname
         self.input_type = input_type
+        self.runtime = runtime
         if not SourceMap.parent_filename:
             SourceMap.parent_filename = parent_filename
             if input_type == "solidity":
@@ -41,11 +42,20 @@ class SourceMap:
                 raise Exception("There is no such type of input")
             SourceMap.ast_helper = AstHelper(SourceMap.parent_filename, input_type)
         self.source = self._get_source()
+
         self.positions = self._get_positions()
+        if not runtime:
+            self.positions_init = self._get_positions_init()
         self.instr_positions = {}
         self.var_names = self._get_var_names()
         self.func_call_names = self._get_func_call_names()
         self.callee_src_pairs = self._get_callee_src_pairs()
+
+    def get_init_pos(self,pc):
+        return self.instr_positions[pc]['begin']
+
+    def get_end_pos(self,pc):
+        return self.instr_positions[pc]['end']
 
     def get_source_code(self, pc):
         try:
@@ -157,6 +167,20 @@ class SourceMap:
                 positions.append(None)
                 positions += asm['.data']['0']['.code']
                 asm = asm['.data']['0']
+            except:
+                break
+        return positions
+
+    def _get_positions_init(self):
+        if self.input_type == "solidity":
+            asm = SourceMap.position_groups[self.cname]['asm']['.code']
+
+        positions = asm
+        while(True):
+            try:
+                positions.append(None)
+                positions += asm['.code']
+                asm = asm['.code']
             except:
                 break
         return positions

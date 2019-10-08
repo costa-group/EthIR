@@ -113,8 +113,8 @@ def init_globals():
     global vertices
     vertices = {}
 
-    global unknown_mstore
-    unknown_mstore = False
+    # global unknown_mstore
+    # unknown_mstore = False
 
     global blockhash_cont
     blockhash_cont = 0
@@ -615,7 +615,7 @@ updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes50(opcode, value, index_variables,block):
     global new_fid
-    global unknown_mstore
+    # global unknown_mstore
     
     if opcode == "POP":        
         v1, updated_variables = get_consume_variable(index_variables)
@@ -630,69 +630,29 @@ def translateOpcodes50(opcode, value, index_variables,block):
         except ValueError:
             instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
-        # if vertices[block].get_trans_mstore() == False and unknown_mstore == False:
-        #     _ , updated_variables = get_consume_variable(index_variables)
-        #     v1, updated_variables = get_new_variable(updated_variables)
-        #     try:
-        #         l_idx = get_local_variable(value)
-        #         instr = v1+ " = " + "l(l"+str(l_idx)+")"
-        #         update_local_variables(l_idx,block)
-        #     except ValueError:
-        #         instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
-        #         new_fid+=1
-        # else:
-        #     _ , updated_variables = get_consume_variable(index_variables)
-        #     v1, updated_variables = get_new_variable(updated_variables)
-            
-        #     instr = v1 + " = "+ "fresh("+str(new_fid)+")"
-        #     new_fid+=1
-            
              
     elif opcode == "MSTORE":
-        if vertices[block].get_trans_mstore() == False and unknown_mstore == False:
-            v0 , updated_variables = get_consume_variable(index_variables)
-            v1 , updated_variables = get_consume_variable(updated_variables)
-            try:
-                l_idx = get_local_variable(value)
-                instr = "l(l"+str(l_idx)+") = "+ v1
-                update_local_variables(l_idx,block)
-            except ValueError:
-                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
-                if vertices[block].is_mstore_unknown():
-                    unknown_mstore = True
-        else:
-            v0 , updated_variables = get_consume_variable(index_variables)
-            v1 , updated_variables = get_consume_variable(updated_variables)
-            try:
-                l_idx = get_local_variable(value)
-                instr = "l(l"+str(l_idx)+") = "+ "fresh("+str(new_fid)+")"
-                new_fid+=1
-                update_local_variables(l_idx,block)
-            except ValueError:
-                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+        v0 , updated_variables = get_consume_variable(index_variables)
+        v1 , updated_variables = get_consume_variable(updated_variables)
+        try:
+            l_idx = get_local_variable(value)
+            instr = "l(l"+str(l_idx)+") = "+ v1
+            update_local_variables(l_idx,block)
+        except ValueError:
+            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+                # if vertices[block].is_mstore_unknown():
+                #     unknown_mstore = True
             
     elif opcode == "MSTORE8":
-        if vertices[block].get_trans_mstore() == False and unknown_mstore == False:
-            v0 , updated_variables = get_consume_variable(index_variables)
-            v1 , updated_variables = get_consume_variable(updated_variables)
-            try:
-                l_idx = get_local_variable(value)
-                instr = "l(l"+str(l_idx)+") = "+ v1
-                update_local_variables(l_idx,block)
-            except ValueError:
-                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
-                if vertices[block].is_mstore_unknown():
-                    unknown_mstore = True
-        else:
-            v0 , updated_variables = get_consume_variable(index_variables)
-            v1 , updated_variables = get_consume_variable(updated_variables)
-            try:
-                l_idx = get_local_variable(value)
-                instr = "l(l"+str(l_idx)+") = "+ "fresh("+str(new_fid)+")"
-                new_fid+=1
-                update_local_variables(l_idx,block)
-            except ValueError:
-                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+        v0 , updated_variables = get_consume_variable(index_variables)
+        v1 , updated_variables = get_consume_variable(updated_variables)
+        try:
+            l_idx = get_local_variable(value)
+            instr = "l(l"+str(l_idx)+") = "+ v1
+            update_local_variables(l_idx,block)
+        except ValueError:
+            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+
     elif opcode == "SLOAD":
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
@@ -1311,7 +1271,6 @@ def compile_block(block):
     global rbr_blocks
     global top_index
     global new_fid
-    global unknown_mstore
     
     cont = 0
     top_index = 0
@@ -1324,7 +1283,6 @@ def compile_block(block):
     rule = RBRRule(block_id, "block",is_string_getter)
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
-    unknown_mstore = False
     
     while not(finish) and cont< len(l_instr):
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
@@ -1490,7 +1448,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = []):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_map = None):
     global rbr_blocks
     global stack_index
     global vertices
@@ -1561,6 +1519,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             ethir_time = end-begin
             print("Build RBR: "+str(ethir_time)+"s")
             store_times(oyente_time,ethir_time)
+            write_info_lines(rbr,source_map,contract_name)
             
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
@@ -1583,3 +1542,38 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else:    
             raise Exception("Error in RBR generation",4)
             
+def write_info_lines(rbr,source_map,contract_name):
+    final_path = costabs_path + "/" + contract_name + "_lines.pl"
+    f = open (final_path, "w")
+
+    for rules in rbr:
+            for rule in rules:
+                if 'block' in rule.get_rule_name(): 
+                    cont_rbr = 0
+                    offset=0
+                    nBq = rule.get_Id()
+
+                    for inst in rule.get_instructions(): 
+                        pc = nBq+offset
+                        try:
+                            nLineCom = source_map.get_init_pos(pc)
+                            nLineFin = source_map.get_end_pos(pc)
+                            # bloque = rule.get_rule_name()[5:]
+                            f.write("numlinea(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
+                            pass
+
+                        except:
+                            continue;
+
+                        if 'nop'in inst:
+                            offset = offset + get_inc_offset(inst);
+                                
+                        cont_rbr = cont_rbr +1          
+    f.close()
+
+
+def get_inc_offset(op): 
+    if 'PUSH' in op:
+        n=op[8:-1]
+        return int(n)+1
+    return 1; 

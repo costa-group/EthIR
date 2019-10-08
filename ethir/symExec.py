@@ -3107,8 +3107,8 @@ def get_scc(edges):
         scc = get_scc(new_edges)
         scc_multiple.update(scc)
         return scc_multiple
-    
-def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None):
+        
+def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -3225,7 +3225,7 @@ def run(disasm_file=None, source_file=None, source_map=None, cfg=None, saco = No
         f2blocks = []
         
     try:
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks)
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_map = source_map)
 
     except Exception as e:
         raise e
