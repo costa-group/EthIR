@@ -1558,8 +1558,9 @@ def write_info_lines(rbr,source_map,contract_name):
                         try:
                             nLineCom = source_map.get_init_pos(pc)
                             nLineFin = source_map.get_end_pos(pc)
+                            nLine = source_map.get_location(pc)['begin']['line']
                             # bloque = rule.get_rule_name()[5:]
-                            f.write("numlinea(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
+                            f.write("numlinea(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLine) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
                             pass
 
                         except:
