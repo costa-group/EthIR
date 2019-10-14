@@ -1551,27 +1551,34 @@ def write_info_lines(rbr,source_map,contract_name):
                 if 'block' in rule.get_rule_name(): 
                     cont_rbr = 0
                     offset=0
+                    i = 0
                     nBq = rule.get_Id()
+                    bq=''
+                    if '_' in str(nBq): #Caso con _X
+                        while nBq[i] != '_' :
+                            bq = bq + nBq[i]
+                            i = i+1
+                        nBq = bq
 
                     for inst in rule.get_instructions(): 
-                        pc = nBq+offset
+                        pc = int(nBq)+offset
+
                         try:
                             nLineCom = source_map.get_init_pos(pc)
                             nLineFin = source_map.get_end_pos(pc)
-                            nLine = source_map.get_location(pc)['begin']['line']
-                            nLine = nLine + 1
                             # bloque = rule.get_rule_name()[5:]
-                            f.write("solidityline(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLine) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
+                            f.write("numlinea(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
                             pass
 
                         except:
-                            continue;
+                           continue;
 
                         if 'nop'in inst:
                             offset = offset + get_inc_offset(inst);
                                 
                         cont_rbr = cont_rbr +1          
     f.close()
+
 
 
 def get_inc_offset(op): 
