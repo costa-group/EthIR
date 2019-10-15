@@ -2139,8 +2139,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #Added by PG
             try:    
                 val = int(position)
-                p = g_src_map._get_var_names()
-                statevar_name_original =  p[val]
+                if g_src_map:
+                    p = g_src_map._get_var_names()
+                    statevar_name_original =  p[val]
             except:
                statevar_name_original = ""
                
@@ -2194,8 +2195,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         global_state["Ia"][position] = new_var
                     else:
                         global_state["Ia"][str(position)] = new_var
-                
-            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
+            if g_src_map:
+                update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
 
         else:
             raise ValueError('STACK underflow')
@@ -2215,7 +2216,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             statevar_name_compressed = new_var_name
             
             #Added by Pablo Gordillo
-            p = g_src_map._get_var_names()
+            if g_src_map:
+                p = g_src_map._get_var_names()
+                
             p_s, v = sstore_fragment(vertices[block],instr_index)
             
             if p_s:
@@ -2237,7 +2240,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             except:
                 statevar_name_original = ""
 
-            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v,g_src_map._get_var_names())
+            if g_src_map:
+                update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v,g_src_map._get_var_names())
             
         else:
             raise ValueError('STACK underflow')
