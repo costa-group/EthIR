@@ -3169,6 +3169,8 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
 
     initGlobalVars()
 
+    source_info = {}
+    
     name = cname
     if t_exs != None:
         tacas_ex = t_exs
@@ -3266,7 +3268,11 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
         f2blocks = []
         
     try:
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_map = source_map)
+
+        source_info["source_map"] = source_map
+        source_info["name_state_variables"] = mapping_state_variables
+        
+        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info)
 
     except Exception as e:
         raise e
