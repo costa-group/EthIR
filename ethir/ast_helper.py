@@ -88,11 +88,27 @@ class AstHelper:
             ret[full_name] = self.extract_func_call_definitions(full_name)
         return ret
 
+
+    #Modified by PG
+    #It does not return constant state variables
     def extract_state_variable_names(self, c_name):
         state_variables = self.extract_states_definitions()[c_name]
         var_names = []
         for var_name in state_variables:
-            var_names.append(var_name["attributes"]["name"])
+            
+            if not var_name["attributes"]["constant"]:
+                var_names.append(var_name["attributes"]["name"])
+ 
+        return var_names
+
+    def extract_constant_state_variable_names(self, c_name):
+        state_variables = self.extract_states_definitions()[c_name]
+        var_names = []
+        for var_name in state_variables:
+            
+            if var_name["attributes"]["constant"]:
+                var_names.append(var_name["attributes"]["name"])
+ 
         return var_names
 
     def extract_func_call_srcs(self, c_name):
