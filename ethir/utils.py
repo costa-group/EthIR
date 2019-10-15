@@ -463,3 +463,40 @@ def get_public_fields(source_file,arr = True):
         fields = map(lambda x: x.split()[-1].strip().strip(";"),good_lines)
     f.close()
     return fields
+
+def update_sstore_map(state_vars,initial_name,compressed_name,isCompresed,position,compress_index,state):
+
+    if initial_name != '':
+        if not isCompresed:
+            state_vars[position] = initial_name
+        else:
+            name = str(position)+"_"+str(compress_index)
+
+            if compress_index == 0:
+                state_vars[name] = initial_name
+            else:
+                exist = state_vars.get(name, False)
+                if (not exist) or (exist not in state):
+                    parts = compressed_name.split()
+
+                    i = 0
+                    st_name = ""
+                    found = False
+                    while(i<len(parts) and (not found)):
+                        if parts[i] in state:
+                            st_name = parts[i]
+                            found = True
+                        i+=1
+                    state_vars[name] = st_name
+            
+
+# '''
+# It computes the index of each state variable to know its solidity name
+# state variable is a list with the state variables g0..gn
+# '''
+# def process_name_state_variables(state_variables,source_map):
+#     index_state_variables = {}
+#     i = 1
+#     prev_var = state_variables[0]
+#     while(i < len(state_variables)):
+
