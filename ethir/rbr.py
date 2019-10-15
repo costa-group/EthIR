@@ -1448,7 +1448,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_map = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None):
     global rbr_blocks
     global stack_index
     global vertices
@@ -1460,11 +1460,16 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     stack_index = stack_info
     component_of = component
 
+    source_map = source_info["source_map"]
+    mapping_state_variables = source_info["name_state_variables"]
+    
     
     begin = dtimer()
     blocks_dict = blocks_input
     vertices = blocks_input
 
+    
+    
     if svc_labels.get("verify",False):
         invalid_options = svc_labels.get("invalid",False)
         if not(invalid_options):
@@ -1519,6 +1524,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             ethir_time = end-begin
             print("Build RBR: "+str(ethir_time)+"s")
             store_times(oyente_time,ethir_time)
+
             write_info_lines(rbr,source_map,contract_name)
             
             if saco_rbr:
