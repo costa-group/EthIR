@@ -27,7 +27,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel
+from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -242,6 +242,9 @@ def initGlobalVars():
 
     global invalid_option
     invalid_option = ""
+
+    global mapping_state_variables
+    mapping_state_variables = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -298,7 +301,7 @@ def build_cfg_and_analyze(evm_version):
         construct_static_edges()
         #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
-
+        
     delete_uncalled()
     update_block_info()
 
@@ -754,7 +757,6 @@ def full_sym_exec():
     params = Parameter(path_conditions_and_vars=path_conditions_and_vars, global_state=global_state, analysis=analysis)
 
     #vertices[0].set_cost(vertices[0].get_block_gas())
-    
     return sym_exec_block(params, 0, 0, 0, -1, 0,[(0,0)])
 
 
@@ -1147,6 +1149,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global potential_jump
     global indirect_jump
     global param_abs
+    global mapping_state_variables
     
     stack = params.stack
     mem = params.mem
@@ -2133,12 +2136,23 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             position = stack.pop(0)
 
+            #Added by PG
+            try:    
+                val = int(position)
+                p = g_src_map._get_var_names()
+                statevar_name_original =  p[val]
+            except:
+               statevar_name_original = ""
+               
             #Added by Pablo Gordillo
             if p_s:
                 vertices[block].add_ls_value("sload",ls_cont[2],str(position)+"_"+str(v))
+
             else:
                 vertices[block].add_ls_value("sload",ls_cont[2],position)
+                
             ls_cont[2]+=1
+            statevar_name = ""
             if isReal(position) and position in global_state["Ia"]:
                 value = global_state["Ia"][position]
                 stack.insert(0, value)
@@ -2155,15 +2169,21 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         position = simplify(position)
                     if g_src_map:
                         new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)
+                        
                         operators = '[-+*/%|&^!><=]'
                         new_var_name = re.compile(operators).split(new_var_name)[0].strip()
+
+                        statevar_name = new_var_name
+                        
                         if g_src_map.is_a_parameter_or_state_variable(new_var_name):
                             new_var_name = "Ia_store" + "-" + str(position) + "-" + new_var_name
                         else:
                             new_var_name = gen.gen_owner_store_var(position)
+                        
                     else:
                         new_var_name = gen.gen_owner_store_var(position)
-
+                        statevar_name = new_var_name
+                        
                     if new_var_name in path_conditions_and_vars:
                         new_var = path_conditions_and_vars[new_var_name]
                     else:
@@ -2174,6 +2194,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         global_state["Ia"][position] = new_var
                     else:
                         global_state["Ia"][str(position)] = new_var
+
+            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v)
+
         else:
             raise ValueError('STACK underflow')
 
@@ -2185,8 +2208,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
 
+            #PG
+            new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)        
+            operators = '[-+*/%|&^!><=]'
+            new_var_name = re.compile(operators).split(new_var_name)[0].strip()
+            statevar_name_compressed = new_var_name
+            
             #Added by Pablo Gordillo
+            p = g_src_map._get_var_names()
             p_s, v = sstore_fragment(vertices[block],instr_index)
+            
             if p_s:
                 vertices[block].add_ls_value("sstore",ls_cont[3],str(stored_address)+"_"+str(v))
             else:
@@ -2198,6 +2229,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             else:
                 # note that the stored_value could be unknown
                 global_state["Ia"][str(stored_address)] = stored_value
+
+            try:
+                val = int(stored_address)
+                statevar_name_original =  p[val]
+                
+            except:
+                statevar_name_original = ""
+
+            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v)
+            
         else:
             raise ValueError('STACK underflow')
     elif opcode == "JUMP":
