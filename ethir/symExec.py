@@ -2172,7 +2172,6 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         
                         operators = '[-+*/%|&^!><=]'
                         new_var_name = re.compile(operators).split(new_var_name)[0].strip()
-
                         statevar_name = new_var_name
                         
                         if g_src_map.is_a_parameter_or_state_variable(new_var_name):
@@ -2190,12 +2189,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         new_var = BitVec(new_var_name, 256)
                         path_conditions_and_vars[new_var_name] = new_var
                     stack.insert(0, new_var)
+
                     if isReal(position):
                         global_state["Ia"][position] = new_var
                     else:
                         global_state["Ia"][str(position)] = new_var
-
-            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v)
+                
+            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
 
         else:
             raise ValueError('STACK underflow')
@@ -2237,7 +2237,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             except:
                 statevar_name_original = ""
 
-            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v)
+            update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v,g_src_map._get_var_names())
             
         else:
             raise ValueError('STACK underflow')
