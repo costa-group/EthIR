@@ -177,7 +177,7 @@ def process_instructions(rule):
 def process_single_instruction(instr,new_instructions,contract_vars,cont):        
     if instr.find("call(",0)!=-1:
         new = call_instruction(instr)
-    elif instr.find("and",0)!=-1:
+    elif instr.find("and(",0)!=-1:
         # nop_top = new_instructions[-1]
         # top = new_instructions[-2]
         # number = top.split("=")[1].strip()
@@ -213,11 +213,11 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         var = " s("+str(cont)+")"
         new = instr[:pos+1]+var
         cont+=1
-    elif instr.find("or",0)!=-1:
+    elif instr.find("or(",0)!=-1:
         pos = instr.find("=")
         new = instr[:pos+1]+" s("+str(cont)+")"
         cont+=1
-    elif instr.find("not",0)!=-1:
+    elif instr.find("not(",0)!=-1:
         # nop_top = new_instructions[-1]
         # top = new_instructions[-2]
         # if nop_top.startswith("nop(PUSH"):
@@ -237,7 +237,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         #new = instr[:pos+1]+var
         new = instr[:pos+1]+" s("+str(cont)+")"
         cont+=1
-    elif instr.find("xor",0)!=-1:
+    elif instr.find("xor(",0)!=-1:
         pos = instr.find("=")
         new = instr[:pos+1]+" s("+str(cont)+")"
         cont+=1
