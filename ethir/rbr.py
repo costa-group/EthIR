@@ -113,6 +113,10 @@ def init_globals():
     global vertices
     vertices = {}
 
+    global all_state_vars
+    all_state_vars = []
+
+
     # global unknown_mstore
     # unknown_mstore = False
 
@@ -613,7 +617,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes50(opcode, value, index_variables,block):
+def translateOpcodes50(opcode, value, index_variables,block,state_names):
     global new_fid
     # global unknown_mstore
     
@@ -660,8 +664,11 @@ def translateOpcodes50(opcode, value, index_variables,block):
             val = value.split("_")
             if len(val)==1:
                 idx = int(value)
-            instr = v1+" = " + "g(" + value + ")"
-            update_field_index(value,block)
+            else:
+                idx = value
+            var_name = state_names.get(idx,idx)
+            instr = v1+" = " + "g(" + str(var_name) + ")"
+            update_field_index(str(var_name),block)
         except ValueError:
             instr = ["gl = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
@@ -672,8 +679,11 @@ def translateOpcodes50(opcode, value, index_variables,block):
             val = value.split("_")
             if len(val)==1:
                 idx = int(value)
-            instr = "g(" + value + ") = " + v1
-            update_field_index(value,block)
+            else:
+                idx = value
+            var_name = state_names.get(idx,idx)
+            instr = "g(" + str(var_name) + ") = " + v1
+            update_field_index(str(var_name),block)
         except ValueError:
             instr = ["gs(1) = "+ v0, "gs(2) = "+v1]
     # elif opcode == "JUMP":
@@ -988,7 +998,7 @@ They are remove when displaying.
 -nop is True when generating nop annotations with the opcode. False otherwise.
 -index_variables refers to the top stack index. int.
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,cond):
+def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -1012,7 +1022,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond):
         value, index_variables = translateOpcodes40(opcode_name,variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id())
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id(),state_vars)
         if type(value) is list:
             for ins in value:
                 rule.add_instr(ins)
@@ -1129,13 +1139,13 @@ def create_uncond_jumpBlock(block_id,variables,jumps):
     else:
         p1_vars = p2_vars = ""
     
-    rule1 = RBRRule(block_id,"jump")
+    rule1 = RBRRule(block_id,"jump",False,all_state_vars)
     rule1.set_guard(guard)
     instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
     rule1.add_instr(instr)
     rule1.set_call_to(str(jumps[0]))
 
-    rule2 = RBRRule(block_id,"jump")
+    rule2 = RBRRule(block_id,"jump",False,all_state_vars)
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
     instr = "call(block"+str(jumps[1])+"("+p2_vars+"globals,bc))"
@@ -1220,13 +1230,13 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
         p1_vars = p2_vars = ""
 
 
-    rule1 = RBRRule(block_id,"jump")
+    rule1 = RBRRule(block_id,"jump",False,all_state_vars)
     rule1.set_guard(guard)
     instr = "call(block"+str(jumps[0])+"("+p1_vars+"globals,bc))"
     rule1.add_instr(instr)
     rule1.set_call_to(str(jumps[0]))
 
-    rule2 = RBRRule(block_id,"jump")
+    rule2 = RBRRule(block_id,"jump",False,all_state_vars)
     guard = get_opposite_guard(guard)
     rule2.set_guard(guard)
     instr = "call(block"+str(falls_to)+"("+p2_vars+"globals,bc))"
@@ -1267,7 +1277,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block):
+def compile_block(block,state_vars):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1280,7 +1290,7 @@ def compile_block(block):
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
     is_string_getter = block.get_string_getter()
-    rule = RBRRule(block_id, "block",is_string_getter)
+    rule = RBRRule(block_id, "block",is_string_getter,all_state_vars)
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
     
@@ -1325,7 +1335,7 @@ def compile_block(block):
             rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),True)        
+                                                   index_variables,block.get_list_jumps(),True,state_vars)        
         cont+=1
 
     if(block.get_block_type()=="falls_to"):
@@ -1453,6 +1463,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global stack_index
     global vertices
     global c_trans
+    global all_state_vars
     
     init_globals()
     c_trans = c_rbr
@@ -1461,6 +1472,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     component_of = component
 
     source_map = source_info["source_map"]
+    if source_map:
+        all_state_vars = source_map._get_var_names()
+
     mapping_state_variables = source_info["name_state_variables"]
     
     
@@ -1483,7 +1497,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             blocks = sorted(blocks_dict.values(), key = getKey)
             for block in blocks:
             #if block.get_start_address() not in to_clone:
-                rule = compile_block(block)
+                rule = compile_block(block,mapping_state_variables)
 
                 inv = check_invalid_options(block,invalid_options)
                     
@@ -1525,7 +1539,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             print("Build RBR: "+str(ethir_time)+"s")
             store_times(oyente_time,ethir_time)
 
-            write_info_lines(rbr,source_map,contract_name)
+            if source_map:
+                write_info_lines(rbr,source_map,contract_name)
             
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
