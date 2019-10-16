@@ -1760,7 +1760,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         source_code = source_code[:idx1_cb]+source_code[idx2_cb+2:]
                         idx1_cb = source_code.find("/*")
                         idx2_cb = source_code.find("*/")
-                        
+                    
                     idx1 = source_code.index("(") + 1
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
@@ -2151,12 +2151,18 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             else:
                 vertices[block].add_ls_value("sload",ls_cont[2],position)
-                
+
+
+            new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)          
+            operators = '[-+*/%|&^!><=]'
+            line = re.compile(operators).split(new_var_name)[0].strip()
+            
             ls_cont[2]+=1
             statevar_name = ""
             if isReal(position) and position in global_state["Ia"]:
                 value = global_state["Ia"][position]
                 stack.insert(0, value)
+                
             elif global_params.USE_GLOBAL_STORAGE and isReal(position) and position not in global_state["Ia"]:
                 value = data_source.getStorageAt(position)
                 global_state["Ia"][position] = value
@@ -2165,6 +2171,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 if str(position) in global_state["Ia"]:
                     value = global_state["Ia"][str(position)]
                     stack.insert(0, value)
+
                 else:
                     if is_expr(position):
                         position = simplify(position)
@@ -2196,8 +2203,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     else:
                         global_state["Ia"][str(position)] = new_var
             if g_src_map:
+                statevar_name = statevar_name if statevar_name != "" else line
                 update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
-
+                
+                
         else:
             raise ValueError('STACK underflow')
 
