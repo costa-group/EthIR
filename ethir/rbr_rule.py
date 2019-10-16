@@ -17,7 +17,7 @@ Each rule contains:
 '''
 
 class RBRRule:
-    def __init__(self,blockId,typeBlock,getter=False):
+    def __init__(self,blockId,typeBlock,getter=False,all_state_vars = []):
         self.blockId = blockId
 
         if typeBlock == "block":
@@ -38,6 +38,7 @@ class RBRRule:
         self.string_getter = getter
         self.invalid_address = False
         self.invalid_source = ""
+        self.all_state_vars = all_state_vars
 
     def __eq__(self,other):
         eq = False
@@ -92,7 +93,15 @@ class RBRRule:
         
 
     def get_global_arg(self):
-        return sorted(self.arg_global,key = toInt)[::-1]
+        if self.all_state_vars == []:
+            return sorted(self.arg_global,key= toInt)[::-1]
+        else:
+            ordered = []
+            for n in self.all_state_vars:
+                if n in self.arg_global:
+                    ordered.append(n)
+            ordered = ordered[::-1]
+            return ordered
 
     def update_global_arg(self,l):
         aux = self.arg_global+l
@@ -132,6 +141,9 @@ class RBRRule:
     def set_call_to_info(self, info):
         self.call_to_info = info
 
+    def get_all_state_vars(self):
+        return self.all_state_vars
+        
     def has_invalid(self):
         return self.invalid_address
 
@@ -172,9 +184,27 @@ class RBRRule:
     It generates the field variables using the indexes in the list arg_global.
     It returns a list with the field variables.
     '''
+    # def build_field_vars(self):
+    #     field_vars = []
+    #     ordered = sorted(self.arg_global,key= toInt)[::-1]
+    #     for i in ordered:
+    #         var = "g("+ str(i)+")"
+    #         field_vars.append(var)
+    #     return field_vars
+
     def build_field_vars(self):
         field_vars = []
-        ordered = sorted(self.arg_global,key= toInt)[::-1]
+        if self.all_state_vars == []:
+            ordered = sorted(self.arg_global,key= toInt)[::-1]
+
+        else:
+            ordered = []
+            for n in self.all_state_vars:
+                if n in self.arg_global:
+                    ordered.append(n)
+                
+            ordered = ordered[::-1]
+
         for i in ordered:
             var = "g("+ str(i)+")"
             field_vars.append(var)
