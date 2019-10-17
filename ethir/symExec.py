@@ -15,6 +15,7 @@ import logging
 import six
 from collections import namedtuple
 #from z3 import *
+import gasol
 
 from vargenerator import *
 from ethereum_data import *
@@ -3175,7 +3176,8 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     global tacas_ex
     global public_fields
     global invalid_option
-                            
+
+
     g_disasm_file = disasm_file
     g_source_file = source_file
     g_src_map = source_map
@@ -3286,6 +3288,9 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
         source_info["name_state_variables"] = mapping_state_variables
         
         rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info)
+        # fields = ["field1","field2"]
+        # block = 70  
+        # gasol.optimize_solidity (block,source_map,fields,cname)
 
     except Exception as e:
         raise e
@@ -3298,5 +3303,5 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
             generate_verify_config_file(cname)
 
         ##Add when both are != None
-            
+  
     return [], 0

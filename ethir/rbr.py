@@ -11,7 +11,7 @@ import c_utranslation
 from timeit import default_timer as dtimer
 from graph_scc import get_entry_scc
 import traceback
- 
+
 
 costabs_path = "/tmp/costabs/" 
 tmp_path = "/tmp/"
@@ -1542,6 +1542,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
             if source_map:
                 write_info_lines(rbr,source_map,contract_name)
+               
             
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)

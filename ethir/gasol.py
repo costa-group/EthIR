@@ -1,18 +1,23 @@
+
 from rbr_rule import RBRRule
+import os
+
+# CONSTANTS
+costabs_path = "/tmp/costabs/" 
+tmp_path = "/tmp/"
 
 def print_methods(rbr,source_map,contract_name) :
     
-    # for rules in rbr:
-    #     for rule in rules:
-    #         if 'block' in rule.get_rule_name(): 
-    #             nBq = get_block_id(rule)
-    #             print("********************************** : "+ str(rule.get_rule_name()) + " " + str(nBq))
-    #             source = source_map.get_source_code(nBq)
-    #             print("   " + str(source))
+    for rules in rbr:
+        for rule in rules:
+            if 'block' in rule.get_rule_name(): 
+                nBq = get_block_id(rule)
+                print("********************************** : "+ str(rule.get_rule_name()) + " " + str(nBq))
+                source = source_map.get_source_code(nBq)
+                print("   " + str(source))
     # print(get_field_getters("hola"))
     # print(get_field_setters("hola"))
     # print(get_field_functions("hola"))
-    optimize_method('block68',source_map)
 
 def get_block_id(rule) :
     nBq = str(rule.get_Id())
@@ -29,48 +34,106 @@ def get_block_id(rule) :
     #     nBq = bq
     # return nBq
 
-def get_field_getters(field) :
-    return "     {0} = getField_{0}(); ".format(field)
 
-def get_field_setters(field) :
-    return "     setField_{0} ({0}); ".format(field)
-
-def get_field_functions(field) :
-    res = "     function get_field_{0} () private returns (uint) {{ return {0} }}; \n"
-    res = res + "     function set_field_{0} (uint val) private {{ {0} = val; }}"
-    return res.format(field)
-
-def optimize_method (block,source_map):
-    solidityFile = source_map.get_source_code(0)
+def optimize_solidity (block,source_map,fields,cname):
+    # global args
+    # fields = args.fields
+    print("Tengo estos fields " + str(fields))
+    solidityFile = source_map.source.content
 
     print("SOLIDITY FILE: *************\n" + solidityFile + "\n*****************")
 
-    source = source_map.get_source_code(70)
+    block = 70
+    optimized = get_optimize_method(block,source_map,fields)
+
+    initPos = source_map.get_init_pos(block)
+    endPos = source_map.get_end_pos(block)
+
+    solidityOptimized = solidityFile[:initPos] + optimized + solidityFile[endPos:]
+
+    print("********************************************* \n\n" + solidityOptimized)
+
+    write_file(solidityOptimized,cname)
+
+
+def get_optimize_method (block,source_map,fields):
+
+    source = source_map.get_source_code(block)
 
     source = source.replace("{","{{")
     source = source.replace("}","}}")
 
     pos_init = source.find("{{") + 2
 
-    print("SOURCE ORIG CODE: *************\n" + source + "\n*****************")
     source = source[:pos_init] + '\n     {0}\n' + source[pos_init:]
+    lastBracePos = source.rfind("}}")
+    source = source[:lastBracePos] + '\n     {1}\n' + source[lastBracePos:]
 
     returnPos = source.find("return ")
     if returnPos != -1 :
         splitRes = source.split("return ")
 
         res = splitRes[0]
-        splitRes.remove(0)
-        # for part in splitRes: 
-        #     res = res + part + "\n     {{1}}\n     return "
+        del splitRes[0]
+        for part in splitRes: 
+            print("Iterando para avanzar 2")
+            res = res + "\n     {1}\n     return " + part
     
-    print("RES " + res)
     source = res
+    # source = res 
+    print("RES VALE: " + res)
+
+    getters = generate_getters(fields)
+    setters = generate_setters(fields)
+    functions = generate_functions(fields)
+    
+    source = source.format(getters,setters)
+    print("VAMOS AQUI")
+    source = source + "\n\n" + functions
 
     print("SOURCE CODE: *************\n" + source + "\n*****************")
+    return source
 
 
+def generate_getters (fields) :
+    res = ""
+    for field in fields:
+        res = res + get_field_getter(field) + "\n     "
+    return res
 
+def generate_setters (fields) :
+    res = ""
+    for field in fields: 
+        res = res + get_field_setter(field) + "\n     "
+    return res
+
+def generate_functions (fields) :
+    res = ""
+    for field in fields: 
+        res = res + get_field_functions(field) + "\n"
+    return res
+
+def get_field_getter(field) :
+    return "     {0} = getField_{0}(); ".format(field)
+
+def get_field_setter(field) :
+    return "     setField_{0} ({0}); ".format(field)
+
+def get_field_functions(field) :
+    res = "     function get_fields_{0} () private returns (uint) {{ return {0} }}; \n"
+    res = res + "     function set_field_{0} (uint val) private {{ {0} = val; }}"
+    return res.format(field)
+
+
+def write_file(optimized,cname = None):
+    if "costabs" not in os.listdir(tmp_path):
+        os.mkdir(costabs_path)
+
+    name = costabs_path+cname+"_opt.sol"
+    with open(name,"w") as f:
+        f.write(optimized)
+
+    f.close()
 
 
     

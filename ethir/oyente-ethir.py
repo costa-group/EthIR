@@ -131,7 +131,7 @@ def analyze_disasm_bytecode():
             svc_options["verify"]=args.verify
         if args.invalid:
             svc_options["invalid"]=args.invalid
-            
+
         result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
     else:
         exit_code = -1
@@ -189,7 +189,6 @@ def run_solidity_analysis(inputs,hashes):
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             
         except Exception as e:
@@ -339,9 +338,10 @@ def main():
     parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with -c flag", choices = ["cpa","verymax","seahorn"])
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with -c flag", choices = ["array","div0","all"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
+    # parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
+    # parser.add_argument("-f", "--fields", type=list, nargs='+', help="Fields to be optimized by Gasol", action="store_true")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
-
     # if args.root_path:
     #     if args.root_path[-1] != '/':
     #         args.root_path += '/'
