@@ -1588,7 +1588,7 @@ def write_info_lines(rbr,source_map,contract_name):
                             nLineCom = source_map.get_init_pos(pc)
                             nLineFin = source_map.get_end_pos(pc)
                             # bloque = rule.get_rule_name()[5:]
-                            f.write("numlinea(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
+                            f.write("solidityline(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
                             pass
 
                         except:
