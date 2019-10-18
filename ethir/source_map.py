@@ -217,3 +217,7 @@ class SourceMap:
 
     def get_filename(self):
         return self.cname.split(":")[0]
+
+    def get_type_state_variable(self,variable):
+        return SourceMap.ast_helper.extract_type_state_variable(self.cname,variable)
+    

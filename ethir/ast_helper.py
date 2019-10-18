@@ -146,3 +146,16 @@ class AstHelper:
             if contract == cname:
                 return path
         return ""
+
+
+    #Added by PG
+    #It does not return constant state variables
+    def extract_type_state_variable(self, c_name,state_var):
+        state_variables = self.extract_states_definitions()[c_name]
+        for var_name in state_variables:
+            
+            if var_name["attributes"]["name"]== state_var:
+                return var_name["attributes"]["type"]
+ 
+
+    
