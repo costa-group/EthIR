@@ -116,6 +116,15 @@ def check_c_translation_dependencies():
 
     return r
 
+def check_optimize_dependencies():
+    c1 = args.optimize == True
+    c2 = args.fields != None
+    c3 = args.contract_name != ""
+    c4 = args.block != None
+    r = (c1 and c2) and (c3 and c4)
+
+    return r
+
 #Added by Pablo Gordillo 
 '''
 We believe that source is a dissasembly evm file
@@ -266,6 +275,51 @@ def run_solidity_analysis(inputs,hashes):
 #    print exit_code
     return results, exit_code
 
+
+def run_solidity_analysis_optimized(inp,hashes):
+    results = {}
+    exit_code = 0
+
+    opt_info = {}
+    svc_opt = {}
+    opt_info["block"] = args.block
+    
+    fields = process_fields(inp['source_map'])
+
+    opt_info["fields"] = fields
+
+    opt_info["c_source"] = inp['c_source'].split("/")[-1]
+
+    print fields
+    print opt_info["c_source"]
+    
+    function_names = hashes[inp["c_name"]]
+
+    try:
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_opt,go = args.goto,opt= opt_info)
+
+        try:
+            c_source = inp['c_source']
+            c_name = inp['c_name']
+            results[c_source][c_name] = result
+        except:
+            results[c_source] = {c_name: result}
+        
+    except Exception as e:
+        #traceback.print_exc()
+
+        if len(e.args)>1:
+            return_code = e.args[1]
+        else:
+            return_code = 1
+
+        result = []
+            #return_code = -1
+        print ("\n Exception: "+str(return_code)+"\n")
+        exit_code = return_code
+            
+    return results, exit_code
+
 def analyze_solidity(input_type='solidity'):
     global args
 
@@ -284,8 +338,19 @@ def analyze_solidity(input_type='solidity'):
     print("*************************************************************")
     print("Compilation time: "+str(y-x)+"s")
     print("*************************************************************")
-    results, exit_code = run_solidity_analysis(inputs,hashes)
-    helper.rm_tmp_files()
+
+    if check_optimize_dependencies():
+        i = 0
+        found = False
+        while(i<len(inputs) and (not found)):
+            if inputs[i]["c_name"]==args.contract_name:
+                inp = inputs[i]
+                found = True
+            i+=1
+        results, exit_code = run_solidity_analysis_optimized(inp,hashes)
+    else:
+        results, exit_code = run_solidity_analysis(inputs,hashes)
+        helper.rm_tmp_files()
 
     if global_params.WEB:
         six.print_(json.dumps(results))
@@ -303,6 +368,14 @@ def process_name(fname):
         new_name = name.replace("(",":").replace(")","")
 
     return new_name
+
+def process_fields(src_map):
+    fields = {}
+    field_names = args.fields.split(",") 
+    for f in field_names:
+        t = src_map.get_type_state_variable(f)
+        fields[f] = t
+    return fields
 
 def generate_saco_hashes_file(dicc):
     with open(costabs_path+"solidity_functions.txt", "w") as f:
@@ -338,10 +411,13 @@ def main():
     parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with -c flag", choices = ["cpa","verymax","seahorn"])
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with -c flag", choices = ["array","div0","all"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with -c flag", action="store_true")
-    # parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
-    # parser.add_argument("-f", "--fields", type=list, nargs='+', help="Fields to be optimized by Gasol", action="store_true")
+    parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
+    parser.add_argument("-f", "--fields", type=str, help="Fields to be optimized by Gasol")
+    parser.add_argument("-cname", "--contract_name", type=str, help="Name of the contract that is going to be optimized")
+    parser.add_argument("-bl", "--block", type=str, help="block to be optimized")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     args = parser.parse_args()
+
     # if args.root_path:
     #     if args.root_path[-1] != '/':
     #         args.root_path += '/'

@@ -35,17 +35,23 @@ def get_block_id(rule) :
     # return nBq
 
 
-def optimize_solidity (block,source_map,fields,cname):
+def optimize_solidity (block,source_map,fields_map,cname):
     # global args
     # fields = args.fields
-    print("Tengo estos fields " + str(fields))
+
+    print("Tengo estos fields " + str(fields_map.keys()))
     solidityFile = source_map.source.content
 
     print("SOLIDITY FILE: *************\n" + solidityFile + "\n*****************")
 
-    block = 70
-    optimized = get_optimize_method(block,source_map,fields)
 
+    print block
+    print fields_map
+    print cname
+    
+    #block = 70
+    optimized = get_optimize_method(block,source_map,fields_map)
+    return
     initPos = source_map.get_init_pos(block)
     endPos = source_map.get_end_pos(block)
 
@@ -58,6 +64,12 @@ def optimize_solidity (block,source_map,fields,cname):
 
 def get_optimize_method (block,source_map,fields):
 
+
+    # print generate_getters(fields.keys())
+    # print generate_setters(fields.keys())
+    # print generate_functions(fields)
+    # print declare_local_variables(fields)
+    
     source = source_map.get_source_code(block)
 
     source = source.replace("{","{{")
@@ -65,7 +77,9 @@ def get_optimize_method (block,source_map,fields):
 
     pos_init = source.find("{{") + 2
 
-    source = source[:pos_init] + '\n     {0}\n' + source[pos_init:]
+    defs = declare_local_variables(fields)
+    
+    source = source[:pos_init] + '\n'+defs+'     {0}\n' + source[pos_init:]
     lastBracePos = source.rfind("}}")
     source = source[:lastBracePos] + '\n     {1}\n' + source[lastBracePos:]
 
@@ -83,8 +97,8 @@ def get_optimize_method (block,source_map,fields):
     # source = res 
     print("RES VALE: " + res)
 
-    getters = generate_getters(fields)
-    setters = generate_setters(fields)
+    getters = generate_getters(fields.keys())
+    setters = generate_setters(fields.keys())
     functions = generate_functions(fields)
     
     source = source.format(getters,setters)
@@ -107,10 +121,11 @@ def generate_setters (fields) :
         res = res + get_field_setter(field) + "\n     "
     return res
 
-def generate_functions (fields) :
+def generate_functions (fields_map) :
     res = ""
-    for field in fields: 
-        res = res + get_field_functions(field) + "\n"
+    for field in fields_map.keys():
+        field_type = fields_map[field]
+        res = res + get_field_functions(field,field_type) + "\n"
     return res
 
 def get_field_getter(field) :
@@ -119,10 +134,24 @@ def get_field_getter(field) :
 def get_field_setter(field) :
     return "     setField_{0} ({0}); ".format(field)
 
-def get_field_functions(field) :
-    res = "     function get_fields_{0} () private returns (uint) {{ return {0} }}; \n"
-    res = res + "     function set_field_{0} (uint val) private {{ {0} = val; }}"
-    return res.format(field)
+def get_field_functions(field,field_type) :
+    res = "     function get_fields_{0} () private returns ({1}) {{ return {0} }}; \n"
+    res = res + "     function set_field_{0} ({1} val) private {{ {0} = val; }}"
+    return res.format(field,field_type)
+
+
+def declare_local_variables(fields_map):
+    res = ""
+    for field in fields_map.keys():
+        field_type = fields_map[field]
+        res = res + declare_local_variable(field,field_type) + "\n"
+
+    return res
+
+        
+def declare_local_variable(field,type_field):
+    res = "     {0} {1};"
+    return res.format(type_field,field)
 
 
 def write_file(optimized,cname = None):
@@ -134,9 +163,6 @@ def write_file(optimized,cname = None):
         f.write(optimized)
 
     f.close()
-
-
-    
 
 
 
