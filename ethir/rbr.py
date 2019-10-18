@@ -1584,6 +1584,9 @@ def write_info_lines(rbr,source_map,contract_name):
                         nBq = bq
 
                     for inst in rule.get_instructions(): 
+                        if not('nop' in inst):
+                            continue;
+							
                         pc = int(nBq)+offset
                         
                         try:
@@ -1592,7 +1595,7 @@ def write_info_lines(rbr,source_map,contract_name):
                             nLine = source_map.get_location(pc)['begin']['line']
                             nLine = nLine+1
                             # bloque = rule.get_rule_name()[5:]
-                            f.write("solidityline(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLine) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + "\n")  
+                            f.write("solidityline(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLine) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + " % " + str(offset) + " " + str(inst) + "	\n")  
 
                         except:
                            continue;
@@ -1604,9 +1607,9 @@ def write_info_lines(rbr,source_map,contract_name):
     f.close()
 
 
-
+   
 def get_inc_offset(op): 
-    if 'PUSH' in op:
+    if 'PUSH' in op: # nop(PUSH1)
         n=op[8:-1]
         return int(n)+1
     return 1; 
