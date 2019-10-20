@@ -3292,13 +3292,13 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
         if opt!= None:
         # fields = ["field1","field2"]
         # block = 70
-            print function_block_map
-            f = opt["block"]
-            block = function_block_map[f]
+            # print function_block_map
+            #f = opt["block"]
+            #block = function_block_map[f]
             gasol.optimize_solidity(opt["block"],source_map,opt["fields"],opt["c_source"])
 
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         raise e
     
     if hashes != None:
