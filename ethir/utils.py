@@ -490,6 +490,13 @@ def update_sstore_map(state_vars,initial_name,compressed_name,isCompresed,positi
                     state_vars[name] = st_name
             
 
+def compute_ccomponent(inverse_component, block):
+    component = []
+    for b in inverse_component.keys():
+        if block in inverse_component[b]:
+            component.append(b)
+
+    return component
 # '''
 # It computes the index of each state variable to know its solidity name
 # state variable is a list with the state variables g0..gn
