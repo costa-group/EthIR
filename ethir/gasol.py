@@ -138,11 +138,11 @@ def get_field_getter(field) :
     return "     {0} = get_field_{0}(); ".format(field)
 
 def get_field_setter(field) :
-    return "     set_field_{0} ({0}); ".format(field)
+    return "     set_field_{0}({0}); ".format(field)
 
 def get_field_functions(field,field_type) :
-    res = "     function get_field_{0} () private returns ({1}) {{ return {0}; }} \n"
-    res = res + "     function set_field_{0} ({1} val) private {{ {0} = val; }}"
+    res = "     function get_field_{0}() private returns ({1}) {{ return {0}; }} \n"
+    res = res + "     function set_field_{0}({1} val) private {{ {0} = val; }}"
     return res.format(field,field_type)
 
 
