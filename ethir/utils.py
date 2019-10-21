@@ -466,8 +466,14 @@ def get_public_fields(source_file,arr = True):
 
 def update_sstore_map(state_vars,initial_name,compressed_name,isCompresed,position,compress_index,state):
 
+    r_val = False
     if initial_name != '':
         if not isCompresed:
+            #print compressed_name
+            if initial_name != compressed_name:
+                compressed = get_field_from_string(compressed_name,state)
+                r_val = (initial_name,compressed_name)
+ 
             state_vars[position] = initial_name
         else:
             name = str(position)+"_"+str(compress_index)
@@ -477,18 +483,10 @@ def update_sstore_map(state_vars,initial_name,compressed_name,isCompresed,positi
             else:
                 exist = state_vars.get(name, False)
                 if (not exist) or (exist not in state):
-                    parts = compressed_name.split()
-
-                    i = 0
-                    st_name = ""
-                    found = False
-                    while(i<len(parts) and (not found)):
-                        if parts[i] in state:
-                            st_name = parts[i]
-                            found = True
-                        i+=1
+                    st_name = get_field_from_string(compressed_name, state)
                     state_vars[name] = st_name
-            
+
+    return r_val
 
 def compute_ccomponent(inverse_component, block):
     component = []
@@ -497,6 +495,51 @@ def compute_ccomponent(inverse_component, block):
             component.append(b)
 
     return component
+
+def get_field_from_string(string, state_variables):
+    parts = string.split()
+
+    i = 0
+    st_name = ""
+    found = False
+    while(i<len(parts) and (not found)):
+        if parts[i] in state_variables:
+            st_name = parts[i]
+            found = True
+        i+=1
+    return st_name
+
+def correct_map_fields(candidate_fields,fields_map):
+    for e in candidate_fields:
+        (x,y) = candidate_fields[e]
+        elem = fields_map.get(str(e)+"_0",False)
+        if elem:
+            fields_map[e] = elem
+        else:
+            pos = search_for_index(x,fields_map)
+
+            if pos ==-1:
+                fields_map[e] = x
+            else:
+                if not(str(pos).startswith(str(e))):
+                    val = int(str(pos).split("_")[0])
+                    f = y if e>val else x
+                    fields_map[e] = f
+
+
+def search_for_index(field,field_map):
+    possible_values = []
+    for e in field_map:
+        if field == field_map[e]:
+            possible_values.append(e)
+
+    vals = map(lambda x: str(x), possible_values)
+    vals.sort()
+    if len(vals)!=0:
+        return vals[0]
+    else:
+        return -1
+    
 # '''
 # It computes the index of each state variable to know its solidity name
 # state variable is a list with the state variables g0..gn
