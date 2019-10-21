@@ -42,16 +42,14 @@ def optimize_solidity (block,source_map,fields_map,cname):
     print("Tengo estos fields " + str(fields_map.keys()))
     solidityFile = source_map.source.content
 
-    print("SOLIDITY FILE: *************\n" + solidityFile + "\n*****************")
+    ##print("SOLIDITY FILE: *************\n" + solidityFile + "\n*****************")
 
 
     print block
     print fields_map
     print cname
     
-    #block = 70
     optimized = get_optimize_method(block,source_map,fields_map)
-    return
     initPos = source_map.get_init_pos(block)
     endPos = source_map.get_end_pos(block)
 
@@ -66,16 +64,22 @@ def get_optimize_method (block,source_map,fields):
 
 
     # print generate_getters(fields.keys())
+    # print ("*******************")
     # print generate_setters(fields.keys())
+    # print ("*******************")
     # print generate_functions(fields)
+    # print ("*******************")
     # print declare_local_variables(fields)
+    # print ("*******************")
     
-    source = source_map.get_source_code(block)
+    source = source_map.get_source_code(int(block))
+    print("SOURCE CODE: *************\n" + source + "\n*****************")
 
     source = source.replace("{","{{")
     source = source.replace("}","}}")
 
     pos_init = source.find("{{") + 2
+
 
     defs = declare_local_variables(fields)
     
@@ -84,7 +88,7 @@ def get_optimize_method (block,source_map,fields):
     source = source[:lastBracePos] + '\n     {1}\n' + source[lastBracePos:]
 
     returnPos = source.find("return ")
-    if returnPos != -1 :
+    if returnPos <> -1 :
         splitRes = source.split("return ")
 
         res = splitRes[0]
@@ -92,20 +96,16 @@ def get_optimize_method (block,source_map,fields):
         for part in splitRes: 
             print("Iterando para avanzar 2")
             res = res + "\n     {1}\n     return " + part
-    
-    source = res
-    # source = res 
-    print("RES VALE: " + res)
+        source = res    
+
 
     getters = generate_getters(fields.keys())
     setters = generate_setters(fields.keys())
     functions = generate_functions(fields)
     
     source = source.format(getters,setters)
-    print("VAMOS AQUI")
     source = source + "\n\n" + functions
 
-    print("SOURCE CODE: *************\n" + source + "\n*****************")
     return source
 
 
@@ -129,13 +129,13 @@ def generate_functions (fields_map) :
     return res
 
 def get_field_getter(field) :
-    return "     {0} = getField_{0}(); ".format(field)
+    return "     {0} = get_field_{0}(); ".format(field)
 
 def get_field_setter(field) :
-    return "     setField_{0} ({0}); ".format(field)
+    return "     set_field_{0} ({0}); ".format(field)
 
 def get_field_functions(field,field_type) :
-    res = "     function get_fields_{0} () private returns ({1}) {{ return {0} }}; \n"
+    res = "     function get_field_{0} () private returns ({1}) {{ return {0}; }} \n"
     res = res + "     function set_field_{0} ({1} val) private {{ {0} = val; }}"
     return res.format(field,field_type)
 
@@ -158,7 +158,7 @@ def write_file(optimized,cname = None):
     if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
 
-    name = costabs_path+cname+"_opt.sol"
+    name = costabs_path+cname[0:-4]+"_opt.sol"
     with open(name,"w") as f:
         f.write(optimized)
 
