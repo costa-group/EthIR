@@ -1,7 +1,7 @@
 
 from rbr_rule import RBRRule
 import os
-
+from utils import compute_ccomponent
 # CONSTANTS
 costabs_path = "/tmp/costabs/" 
 tmp_path = "/tmp/"
@@ -35,7 +35,7 @@ def get_block_id(rule) :
     # return nBq
 
 
-def optimize_solidity (block,source_map,fields_map,cname):
+def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
     # global args
     # fields = args.fields
 
@@ -48,8 +48,12 @@ def optimize_solidity (block,source_map,fields_map,cname):
     print block
     print fields_map
     print cname
+
+    ccomponent = compute_ccomponent(component_of, block)
+
+    fields_written =  is_written(rbr,ccomponent)
     
-    optimized = get_optimize_method(block,source_map,fields_map)
+    optimized = get_optimize_method(block,source_map,fields_map,fields_written)
     initPos = source_map.get_init_pos(block)
     endPos = source_map.get_end_pos(block)
 
@@ -60,7 +64,7 @@ def optimize_solidity (block,source_map,fields_map,cname):
     write_file(solidityOptimized,cname)
 
 
-def get_optimize_method (block,source_map,fields):
+def get_optimize_method (block,source_map,fields,fields_written):
 
 
     # print generate_getters(fields.keys())
@@ -100,7 +104,7 @@ def get_optimize_method (block,source_map,fields):
 
 
     getters = generate_getters(fields.keys())
-    setters = generate_setters(fields.keys())
+    setters = generate_setters(fields.keys(),fields_written)
     functions = generate_functions(fields)
     
     source = source.format(getters,setters)
@@ -115,10 +119,12 @@ def generate_getters (fields) :
         res = res + get_field_getter(field) + "\n     "
     return res
 
-def generate_setters (fields) :
+def generate_setters (fields,fields_written) :
     res = ""
-    for field in fields: 
-        res = res + get_field_setter(field) + "\n     "
+    for field in fields:
+        if field in fields_written:
+            res = res + get_field_setter(field) + "\n     "
+
     return res
 
 def generate_functions (fields_map) :
@@ -164,7 +170,23 @@ def write_file(optimized,cname = None):
 
     f.close()
 
+def is_written(rbr,conected_component):
+    is_written = []
+    for b in conected_component:
+        block_name = "block"+str(b)
+        [rule] = rbr[block_name]
+        instrs = rule.get_instructions()
+        for i in instrs:
+            eq_index = i.find("=")
+            field_index = i.find("g(")
+            if (eq_index !=-1 and field_index !=-1) and (field_index <eq_index):
+                field_sstore = i[:eq_index].strip()
+                if not field_index in is_written:
+                    is_written.append(field_sstore)
 
+    fields_written = map(lambda x: x.lstrip("g(").rstrip(")"),is_written)
+    return fields_written
 
+    
 
 
