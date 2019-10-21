@@ -156,6 +156,15 @@ class AstHelper:
             
             if var_name["attributes"]["name"]== state_var:
                 return var_name["attributes"]["type"]
+
+
+    def extract_type_state_variables(self, c_name):
+        vars_map = {}
+        state_variables = self.extract_states_definitions()[c_name]
+        for var_name in state_variables:
+            name = var_name["attributes"]["name"]
+            vars_map[name] = var_name["attributes"]["type"] 
+        return vars_map
  
 
     
