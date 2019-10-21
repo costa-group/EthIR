@@ -220,4 +220,7 @@ class SourceMap:
 
     def get_type_state_variable(self,variable):
         return SourceMap.ast_helper.extract_type_state_variable(self.cname,variable)
+
+    def get_type_state_variables(self):
+        return SourceMap.ast_helper.extract_type_state_variables(self.cname)
     
