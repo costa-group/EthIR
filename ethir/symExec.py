@@ -28,7 +28,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map
+from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -246,6 +246,9 @@ def initGlobalVars():
 
     global mapping_state_variables
     mapping_state_variables = {}
+
+    global update_fields
+    update_fields = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -302,7 +305,9 @@ def build_cfg_and_analyze(evm_version):
         construct_static_edges()
         #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
-        
+
+    correct_map_fields(update_fields,mapping_state_variables)
+    print mapping_state_variables
     delete_uncalled()
     update_block_info()
 
@@ -1151,6 +1156,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global indirect_jump
     global param_abs
     global mapping_state_variables
+    global update_fields
     
     stack = params.stack
     mem = params.mem
@@ -2205,8 +2211,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         global_state["Ia"][str(position)] = new_var
             if g_src_map:
                 statevar_name = statevar_name if statevar_name != "" else line
-                update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
-                
+                r_val = update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
+                if r_val:
+                    update_fields[position] = r_val
                 
         else:
             raise ValueError('STACK underflow')
@@ -2219,12 +2226,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
 
+            # print stored_address
+            # print stored_value
+             
             #PG
             new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)        
             operators = '[-+*/%|&^!><=]'
             new_var_name = re.compile(operators).split(new_var_name)[0].strip()
             statevar_name_compressed = new_var_name
-            
+            #print new_var_name
             #Added by Pablo Gordillo
             if g_src_map:
                 p = g_src_map._get_var_names()
@@ -2251,8 +2261,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 statevar_name_original = ""
 
             if g_src_map:
-                update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v,g_src_map._get_var_names())
-            
+               r_val = update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name_compressed,p_s,stored_address,v,g_src_map._get_var_names())
+               if r_val:
+                    update_fields[stored_address] = r_val
         else:
             raise ValueError('STACK underflow')
     elif opcode == "JUMP":
