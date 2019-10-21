@@ -290,8 +290,8 @@ def run_solidity_analysis_optimized(inp,hashes):
 
     opt_info["c_source"] = inp['c_source'].split("/")[-1]
 
-    print fields
-    print opt_info["c_source"]
+    # print fields
+    # print opt_info["c_source"]
     
     function_names = hashes[inp["c_name"]]
 
