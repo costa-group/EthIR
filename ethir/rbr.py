@@ -1462,7 +1462,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None):
     global rbr_blocks
     global stack_index
-    global vertices
+    global verticesd
     global c_trans
     global all_state_vars
     
@@ -1552,6 +1552,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 c_utranslation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
             print("*************************************************************")
 
+            return rbr_blocks
+        
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
