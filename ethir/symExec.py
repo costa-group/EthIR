@@ -3287,7 +3287,7 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
         source_info["source_map"] = source_map
         source_info["name_state_variables"] = mapping_state_variables
         
-        rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info)
+        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info)
 
         if opt!= None:
         # fields = ["field1","field2"]
@@ -3295,7 +3295,7 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
             # print function_block_map
             f = opt['block']
             #block = function_block_map[f]
-            gasol.optimize_solidity(int(opt["block"]),source_map,opt["fields"],opt["c_source"])
+            gasol.optimize_solidity(int(opt["block"]),source_map,opt["fields"],opt["c_source"],rbr_rules,component_of_blocks)
 
     except Exception as e:
         traceback.print_exc()
