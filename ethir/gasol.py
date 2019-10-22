@@ -39,15 +39,15 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
     # global args
     # fields = args.fields
 
-    print("Tengo estos fields " + str(fields_map.keys()))
+    #print("Tengo estos fields " + str(fields_map.keys()))
     solidityFile = source_map.source.content
 
     ##print("SOLIDITY FILE: *************\n" + solidityFile + "\n*****************")
 
 
-    print block
-    print fields_map
-    print cname
+    #print block
+    #print fields_map
+    #print cname
 
     ccomponent = compute_ccomponent(component_of, block)
 
@@ -105,7 +105,7 @@ def get_optimize_method (block,source_map,fields,fields_written):
 
     getters = generate_getters(fields.keys())
     setters = generate_setters(fields.keys(),fields_written)
-    functions = generate_functions(fields)
+    functions = generate_functions(fields,fields_written)
     
     source = source.format(getters,setters)
     source = source + "\n\n" + functions
@@ -127,22 +127,24 @@ def generate_setters (fields,fields_written) :
 
     return res
 
-def generate_functions (fields_map) :
+def generate_functions (fields_map,fields_written) :
     res = ""
     for field in fields_map.keys():
         field_type = fields_map[field]
-        res = res + get_field_functions(field,field_type) + "\n"
+        is_written = field in fields_written
+        res = res + get_field_functions(field,field_type,is_written) + "\n"
     return res
 
 def get_field_getter(field) :
-    return "     {0} = get_field_{0}(); ".format(field)
+    return "\t{0} = get_field_{0}(); ".format(field)
 
 def get_field_setter(field) :
-    return "     set_field_{0}({0}); ".format(field)
+    return "\tset_field_{0}({0}); ".format(field)
 
-def get_field_functions(field,field_type) :
-    res = "     function get_field_{0}() private returns ({1}) {{ return {0}; }} \n"
-    res = res + "     function set_field_{0}({1} val) private {{ {0} = val; }}"
+def get_field_functions(field,field_type,is_written) :
+    res = "    function get_field_{0}() private returns ({1}) {{ return {0}; }} \n"
+    if is_written:
+        res = res + "    function set_field_{0}({1} val) private {{ {0} = val; }}"
     return res.format(field,field_type)
 
 
@@ -156,7 +158,7 @@ def declare_local_variables(fields_map):
 
         
 def declare_local_variable(field,type_field):
-    res = "     {0} {1};"
+    res = "\t{0} {1};"
     return res.format(type_field,field)
 
 
