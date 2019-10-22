@@ -50,19 +50,22 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
     #print cname
 
     ccomponent = compute_ccomponent(component_of, block)
-
-    fields_written =  is_written(rbr,ccomponent)
+    externals = has_externall_calls(rbr,ccomponent)
+    if not externals:
+        fields_written =  is_written(rbr,ccomponent)
     
-    optimized = get_optimize_method(block,source_map,fields_map,fields_written)
-    initPos = source_map.get_init_pos(block)
-    endPos = source_map.get_end_pos(block)
+        optimized = get_optimize_method(block,source_map,fields_map,fields_written)
+        initPos = source_map.get_init_pos(block)
+        endPos = source_map.get_end_pos(block)
 
-    solidityOptimized = solidityFile[:initPos] + optimized + solidityFile[endPos:]
+        solidityOptimized = solidityFile[:initPos] + optimized + solidityFile[endPos:]
 
-    print("********************************************* \n\n" + solidityOptimized)
+        print("********************************************* \n\n" + solidityOptimized)
 
-    write_file(solidityOptimized,cname)
+        write_file(solidityOptimized,cname)
 
+    else:
+        print("WARNING: The method cannot be optimized due to an external call")
 
 def get_optimize_method (block,source_map,fields,fields_written):
 
@@ -189,6 +192,13 @@ def is_written(rbr,conected_component):
     fields_written = map(lambda x: x.lstrip("g(").rstrip(")"),is_written)
     return fields_written
 
-    
 
-
+def has_externall_calls(rbr,ccomponent):
+    for b in ccomponent:
+        block_name = "block"+str(b)
+        [rule] = rbr[block_name]
+        instrs = rule.get_instructions()
+        for i in instrs:
+            if i in ["nop(CALL)","nop(DELEGATECALL)","nop(CALLCODE)"]:
+                return True
+    return False
