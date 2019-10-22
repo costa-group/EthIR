@@ -285,7 +285,7 @@ def run_solidity_analysis_optimized(inp,hashes):
     opt_info["block"] = args.block
     
     fields = process_fields(inp['source_map'])
-
+    
     opt_info["fields"] = fields
 
     opt_info["c_source"] = inp['c_source'].split("/")[-1]
@@ -374,6 +374,7 @@ def process_fields(src_map):
     field_names = args.fields.split(",") 
     for f in field_names:
         t = src_map.get_type_state_variable(f)
+        t = t.strip("contract").strip()
         fields[f] = t
     return fields
 
