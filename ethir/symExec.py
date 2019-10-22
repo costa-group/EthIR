@@ -307,7 +307,6 @@ def build_cfg_and_analyze(evm_version):
         full_sym_exec()  # jump targets are constructed on the fly
 
     correct_map_fields(update_fields,mapping_state_variables)
-    print mapping_state_variables
     delete_uncalled()
     update_block_info()
 
