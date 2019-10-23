@@ -227,7 +227,7 @@ def write_message_file(cname = None,t_msg=None, af= None):
     name = costabs_path+cname+".log"
     with open(name,"w") as f:
         if t_msg == "error":
-            message = "ERROR: The function cannot be optimized due to external calls that may modified the field"
+            message = "ERROR: The function cannot be optimized due to external calls that may modified the fields"
         elif t_msg == "info":
             if af == []:
                 message = "GASOL optimization success"
