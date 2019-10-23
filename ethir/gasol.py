@@ -232,7 +232,7 @@ def write_message_file(cname = None,t_msg=None, af= None):
             message = "ERROR: The method cannot be optimized due to external calls"
         elif t_msg == "warning":
             str_af = ",".join(af)
-            message = "WARNING: "+str_af+ " cannot be optimized due to external calls"
+            message = "WARNING: "+str_af+ "cannot be optimized (arrays)"
         f.write(message)
 
     f.close()
