@@ -146,7 +146,7 @@ def generate_functions (fields_map,fields_written) :
     return res
 
 def get_field_getter(field,field_type) :
-    return "\t{1} {0} = get_field_{0}(); ".format(field,field_type)
+    return "\t\t{1} {0} = get_field_{0}(); ".format(field,field_type)
 
 def get_field_setter(field) :
     return "\tset_field_{0}({0}); ".format(field)
