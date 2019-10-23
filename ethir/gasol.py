@@ -227,14 +227,14 @@ def write_message_file(cname = None,t_msg=None, af= None):
     name = costabs_path+cname+".log"
     with open(name,"w") as f:
         if t_msg == "error":
-            message = "ERROR: The method cannot be optimized due to external calls"
+            message = "ERROR: The function cannot be optimized due to external calls that may modified the field"
         elif t_msg == "info":
             if af == []:
                 message = "SUCCESS"
             else:
                 str_af = ",".join(af)
-                message = "WARNING: "+str_af+ "cannot be optimized (arrays)"
-                message = message+"\nSUCCESS"
+                message = "WARNING: Field\s "+str_af+ " cannot be optimized because they are of type array"
+                message = message+"\nGASOL optimization success"
         f.write(message)
 
     f.close()
