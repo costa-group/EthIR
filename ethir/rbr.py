@@ -664,7 +664,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         try:
             val = value.split("_")
             if len(val)==1:
-                idx = int(value)
+                idx = value
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
@@ -679,7 +679,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         try:
             val = value.split("_")
             if len(val)==1:
-                idx = int(value)
+                idx = value
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
