@@ -144,15 +144,15 @@ def generate_functions (fields_map,fields_written) :
     return res
 
 def get_field_getter(field,field_type) :
-    return "\t\t{1} {0} = get_field_{0}(); ".format(field,field_type)
+    return "\t\t{1} {0} = get_field_{0}();  //GASOL optimization".format(field,field_type)
 
 def get_field_setter(field) :
-    return "\tset_field_{0}({0}); ".format(field)
+    return "\tset_field_{0}({0}); //GASOL optimization".format(field)
 
 def get_field_functions(field,field_type,is_written) :
-    res = "    function get_field_{0}() private returns ({1}) {{ return {0}; }} \n"
+    res = "    function get_field_{0}() private returns ({1}) {{ return {0}; }} //GASOL optimization \n"
     if is_written:
-        res = res + "    function set_field_{0}({1} val) private {{ {0} = val; }}"
+        res = res + "    function set_field_{0}({1} val) private {{ {0} = val; }} //GASOL optimizacion"
     return res.format(field,field_type)
 
 
