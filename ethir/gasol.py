@@ -88,9 +88,9 @@ def get_optimize_method (block,source_map,fields,fields_written):
     pos_init = source.find("{{") + 2
 
 
-    defs = declare_local_variables(fields)
+    #defs = declare_local_variables(fields)
     
-    source = source[:pos_init] + '\n'+defs+'     {0}\n' + source[pos_init:]
+    source = source[:pos_init] +'\n    {0}\n' + source[pos_init:]
     lastBracePos = source.rfind("}}")
     source = source[:lastBracePos] + '\n     {1}\n' + source[lastBracePos:]
 
@@ -106,7 +106,7 @@ def get_optimize_method (block,source_map,fields,fields_written):
         source = res    
 
 
-    getters = generate_getters(fields.keys())
+    getters = generate_getters(fields)
     setters = generate_setters(fields.keys(),fields_written)
     functions = generate_functions(fields,fields_written)
     
@@ -118,8 +118,9 @@ def get_optimize_method (block,source_map,fields,fields_written):
 
 def generate_getters (fields) :
     res = ""
-    for field in fields:
-        res = res + get_field_getter(field) + "\n     "
+    for field in fields.keys():
+        field_type = fields[field]
+        res = res + get_field_getter(field,field_type) + "\n     "
     return res
 
 def generate_setters (fields,fields_written) :
@@ -138,8 +139,8 @@ def generate_functions (fields_map,fields_written) :
         res = res + get_field_functions(field,field_type,is_written) + "\n"
     return res
 
-def get_field_getter(field) :
-    return "\t{0} = get_field_{0}(); ".format(field)
+def get_field_getter(field,field_type) :
+    return "\t{1} {0} = get_field_{0}(); ".format(field,field_type)
 
 def get_field_setter(field) :
     return "\tset_field_{0}({0}); ".format(field)
