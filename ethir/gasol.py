@@ -65,6 +65,7 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
         write_file(solidityOptimized,cname)
 
     else:
+        write_error_field()
         print("WARNING: The method cannot be optimized due to an external call")
 
 def get_optimize_method (block,source_map,fields,fields_written):
@@ -165,17 +166,6 @@ def declare_local_variable(field,type_field):
     res = "\t{0} {1};"
     return res.format(type_field,field)
 
-
-def write_file(optimized,cname = None):
-    if "costabs" not in os.listdir(tmp_path):
-        os.mkdir(costabs_path)
-
-    name = costabs_path+cname[0:-4]+"_opt.sol"
-    with open(name,"w") as f:
-        f.write(optimized)
-
-    f.close()
-
 def is_written(rbr,conected_component):
     is_written = []
     for b in conected_component:
@@ -193,7 +183,6 @@ def is_written(rbr,conected_component):
     fields_written = map(lambda x: x.lstrip("g(").rstrip(")"),is_written)
     return fields_written
 
-
 def has_externall_calls(rbr,ccomponent):
     for b in ccomponent:
         block_name = "block"+str(b)
@@ -203,3 +192,26 @@ def has_externall_calls(rbr,ccomponent):
             if i in ["nop(CALL)","nop(DELEGATECALL)","nop(CALLCODE)"]:
                 return True
     return False
+
+def write_file(optimized,cname = None):
+    if "costabs" not in os.listdir(tmp_path):
+        os.mkdir(costabs_path)
+
+    name = costabs_path+cname[0:-4]+"_opt.sol"
+    with open(name,"w") as f:
+        f.write(optimized)
+
+    f.close()
+
+def write_error_field(cname = None):
+    if "costabs" not in os.listdir(tmp_path):
+        os.mkdir(costabs_path)
+
+    if cname == None:
+        cname = "gasol"
+    name = costabs_path+cname+".error"
+    with open(name,"w") as f:
+        message = "WARNING: The method cannot be optimized due to external calls"
+        f.write(message)
+
+    f.close()
