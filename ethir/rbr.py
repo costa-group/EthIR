@@ -664,6 +664,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         try:
             val = value.split("_")
             if len(val)==1:
+                int(value)
                 idx = value
             else:
                 idx = value
@@ -679,6 +680,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         try:
             val = value.split("_")
             if len(val)==1:
+                int(value)
                 idx = value
             else:
                 idx = value
