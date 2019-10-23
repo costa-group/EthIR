@@ -96,7 +96,7 @@ def get_optimize_method (block,source_map,fields,fields_written):
 
     #defs = declare_local_variables(fields)
     
-    source = source[:pos_init] +'\n    {0}\n' + source[pos_init:]
+    source = source[:pos_init] +'\n{0}\n' + source[pos_init:]
     lastBracePos = source.rfind("}}")
     source = source[:lastBracePos] + '\n     {1}\n' + source[lastBracePos:]
 
