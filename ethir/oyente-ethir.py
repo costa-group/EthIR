@@ -374,7 +374,9 @@ def process_fields(src_map):
     field_names = args.fields.split(",") 
     for f in field_names:
         t = src_map.get_type_state_variable(f)
-        t = t.strip("contract").strip()
+        if t.find("contract ")!=-1:
+            t = t.split("contract")[-1]
+        t = t.strip()
         fields[f] = t
     return fields
 
