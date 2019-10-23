@@ -472,7 +472,8 @@ def update_sstore_map(state_vars,initial_name,compressed_name,isCompresed,positi
             #print compressed_name
             if initial_name != compressed_name:
                 compressed = get_field_from_string(compressed_name,state)
-                r_val = (initial_name,compressed_name.split()[-1])
+                nn = compressed_name.split()
+                r_val = (initial_name,nn[-1]) if nn != [] else (initial_name,initial_name)  
  
             state_vars[position] = initial_name
         else:
