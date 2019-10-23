@@ -230,7 +230,7 @@ def write_message_file(cname = None,t_msg=None, af= None):
             message = "ERROR: The function cannot be optimized due to external calls that may modified the field"
         elif t_msg == "info":
             if af == []:
-                message = "SUCCESS"
+                message = "GASOL optimization success"
             else:
                 str_af = ",".join(af)
                 message = "WARNING: Field\s "+str_af+ " cannot be optimized because they are of type array"
