@@ -52,8 +52,10 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
     ccomponent = compute_ccomponent(component_of, block)
     externals = has_externall_calls(rbr,ccomponent)
     if not externals:
+        array_fields = check_fields_type_arrays(fields_map)
+        clean_fields_array(array_fields,fields_map)
         fields_written =  is_written(rbr,ccomponent)
-    
+        
         optimized = get_optimize_method(block,source_map,fields_map,fields_written)
         initPos = source_map.get_init_pos(block)
         endPos = source_map.get_end_pos(block)
@@ -64,9 +66,12 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
 
         write_file(solidityOptimized,cname)
 
+        if array_fields != []:
+            write_message_file(t_msg = "warning",af = array_fields)
+            
     else:
-        write_error_field()
-        print("WARNING: The method cannot be optimized due to an external call")
+        write_message_file(t_msg = "error")
+        print("ERROR: The method cannot be optimized due to an external call")
 
 def get_optimize_method (block,source_map,fields,fields_written):
 
@@ -193,6 +198,18 @@ def has_externall_calls(rbr,ccomponent):
                 return True
     return False
 
+def check_fields_type_arrays(fields):
+    not_optimizable = []
+    for e in fields:
+        if fields[e].find("[")!=-1:
+            not_optimizable.append(e)
+
+    return not_optimizable
+
+def clean_fields_array(array_fields,fields):
+    for a in array_fields:
+        del fields[a]
+
 def write_file(optimized,cname = None):
     if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
@@ -203,15 +220,19 @@ def write_file(optimized,cname = None):
 
     f.close()
 
-def write_error_field(cname = None):
+def write_message_file(cname = None,t_msg=None, af= None):
     if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
 
     if cname == None:
         cname = "gasol"
-    name = costabs_path+cname+".error"
+    name = costabs_path+cname+".log"
     with open(name,"w") as f:
-        message = "WARNING: The method cannot be optimized due to external calls"
+        if t_msg == "error":
+            message = "ERROR: The method cannot be optimized due to external calls"
+        elif t_msg == "warning":
+            str_af = ",".join(af)
+            message = "WARNING: "+str_af+ " cannot be optimized due to external calls"
         f.write(message)
 
     f.close()
