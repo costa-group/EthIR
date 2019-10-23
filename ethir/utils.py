@@ -527,6 +527,66 @@ def correct_map_fields(candidate_fields,fields_map):
                     fields_map[e] = f
 
 
+def correct_map_fields1(fields_map,var_fields):
+    correct = True
+    i = 0
+    offset=0
+    for e in fields_map:
+        val = fields_map[e]
+        del fields_map[e]
+        fields_map[str(e)] = val
+    
+    while(i<len(var_fields) and correct):
+        field = var_fields[i]
+        pos = search_for_index(field,fields_map)
+
+        if pos ==-1:
+            fields_map[str(i)] = field
+        else:
+            if str(pos).split("_")[0] != str(i):
+                correct = False
+                offset = offset+1
+        i=i+1
+
+    while(i<len(var_fields)):
+        number = search_greatter_compacts(pos,fields_map)
+
+        if number !=0:
+            offset = offset+number
+        field = var_fields[i]
+
+        potential_index = i-offset
+
+        pos = exist_index(potential_index,fields_map)
+
+        fields_map[str(pos)] = field
+
+        i+=1
+
+def search_greatter_compacts(pos,fields_map):
+    
+    numbers = fields_map.keys()
+    pos_int = str(pos).split("_")[0]
+    numbers_str = filter(lambda x: str(x).startswith(pos_int),numbers)
+    end = filter(lambda x: str(x)>str(pos),numbers_str)
+    if len(end)>0:
+        if end[0] == pos_int+"_0":
+            fields_map[pos_int+"_0"] = fields_map[pos_int]
+            end.pop(0)
+        
+    return len(end)
+
+def exist_index(potential_index,fields_map):
+    numbers = fields_map.keys()
+    numbers_str = filter(lambda x: str(x).startswith(str(potential_index)), numbers)
+    
+    if len(numbers_str)== 0:
+        return potential_index
+    else:
+        numbers_str = map(lambda x: str(x), numbers_str)
+        numbers_str.sort()
+        return numbers_str[0]
+
 def search_for_index(field,field_map):
     possible_values = []
     for e in field_map:
