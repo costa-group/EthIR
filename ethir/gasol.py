@@ -67,7 +67,7 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
         write_file(solidityOptimized,cname)
 
         if array_fields != []:
-            write_message_file(t_msg = "warning",af = array_fields)
+            write_message_file(t_msg = "info",af = array_fields)
             
     else:
         write_message_file(t_msg = "error")
@@ -230,7 +230,7 @@ def write_message_file(cname = None,t_msg=None, af= None):
     with open(name,"w") as f:
         if t_msg == "error":
             message = "ERROR: The method cannot be optimized due to external calls"
-        elif t_msg == "warning":
+        elif t_msg == "info":
             if af == []:
                 message = "SUCCESS"
             else:
