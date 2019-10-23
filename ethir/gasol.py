@@ -65,9 +65,7 @@ def optimize_solidity (block,source_map,fields_map,cname,rbr,component_of):
         print("********************************************* \n\n" + solidityOptimized)
 
         write_file(solidityOptimized,cname)
-
-        if array_fields != []:
-            write_message_file(t_msg = "info",af = array_fields)
+        write_message_file(t_msg = "info",af = array_fields)
             
     else:
         write_message_file(t_msg = "error")
