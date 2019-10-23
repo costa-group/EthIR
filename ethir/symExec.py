@@ -28,7 +28,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields
+from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -306,7 +306,9 @@ def build_cfg_and_analyze(evm_version):
         #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
 
-    correct_map_fields(update_fields,mapping_state_variables)
+
+    correct_map_fields1(mapping_state_variables,g_src_map._get_var_names())
+
     delete_uncalled()
     update_block_info()
 
