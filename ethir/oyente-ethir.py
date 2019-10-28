@@ -6,7 +6,7 @@ import six
 import json
 import symExec
 import logging
-import requests
+#import requests
 import argparse
 import subprocess
 import global_params
