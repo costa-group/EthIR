@@ -18,7 +18,6 @@ from collections import namedtuple
 import gasol
 
 from vargenerator import *
-from ethereum_data import *
 from basicblock import BasicBlock
 from analysis import *
 # from test_evm.global_test_params import (TIME_OUT, UNKNOWN_INSTRUCTION,
