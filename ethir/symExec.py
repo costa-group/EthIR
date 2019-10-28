@@ -301,6 +301,7 @@ def build_cfg_and_analyze(evm_version):
         tokens = tokenize.generate_tokens(disasm_file.readline)
         collect_vertices(tokens)
         construct_bb()
+        #get_evm_block()
         construct_static_edges()
         #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
@@ -3323,3 +3324,30 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
         ##Add when both are != None
   
     return [], 0
+
+def get_evm_block():
+    blocks = {}
+    str_b = ""
+    for b in vertices:
+        instructions = vertices[b].get_instructions()
+        str_b = ""
+        for i in instructions:
+            i_aux = i.split()[0]
+            c = get_opcode(i_aux)
+            hex_val = str(c[0])
+            if hex_val.startswith("0x"):
+                op_val = hex_val[2:]
+            else:
+                op_val = hex(int(hex_val))[2:]
+            if i.startswith("PUSH"):
+                num = i.split()[1][2:]
+            else:
+                num = ""
+            str_b = str_b+op_val+num
+        blocks[b] = str_b
+
+    for b in blocks:
+        f = open("/tmp/costabs/block_"+str(b)+".bl","w")
+        f.write(blocks[b])
+        f.close()
+        
