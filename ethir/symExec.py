@@ -3334,11 +3334,17 @@ def get_evm_block():
         for i in instructions:
             i_aux = i.split()[0]
             c = get_opcode(i_aux)
+           # print c
             hex_val = str(c[0])
             if hex_val.startswith("0x"):
                 op_val = hex_val[2:]
+               
             else:
                 op_val = hex(int(hex_val))[2:]
+
+                if (int(op_val,16)<12):
+                    op_val = "0"+str(op_val)
+                    
             if i.startswith("PUSH"):
                 num = i.split()[1][2:]
             else:
