@@ -3352,6 +3352,9 @@ def get_evm_block():
             str_b = str_b+op_val+num
         blocks[b] = str_b
 
+    if "costabs" not in os.listdir(tmp_path):
+        os.mkdir(costabs_path)
+        
     for b in blocks:
         f = open("/tmp/costabs/block_"+str(b)+".bl","w")
         f.write(blocks[b])
