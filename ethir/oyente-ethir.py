@@ -72,7 +72,7 @@ def has_dependencies_installed():
     return True
 
 def clean_dir():
-    ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol"]
+    ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl"]
     if "costabs" in os.listdir(tmp_path):
         for elem in os.listdir(costabs_path):
             last = elem.split(".")[-1]
@@ -201,7 +201,7 @@ def run_solidity_analysis(inputs,hashes):
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             
         except Exception as e:
-            #traceback.print_exc()
+            traceback.print_exc()
 
             if len(e.args)>1:
                 return_code = e.args[1]
@@ -218,10 +218,10 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
                 
             except Exception as e:
-                #traceback.print_exc()
+                traceback.print_exc()
                 if len(e.args)>1:
                     return_code = e.args[1]
                 else:
@@ -230,7 +230,7 @@ def run_solidity_analysis(inputs,hashes):
                 result = []
                 # return_code = -1
                 print ("\n Exception: "+str(return_code)+"\n")
-            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,t_exs = args.source,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
+            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             i+=1
             returns.append(return_code)
             try:
@@ -306,7 +306,7 @@ def run_solidity_analysis_optimized(inp,hashes):
             results[c_source] = {c_name: result}
         
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
 
         if len(e.args)>1:
             return_code = e.args[1]

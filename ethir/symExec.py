@@ -225,9 +225,6 @@ def initGlobalVars():
     global param_abs
     param_abs = ("","")
     
-    global tacas_ex
-    tacas_ex = ""
-
     global scc_unary
     scc_unary = []
 
@@ -3177,7 +3174,7 @@ def get_scc(edges):
         scc_multiple.update(scc)
         return scc_multiple
         
-def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,t_exs = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None):    
+def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -3187,7 +3184,6 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     global vertices
     global stack_h
     global name
-    global tacas_ex
     global public_fields
     global invalid_option
 
@@ -3201,8 +3197,7 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     source_info = {}
     
     name = cname
-    if t_exs != None:
-        tacas_ex = t_exs
+
     if hashes != None:
         f_hashes = hashes
 
