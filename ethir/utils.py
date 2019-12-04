@@ -600,7 +600,15 @@ def search_for_index(field,field_map):
         return vals[0]
     else:
         return -1
-    
+
+
+def is_integer(num):
+    try:
+        val = int(num)
+    except:
+        val = -1
+
+    return val
 # '''
 # It computes the index of each state variable to know its solidity name
 # state variable is a list with the state variables g0..gn
