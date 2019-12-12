@@ -2159,10 +2159,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             else:
                 vertices[block].add_ls_value("sload",ls_cont[2],position)
 
-
-            new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)          
-            operators = '[-+*/%|&^!><=]'
-            line = re.compile(operators).split(new_var_name)[0].strip()
+            if g_src_map:
+                new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)          
+                operators = '[-+*/%|&^!><=]'
+                line = re.compile(operators).split(new_var_name)[0].strip()
             
             ls_cont[2]+=1
             statevar_name = ""
@@ -2230,13 +2230,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             # print stored_value
              
             #PG
-            new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)        
-            operators = '[-+*/%|&^!><=]'
-            new_var_name = re.compile(operators).split(new_var_name)[0].strip()
-            statevar_name_compressed = new_var_name
+
             #print new_var_name
             #Added by Pablo Gordillo
             if g_src_map:
+                new_var_name = g_src_map.get_source_code(global_state['pc'] - 1)        
+                operators = '[-+*/%|&^!><=]'
+                new_var_name = re.compile(operators).split(new_var_name)[0].strip()
+                statevar_name_compressed = new_var_name
+                
                 p = g_src_map._get_var_names()
                 
             p_s, v = sstore_fragment(vertices[block],instr_index)
