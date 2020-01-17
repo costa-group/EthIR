@@ -211,4 +211,6 @@ def get_ins_cost(opcode):
         return GCOST["Gbalance"]
     elif opcode == "BLOCKHASH":
         return GCOST["Gblockhash"]
+    elif opcode == "SSTORE":
+        return 20000
     return 0
