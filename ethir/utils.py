@@ -403,15 +403,30 @@ def write_cfg(it,vertices,name = False,cloned = False):
     with open(name,"w") as f:
         for block in vert:
             f.write("================\n")
-            f.write("start address: "+ str(block.get_start_address())+"\n")
-            f.write("end address: "+str(block.get_end_address())+"\n")
+            if not cloned:
+                f.write("start address: "+ str(hex(block.get_start_address())[2:])+"\n")
+            else:
+                f.write("start address: "+ str(block.get_start_address())+"\n")
+
+            if not cloned:
+                f.write("end address: "+str(hex(block.get_end_address())[2:])+"\n")
+            else:
+                f.write("end address: "+str(block.get_end_address())+"\n")
+
             f.write("end statement type: " + block.get_block_type()+"\n")
 
             f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
             if(block.get_falls_to() != None):
                 f.write("falls to: " +str(block.get_falls_to())+"\n")
+
+            addresses = block.get_pcs()
+            i = 0
             for instr in block.get_instructions():
-                f.write(instr+"\n")
+                if not cloned:
+                    f.write(addresses[i][2:]+": "+instr+"\n")
+                    i+=1
+                else:
+                    f.write(instr+"\n")
     f.close()
 
 def cfg_dot(it,block_input,name = False,cloned = False):
