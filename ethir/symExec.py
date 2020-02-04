@@ -859,7 +859,12 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     result = False
     instr_index = 0
 
+    bl = vertices[block]
+    
     for instr in block_ins:
+        if not bl.get_pcs_stored():
+            bl.add_pc(hex(global_state["pc"]))
+        
         sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
         instr_index+=1
         if sha_identify and not result:
@@ -874,6 +879,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
 
+    if not bl.get_pcs_stored():
+        bl.set_pcs_stored(True)
+            
     if result:
 
         falls = vertices[pre_block].get_falls_to()
