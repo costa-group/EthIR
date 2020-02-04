@@ -415,9 +415,16 @@ def write_cfg(it,vertices,name = False,cloned = False):
 
             f.write("end statement type: " + block.get_block_type()+"\n")
 
-            f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
+            if not cloned:
+                f.write("jump target: " + " ".join(str(hex(x)[2:]) for x in block.get_list_jumps())+"\n")
+            else:
+                f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
+
             if(block.get_falls_to() != None):
-                f.write("falls to: " +str(block.get_falls_to())+"\n")
+                if not cloned:
+                    f.write("falls to: " +str(hex(block.get_falls_to())[2:])+"\n")
+                else:
+                    f.write("falls to: " +str(block.get_falls_to())+"\n")
 
             addresses = block.get_pcs()
             i = 0
