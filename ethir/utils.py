@@ -403,28 +403,25 @@ def write_cfg(it,vertices,name = False,cloned = False):
     with open(name,"w") as f:
         for block in vert:
             f.write("================\n")
-            if not cloned:
-                f.write("start address: "+ str(hex(block.get_start_address())[2:])+"\n")
-            else:
-                f.write("start address: "+ str(block.get_start_address())+"\n")
 
-            if not cloned:
-                f.write("end address: "+str(hex(block.get_end_address())[2:])+"\n")
-            else:
-                f.write("end address: "+str(block.get_end_address())+"\n")
+            start_addr, end_addr, jump_addr, falls_addr = compute_hex_vals_cfg(block)
+            
+            f.write("start address: "+ str(start_addr)+"\n")
 
+            f.write("end address: "+str(end_addr)+"\n")
+            
             f.write("end statement type: " + block.get_block_type()+"\n")
 
+
+            
             if not cloned:
                 f.write("jump target: " + " ".join(str(hex(x)[2:]) for x in block.get_list_jumps())+"\n")
             else:
                 f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
 
-            if(block.get_falls_to() != None):
-                if not cloned:
-                    f.write("falls to: " +str(hex(block.get_falls_to())[2:])+"\n")
-                else:
-                    f.write("falls to: " +str(block.get_falls_to())+"\n")
+            f.write("jump target: " + str(jump_addr)+"\n")
+
+            f.write("falls to: " +str(falls_addr)+"\n")
 
             addresses = block.get_pcs()
             i = 0
@@ -436,6 +433,31 @@ def write_cfg(it,vertices,name = False,cloned = False):
                     f.write(instr+"\n")
     f.close()
 
+
+def compute_hex_vals_cfg(block):
+    start_addr = ""
+    end_addr = ""
+    jump_addr = ""
+    falls_addr = ""
+
+    start = block.get_start_address().split("_")
+    end = block.get_end_address().split("_")
+
+    
+    if len(start)>1:
+        start0 = hex(int(start[0]))[2:]
+        start_addr = start0+"_"+start[1]
+    else:
+        start_addr = hex(int(start[0]))[2:]
+
+    if len(end)>1:
+        start0 = hex(int(start[0]))[2:]
+        start_addr = start0+"_"+start[1]
+    else:
+        start_addr = hex(int(start[0]))[2:]
+
+        
+    
 def cfg_dot(it,block_input,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
