@@ -35,7 +35,11 @@ class BasicBlock:
         self.div_invalid_pattern = False
         self.stacks_old = []
         self.path = []
-    
+
+        self.pcs = []
+        self.pcs_stored = False
+
+        
     def get_start_address(self):
         return self.start
 
@@ -476,6 +480,23 @@ class BasicBlock:
 
     def get_cost(self):
         return self.cost
+
+
+    def get_pcs(self):
+        return self.pcs
+
+    def set_pcs(self,pcs_list):
+        self.pcs = pcs_list
+
+    def add_pc(self,val):
+        self.pcs.append(val)
+
+    def get_pcs_stored(self):
+        return self.pcs_stored
+        
+    def set_pcs_stored(self,val):
+        self.pcs_stored = val
+
         
     def display(self):
         six.print_("================")
