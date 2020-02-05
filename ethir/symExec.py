@@ -3313,7 +3313,7 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     #         raise Exception("Error in clonning process",3)
         
     
-    check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
+    # check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
     compute_component_of_cfg()
