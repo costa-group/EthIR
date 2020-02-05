@@ -27,7 +27,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1
+from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -38,6 +38,7 @@ UNSIGNED_BOUND_NUMBER = 2**256 - 1
 CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
+ebso_path = "/tmp/costabs/blocks"
 costabs_path = "/tmp/costabs/"
 tmp_path = "/tmp/"
 
@@ -224,7 +225,7 @@ def initGlobalVars():
 
     global param_abs
     param_abs = ("","")
-    
+
     global scc_unary
     scc_unary = []
 
@@ -240,11 +241,26 @@ def initGlobalVars():
     global invalid_option
     invalid_option = ""
 
+
+    global push_jump_relations
+    push_jump_relations = {}
+
+    global jump_addresses
+    jump_addresses = []
+
+    #Added by AHC
+    
+    global block_cont
+    block_cont = {}
+    
     global mapping_state_variables
     mapping_state_variables = {}
 
     global update_fields
     update_fields = {}
+
+    global ebso_opt
+    ebso_opt = ""
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -298,7 +314,8 @@ def build_cfg_and_analyze(evm_version):
         tokens = tokenize.generate_tokens(disasm_file.readline)
         collect_vertices(tokens)
         construct_bb()
-        #get_evm_block()
+        # if ebso_opt:
+        #     get_evm_block()
         construct_static_edges()
         #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
@@ -310,6 +327,14 @@ def build_cfg_and_analyze(evm_version):
     
     delete_uncalled()
     update_block_info()
+    build_push_jump_relations()
+
+    if debug_info:
+        print "*****************************"
+        print "Graph"
+        show_graph(vertices)
+        print "Is Graph consistent?"
+        print check_graph_consistency(vertices)
 
 
 #Added by Pablo Gordillo
@@ -317,6 +342,10 @@ def update_block_info():
     global blocks_to_clone
     
     vert = sorted(vertices.values(), key = getKey)
+    if debug_info:
+        print "Updating block info"
+        print vertices.keys()
+        
     for block in vert:    
         block.compute_list_jump(edges[block.get_start_address()])
         c = block.compute_cloning()
@@ -376,6 +405,18 @@ def propagate_mstore_unknown(block_addr,visited):
             propagate_mstore_unknown(falls,visited)
 
 #Added by Pablo Gordillo
+
+def build_push_jump_relations():
+    global push_jump_relations
+
+    old_dict = push_jump_relations
+    push_jump_relations = {}
+
+    for block in blocks_to_clone:
+        rel = old_dict[block.get_start_address()]
+        for jump_address in rel.keys():
+            push_jump_relations[jump_address] = rel[jump_address]
+
 def print_cfg():
     vert = sorted(vertices.values(), key = getKey)
     for block in vert:
@@ -785,9 +826,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global param_abs
     global scc_unary
     global getter_blocks
+    global block_stack
+    global block_cont
+    global edges
+    global stack_h
+    global calldataload_values
+    global jump_type
 
-
-    
     visited = params.visited
     stack = params.stack
     stack_old = list(params.stack)
@@ -859,8 +904,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     result = False
     instr_index = 0
 
+
     bl = vertices[block]
-    
+
     for instr in block_ins:
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
@@ -881,7 +927,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     if not bl.get_pcs_stored():
         bl.set_pcs_stored(True)
-            
+
+
     if result:
 
         falls = vertices[pre_block].get_falls_to()
@@ -954,53 +1001,44 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     elif jump_type[block] == "unconditional":  # executing "JUMP"
         successor = vertices[block].get_jump_target()
         new_params = params.copy()
-        new_params.global_state["pc"] = successor
+        new_params.global_state["pc"] = get_initial_block_address(successor)
         if g_src_map:
             source_code = g_src_map.get_source_code(global_state['pc'])
             if source_code in g_src_map.func_call_names:
                 func_call = global_state['pc']
                 
+         # AHC: If we find an already cloned block, we must check whether to copy it,
+        # if leads to a possible non cloned path; or we can redirect to an existing one.
+        if successor in visited_blocks:
+            if debug_info:
+                print("Successor already visited: ")
+                print successor
+                print("From unconditional block: ")
+                print block
+            
+            # We filter all nodes with same beginning, and check if there's one of those
+            # nodes with same stack. Notice that one block may contain several stacks
+                
+            same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
+            
+            if len(same_stack_successors) > 0:
+                update_matching_successor(successor, same_stack_successors[0], block, "jump_target")
+            else:
+                copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, "jump_target")
         
-        if successor in vertices:
-
+        elif successor in vertices:
+            
+            # Mirar si clonarlo o no TODO
             vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
-            proc = procesed_indirect_jumps.get(successor,[])
 
             if not(vertices[successor].known_stack(list(stack))):
                 path.append((block,successor))
                 sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
-                procesed_indirect_jumps = update_map(procesed_indirect_jumps,block,successor)
                 path.pop()
-            else:
-                if vertices[successor].get_depth_level()<(current_level+1): 
-                    vertices[successor].set_depth_level(current_level+1)
-                    update_depth_level(successor,current_level+1,[])
-                # if ((block,successor) not in path):
-            #     # if potential_jump:
-            #     #     potential_jump = False
-            #     path.append((block,successor))
-            #     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-            #     procesed_indirect_jumps = update_map(procesed_indirect_jumps,block,successor)
-            #     path.pop()
-            # else : #the pair is in the path
-            #     if not(vertices[successor].known_stack(list(stack))):
-            #     # if not potential_jump:
-            #     #     potential_jump = True
-            #         path.append((block,successor))
-            #         sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-            #         path.pop()
-                # else:
-                #     print "PASO"
-                # else:
-            
-                #     potential_jump = False
-                #     if not(vertices[successor].is_direct_block()):
-                #         print "ENTRARIA con"+str(successor)
-                #         if stack[indirect_jump[successor]] not in proc:
-                #             path.append((block,successor))
-                #             sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-                #             path.pop()
-                    #if stack[indirect_jump[successor]] not in proc:
+            # else:
+            #     if vertices[successor].get_depth_level()<(current_level+1): 
+            #         vertices[successor].set_depth_level(current_level+1)
+            #         update_depth_level(successor,current_level+1,[])
                     
         else:
             if successor not in blocks_to_create:
@@ -1009,35 +1047,37 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     elif jump_type[block] == "falls_to":  # just follow to the next basic block
         successor = vertices[block].get_falls_to()
 
-        vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
         new_params = params.copy()
-        new_params.global_state["pc"] = successor
-        if not(vertices[successor].known_stack(list(stack))):
+        new_params.global_state["pc"] = get_initial_block_address(successor)
+
+        # AHC: If we find an already cloned block, we must check whether to copy it,
+        # if leads to a possible non cloned path; or we can redirect to an existing one.
+        if successor in visited_blocks:
+
+            # We filter all nodes with same beginning, and check if there's one of those
+            # nodes with same stack. Notice that one block may contain several stacks
+            same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
+
+
+            if len(same_stack_successors) > 0:
+                update_matching_successor(successor, same_stack_successors[0], block, "falls_to")
+                
+            else:
+                copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, "falls_to")
+
+        elif not(vertices[successor].known_stack(list(stack))):
+            vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
             path.append((block,successor))
+            
             sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
             path.pop()
         else:
+            vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
+            # if vertices[successor].get_depth_level()<(current_level+1):
+            #     vertices[successor].set_depth_level(current_level+1)
+            #     update_depth_level(successor,current_level+1,[])
 
-            if vertices[successor].get_depth_level()<(current_level+1):
-                vertices[successor].set_depth_level(current_level+1)
-                update_depth_level(successor,current_level+1,[])
-            # if (((block,successor) not in path)):
-        #     if potential_jump:
-        #         potential_jump = False
-        #     path.append((block,successor))
-        #     sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-        #     path.pop()
-        # else:
-        #     # if not potential_jump:
-        #     #     potential_jump = True
-        #     if not(vertices[successor].known_stack(list(stack))):
-        #         path.append((block,successor))
-        #         sym_exec_block(new_params, successor, block, depth, func_call,level+1,path)
-        #         path.pop()
-        #     # else:
-        #     #     print "PASO"
-        #     # else:
-        #     #     potential_jump = False
+            
     elif jump_type[block] == "conditional":  # executing "JUMPI"
 
         # A choice point, we proceed with depth first search
@@ -1046,11 +1086,25 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
 
         new_params = params.copy()
-        new_params.global_state["pc"] = left_branch
+        new_params.global_state["pc"] = get_initial_block_address(left_branch)
         #new_params.path_conditions_and_vars["path_condition"].append(branch_expression)
         last_idx = len(new_params.path_conditions_and_vars["path_condition"]) - 1
                 #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
-        if left_branch in vertices:
+
+        # AHC: If we find an already cloned block, we must check whether to copy it,
+        # if leads to a possible non cloned path; or we can redirect to an existing one.
+        if left_branch in visited_blocks:
+
+            # We filter all nodes with same beginning, and check if there's one of those
+            # nodes with same stack. Notice that one block may contain several stacks
+            same_stack_successors = get_all_blocks_with_same_stack(left_branch, stack)
+            if len(same_stack_successors) > 0:
+                update_matching_successor(left_branch, same_stack_successors[0], block, "jump_target")
+                
+            else:
+                copy_already_visited_node(left_branch, new_params, block, depth, func_call,current_level,path, "jump_target")
+                
+        elif left_branch in vertices:
             vertices[left_branch].add_origin(block) #to compute which are the blocks that leads to successor
             if not(vertices[left_branch].known_stack(list(stack))):
             # if (((block,left_branch) not in path)):
@@ -1059,10 +1113,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 path.append((block,left_branch))
                 sym_exec_block(new_params, left_branch, block, depth, func_call,current_level+1,path)
                 path.pop()
-            else:
-                if vertices[left_branch].get_depth_level() < (current_level+1):
-                    vertices[left_branch].set_depth_level(current_level+1)
-                    update_depth_level(left_branch,current_level+1,[])
+            # else:
+            #     if vertices[left_branch].get_depth_level() < (current_level+1):
+            #         vertices[left_branch].set_depth_level(current_level+1)
+            #         update_depth_level(left_branch,current_level+1,[])
                 # else:
             #     # if not potential_jump:
             #     #     potential_jump = True
@@ -1097,24 +1151,29 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
         
         new_params = params.copy()
-        new_params.global_state["pc"] = right_branch
+        new_params.global_state["pc"] = get_initial_block_address(right_branch) 
         #new_params.path_conditions_and_vars["path_condition"].append(negated_branch_expression)
         last_idx = len(new_params.path_conditions_and_vars["path_condition"]) - 1
         #new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
         # print right_branch
         # print path
         # print "\n"
-        if right_branch in vertices:
+        # AHC: If we find an already cloned block, we must check whether to copy it,
+        # if leads to a possible non cloned path; or we can redirect to an existing one.
+        if right_branch in visited_blocks:
+
+            # We filter all nodes with same beginning, and check if there's one of those
+            # nodes with same stack. Notice that one block may contain several stacks
+            same_stack_successors = get_all_blocks_with_same_stack(right_branch, stack)
+            
+            if len(same_stack_successors) > 0:
+                update_matching_successor(right_branch, same_stack_successors[0], block, "falls_to")
+            else:
+                copy_already_visited_node(right_branch, new_params, block, depth, func_call,current_level,path, "falls_to")
+                
+        elif right_branch in vertices:
             vertices[right_branch].add_origin(block)
-            # if ((block,right_branch) not in path):
-            #     if potential_jump:
-            #         potential_jump = False
-            #     path.append((block,right_branch))
-            #     sym_exec_block(new_params, right_branch, block, depth, func_call,level+1,path)
-            #     path.pop()
-            # else:
-            #     # if not potential_jump:
-            #     #     potential_jump = True
+            
             if not(vertices[right_branch].known_stack(list(stack))):
                 path.append((block,right_branch))
                 sym_exec_block(new_params, right_branch, block, depth, func_call,current_level+1,path)
@@ -1123,10 +1182,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 #     print "PASO"
                 # else:
                 #     potential_jump = False
-            else:
-                if vertices[right_branch].get_depth_level < (current_level+1):
-                    vertices[right_branch].set_depth_level(current_level+1)
-                    update_depth_level(right_branch,current_level+1,[])
+            # else:
+            #     if vertices[right_branch].get_depth_level < (current_level+1):
+            #         vertices[right_branch].set_depth_level(current_level+1)
+            #         update_depth_level(right_branch,current_level+1,[])
         else:
             if right_branch not in blocks_to_create:
                 blocks_to_create.append(right_branch)
@@ -1146,7 +1205,104 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     r = compute_loop_scc(block)
     if r and block not in scc_unary:
         scc_unary.append(block)
+
+
+
+# Given a block and current stack, returns all blocks that share same initial name
+# and has the same stack (it's supposed to be at most one)
+def get_all_blocks_with_same_stack(successor, stack):
+    global vertices
+
+    # We just search for those nodes that share initial name with our successor
+    all_successor_copies = filter(lambda x: get_initial_block_address(x) == get_initial_block_address(successor), vertices)
+    same_stack_successors = []
     
+    for found_successor in all_successor_copies:
+        list_stacks = vertices[found_successor].get_stacks()
+
+        # If there's no stack in the node, we must check if our stack is empty, or doesn't contain jump values info.
+        if list_stacks == [[]]:
+            if filter(lambda x: isinstance(x,tuple) and (x[0] in vertices) and x[0]!=0,stack) == []:
+                same_stack_successors.append(found_successor)
+        else:
+            # Otherwise, we check every path to see if they're esentially the same
+            for found_stack in list_stacks:
+                if check_if_same_stack(found_stack,stack,vertices):
+                    same_stack_successors.append(found_successor)
+                    break
+    return same_stack_successors
+
+# Given a block, its successor, and another successor already visited that shares same stack,
+# updates info from matching successor and block, to preserve info without cloning.
+def update_matching_successor(successor, matching_successor, block, t):
+    global vertices
+    global edges
+    
+    #If it's already cloned, we just have to update info
+    vertices[matching_successor].add_origin(block)
+    if t == "falls_to":
+        vertices[block].set_falls_to(matching_successor)
+    else:
+        vertices[block].set_jump_target(matching_successor, True)
+        
+    old_edges = filter(lambda x: x!= successor, edges[block])
+    old_edges.append(matching_successor)
+    edges[block] = old_edges
+    
+# Copies an already visited node, as there's no other node with same initial name with the same stack
+def copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, t):
+    global vertices
+    global block_cont
+    global stack_h
+    global calldataload_values
+    global edges
+    global jump_type
+    
+    # We make a copy for the successor
+    new_successor = vertices[successor].copy()
+
+    # We obtain new index from block_cont and update the value
+    original_successor = get_initial_block_address(successor)
+    idx = block_cont.get(original_successor, 0)
+    block_cont[original_successor] = idx + 1
+
+    # Once we know the index, we just add it to the base address from the succesor
+    # and update the start address from the copy
+    new_successor_address = str(get_initial_block_address(successor)) + "_" + str(idx)
+    new_successor.set_start_address(new_successor_address)
+
+    # We update info related to blocks: new successor comes from block,
+    # block jumps to new successor and we store new successor in vertices
+    new_successor.set_comes_from([block])
+    vertices[new_successor_address] = new_successor
+    if t == "falls_to":
+        vertices[block].set_falls_to(new_successor_address)
+    else:
+        vertices[block].set_jump_target(new_successor_address, True)
+        
+    # This maps have already been initialized for each block,
+    # therefore we initilize them for new blocks, using info from successor (not neccesary)
+    stack_h[new_successor_address] = [float("inf"),float("inf")]
+    calldataload_values[new_successor_address] = calldataload_values[successor]
+
+    # Edges must be initialized to None, as it doesn't share the same list as the original node
+    edges[new_successor_address] = []
+    old_edges = filter(lambda x: x!= successor, edges[block])
+    old_edges.append(new_successor_address)
+    edges[block] = old_edges
+    
+    jump_type[new_successor_address] = jump_type[successor]
+                
+    # Finally, we keep on cloning
+    path.append((block, new_successor_address))
+
+    if debug_info:
+        print "LLegue aqui con" + str(new_successor_address)
+        print block
+    sym_exec_block(new_params, new_successor_address, block, depth, func_call,current_level+1,path)
+    path.pop()
+        
+        
 # Symbolically executing an instruction
 def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global MSIZE
@@ -1165,6 +1321,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global param_abs
     global mapping_state_variables
     global update_fields
+    global push_jump_relations
+    global jump_addresses
+
     
     stack = params.stack
     mem = params.mem
@@ -1217,6 +1376,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
             # Type conversion is needed when they are mismatched
             if isReal(first) and isSymbolic(second):
                 first = BitVecVal(first, 256)
@@ -1237,6 +1399,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isReal(first) and isSymbolic(second):
                 first = BitVecVal(first, 256)
             elif isSymbolic(first) and isReal(second):
@@ -1251,6 +1417,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isReal(first) and isSymbolic(second):
                 first = BitVecVal(first, 256)
                 computed = first - second
@@ -1268,6 +1438,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 if second == 0:
                     computed = 0
@@ -1294,6 +1468,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 first = to_signed(first)
                 second = to_signed(second)
@@ -1336,6 +1514,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+
             if isAllReal(first, second):
                 if second == 0:
                     computed = 0
@@ -1366,6 +1548,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 if second == 0:
                     computed = 0
@@ -1378,25 +1564,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 first = to_symbolic(first)
                 second = to_symbolic(second)
 
-                solver.push()
-                solver.add(Not(second == 0))
-                if check_sat(solver) == unsat:
-                    # it is provable that second is indeed equal to zero
-                    computed = 0
-                else:
 
-                    solver.push()
-                    solver.add(first < 0) # check sign of first element
-                    sign = BitVecVal(-1, 256) if check_sat(solver) == sat \
-                        else BitVecVal(1, 256)
-                    solver.pop()
-
-                    z3_abs = lambda x: If(x >= 0, x, -x)
-                    first = z3_abs(first)
-                    second = z3_abs(second)
-
-                    computed = sign * (first % second)
-                solver.pop()
+                computed = (first % second)
 
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
@@ -1409,6 +1578,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             second = stack.pop(0)
             third = stack.pop(0)
 
+            first = get_push_value(first)
+            second = get_push_value(second)
+            third = get_push_value(third)
+            
             if isAllReal(first, second, third):
                 if third == 0:
                     computed = 0
@@ -1439,6 +1612,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             second = stack.pop(0)
             third = stack.pop(0)
 
+            first = get_push_value(first)
+            second = get_push_value(second)
+            third = get_push_value(third)
+            
             if isAllReal(first, second, third):
                 if third == 0:
                     computed = 0
@@ -1465,6 +1642,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             base = stack.pop(0)
             exponent = stack.pop(0)
+
+            base = get_push_value(base)
+            exponent = get_push_value(exponent)
+            
             # Type conversion is needed when they are mismatched
             if isAllReal(base, exponent):
                 computed = pow(base, exponent, 2**256)
@@ -1482,6 +1663,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 if first >= 32 or first < 0:
                     computed = second
@@ -1520,6 +1705,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 first = to_unsigned(first)
                 second = to_unsigned(second)
@@ -1538,6 +1727,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 first = to_unsigned(first)
                 second = to_unsigned(second)
@@ -1556,6 +1749,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 first = to_signed(first)
                 second = to_signed(second)
@@ -1574,6 +1771,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 first = to_signed(first)
                 second = to_signed(second)
@@ -1592,6 +1793,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+
             if isAllReal(first, second):
                 if first == second:
                     computed = 1
@@ -1610,6 +1815,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
+
+            first = get_push_value(first)
+
             if isReal(first):
                 if first == 0:
                     computed = 1
@@ -1626,7 +1834,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
             second = stack.pop(0)
-            computed = first & second
+            
+            first_aux = get_push_value(first)
+            second_aux = get_push_value(second)
+            
+            computed = first_aux & second_aux
+
+            if computed == first_aux:
+                computed = first
+            elif computed == second_aux:
+                computed = second
+            
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
@@ -1637,7 +1855,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first = stack.pop(0)
             second = stack.pop(0)
 
-            computed = first | second
+            first_aux = get_push_value(first)
+            second_aux = get_push_value(second)
+            
+            computed = first_aux | second_aux
+
+            if computed == first_aux:
+                computed = first
+            elif computed == second_aux:
+                computed = second
+                
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
 
@@ -1649,7 +1876,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first = stack.pop(0)
             second = stack.pop(0)
 
-            computed = first ^ second
+            first_aux = get_push_value(first)
+            second_aux = get_push_value(second)
+
+            computed = first_aux ^ second_aux
+
+            if computed == first_aux:
+                computed = first
+            elif computed == second_aux:
+                computed = second
+            
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
 
@@ -1659,6 +1895,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
+
+            first = get_push_value(first)
+            
             computed = (~first) & UNSIGNED_BOUND_NUMBER
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
@@ -1668,9 +1907,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 1:
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
+
+            first = get_push_value(first)
+            
             byte_index = 32 - first - 1
             second = stack.pop(0)
 
+            second = get_push_value(second)
+            
             if isAllReal(first, second):
                 if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
@@ -1700,6 +1944,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             s0 = stack.pop(0)
             s1 = stack.pop(0)
+
+            s0 = get_push_value(s0)
+            s1 = get_push_value(s1)
+            
             # if isAllReal(s0, s1):
             #     # simulate the hashing of sha3
             #     data = [str(x) for x in memory[s0: s0 + s1]]
@@ -1733,6 +1981,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             address = stack.pop(0)
+            address = get_push_value(address)
+            
             if isReal(address) and global_params.USE_GLOBAL_BLOCKCHAIN:
                 new_var = data_source.getBalance(address)
             else:
@@ -1764,6 +2014,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             position = stack.pop(0)
+
+            position = get_push_value(position)
+            
             if g_src_map:
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
                 if source_code.startswith("function") and isReal(position):
@@ -1856,6 +2109,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             mem_location = stack.pop(0)
             code_from = stack.pop(0)
             no_bytes = stack.pop(0)
+
+            mem_location = get_push_value(mem_location)
+            code_from = get_push_value(code_from)
+            no_bytes = get_push_value(no_bytes)
+            
             current_miu_i = global_state["miu_i"]
 
             if isAllReal(mem_location, current_miu_i, code_from, no_bytes):
@@ -1921,6 +2179,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             address = stack.pop(0)
+
+            address = get_push_value(address)
+            
             if isReal(address) and global_params.USE_GLOBAL_BLOCKCHAIN:
                 code = data_source.getCode(address)
                 stack.insert(0, len(code)/2)
@@ -1943,6 +2204,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             mem_location = stack.pop(0)
             code_from = stack.pop(0)
             no_bytes = stack.pop(0)
+
+            address = get_push_value(address)
+            mem_location = get_push_value(mem_location)
+            code_from = get_push_value(code_from)
+            no_bytes = get_push_value(no_bytes)
+            
             current_miu_i = global_state["miu_i"]
 
             if isAllReal(address, mem_location, current_miu_i, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
@@ -2026,6 +2293,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             address = stack.pop(0)
 
+            address = get_push_value(address)
+            
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
@@ -2070,6 +2339,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
 
+            stored_address = get_push_value(stored_address)
+            stored_value = get_push_value(stored_value)
+            
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
@@ -2079,11 +2351,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 old_size = len(memory) // 32
                 new_size = ceil32(stored_address + 32) // 32
                 mem_extend = (new_size - old_size) * 32
-                memory.extend([0] * mem_extend)
-                value = stored_value
-                for i in range(31, -1, -1):
-                    memory[stored_address + i] = value % 256
-                    value /= 256
+                try:
+                    memory.extend([0] * mem_extend)
+                    value = stored_value
+                    for i in range(31, -1, -1):
+                        memory[stored_address + i] = value % 256
+                        value /= 256
+                except:
+                    value = stored_value
+                    for i in range(31, -1, -1):
+                        mem[str(stored_address + i)] = value % 256
+                        value /= 256
             if isAllReal(stored_address, current_miu_i):
                 if six.PY2:
                     temp = long(math.ceil((stored_address + 32) / float(32)))
@@ -2112,8 +2390,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             stored_address = stack.pop(0)
             temp_value = stack.pop(0)
-            stored_value = temp_value % 256  # get the least byte
 
+            stored_address = get_push_value(stored_address)
+            temp_value = get_push_value(temp_value)
+            
+            stored_value = temp_value % 256  # get the least byte
+     
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
             
@@ -2150,7 +2432,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             p_s,v = check_sload_fragment_pattern(vertices[block],instr_index,stack)
             
             position = stack.pop(0)
-
+            position = get_push_value(position)
+            
             #Added by PG
             try:    
                 val = int(position)
@@ -2234,11 +2517,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
 
+            stored_address = get_push_value(stored_address)
+            stored_value = get_push_value(stored_value)
+            
             # print stored_address
             # print stored_value
              
             #PG
-
             #print new_var_name
             #Added by Pablo Gordillo
             if g_src_map:
@@ -2246,7 +2531,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 operators = '[-+*/%|&^!><=]'
                 new_var_name = re.compile(operators).split(new_var_name)[0].strip()
                 statevar_name_compressed = new_var_name
-                
+
                 p = g_src_map._get_var_names()
                 
             p_s, v = sstore_fragment(vertices[block],instr_index)
@@ -2278,7 +2563,21 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             raise ValueError('STACK underflow')
     elif opcode == "JUMP":
         if len(stack) > 0:
-            target_address = stack.pop(0)
+            push_address = stack.pop(0)
+            target_address,push_block = push_address
+
+            jump_addresses.append(target_address)
+            
+            #Define push-jump relations for cloning
+            rel = push_jump_relations.get(block,{})
+            addresses = rel.get(target_address,[])
+            if addresses != []:
+                if push_block not in addresses:
+                    rel[target_address] = addresses.append(push_block)
+            else:
+                rel[target_address] = [push_block]
+
+            push_jump_relations[block] = rel
 
             vertices[block].set_jump_target(target_address)
 
@@ -2290,6 +2589,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         # We need to prepare two branches
         if len(stack) > 1:
             target_address = stack.pop(0)
+            target_address = get_push_value(target_address)
+
             if isSymbolic(target_address):
                 try:
                     target_address = int(str(simplify(target_address)))
@@ -2303,10 +2604,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     branch_expression = True
             else:
                 branch_expression = (flag != 0)
-            # if (function_info[0]):
-            #     name = function_info[1]
-            #     function_block_map[name]=target_address
-            #     function_info = (False,"")
+
             vertices[block].set_branch_expression(branch_expression)
             if target_address not in edges[block]:
                 edges[block].append(target_address)
@@ -2337,6 +2635,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     #
     elif opcode.startswith('PUSH', 0):  # this is a push instruction
         position = int(opcode[4:], 10)
+        if debug_info:
+            print global_state["pc"]
+
         global_state["pc"] = global_state["pc"] + 1 + position
         hs = str(instr_parts[1])[2:] #To delete 0x...
         if f_hashes and hs in f_hashes :
@@ -2346,7 +2647,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
         
         pushed_value = int(instr_parts[1], 16)
-        stack.insert(0, pushed_value)
+        stack.insert(0, (pushed_value,block))
         if global_params.UNIT_TEST == 3: # test evm symbolic
             stack[0] = BitVecVal(stack[0], 256)
     #
@@ -2414,6 +2715,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             size_data_input = stack.pop(0)
             start_data_output = stack.pop(0)
             size_data_ouput = stack.pop(0)
+
+            outgas = get_push_value(outgas)
+            recipient = get_push_value(recipient)
+            transfer_amount = get_push_value(transfer_amount)
+            start_data_input = get_push_value(start_data_input)
+            size_data_input = get_push_value(size_data_input)
+            start_data_output = get_push_value(start_data_output)
+            size_data_ouput = get_push_value(size_data_ouput)
+            
             # in the paper, it is shaky when the size of data output is
             # min of stack[6] and the | o |
 
@@ -2481,6 +2791,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             outgas = stack.pop(0)
             recipient = stack.pop(0) # this is not used as recipient
+
+            outgas = get_push_value(outgas)
+            recipient = get_push_value(recipient)
+            
             if global_params.USE_GLOBAL_STORAGE:
                 if isReal(recipient):
                     recipient = hex(recipient)
@@ -2495,6 +2809,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             size_data_input = stack.pop(0)
             start_data_output = stack.pop(0)
             size_data_ouput = stack.pop(0)
+
+            transfer_amount = get_push_value(transfer_amount)
+            start_data_input = get_push_value(start_data_input)
+            size_data_input = get_push_value(size_data_input)
+            start_data_output = get_push_value(start_data_output)
+            size_data_output = get_push_value(size_data_output)
             # in the paper, it is shaky when the size of data output is
             # min of stack[6] and the | o |
 
@@ -2530,6 +2850,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] += 1
             stack.pop(0)
             recipient = stack.pop(0)
+
+            recipient = get_push_value(recipient)
+            
             if global_params.USE_GLOBAL_STORAGE:
                 if isReal(recipient):
                     recipient = hex(recipient)
@@ -2561,6 +2884,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     elif opcode == "SUICIDE":
         global_state["pc"] = global_state["pc"] + 1
         recipient = stack.pop(0)
+
+        recipient = get_push_value(recipient)
+        
         transfer_amount = global_state["balance"]["Ia"]
         global_state["balance"]["Ia"] = 0
         if isReal(recipient):
@@ -2585,31 +2911,33 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         #     exit(UNKNOWN_INSTRUCTION)
         raise Exception('UNKNOWN INSTRUCTION: ' + opcode)
 
-def update_depth_level(b,level,updated,list_jumps = False):
-    # print "BLOCK: "+str(b)+" LEVEL: "+str(level)
-    if b not in updated:
-        updated.append(b)
-        vertices[b].set_depth_level(level)
-        jump = vertices[b].get_jump_target()
-        falls = vertices[b].get_falls_to()
-        l_jumps = vertices[b].get_list_jumps()
-        # print "JUMP: "+str(jump)
-        # print "FALLS: "+str(falls)
-        # print "MAS: "+str(vertices[b].get_list_jumps())
+# def update_depth_level(b,level,updated,list_jumps = False):
+#     # print "BLOCK: "+str(b)+" LEVEL: "+str(level)
+#     if b not in updated:
+#         updated.append(b)
+#         vertices[b].set_depth_level(level)
+#         jump = vertices[b].get_jump_target()
+#         falls = vertices[b].get_falls_to()
+#         l_jumps = vertices[b].get_list_jumps()
+#         # print "JUMP: "+str(jump)
+#         # print "FALLS: "+str(falls)
+#         # print "MAS: "+str(vertices[b].get_list_jumps())
 
-        if not list_jumps:
-            if jump != 0 and vertices[jump].get_depth_level()<(level+1):
-                update_depth_level(jump,level+1,updated)
+#         if not list_jumps:
+#             exist_bl = vertices.get(jump,False)
+            
+#             if exist_bl!=False and jump != 0 and exist_bl.get_depth_level()<(level+1):
+#                 update_depth_level(jump,level+1,updated)
 
-        else:
-            for l in l_jumps:
-                update_depth_level(l,level+1,updated)
+#         else:
+#             for l in l_jumps:
+#                 update_depth_level(l,level+1,updated)
                     
-        if falls != None and vertices[falls].get_depth_level()<(level+1):
+#         if falls != None and vertices[falls].get_depth_level()<(level+1):
 
-            update_depth_level(falls,level+1,updated)
-        # if jump == 0 and falls == None:
-        #     print "TERMINAL"
+#             update_depth_level(falls,level+1,updated)
+#         # if jump == 0 and falls == None:
+#         #     print "TERMINAL"
 
     
 
@@ -2667,277 +2995,6 @@ def access_array_sim(opcode_ins,fake_stack):
     # print fake_stack
     return end
 
-# Detect if a money flow depends on the timestamp
-def detect_time_dependency():
-    global results
-    global g_src_map
-    global time_dependency
-
-    TIMESTAMP_VAR = "IH_s"
-    is_dependant = False
-    pcs = []
-    if global_params.PRINT_PATHS:
-        log.info("ALL PATH CONDITIONS")
-    for i, cond in enumerate(path_conditions):
-        if global_params.PRINT_PATHS:
-            log.info("PATH " + str(i + 1) + ": " + str(cond))
-        for j, expr in enumerate(cond):
-            if is_expr(expr):
-                if TIMESTAMP_VAR in str(expr) and j in global_problematic_pcs["time_dependency_bug"][i]:
-                    pcs.append(global_problematic_pcs["time_dependency_bug"][i][j])
-                    is_dependant = True
-                    continue
-
-    time_dependency = TimeDependency(g_src_map, pcs)
-
-    if g_src_map:
-        results['vulnerabilities']['time_dependency'] = time_dependency.get_warnings()
-    else:
-        results['vulnerabilities']['time_dependency'] = time_dependency.is_vulnerable()
-    log.info('\t  Timestamp Dependency: \t\t %s', time_dependency.is_vulnerable())
-
-    if global_params.REPORT_MODE:
-        file_name = g_disasm_file.split("/")[len(g_disasm_file.split("/"))-1].split(".")[0]
-        report_file = file_name + '.report'
-        with open(report_file, 'w') as rfile:
-            if is_dependant:
-                rfile.write("yes\n")
-            else:
-                rfile.write("no\n")
-
-
-# detect if two paths send money to different people
-def detect_money_concurrency():
-    global results
-    global g_src_map
-    global money_concurrency
-
-    n = len(money_flow_all_paths)
-    for i in range(n):
-        log.debug("Path " + str(i) + ": " + str(money_flow_all_paths[i]))
-        log.debug(all_gs[i])
-    i = 0
-    false_positive = []
-    concurrency_paths = []
-    flows = []
-    for flow in money_flow_all_paths:
-        i += 1
-        if len(flow) == 1:
-            continue  # pass all flows which do not do anything with money
-        for j in range(i, n):
-            jflow = money_flow_all_paths[j]
-            if len(jflow) == 1:
-                continue
-            if is_diff(flow, jflow):
-                flows.append(global_problematic_pcs["money_concurrency_bug"][i-1])
-                flows.append(global_problematic_pcs["money_concurrency_bug"][j])
-                concurrency_paths.append([i-1, j])
-                if global_params.CHECK_CONCURRENCY_FP and \
-                        is_false_positive(i-1, j, all_gs, path_conditions) and \
-                        is_false_positive(j, i-1, all_gs, path_conditions):
-                    false_positive.append([i-1, j])
-                break
-        if flows:
-            break
-
-    money_concurrency = MoneyConcurrency(g_src_map, flows)
-
-    if g_src_map:
-        results['vulnerabilities']['money_concurrency'] = money_concurrency.get_warnings_of_flows()
-    else:
-        results['vulnerabilities']['money_concurrency'] = money_concurrency.is_vulnerable()
-    log.info('\t  Transaction-Ordering Dependence (TOD): %s', money_concurrency.is_vulnerable())
-
-    # if PRINT_MODE: print "All false positive cases: ", false_positive
-    log.debug("Concurrency in paths: ")
-    if global_params.REPORT_MODE:
-        rfile.write("number of path: " + str(n) + "\n")
-        # number of FP detected
-        rfile.write(str(len(false_positive)) + "\n")
-        rfile.write(str(false_positive) + "\n")
-        # number of total races
-        rfile.write(str(len(concurrency_paths)) + "\n")
-        # all the races
-        rfile.write(str(concurrency_paths) + "\n")
-
-def detect_parity_multisig_bug_2():
-    global g_src_map
-    global results
-    global parity_multisig_bug_2
-
-    parity_multisig_bug_2 = ParityMultisigBug2(g_src_map)
-
-    results['vulnerabilities']['parity_multisig_bug_2'] = parity_multisig_bug_2.get_warnings()
-    s = "\t  Parity Multisig Bug 2: \t\t %s" % parity_multisig_bug_2.is_vulnerable()
-    log.info(s)
-
-def check_callstack_attack(disasm):
-    problematic_instructions = ['CALL', 'CALLCODE']
-    pcs = []
-    for i in range(0, len(disasm)):
-        instruction = disasm[i]
-        if instruction[1] in problematic_instructions:
-            try:
-                pc = int(instruction[0])
-                if not disasm[i+1][1] == 'SWAP':
-                    continue
-                swap_num = int(disasm[i+1][2])
-                if not all(disasm[i+j+2][1] == 'POP' for j in range(swap_num)):
-                    continue
-            except IndexError:
-                continue
-
-            try:
-                opcode1 = disasm[i + swap_num + 2][1]
-                opcode2 = disasm[i + swap_num + 3][1]
-                opcode3 = disasm[i + swap_num + 4][1]
-                if opcode1 == "ISZERO" \
-                    or opcode1 == "DUP" and opcode2 == "ISZERO" \
-                    or opcode1 == "JUMPDEST" and opcode2 == "ISZERO" \
-                    or opcode1 == "JUMPDEST" and opcode2 == "DUP" and opcode3 == "ISZERO":
-                        pass
-                else:
-                    pcs.append(pc)
-            except IndexError:
-                pcs.append(pc)
-    return pcs
-
-
-def detect_callstack_attack():
-    global results
-    global g_src_map
-    global calls_affect_state
-    global callstack
-
-    disasm_data = open(g_disasm_file).read()
-    instr_pattern = r"([\d]+) ([A-Z]+)([\d]+)?(?: => 0x)?(\S+)?"
-    instr = re.findall(instr_pattern, disasm_data)
-    pcs = check_callstack_attack(instr)
-
-    callstack = CallStack(g_src_map, pcs, calls_affect_state)
-
-    if g_src_map:
-        results['vulnerabilities']['callstack'] = callstack.get_warnings()
-    else:
-        results['vulnerabilities']['callstack'] = callstack.is_vulnerable()
-    log.info('\t  Callstack Depth Attack Vulnerability:  %s', callstack.is_vulnerable())
-
-def detect_reentrancy():
-    global g_src_map
-    global results
-    global reentrancy
-
-    pcs = global_problematic_pcs["reentrancy_bug"]
-    reentrancy = Reentrancy(g_src_map, pcs)
-
-    if g_src_map:
-        results['vulnerabilities']['reentrancy'] = reentrancy.get_warnings()
-    else:
-        results['vulnerabilities']['reentrancy'] = reentrancy.is_vulnerable()
-    log.info("\t  Re-Entrancy Vulnerability: \t\t %s", reentrancy.is_vulnerable())
-
-def detect_assertion_failure():
-    global g_src_map
-    global results
-    global assertion_failure
-
-    assertion_failure = AssertionFailure(g_src_map, global_problematic_pcs['assertion_failure'])
-
-    results['vulnerabilities']['assertion_failure'] = assertion_failure.get_warnings()
-    s = "\t  Assertion Failure: \t\t\t %s" % assertion_failure.is_vulnerable()
-    log.info(s)
-
-def detect_vulnerabilities():
-    global results
-    global g_src_map
-    global visited_pcs
-    global global_problematic_pcs
-    global begin
-
-    if instructions:
-        evm_code_coverage = float(len(visited_pcs)) / len(instructions.keys()) * 100
-        log.info("\t  EVM Code Coverage: \t\t\t %s%%", round(evm_code_coverage, 1))
-        results["evm_code_coverage"] = str(round(evm_code_coverage, 1))
-
-        if g_src_map:
-            detect_parity_multisig_bug_2()
-
-        log.debug("Checking for Callstack attack...")
-        detect_callstack_attack()
-
-        if global_params.REPORT_MODE:
-            rfile.write(str(total_no_of_paths) + "\n")
-
-        detect_money_concurrency()
-        detect_time_dependency()
-
-        stop = time.time()
-        if global_params.REPORT_MODE:
-            rfile.write(str(stop-begin))
-            rfile.close()
-
-        log.debug("Results for Reentrancy Bug: " + str(reentrancy_all_paths))
-        detect_reentrancy()
-
-        if global_params.CHECK_ASSERTIONS:
-            if g_src_map:
-                detect_assertion_failure()
-            else:
-                raise Exception("Assertion checks need a Source Map")
-
-        if g_src_map:
-            log_info()
-
-    else:
-        log.info("\t  EVM code coverage: \t 0/0")
-        log.info("\t  Callstack bug: \t False")
-        log.info("\t  Money concurrency bug: False")
-        log.info("\t  Time dependency bug: \t False")
-        log.info("\t  Reentrancy bug: \t False")
-        if global_params.CHECK_ASSERTIONS:
-            log.info("\t  Assertion failure: \t False")
-        results["evm_code_coverage"] = "0/0"
-
-    return results, vulnerability_found()
-
-def log_info():
-    global g_src_map
-    global time_dependency
-    global callstack
-    global money_concurrency
-    global reentrancy
-    global assertion_failure
-    global parity_multisig_bug_2
-
-    vulnerabilities = [callstack, money_concurrency, time_dependency, reentrancy]
-    if g_src_map and global_params.CHECK_ASSERTIONS:
-        vulnerabilities.append(assertion_failure)
-        vulnerabilities.append(parity_multisig_bug_2)
-
-    for vul in vulnerabilities:
-        s = str(vul)
-        if s:
-            log.info(s)
-
-def vulnerability_found():
-    global g_src_map
-    global time_dependency
-    global callstack
-    global money_concurrency
-    global reentrancy
-    global assertion_failure
-    global parity_multisig_bug_2
-
-    vulnerabilities = [callstack, money_concurrency, time_dependency, reentrancy]
-
-    if g_src_map and global_params.CHECK_ASSERTIONS:
-        vulnerabilities.append(assertion_failure)
-        vulnerabilities.append(parity_multisig_bug_2)
-
-    for vul in vulnerabilities:
-        if vul.is_vulnerable():
-            return 1
-    return 0
 
 class TimeoutError(Exception):
     pass
@@ -3184,7 +3241,7 @@ def get_scc(edges):
         scc_multiple.update(scc)
         return scc_multiple
         
-def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None):    
+def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None, ebso = None,source_name = None):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -3196,7 +3253,7 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     global name
     global public_fields
     global invalid_option
-
+    global ebso_opt
 
     g_disasm_file = disasm_file
     g_source_file = source_file
@@ -3207,10 +3264,18 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     source_info = {}
     
     name = cname
+    ebso_opt = ebso
 
+    if source_name != None:
+        s_name = source_name.split("/")[-1].split(".")[0]
+    else:
+        s_name = source_name
+        
     if hashes != None:
         f_hashes = hashes
 
+    
+        
     if cname != None:
         print("File: "+str(cname))
 
@@ -3230,50 +3295,36 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
 
-    
     check_cfg_option(cfg,cname,execution)
-
-    # for e in blocks_to_clone:
-    #     print e.get_start_address()
-    #     print e.get_depth_level()
-
         
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
-    for e in blocks2clone:
-        update_depth_level(e.get_start_address(),e.get_depth_level(),[],True)
+    # for e in blocks2clone:
+    #     update_depth_level(e.get_start_address(),e.get_depth_level(),[],True)
 
 
     compute_component_of_cfg()
-    # try:
-    #     compute_cloning(blocks_to_clone,vertices,stack_h)
-    # except:
-    #     raise Exception("Error in clonning process",3)
     
-    if len(blocks_to_clone)!=0:
-        try:
-            compute_cloning(blocks_to_clone,vertices,stack_h,component_of_blocks)
-        except:
-            #traceback.print_exc()
-            raise Exception("Error in clonning process",3)
+    # if len(blocks_to_clone)!=0:
+    #     try:
+    #         print blocks_to_clone[0].get_start_address()
+    #         compute_cloning(blocks_to_clone,vertices,stack_h,component_of_blocks)
+    #     except:
+    #         traceback.print_exc()
+    #         raise Exception("Error in clonning process",3)
         
-    # for e in vertices.values():
-    #     e.display()
-
     
     check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
     begin1 = dtimer()
     compute_component_of_cfg()
     
-    compute_transitive_mstore_value()
-    # end = dtimer()
-    # print("Component performance: "+str(end-begin1)+"s")
+    #compute_transitive_mstore_value()
     
     end = dtimer()
     oyente_t = end-begin
     print("OYENTE tool: "+str(oyente_t)+"s")
 
-    update_edges(vertices, edges)
+    #update_edges(vertices, edges)
 
     scc = {}
     if go:
@@ -3305,8 +3356,8 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
 
         source_info["source_map"] = source_map
         source_info["name_state_variables"] = mapping_state_variables
-        
-        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info)
+
+        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,ebso = ebso_opt,sname = s_name)
 
         if opt!= None:
         # fields = ["field1","field2"]
@@ -3360,9 +3411,12 @@ def get_evm_block():
 
     if "costabs" not in os.listdir(tmp_path):
         os.mkdir(costabs_path)
-        
+    if "blocks" not in os.listdir(costabs_path):
+        os.mkdir(ebso_path)
     for b in blocks:
-        f = open("/tmp/costabs/block_"+str(b)+".bl","w")
+        bl_path = ebso_path+"/block"+str(b)
+        os.mkdir(bl_path)
+        f = open(bl_path+"/block_"+str(b)+".bl","w")
         f.write(blocks[b])
         f.close()
         
