@@ -30,22 +30,18 @@ class BasicBlock:
         self.clone = False
         self.string_getter = False
         self.cost = 0
-        self.unknown_mstore = False
-        self.transitive_mstore = False
         self.access_array = False
         self.assertfail_in_getter = False
         self.div_invalid_pattern = False
         self.stacks_old = []
         self.path = []
-
-        self.pcs = []
-        self.pcs_stored = False
-        
+    
     def get_start_address(self):
         return self.start
 
     def set_start_address(self,address):
-        self.start = address    
+        self.start = address
+
         
     def get_end_address(self):
         return self.end
@@ -130,6 +126,13 @@ class BasicBlock:
                 i = self.list_jumps.index(address)
                 self.list_jumps[i]=val
 
+    def set_comes_from(self, new_comes_from):
+        self.comes_from = new_comes_from
+
+    def add_jump(self, val):
+        if val not in self.list_jumps:
+            self.list_jumps.append(val)
+                
     def set_cloning(self, c):
         self.clone = c
 
@@ -317,20 +320,20 @@ class BasicBlock:
         
         self.instructions = new_instructions
 
-    def is_mstore_unknown(self):
-        return self.unknown_mstore
+    # def is_mstore_unknown(self):
+    #     return self.unknown_mstore
 
-    def set_unknown_mstore(self,val):
-        self.unknown_mstore = val
+    # def set_unknown_mstore(self,val):
+    #     self.unknown_mstore = val
         
-    def act_trans_mstore(self):
-        self.transitive_mstore = True
+    # def act_trans_mstore(self):
+    #     self.transitive_mstore = True
 
-    def get_trans_mstore(self):
-        return self.transitive_mstore
+    # def get_trans_mstore(self):
+    #     return self.transitive_mstore
 
-    def set_trans_mstore(self,val):
-        self.transitive_mstore = val
+    # def set_trans_mstore(self,val):
+    #     self.transitive_mstore = val
         
     def get_stack_info(self):
         return self.stack_info
@@ -378,13 +381,21 @@ class BasicBlock:
         self.div_invalid_pattern = True
     
     def add_stack(self,s):
-        s_aux = filter(lambda x: isinstance(x,int),s)
-        if not(s_aux in self.stacks_old):
+        s_aux = filter(lambda x: isinstance(x,tuple),s)
+        is_in = self._is_in_old_stacks(s_aux)
+        if not(is_in):
             self.stacks_old.append(s_aux)
-
+            
     def known_stack(self,s):
-        s_aux = filter(lambda x: isinstance(x,int),s)
-        return (s_aux in self.stacks_old)
+        s_aux = filter(lambda x: isinstance(x,tuple),s)
+        is_in = self._is_in_old_stacks(s_aux)
+        return is_in
+
+    def _is_in_old_stacks(self,stack):
+        jump_addresses = map(lambda x: x[0],stack)
+        old_stacks_addresses = map(lambda x: map(lambda y:y[0],x),self.stacks_old)
+        return jump_addresses in old_stacks_addresses
+    
 
     def get_stacks(self):
         return self.stacks_old
@@ -399,7 +410,11 @@ class BasicBlock:
         if p not in self.path:
             end = map(lambda x: x[1],p)
             self.path.append(end)
-        
+
+    
+    def set_paths(self,p):
+        self.path = p
+            
     def copy(self):
         
         new_obj =  BasicBlock(self.start, self.end)
@@ -409,7 +424,7 @@ class BasicBlock:
         if self.falls_to != None:
             new_obj.set_falls_to(self.falls_to)
             
-        new_obj.set_list_jump(list(self.list_jumps))
+        new_obj.set_list_jump([])
         new_obj._set_mload_values(self.mload_values.copy())
         new_obj._set_mstore_values(self.mstore_values.copy())
         new_obj._set_sload_values(self.sload_values.copy())
@@ -421,12 +436,16 @@ class BasicBlock:
         new_obj.set_stack_info(list(self.stack_info))
         new_obj.set_cloning(self.clone)
         new_obj.set_string_getter(self.string_getter)
-        new_obj.set_unknown_mstore(self.unknown_mstore)
-        new_obj.set_trans_mstore(self.transitive_mstore)
+        # new_obj.set_unknown_mstore(self.unknown_mstore)
+        # new_obj.set_trans_mstore(self.transitive_mstore)
+        new_obj.set_paths(self.path)
         new_obj.set_access_array(self.access_array)
         new_obj.set_div_invalid_pattern(self.div_invalid_pattern)
         new_obj.set_assertfail_in_getter(self.assertfail_in_getter)
-        new_obj.set_stacks(self.stacks_old)
+        
+        #AHC: When we copy, we just forget about old stacks
+        new_obj.set_stacks([])
+        
         return new_obj
 
     def is_direct_block(self):
@@ -457,23 +476,7 @@ class BasicBlock:
 
     def get_cost(self):
         return self.cost
-
-    def get_pcs(self):
-        return self.pcs
-
-
-    def set_pcs(self,pcs_list):
-        self.pcs = pcs_list
-
-    def add_pc(self,val):
-        self.pcs.append(val)
-
-    def get_pcs_stored(self):
-        return self.pcs_stored
         
-    def set_pcs_stored(self,val):
-        self.pcs_stored = val
-    
     def display(self):
         six.print_("================")
 
