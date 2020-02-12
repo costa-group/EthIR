@@ -1460,6 +1460,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 second = to_symbolic(second)
                 # solver.push()
                 # solver.add( Not(third == 0) )
+                #if third == unsat:
                 if isReal(third) and third == 0:
                     computed = 0
                 else:
@@ -1794,7 +1795,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 second = to_symbolic(second)
                 # solver.push()
                 # solver.add( Not (Or( first >= 32, first < 0 ) ) )
-                if isReal(byte_index) and byte_index < 0:
+                if byte_index < 0:
                     computed = 0
                 else:
                     computed = second & (255 << (8 * byte_index))
@@ -1901,8 +1902,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     idx2 = source_code.index(")")
                     params = source_code[idx1:idx2]
 
-                    if source_code.find("//")!=-1:
-                        p = source_code.split("\n")
+                    if params.find("//")!=-1:
+                        p = params.split("\n")
                         params = []
                         for e in p:
                             idx = e.find("//")
@@ -1912,43 +1913,18 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                             else:
                                 params.append(e)
                         params = ",".join(params)
-                        source_code = "\n".join(params)
-
-                    idx1 = source_code.index("(") + 1
-                    idx2 = find_first_closing_parentheses(source_code)
-                    
-                    params = source_code[idx1:idx2]
                         
                     params_list = params.split(",")
                     params_list_aux = []
-                    
                     for param in params_list:
                         comments = param.split("\n")
                         params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
 
                     params_list_aux = filter(lambda x: x.strip() != "",params_list_aux)
                   
-                    params_type = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[0] for param in params_list_aux]
-
-                    replicated_params_list = []
-                    for param_name, param_type in zip(params_list,params_type):
-                        # Means current param is an array
-                        if param_type.find("[") != -1:
-                            number_init = param_type.find("[") + 1
-                            number_end = param_type.find("]")
-                            # If both numbers are the same, then argument forma is type[], so we just add the name.
-                            if number_init == number_end:
-                                replicated_params_list.append(param_name)
-                            else:
-                                number = int(param_type[number_init:number_end])
-                                for i in range(number):
-                                    replicated_params_list.append(param_name + "[" +  str(i) + "]")
-                        else:
-                            replicated_params_list.append(param_name)
-                                        
+                    params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
                     param_idx = (position - 4) // 32
-                    
-                    new_var_name = replicated_params_list[param_idx]
+                    new_var_name = params_list[param_idx]
                     g_src_map.var_names.append(new_var_name)
                     param_abs = (block,new_var_name)
                 else:
@@ -2797,6 +2773,72 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         # TODO
         return
 
+
+    elif opcode == "SHL":
+        if len(stack) > 1:
+            global_state["pc"] = global_state["pc"] + 1
+            first = stack.pop(0)
+            second = stack.pop(0)
+
+            first = get_push_value(first)
+            second = get_push_value(second)
+
+            # Type conversion is needed when they are mismatched
+            if isReal(first) and isReal(second):
+                first = to_unsigned(first)
+                second = to_unsigned(second)
+                computed = second*(2**first) % (2**256)
+            else:
+                computed = "shl("+str(first)+","+str(second)+")"
+            #computed = simplify(computed) if is_expr(computed) else computed
+            stack.insert(0, computed)
+            
+        else:
+            raise ValueError('STACK underflow')
+    elif opcode == "SHR":
+        if len(stack) > 1:
+
+            global_state["pc"] = global_state["pc"] + 1
+            first = stack.pop(0)
+            second = stack.pop(0)
+            
+            first = get_push_value(first)
+            second = get_push_value(second)
+            # Type conversion is needed when they are mismatched
+            if isReal(first) and isReal(second):
+                first = to_unsigned(first)
+                second = to_unsigned(second)
+
+                #computed = second >> first
+                computed = math.floor(second/(2**first))
+            else:
+                computed = "shr("+str(first)+","+str(second)+")"
+            #computed = simplify(computed) if is_expr(computed) else computed
+            stack.insert(0, computed)
+            
+        else:
+            raise ValueError('STACK underflow')
+
+    elif opcode == "SAR":
+        if len(stack) > 1:
+            global_state["pc"] = global_state["pc"] + 1
+            first = stack.pop(0)
+            second = stack.pop(0)
+            
+            first = get_push_value(first)
+            second = get_push_value(second)
+            # Type conversion is needed when they are mismatched
+            if isReal(first) and isReal(second):
+                #computed = second >> first
+                computed = math.floor(second/(2**first))
+            else:
+                computed = "shr("+str(first)+","+str(second)+")"
+            #computed = simplify(computed) if is_expr(computed) else computed
+            stack.insert(0, computed)
+            
+        else:
+            raise ValueError('STACK underflow')
+        
     else:
         log.debug("UNKNOWN INSTRUCTION: " + opcode)
         # if global_params.UNIT_TEST == 2 or global_params.UNIT_TEST == 3:
@@ -2836,6 +2878,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     else:
         if successor not in blocks_to_create:
             blocks_to_create.append(successor)
+
     
 
 def access_array_sim(opcode_ins,fake_stack):
