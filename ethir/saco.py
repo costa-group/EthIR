@@ -289,7 +289,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
     elif instr.find("byte",0)!=-1: # upper bound-> 255
         pos = instr.find("=",0)
         new = instr[:pos+1]+" 255"
-    elif instr.find("sha",0)!=-1:
+    elif instr.find("sha3",0)!=-1:
         pos = instr.find("=",0)
         new = instr[:pos+1]+" s("+str(cont)+")"
         cont+=1
@@ -308,6 +308,25 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
                 new = instr
         else:
             new = instr
+
+    elif instr.find("shl")!=-1:
+        pos = instr.find("=")
+        var = " s("+str(cont)+")"
+        new = instr[:pos+1]+var
+        cont+=1
+
+    elif instr.find("shr")!=-1:
+        pos = instr.find("=")
+        var = " s("+str(cont)+")"
+        new = instr[:pos+1]+var
+        cont+=1
+
+    elif instr.find("sar")!=-1:
+        pos = instr.find("=")
+        var = " s("+str(cont)+")"
+        new = instr[:pos+1]+var
+        cont+=1
+    
     elif instr.find("nop(MLOAD)")!=-1:
         top = new_instructions.pop()
         val = top.split("=")[0].strip()
