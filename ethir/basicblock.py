@@ -304,8 +304,8 @@ class BasicBlock:
                 mload +=1
             elif instr[:6] == "MSTORE": #MSTORE8
                 val = self._get_concrete_value("mstore",mstore)
-                if val == "?":
-                    self.unknown_mstore = True
+                # if val == "?":
+                #     self.unknown_mstore = True
                 new_instr = instr + " " + val
                 mstore+=1
             elif instr == "SLOAD":
@@ -385,10 +385,9 @@ class BasicBlock:
         self.div_invalid_pattern = True
     
     def add_stack(self,s):
-        s_aux = filter(lambda x: isinstance(x,tuple),s)
-        is_in = self._is_in_old_stacks(s_aux)
+        is_in = self._is_in_old_stacks(s)
         if not(is_in):
-            self.stacks_old.append(s_aux)
+            self.stacks_old.append(s)
             
     def known_stack(self,s):
         s_aux = filter(lambda x: isinstance(x,tuple),s)
@@ -396,9 +395,10 @@ class BasicBlock:
         return is_in
 
     def _is_in_old_stacks(self,stack):
-        jump_addresses = map(lambda x: x[0],stack)
-        old_stacks_addresses = map(lambda x: map(lambda y:y[0],x),self.stacks_old)
-        return jump_addresses in old_stacks_addresses
+        # jump_addresses = map(lambda x: x[0],stack)
+        # old_stacks_addresses = map(lambda x: map(lambda y:y[0],x),self.stacks_old)
+        # return jump_addresses in old_stacks_addresses
+        return stack in self.stacks_old
     
 
     def get_stacks(self):

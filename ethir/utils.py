@@ -14,6 +14,7 @@ import difflib
 import six
 #from z3 import *
 #from z3.z3util import get_vars
+from z3 import unknown
 
 from dot_tree import Tree, build_tree
 
@@ -412,13 +413,6 @@ def write_cfg(it,vertices,name = False,cloned = False):
             
             f.write("end statement type: " + block.get_block_type()+"\n")
 
-
-            
-            if not cloned:
-                f.write("jump target: " + " ".join(str(hex(x)[2:]) for x in block.get_list_jumps())+"\n")
-            else:
-                f.write("jump target: " + " ".join(str(x) for x in block.get_list_jumps())+"\n")
-
             f.write("jump target: " + str(jump_addr)+"\n")
 
             f.write("falls to: " +str(falls_addr)+"\n")
@@ -437,12 +431,12 @@ def write_cfg(it,vertices,name = False,cloned = False):
 def compute_hex_vals_cfg(block):
     start_addr = ""
     end_addr = ""
-    jump_addr = ""
+    jump_addrs = ""
     falls_addr = ""
 
-    start = block.get_start_address().split("_")
-    end = block.get_end_address().split("_")
-
+    
+    start = str(block.get_start_address()).split("_")
+    end = str(block.get_end_address()).split("_")
     
     if len(start)>1:
         start0 = hex(int(start[0]))[2:]
@@ -456,8 +450,32 @@ def compute_hex_vals_cfg(block):
     else:
         start_addr = hex(int(start[0]))[2:]
 
+    jumps_hex = []
+    for jump in  block.get_list_jumps():
+        elems = str(jump).split("_")
+        if len(elems)>1:
+            jump0 = hex(int(elems[0]))[2:]
+            jump_addr = jump0+"_"+elems[1]
+        else:
+            jump_addr = hex(int(elems[0]))[2:]
+        jumps_hex.append(jump_addr)
         
-    
+    jump_addrs = " ".join(jumps_hex)
+
+    falls = str(block.get_falls_to()).split("_")
+
+    if falls!=['None']:
+        if len(falls)>1:
+            falls0 = hex(int(falls[0]))[2:]
+            falls_addr = falls0+"_"+falls[1]
+        else:
+            falls_addr = hex(int(falls[0]))[2:]
+    else:
+        falls_addr = None
+
+
+    return start_addr,end_addr,jump_addrs,falls_addr
+        
 def cfg_dot(it,block_input,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
@@ -704,7 +722,10 @@ def check_if_same_stack(stack1, stack2, blocks_info):
     # print s1_aux
     # print "S2"
     # print s2_aux
-    return s1_aux == s2_aux
+    #return s1_aux == s2_aux
+    s1_dir = [get_initial_block_address(x[0]) for x in s1_aux]
+    s2_dir = [get_initial_block_address(x[0]) for x in s2_aux]
+    return (s1_dir == s2_dir and len(stack1) == len(stack2))
 
 def show_graph(blocks_input):
     for address in blocks_input:
@@ -897,3 +918,26 @@ def all_integers(variables):
 #     prev_var = state_variables[0]
 #     while(i < len(state_variables)):
 
+# Given a string, returns closing parentheses index that closes first parenthese,
+# assuming parentheses are well-placed.
+def find_first_closing_parentheses(string):
+    idx_ini = string.find("(") + 1
+    filtered_string = string[idx_ini:]
+    cont = 1
+    while cont > 0:
+        opening_index = filtered_string.find("(")
+        closing_index = filtered_string.find(")")
+        if opening_index == -1:
+            return idx_ini + closing_index
+        elif opening_index < closing_index:
+            cont = cont+1
+            idx_ini = idx_ini + opening_index + 1
+            filtered_string = filtered_string[opening_index+1:]
+        else:
+            cont = cont-1
+            if cont == 0:
+                return idx_ini + closing_index
+            else:
+                idx_ini = idx_ini + closing_index + 1
+                filtered_string = filtered_string[closing_index+1:]
+    raise ValueError("Parentheses are not consistent")
