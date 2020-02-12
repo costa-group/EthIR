@@ -34,7 +34,7 @@ def init_globals():
 
     global opcodes10
     opcodes10 = ["LT", "GT", "SLT", "SGT", "EQ", "ISZERO", "AND", "OR",
-                "XOR", "NOT", "BYTE"]
+                 "XOR", "NOT", "BYTE","SHL","SHR","SAR"]
 
     global opcodes20
     opcodes20 = ["SHA3"]
@@ -450,6 +450,25 @@ def translateOpcodes10(opcode, index_variables,cond):
         v1, updated_variables = get_consume_variable(updated_variables)
         v2, updated_variables = get_new_variable(updated_variables)
         instr = v2+" = byte(" + v1 + " , " + v0 + ")" 
+
+    elif opcode == "SHL":
+        v0, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(updated_variables)
+        v2, updated_variables = get_new_variable(updated_variables)
+        instr = v2+" = shl(" + v1 + " , " + v0 + ")" 
+
+    elif opcode == "SHR":
+        v0, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(updated_variables)
+        v2, updated_variables = get_new_variable(updated_variables)
+        instr = v2+" = shr(" + v1 + " , " + v0 + ")" 
+
+    elif opcode == "SAR":
+        v0, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(updated_variables)
+        v2, updated_variables = get_new_variable(updated_variables)
+        instr = v2+" = sar(" + v1 + " , " + v0 + ")" 
+        
     else:    
         instr = "Error opcodes10: "+ opcode
         updated_variables = index_variables
