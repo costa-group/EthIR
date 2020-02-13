@@ -40,9 +40,10 @@ def init_globals():
     opcodes20 = ["SHA3"]
 
     global opcodes30
-    opcodes30 = ["ADDRESS", "BALANCE", "ORIGIN", "CALLER", "CALLVALUE",
-                "CALLDATALOAD", "CALLDATASIZE", "CALLDATACOPY", "CODESIZE",
-                "CODECOPY", "GASPRICE", "EXTCODESIZE", "EXTCODECOPY", "MCOPY"]
+    opcodes30 = ["ADDRESS", "BALANCE", "ORIGIN", "CALLER",
+                 "CALLVALUE", "CALLDATALOAD", "CALLDATASIZE",
+                 "CALLDATACOPY", "CODESIZE", "CODECOPY", "GASPRICE",
+                 "EXTCODESIZE", "EXTCODECOPY", "MCOPY","EXTCODEHASH"]
 
     global opcodes40
     opcodes40 = ["BLOCKHASH", "COINBASE", "TIMESTAMP", "NUMBER",
@@ -573,6 +574,12 @@ def translateOpcodes30(opcode, value, index_variables,block):
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1+" = extcodesize"
         update_bc_in_use("extcodesize",block)
+
+    elif opcode == "EXTCODEHASH":
+        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = extcodehash("+v1+")"
+
     elif opcode == "EXTCODECOPY":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
