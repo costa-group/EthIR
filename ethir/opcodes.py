@@ -24,6 +24,9 @@ opcodes = {
     "XOR": [0x18, 2, 1],
     "NOT": [0x19, 1, 1],
     "BYTE": [0x1a, 2, 1],
+    "SHL": [0x1b,2,1],
+    "SHR": [0x1c,2,1],
+    "SAR": [0x1d,2,1],
     "SHA3": [0x20, 2, 1],
     "ADDRESS": [0x30, 0, 1],
     "BALANCE": [0x31, 1, 1],
@@ -39,6 +42,7 @@ opcodes = {
     "EXTCODESIZE": [0x3b, 1, 1],
     "EXTCODECOPY": [0x3c, 4, 0],
     "MCOPY": [0x3d, 3, 0],
+    "EXTCODEHASH": [0x3f, 1, 1],
     "BLOCKHASH": [0x40, 1, 1],
     "COINBASE": [0x41, 0, 1],
     "TIMESTAMP": [0x42, 0, 1],
@@ -124,7 +128,8 @@ GCOST = {
     "Gsha3": 30,
     "Gsha3word": 6,
     "Gcopy": 3,
-    "Gblockhash": 20
+    "Gblockhash": 20,
+    "Gextcodehash":400
 }
 
 Wzero = ("STOP", "RETURN", "REVERT", "ASSERTFAIL")
@@ -144,6 +149,8 @@ Wmid = ("ADDMOD", "MULMOD", "JUMP")
 Whigh = ("JUMPI")
 
 Wext = ("EXTCODESIZE")
+
+Wext = ("EXTCODHASH")
 
 def get_opcode(opcode):
     if opcode in opcodes:
@@ -205,6 +212,8 @@ def get_ins_cost(opcode):
         return GCOST["Glog"] + num_topics * GCOST["Glogtopic"]
     elif opcode == "EXTCODECOPY":
         return GCOST["Gextcode"]
+    elif opcode == "EXTCODEHASH":
+        return GCOST["Gextcodehash"]
     elif opcode in ("CALLDATACOPY", "CODECOPY"):
         return GCOST["Gverylow"]
     elif opcode == "BALANCE":

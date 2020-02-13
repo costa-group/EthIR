@@ -2838,6 +2838,22 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
         else:
             raise ValueError('STACK underflow')
+
+
+    elif opcode == "EXTCODEHASH":
+        if len(stack) > 0:
+            global_state["pc"] = global_state["pc"] + 1
+            s0 = stack.pop(0)
+
+            s0 = get_push_value(s0)
+            
+            new_var_name = gen.gen_arbitrary_var()
+            new_var = BitVec(new_var_name, 256)
+                # path_conditions_and_vars[new_var_name] = new_var
+            stack.insert(0, new_var)
+        else:
+            raise ValueError('STACK underflow')
+
         
     else:
         log.debug("UNKNOWN INSTRUCTION: " + opcode)
