@@ -326,7 +326,12 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         var = " s("+str(cont)+")"
         new = instr[:pos+1]+var
         cont+=1
-    
+
+    elif instr.find("extcodehash",0)!=-1:
+        pos = instr.find("=",0)
+        new = instr[:pos+1]+" s("+str(cont)+")"
+        cont+=1
+        
     elif instr.find("nop(MLOAD)")!=-1:
         top = new_instructions.pop()
         val = top.split("=")[0].strip()
