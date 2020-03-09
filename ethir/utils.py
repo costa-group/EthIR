@@ -445,10 +445,10 @@ def compute_hex_vals_cfg(block):
         start_addr = hex(int(start[0]))[2:]
 
     if len(end)>1:
-        start0 = hex(int(start[0]))[2:]
-        start_addr = start0+"_"+start[1]
+        end0 = hex(int(end[0]))[2:]
+        end_addr = end0+"_"+end[1]
     else:
-        start_addr = hex(int(start[0]))[2:]
+        end_addr = hex(int(end[0]))[2:]
 
     jumps_hex = []
     for jump in  block.get_list_jumps():
