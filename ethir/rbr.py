@@ -118,8 +118,17 @@ def init_globals():
     all_state_vars = []
 
 
-    # global unknown_mstore
-    # unknown_mstore = False
+    global forget_memory_blocks
+    forget_memory_blocks = []
+
+    global forget_memory
+    forget_memory = False
+
+    # global forget_storage_blocks
+    # forget_storage_blocks = []
+
+    # global forget_storage
+    # forget_storage = False
 
     global blockhash_cont
     blockhash_cont = 0
@@ -645,6 +654,7 @@ updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes50(opcode, value, index_variables,block,state_names):
     global new_fid
+    global forget_memory
     # global unknown_mstore
     
     if opcode == "POP":        
@@ -669,7 +679,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             instr = "l(l"+str(l_idx)+") = "+ v1
             update_local_variables(l_idx,block)
         except ValueError:
-            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+            forget_memory = True
+            instr = ["FORGET MEM","ls(1) = "+ v1, "ls(2) = "+v0]
+            #instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
                 # if vertices[block].is_mstore_unknown():
                 #     unknown_mstore = True
             
@@ -681,7 +693,8 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             instr = "l(l"+str(l_idx)+") = "+ v1
             update_local_variables(l_idx,block)
         except ValueError:
-            instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+            forget_memory = True
+            instr = ["FORGET MEM","ls(1) = "+ v1, "ls(2) = "+v0]
 
     elif opcode == "SLOAD":
         _ , updated_variables = get_consume_variable(index_variables)
@@ -713,6 +726,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             instr = "g(" + str(var_name) + ") = " + v1
             update_field_index(str(var_name),block)
         except ValueError:
+            #instr = ["gs(1) = "+ v0, "gs(2) = "+v1,"FORGET STR"]
             instr = ["gs(1) = "+ v0, "gs(2) = "+v1]
     # elif opcode == "JUMP":
     #     pass
@@ -1309,6 +1323,7 @@ def compile_block(block,state_vars):
     global rbr_blocks
     global top_index
     global new_fid
+    global forget_memory_blocks
     
     cont = 0
     top_index = 0
@@ -1378,6 +1393,9 @@ def compile_block(block,state_vars):
     # if inv:
     #     rule.activate_invalid()
 
+    if forget_memory:
+        forget_memory_blocks.append(rule)
+    
     return rule
 
 
@@ -1464,7 +1482,12 @@ def component_update_fields(rule,component):
         for elem_c in component[block]:
             component_update_fields_block(elem_c,(fields,bc,local))#local)
 
-
+def forget_mem_variables():
+    global new_fid
+    
+    for frule in forget_memory_blocks:
+        new_fid = frule.forget_memory(new_fid)
+            
 def check_invalid_options(block,invalid_options):
     if invalid_options == "all":
         inv = block_has_invalid(block)
@@ -1492,6 +1515,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global verticesd
     global c_trans
     global all_state_vars
+    global forget_memory
+
     
     init_globals()
     c_trans = c_rbr
@@ -1525,6 +1550,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             blocks = sorted(blocks_dict.values(), key = getKey)
             for block in blocks:
             #if block.get_start_address() not in to_clone:
+                forget_memory = False
                 rule = compile_block(block,mapping_state_variables)
 
                 inv = check_invalid_options(block,invalid_options)
@@ -1532,7 +1558,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 if inv[0]:
                     rule.activate_invalid()
                     rule.set_invalid_source(inv[1])
-                    
+
                 rbr_blocks[rule.get_rule_name()]=[rule]
             
 
@@ -1558,7 +1584,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
                     r.update_rule()
 
-
+            forget_mem_variables()
+                    
             rbr = sorted(rbr_blocks.values(),key = orderRBR)
             write_rbr(rbr,exe,contract_name)
         

@@ -277,7 +277,7 @@ class RBRRule:
 #        self.fresh_index = max(self.fresh_index,self.arg_input)
         if self.string_getter:
             self.include_string_getter()
-        
+            
     def include_string_getter(self):
         #Patter defined in symExec.py
         #Pattern identified by Oyente
@@ -317,6 +317,24 @@ class RBRRule:
                 
         return string_vars
 
+    def forget_memory(self,new_fid):
+        new_instrs = []
+        fresh_idx = new_fid
+        
+        for i in self.instr:
+            if i.find("FORGET MEM")==-1:
+                new_instrs.append(i)
+            else:
+                ordered = sorted(self.arg_local)[::-1]
+                for lv in ordered:
+                    var = "l(l"+str(lv)+")"
+                    instr = var+" = fresh("+str(fresh_idx)+")"
+                    new_instrs.append(instr)
+                    fresh_idx+=1
+
+        self.instr = new_instrs
+        return fresh_idx
+    
     '''
     It builds a string that represent the rbr.
     '''
