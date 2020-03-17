@@ -1885,11 +1885,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             position = stack.pop(0)
 
             position = get_push_value(position)
-            
+
             if g_src_map:
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
                 if source_code.startswith("function") and isReal(position):
-                    #Delete commment blocks
+                    # Delete commment blocks
+                    # print("Source code: ")
+                    # print(source_code)
                     idx1_cb = source_code.find("/*")
                     idx2_cb = source_code.find("*/")
                     
@@ -1897,22 +1899,29 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         source_code = source_code[:idx1_cb]+source_code[idx2_cb+2:]
                         idx1_cb = source_code.find("/*")
                         idx2_cb = source_code.find("*/")
-                    
-                    idx1 = source_code.index("(") + 1
-                    idx2 = source_code.index(")")
-                    params = source_code[idx1:idx2]
 
-                    if params.find("//")!=-1:
-                        p = params.split("\n")
+                    if source_code.find("//") != -1:
+                        p = source_code.split("\n")
                         params = []
                         for e in p:
                             idx = e.find("//")
                             if idx != -1:
                                 params.append(e[:idx])
-                                
                             else:
                                 params.append(e)
-                        params = ",".join(params)
+                        source_code = "\n".join(params)
+
+                    # print("Source code without comments")
+                    # print(source_code)
+
+                    
+                    idx1 = source_code.index("(") + 1
+                    idx2 = find_first_closing_parentheses(source_code)
+                    
+                    params = source_code[idx1:idx2]
+
+                    # print("Args")
+                    # print(params)
                         
                     params_list = params.split(",")
                     params_list_aux = []
@@ -1921,10 +1930,37 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
 
                     params_list_aux = filter(lambda x: x.strip() != "",params_list_aux)
-                  
+                    # print("Params list aux")
+                    # print params_list_aux
+                    
                     params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
+
+                    params_type = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[0] for param in params_list_aux]
+
+                    replicated_params_list = []
+                    for param_name, param_type in zip(params_list,params_type):
+                        # Means current param is an array
+                        if param_type.find("[") != -1:
+                            number_init = param_type.find("[") + 1
+                            number_end = param_type.find("]")
+                            # If both numbers are the same, then argument forma is type[], so we just add the name.
+                            if number_init == number_end:
+                                replicated_params_list.append(param_name)
+                            else:
+                                number = int(param_type[number_init:number_end])
+                                for i in range(number):
+                                    replicated_params_list.append(param_name + "[" +  str(i) + "]")
+                        else:
+                            replicated_params_list.append(param_name)
+                    # print("Duplicated params list")
+                    # print(replicated_params_list)
+                            
+                    
                     param_idx = (position - 4) // 32
-                    new_var_name = params_list[param_idx]
+
+                    # print("Param idx")
+                    # print param_idx
+                    new_var_name = replicated_params_list[param_idx]
                     g_src_map.var_names.append(new_var_name)
                     param_abs = (block,new_var_name)
                 else:
