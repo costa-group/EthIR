@@ -1584,7 +1584,7 @@ def write_init(rules,execution,cname):
             s_vars = get_stack_variables(stack_vars_global,True)
             r_vars = get_rest_variables(stack_vars_global,True)    
             s = s+"".join(s_vars)+"".join(r_vars)
-            with open ('operacionesT.c',"r") as fich :
+            with open ('ethereum-256.c',"r") as fich :
                 f.write(fich.read())
             fich.close()
 
