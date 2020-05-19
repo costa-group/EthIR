@@ -113,12 +113,20 @@ def get_contract_vars(rule):
     return new
 
 def get_field_vars(rule):
-    gv = rule.get_global_arg()
+    names, numeric = rule.get_global_arg()
 
-    if st_vars == []:
-        new = map(lambda x: "field(g"+x+")",gv)
+    if numeric != []:
+        new_numeric = map(lambda x: "field(g"+x+")",numeric)
     else:
-        new = map(lambda x: "field("+x+")",gv)
+        new_numeric = []
+        
+    if names != []:
+        new_names = map(lambda x: "field("+x+")",names)
+    else:
+        new_names = []
+        
+    new = new_names+new_numeric 
+
     return new
 
 def transform_vars(var):

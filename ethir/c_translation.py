@@ -1588,8 +1588,9 @@ def initialize_global_variables(rules):
         r = rules[1][0]
     else:
         r = rules[0][0]
-            
-    fields_id = r.get_global_arg()[::-1]
+
+    name_fields, numeric_fields = r.get_global_arg()
+    fields_id = name_fields[::-1]+numeric_fields[::-1]
     bc_data = r.get_bc()
     locals_vars = sorted(r.get_args_local())[::-1]
 
@@ -1631,7 +1632,9 @@ def write_init(rules,execution,cname):
             r = rules[1][0]
         else:
             r = rules[0][0]
-        fields_id = r.get_global_arg()[::-1]
+
+        name_fields, numeric_fields = r.get_global_arg()
+        fields_id = name_fields[::-1]+numeric_fields[::-1]
         bc_data = r.get_bc()
         locals_vars = sorted(r.get_args_local())[::-1]
                                 

@@ -94,14 +94,19 @@ class RBRRule:
 
     def get_global_arg(self):
         if self.all_state_vars == []:
-            return sorted(self.arg_global,key= toInt)[::-1]
+            return [], sorted(self.arg_global,key= toInt)[::-1]
         else:
             ordered = []
-            for n in self.all_state_vars:
-                if n in self.arg_global:
+            numeric = []
+            for n in self.arg_global:
+                if n in self.all_state_vars:
                     ordered.append(n)
+                else:
+                    numeric.append(n)
+
+            numeric = sorted(numeric,key= toInt)[::-1]
             ordered = ordered[::-1]
-            return ordered
+            return ordered, numeric
 
     def update_global_arg(self,l):
         aux = self.arg_global+l
@@ -199,11 +204,16 @@ class RBRRule:
 
         else:
             ordered = []
-            for n in self.all_state_vars:
-                if n in self.arg_global:
+            numeric = []
+            for n in self.arg_global:
+                if n in self.all_state_vars:
                     ordered.append(n)
-                
-            ordered = ordered[::-1]
+                else:
+                    numeric.append(n)
+
+
+            numeric = sorted(numeric,key= toInt)[::-1]
+            ordered = ordered[::-1]+numeric
 
         for i in ordered:
             var = "g("+ str(i)+")"
