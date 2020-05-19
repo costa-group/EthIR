@@ -22,11 +22,13 @@ class InputHelper:
             attr_defaults = {
                 'source': None,
                 'evm': False,
+                'runtime': True
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
                 'source': None,
                 'evm': False,
+                'runtime': True,
                 'root_path': "",
                 'compiled_contracts': []
             }
@@ -34,6 +36,7 @@ class InputHelper:
             attr_defaults = {
                 'source': None,
                 'evm': False,
+                'runtime': True,
                 'root_path': "",
                 'allow_paths': None,
                 'compiled_contracts': []
@@ -42,6 +45,7 @@ class InputHelper:
             attr_defaults = {
                 'source': None,
                 'evm': False,
+                'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
             }
@@ -52,6 +56,8 @@ class InputHelper:
                 raise Exception("'%s' attribute can't be None" % attr)
             else:
                 setattr(self, attr, val)
+
+        self.init_compiled_contracts = []
 
     def get_inputs(self):
         inputs = []
@@ -64,25 +70,38 @@ class InputHelper:
             inputs.append({'disasm_file': disasm_file})
         else:
             contracts = self._get_compiled_contracts()
+
+            if not self.runtime:
+                contracts_init = self._get_compiled_contracts_init(contracts)
+
             self._prepare_disasm_files_for_analysis(contracts)
+
+            if not self.runtime:
+                self._prepare_disasm_files_for_analysis(contracts,contracts_init)
+                
             for contract, _ in contracts:
                 c_source, cname = contract.split(':')
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
-                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path)
+                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path,self.runtime)
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
                 disasm_file = self._get_temporary_files(contract)['disasm']
+                if not self.runtime:
+                    disasm_file_init = self._get_temporary_files(contract)['disasm_init']
+                else:
+                    disasm_file_init = None
                 inputs.append({
                     'contract': contract,
                     'source_map': source_map,
                     'source': self.source,
                     'c_source': c_source,
                     'c_name': cname,
-                    'disasm_file': disasm_file
+                    'disasm_file': disasm_file,
+                    'disasm_file_init': disasm_file_init
                 })
         return inputs
-
+    
     #Modified by Pablo Gordillo
     #Not remove tmp files (dissasamble files)
     def rm_tmp_files(self):
@@ -92,18 +111,33 @@ class InputHelper:
         else:
             self._rm_tmp_files_of_multiple_contracts(self.compiled_contracts)
 
+
+    def _get_compiled_contracts_init(self,runtime_contracts):
+        contracts = self._compile_solidity_init()
+        init_contracts = []
+        for name_contract,evm in runtime_contracts:
+            name_r,evm_r = contracts.pop(0)
+            if name_contract != name_r:
+                raise Exception("Something was wrong during the decompiled process...")
+            else:
+                pos = evm_r.find(evm)
+                init_contracts.append((name_r,evm_r[:pos]))
+                
+        self.init_compiled_contracts = init_contracts
+        return init_contracts
+
     def _get_compiled_contracts(self):
         if not self.compiled_contracts:
             if self.input_type == InputHelper.SOLIDITY:
-                self.compiled_contracts = self._compile_solidity()
+                self.compiled_contracts = self._compile_solidity_runtime() 
             elif self.input_type == InputHelper.STANDARD_JSON:
                 self.compiled_contracts = self._compile_standard_json()
             elif self.input_type == InputHelper.STANDARD_JSON_OUTPUT:
                 self.compiled_contracts = self._compile_standard_json_output(self.source)
 
         return self.compiled_contracts
-
-    def _compile_solidity(self):
+    
+    def _compile_solidity_runtime(self):
         cmd = "solc --bin-runtime %s" % self.source
         out = run_command(cmd)
 
@@ -114,6 +148,18 @@ class InputHelper:
         else:
             return self._extract_bin_str(out)
 
+    def _compile_solidity_init(self):
+        cmd = "solc --bin %s" % self.source
+        out = run_command(cmd)
+
+        libs = re.findall(r"_+(.*?)_+", out)
+        libs = set(libs)
+        if libs:
+            return self._link_libraries(self.source, libs)
+        else:
+            return self._extract_bin_str_init(out)
+
+        
     def _compile_standard_json(self):
         FNULL = open(os.devnull, 'w')
         cmd = "cat %s" % self.source
@@ -154,6 +200,17 @@ class InputHelper:
             exit(1)
         return contracts
 
+    def _extract_bin_str_init(self, s):
+        binary_regex = r"\n======= (.*?) =======\nBinary: \n(.*?)\n"
+        contracts = re.findall(binary_regex, s)
+        contracts = [contract for contract in contracts if contract[1]]
+        if not contracts:
+            logging.critical("Solidity compilation failed")
+            if global_params.WEB:
+                six.print_({"error": "Solidity compilation failed"})
+            exit(1)
+        return contracts
+    
     def _link_libraries(self, filename, libs):
         option = ""
         for idx, lib in enumerate(libs):
@@ -168,30 +225,45 @@ class InputHelper:
         out = p2.communicate()[0].decode()
         return self._extract_bin_str(out)
 
-    def _prepare_disasm_files_for_analysis(self, contracts):
-        for contract, bytecode in contracts:
-            self._prepare_disasm_file(contract, bytecode)
+    def _prepare_disasm_files_for_analysis(self, contracts,init_contracts=None):
+        if not init_contracts:
+            for contract, bytecode in contracts:
+                self._prepare_disasm_file(contract, bytecode)
+        else:
+            for contract, bytecode in init_contracts:
+                self._prepare_disasm_file(contract, bytecode,True)
 
-    def _prepare_disasm_file(self, target, bytecode):
-        self._write_evm_file(target, bytecode)
-        self._write_disasm_file(target)
+    def _prepare_disasm_file(self, target, bytecode,init_contracts=False):
+        self._write_evm_file(target, bytecode,init_contracts)
+        self._write_disasm_file(target,init_contracts)
 
     def _get_temporary_files(self, target):
         return {
             "evm": target + ".evm",
             "disasm": target + ".evm.disasm",
+            "evm_init": target + "_init.evm",
+            "disasm_init": target + "_init.evm.disasm",
             "log": target + ".evm.disasm.log"
         }
-
-    def _write_evm_file(self, target, bytecode):
-        evm_file = self._get_temporary_files(target)["evm"]
+    
+    def _write_evm_file(self, target, bytecode,init_contracts):
+        if init_contracts:
+            evm_file = self._get_temporary_files(target)["evm_init"]
+        else:
+            evm_file = self._get_temporary_files(target)["evm"]
         with open(evm_file, 'w') as of:
             of.write(self._removeSwarmHash(bytecode))
 
-    def _write_disasm_file(self, target):
+    def _write_disasm_file(self, target,init_contracts):
         tmp_files = self._get_temporary_files(target)
-        evm_file = tmp_files["evm"]
-        disasm_file = tmp_files["disasm"]
+
+        if init_contracts:
+            evm_file = tmp_files["evm_init"]
+            disasm_file = tmp_files["disasm_init"]
+        else:
+            evm_file = tmp_files["evm"]
+            disasm_file = tmp_files["disasm"]
+
         disasm_out = ""
         try:
             disasm_p = subprocess.Popen(
@@ -203,20 +275,31 @@ class InputHelper:
 
         with open(disasm_file, 'w') as of:
             of.write(disasm_out)
-
+        
     def _rm_tmp_files_of_multiple_contracts(self, contracts):
         if self.input_type in ['standard_json', 'standard_json_output']:
             self._rm_file('standard_json_output')
         for contract, _ in contracts:
             self._rm_tmp_files(contract)
 
-    def _rm_tmp_files(self, target):
-        tmp_files = self._get_temporary_files(target)
-        if not self.evm:
-            self._rm_file(tmp_files["evm"])
-            self._rm_file(tmp_files["disasm"])
-        self._rm_file(tmp_files["log"])
+        if self.init_compiled_contracts:
+            for contract,_ in self.init_compiled_contracts:
+                self._rm_tmp_files(contract,True)
 
+    def _rm_tmp_files(self, target,init_contract=False):
+        tmp_files = self._get_temporary_files(target)
+        if not init_contract:
+            if not self.evm:
+                self._rm_file(tmp_files["evm"])
+                self._rm_file(tmp_files["disasm"])
+            self._rm_file(tmp_files["log"])
+
+        else:
+            if not self.evm:
+                self._rm_file(tmp_files["evm_init"])
+                self._rm_file(tmp_files["disasm_init"])
+
+                
     def _rm_file(self, path):
         if os.path.isfile(path):
             os.unlink(path)

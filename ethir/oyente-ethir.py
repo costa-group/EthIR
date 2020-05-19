@@ -324,9 +324,10 @@ def analyze_solidity(input_type='solidity'):
     global args
 
     x = dtimer()
-
+    is_runtime = not(args.init)
+    
     if input_type == 'solidity':
-        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm)
+         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm=args.evm,runtime=is_runtime)
     elif input_type == 'standard_json':
         helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
     elif input_type == 'standard_json_output':
@@ -406,6 +407,7 @@ def main():
     
     #Added by Pablo Gordillo
     parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
+    parser.add_argument( "-in", "--init",        help="Consider the initialization of the fields", action="store_true")
     parser.add_argument( "-d", "--debug",                   help="Display the status of the stack after each opcode", action = "store_true")
     parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
