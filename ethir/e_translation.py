@@ -1453,7 +1453,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
 
 #Recibe el numero en hex y lo divide en bloques de 8
 def fun_aux_split(hex_value):
-    value_string = str(hex_value)[2:] #hay que quitar el 0x
+    value_string = str(hex_value)[2:].strip("L") #hay que quitar el 0x
     aux = '0x'
     tam = len(value_string)
     palabras = tam / 8 
