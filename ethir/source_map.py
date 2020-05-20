@@ -27,11 +27,11 @@ class SourceMap:
     sources = {}
     ast_helper = None
 
-    def __init__(self, cname, parent_filename, input_type, root_path="",runtime=True):
+    def __init__(self, cname, parent_filename, input_type, root_path=""):
         self.root_path = root_path
         self.cname = cname
         self.input_type = input_type
-        self.runtime = runtime
+        #self.runtime = runtime
         if not SourceMap.parent_filename:
             SourceMap.parent_filename = parent_filename
             if input_type == "solidity":
@@ -44,8 +44,8 @@ class SourceMap:
         self.source = self._get_source()
 
         self.positions = self._get_positions()
-        if not runtime:
-            self.positions_init = self._get_positions_init()
+        # if not runtime:
+        #     self.positions_init = self._get_positions_init()
         self.instr_positions = {}
         self.var_names = self._get_var_names()
         self.func_call_names = self._get_func_call_names()

@@ -78,12 +78,17 @@ class InputHelper:
 
             if not self.runtime:
                 self._prepare_disasm_files_for_analysis(contracts,contracts_init)
-                
+
+                for contract_init,_ in contracts_init:
+                    if self.input_type == InputHelper.SOLIDITY:
+                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path)
+                    else:
+                        source_map_init = SourceMap(contract, self.source, 'standard json', self.root_path)
             for contract, _ in contracts:
                 c_source, cname = contract.split(':')
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
-                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path,self.runtime)
+                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path)
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
                 disasm_file = self._get_temporary_files(contract)['disasm']
@@ -94,6 +99,7 @@ class InputHelper:
                 inputs.append({
                     'contract': contract,
                     'source_map': source_map,
+                    'source_map_init': source_map_init,
                     'source': self.source,
                     'c_source': c_source,
                     'c_name': cname,
