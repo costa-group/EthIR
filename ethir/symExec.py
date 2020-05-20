@@ -65,6 +65,7 @@ class Parameter:
 
 def initGlobalVars():
     global g_src_map
+    global g_src_map_init
     global solver
     # Z3 solver
 
@@ -309,6 +310,8 @@ def build_cfg_and_analyze(evm_version):
     with open(g_disasm_file, 'r') as disasm_file:
         disasm_file.readline()  # Remove first line
         tokens = tokenize.generate_tokens(disasm_file.readline)
+        print "CUCU"
+        print tokens
         collect_vertices(tokens)
         construct_bb()
         # if ebso_opt:
@@ -429,11 +432,15 @@ def mapping_push_instruction(current_line_content, current_ins_address, idx, pos
         if not positions[idx]:
             return idx + 1
         name = positions[idx]['name']
+        print "********************"
+        print positions[idx]
+        print name
         if name.startswith("tag"):
             idx += 1
         else:
             if name.startswith("PUSH"):
                 if name == "PUSH":
+                    print "AQUI"
                     value = positions[idx]['value']
                     instr_value = current_line_content.split(" ")[1]
                     if int(value, 16) == int(instr_value, 16):
@@ -3233,7 +3240,7 @@ def get_scc(edges):
         scc_multiple.update(scc)
         return scc_multiple
         
-def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None):    
+def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -3245,11 +3252,13 @@ def run(disasm_file=None,disasm_file_init=None, source_map=None , source_file=No
     global name
     global public_fields
     global invalid_option
-
+    
     g_disasm_file = disasm_file
     g_source_file = source_file
     g_src_map = source_map
-
+    
+    print g_src_map
+    
     initGlobalVars()
 
     source_info = {}
