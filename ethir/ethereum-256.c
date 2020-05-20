@@ -368,77 +368,73 @@ ethint256 BYTE(ethint256 x, ethint256 y){
 ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
   
   int v1 = y.w0; 
-  ethint256 aux1; //para el or con v0
   ethint256 byte; //para ver si la palabra tiene signo positivo (LEQ,GT)
-  ethint256 bytei;
 
   if(v1 == 0){
     byte = cons(0,0,0,0,0,0,0,v0.w0 & 0x000000ff);
     int x = v0.w0 & 0x000000ff;
-  
     if(x <= 127){ return v0;} 
-    else{ 
-        return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffff00 | x); }
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffff00 | x); }
   }
   if(v1 == 1){
-    bytei = cons(0,0,0,0,0,0,0,60);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;} 
-    else{ aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffff0000); return OR(v0,aux1 );} 
+   byte = cons(0,0,0,0,0,0,0,v0.w0 & 0x0000ffff);
+    int x = v0.w0 & 0x0000ffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffff0000 | x); }
   }
   if(v1 == 2){
-    bytei = cons(0,0,0,0,0,0,0,58);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;} 
-    else{ aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xff000000); return OR(v0,aux1 );} 
+   byte = cons(0,0,0,0,0,0,0,v0.w0 & 0x00ffffff);
+    int x = v0.w0 & 0x00ffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xff000000 | x); }
   }
   if(v1 == 3){
-    bytei = cons(0,0,0,0,0,0,0,56);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;} 
-    else{ aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0); return OR(v0,aux1 );} 
+   byte = cons(0,0,0,0,0,0,0,v0.w0 & 0xffffffff);
+    int x = v0.w0 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0x00000000 | x); }
   }
 
   if(v1 == 7){
-    bytei = cons(0,0,0,0,0,0,0,48);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;}
-    else { aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0,0); return OR(v0,aux1 );}
+    byte = cons(0,0,0,0,0,0,v0.w1 & 0xffffffff,0);
+    int x = v0.w1 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0x00000000 | x,0); }
   }
  
   if(v1 == 11){
-    bytei = cons(0,0,0,0,0,0,0,40);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;} 
-    else { aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0,0,0); return OR(v0,aux1 );}
+   byte = cons(0,0,0,0,0,v0.w2 & 0xffffffff,0,0);
+    int x = v0.w2 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0x00000000 | x,0,0); }
   }
   
   if(v1 == 15){
-    bytei = cons(0,0,0,0,0,0,0,32);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;}    
-    else{ aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0,0,0,0); return OR(v0,aux1 );}
+    byte = cons(0,0,0,0,v0.w3 & 0xffffffff,0,0,0);
+    int x = v0.w3 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0x00000000 | x,0,0,0); }
   }
   
   if(v1 == 19){
-    bytei = cons(0,0,0,0,0,0,0,24);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;}  
-    else{ aux1 = cons(0xffffffff,0xffffffff,0xffffffff,0,0,0,0,0); return OR(v0,aux1 );}
+    byte = cons(0,0,0,v0.w4 & 0xffffffff,0,0,0,0);
+    int x = v0.w4 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0xffffffff,0x00000000 | x,0,0,0,0); }
   }
   
  if(v1 == 23){
-    bytei = cons(0,0,0,0,0,0,0,16);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;}        
-    else{ aux1 = cons(0xffffffff,0xffffffff,0,0,0,0,0,0); return OR(v0,aux1 );}
+    byte = cons(0,0,v0.w5 & 0xffffffff,0,0,0,0,0);
+    int x = v0.w5 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0xffffffff,0x00000000 | x,0,0,0,0,0); }
   }
 
   if(v1 == 27){
-    bytei = cons(0,0,0,0,0,0,0,8);
-    byte = BYTE(v0,bytei); 
-    if(byte.w0 == 0){ return v0;}   
-    else{ aux1 = cons(0xffffffff,0,0,0,0,0,0,0); return OR(v0,aux1 );}
+    byte = cons(0,v0.w6 & 0xffffffff,0,0,0,0,0,0);
+    int x = v0.w6 & 0xffffffff;
+    if(x <= 127){ return v0;} 
+    else{ return cons(0xffffffff,0x00000000 | x,0,0,0,0,0,0); }
   }
   if(v1 == 30){ return v0; }
 }
