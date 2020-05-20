@@ -198,7 +198,7 @@ def run_solidity_analysis(inputs,hashes):
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
             
         except Exception as e:
             traceback.print_exc()
@@ -218,7 +218,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
                 
             except Exception as e:
                 traceback.print_exc()
