@@ -84,6 +84,10 @@ class InputHelper:
                         source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path)
                     else:
                         source_map_init = SourceMap(contract, self.source, 'standard json', self.root_path)
+
+            else:
+                source_map_init = None
+                        
             for contract, _ in contracts:
                 c_source, cname = contract.split(':')
                 c_source = re.sub(self.root_path, "", c_source)
