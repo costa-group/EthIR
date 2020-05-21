@@ -1599,7 +1599,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             if source_map:
                 write_info_lines(rbr,source_map,contract_name)
                
-            
+
+            if init_fields != []:
+                init_filds_def = rename_init_fields(mapping_state_variables)
+                
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr == "int":
@@ -1721,7 +1724,6 @@ def process_init_values_fields(rbr):
             init_fields_of_rule = get_initialization(fields,ins)
             field_vals+=init_fields_of_rule
             
-    print field_vals
     init_fields = field_vals
 
 def get_initialization(fields,instructions):
@@ -1735,11 +1737,25 @@ def get_initialization(fields,instructions):
         potential_ins = instructions[:idx]
         assignments = filter(lambda x: x.startswith(stack_var),potential_ins)
         init_value = assignments[-1].split("=")[-1].strip()
-        print init_value
         fields_vals = field_vals.append(field_var+" = "+str(init_value))
 
     return field_vals
-    
+
+def rename_init_fields(mapping_state_variables):
+
+    rename_ins = []
+    for f in init_fields:
+        elems = f.split("=")
+        g_var = elems[0].strip()
+        val = elems[1].strip()
+
+        f_index = g_var[2:-1]
+        name = mapping_state_variables.get(f_index,f_index)
+        new_ins = "g("+name+") = "+val
+        rename_ins.append(new_ins)
+
+    return rename_ins
+
 def write_info_lines(rbr,source_map,contract_name):
     final_path = costabs_path + "/" + contract_name + "_lines.pl"
     f = open (final_path, "w")
