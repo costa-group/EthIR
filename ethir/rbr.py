@@ -1538,8 +1538,6 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     begin = dtimer()
     blocks_dict = blocks_input
     vertices = blocks_input
-
-    
     
     if svc_labels.get("verify",False):
         invalid_options = svc_labels.get("invalid",False)
@@ -1653,7 +1651,7 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
 
     mapping_state_variables = source_info["name_state_variables"]
 
-    
+
 
     try:
         if blocks_dict and stack_info:
@@ -1698,6 +1696,7 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
                     
             rbr = sorted(rbr_blocks.values(),key = orderRBR)
 
+            process_init_values_fields(rbr)
             # for r in rbr:
             #     for rr in r:
             #         rr.display()
@@ -1708,7 +1707,39 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
     except Exception as e:
         traceback.print_exc()
         raise Exception("Error in RBR generation for init fields",4)
+
+
+def process_init_values_fields(rbr):
+    global init_fields
+
+    field_vals = []
+    for rules in rbr:
+        for r in rules:
+            ins = r.get_instructions()
+            fields = filter(lambda x: x.startswith("g("),ins)
+
+            init_fields_of_rule = get_initialization(fields,ins)
+            field_vals+=init_fields_of_rule
             
+    print field_vals
+    init_fields = field_vals
+
+def get_initialization(fields,instructions):
+    field_vals = []
+    
+    for f in fields:
+        elems = f.split("=")
+        field_var = elems[0].strip()
+        stack_var = elems[-1].strip()
+        idx = instructions.index(f)
+        potential_ins = instructions[:idx]
+        assignments = filter(lambda x: x.startswith(stack_var),potential_ins)
+        init_value = assignments[-1].split("=")[-1].strip()
+        print init_value
+        fields_vals = field_vals.append(field_var+" = "+str(init_value))
+
+    return field_vals
+    
 def write_info_lines(rbr,source_map,contract_name):
     final_path = costabs_path + "/" + contract_name + "_lines.pl"
     f = open (final_path, "w")
