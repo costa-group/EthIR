@@ -1601,16 +1601,16 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                
 
             if init_fields != []:
-                init_filds_def = rename_init_fields(mapping_state_variables)
+                init_fields_def = rename_init_fields(mapping_state_variables)
                 
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr == "int":
-                c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
+                c_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm,init_fields_def)
             elif c_rbr == "uint":
-                c_utranslation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
+                c_utranslation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm,init_fields_def)
             elif c_rbr == "uint256":
-                e_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm)
+                e_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm,init_fields_def)
             
             print("*************************************************************")
 
