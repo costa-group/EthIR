@@ -16,6 +16,7 @@ import traceback
 
 costabs_path = "/tmp/costabs/" 
 tmp_path = "/tmp/"
+init_fields = []
 
 '''
 It initialize the globals variables. 
@@ -1515,7 +1516,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None):
     global rbr_blocks
     global stack_index
-    global verticesd
+    global vertices
     global c_trans
     global all_state_vars
     global forget_memory
@@ -1626,6 +1627,87 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 raise Exception("Error in C trnaslation",6)
         else:    
             raise Exception("Error in RBR generation",4)
+
+
+def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, component = None,source_info = None):
+    global rbr_blocks
+    global stack_index
+    global vertices
+    global c_trans
+    global all_state_vars
+    global forget_memory
+    
+    init_globals()
+    
+    stack_index = stack_info
+    component_of = component
+    
+    blocks_dict = blocks_input
+    vertices = blocks_input
+
+    invalid_options = False
+
+    source_map = source_info["source_map"]
+    if source_map:
+        all_state_vars = source_map._get_var_names()
+
+    mapping_state_variables = source_info["name_state_variables"]
+
+    
+
+    try:
+        if blocks_dict and stack_info:
+            blocks = sorted(blocks_dict.values(), key = getKey)
+            for block in blocks:
+            #if block.get_start_address() not in to_clone:
+                forget_memory = False
+                rule = compile_block(block,mapping_state_variables)
+
+                inv = check_invalid_options(block,invalid_options)
+                    
+                if inv[0]:
+                    rule.activate_invalid()
+                    rule.set_invalid_source(inv[1])
+
+                rbr_blocks[rule.get_rule_name()]=[rule]
+            
+
+            rule_c = create_blocks(block_unbuild)
+               
+            for rule in rbr_blocks.values():# _blocks.values():
+                for r in rule:
+                    component_update_fields(r,component_of)
+                    #                r.update_global_arg(fields_per_block.get(r.get_Id(),[]))
+                    #                r.set_global_vars(max_field_list)
+                    #r.set_args_local(current_local_var)
+                    #r.display()
+
+            for rule in rbr_blocks.values():
+                for r in rule:
+                    jumps_to = r.get_call_to()
+                
+                    if jumps_to != -1:
+                        f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
+                        bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
+                        l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+                        r.set_call_to_info((f,bc,l))
+
+                    r.update_rule()
+
+            #forget_mem_variables()
+                    
+            rbr = sorted(rbr_blocks.values(),key = orderRBR)
+
+            # for r in rbr:
+            #     for rr in r:
+            #         rr.display()
+            #TODO: Filter fields
+        
+        else :
+            print ("Error, you have to provide the CFG associated with the solidity file analyzed")
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception("Error in RBR generation for init fields",4)
             
 def write_info_lines(rbr,source_map,contract_name):
     final_path = costabs_path + "/" + contract_name + "_lines.pl"

@@ -3247,6 +3247,10 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global name
     global public_fields
     global invalid_option
+
+
+    if disasm_file_init != None:
+        analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
     
     g_disasm_file = disasm_file
     g_source_file = source_file
@@ -3375,6 +3379,63 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         ##Add when both are != None
   
     return [], 0
+
+
+def analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version):
+    global g_disasm_file
+    global g_source_file
+    global g_src_map
+    global results
+    global f_hashes
+    global debug_info
+    global vertices
+    global stack_h
+    global name
+    global public_fields
+    global invalid_option
+
+    g_disasm_file = disasm_file_init
+    g_source_file = source_file
+    g_src_map = source_map_init
+    
+    
+    initGlobalVars()
+
+    source_info = {}
+    s_name = None
+        
+
+
+    
+    invalid_option = False
+    verify = False
+        
+    analyze(evm_version)
+        
+    blocks2clone = sorted(blocks_to_clone, key = getLevel)
+
+    compute_component_of_cfg()
+
+    
+    if function_block_map != {}:
+        val = function_block_map.values()
+        f2blocks = map(lambda x: x[0],val)
+    else:
+        f2blocks = []
+
+    try:
+        source_info["source_map"] = source_map
+        source_info["name_state_variables"] = mapping_state_variables
+        
+        rbr.evm2rbr_init(blocks_input = vertices, stack_info = stack_h, block_unbuild = blocks_to_create, component = component_of_blocks,source_info = source_info)
+
+    except Exception as e:
+        traceback.print_exc()
+        raise e
+      
+    return [], 0
+    
+
 
 def get_evm_block():
     blocks = {}
