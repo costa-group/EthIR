@@ -81,7 +81,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm,init_fields):
             heads, new_rules = rbr2c_recur(rbr)
         
         if svcomp!={}:
-            head_c , rule = initialize_globals(rbr)
+            head_c , rule = initialize_globals(rbr,init_fields)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
 
@@ -1638,18 +1638,20 @@ def add_svcomp_labels():
 
     return labels
 
-def initialize_globals(rules):
+def initialize_globals(rules,init_fields):
     head_c = "void init_globals();"
     head = "void init_globals(){\n"
     
-    vars_init = initialize_global_variables(rules)
+    vars_init = initialize_global_variables(rules,init_fields)
     method = head+vars_init+"}\n"
 
     return head_c, method
     
-def initialize_global_variables(rules):
+def initialize_global_variables(rules,init_fields):
 
     s = ""
+
+    initialized_vars = init_fields.keys()
     
     if(len(rules)>1):
         r = rules[1][0]
@@ -1662,7 +1664,14 @@ def initialize_global_variables(rules):
     locals_vars = sorted(r.get_args_local())[::-1]
 
     
-    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_uint()",fields_id)
+    nondet_fields = filter(lambda x: x not in initialized_vars,fields_id) 
+    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",nondet_fields)
+
+    for v in initialized_vars:
+        val = init_fields[v]
+        fields.append("\tg"+str(v)+" = "+str(val))
+
+    
     l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_uint()",locals_vars)
     bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_uint()",bc_data)
 

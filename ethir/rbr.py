@@ -1602,6 +1602,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
             if init_fields != []:
                 init_fields_def = rename_init_fields(mapping_state_variables)
+            else:
+                init_fields_def ={}
                 
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
@@ -1745,6 +1747,7 @@ def rename_init_fields(mapping_state_variables):
 
     rename_ins = []
     name_vars = []
+    initialized_fields = {}
     for f in init_fields:
         elems = f.split("=")
         g_var = elems[0].strip()
@@ -1752,14 +1755,14 @@ def rename_init_fields(mapping_state_variables):
 
         f_index = g_var[2:-1]
         name = mapping_state_variables.get(f_index,f_index)
-        new_ins = "g("+name+") = "+val
+        initialized_fields[name]  = val
 
-        if name not in name_vars:
-            name_vars.append(name)
+        # if name not in name_vars:
+        #     name_vars.append(name)
             
-        rename_ins.append(new_ins)
+        # rename_ins.append(new_ins)
 
-    return rename_ins,name_vars
+    return initialized_fields
 
 def write_info_lines(rbr,source_map,contract_name):
     final_path = costabs_path + "/" + contract_name + "_lines.pl"
