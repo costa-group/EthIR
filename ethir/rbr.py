@@ -1744,6 +1744,7 @@ def get_initialization(fields,instructions):
 def rename_init_fields(mapping_state_variables):
 
     rename_ins = []
+    name_vars = []
     for f in init_fields:
         elems = f.split("=")
         g_var = elems[0].strip()
@@ -1752,9 +1753,13 @@ def rename_init_fields(mapping_state_variables):
         f_index = g_var[2:-1]
         name = mapping_state_variables.get(f_index,f_index)
         new_ins = "g("+name+") = "+val
+
+        if name not in name_vars:
+            name_vars.append(name)
+            
         rename_ins.append(new_ins)
 
-    return rename_ins
+    return rename_ins,name_vars
 
 def write_info_lines(rbr,source_map,contract_name):
     final_path = costabs_path + "/" + contract_name + "_lines.pl"
