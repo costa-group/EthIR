@@ -26,21 +26,22 @@ class SourceMap:
     position_groups = {}
     sources = {}
     ast_helper = None
-
-    def __init__(self, cname, parent_filename, input_type, root_path=""):
+    
+    def __init__(self, cname, parent_filename, input_type, root_path="",sol_version=""):
         self.root_path = root_path
         self.cname = cname
         self.input_type = input_type
         #self.runtime = runtime
+        self.solc_version = sol_version
         if not SourceMap.parent_filename:
             SourceMap.parent_filename = parent_filename
             if input_type == "solidity":
-                SourceMap.position_groups = SourceMap._load_position_groups()
+                SourceMap.position_groups = SourceMap._load_position_groups(self.solc_version)
             elif input_type == "standard json":
                 SourceMap.position_groups = SourceMap._load_position_groups_standard_json()
             else:
                 raise Exception("There is no such type of input")
-            SourceMap.ast_helper = AstHelper(SourceMap.parent_filename, input_type)
+            SourceMap.ast_helper = AstHelper(SourceMap.parent_filename, input_type,self.solc_version)
         self.source = self._get_source()
 
         self.positions = self._get_positions()
@@ -50,7 +51,10 @@ class SourceMap:
         self.var_names = self._get_var_names()
         self.func_call_names = self._get_func_call_names()
         self.callee_src_pairs = self._get_callee_src_pairs()
+ 
+       
 
+        
     def get_init_pos(self,pc):
         return self.instr_positions[pc]['begin']
 
@@ -149,8 +153,13 @@ class SourceMap:
         return output["contracts"]
 
     @classmethod
-    def _load_position_groups(cls):
-        cmd = "solc --combined-json asm %s" % cls.parent_filename
+    def _load_position_groups(cls,solc_v):
+        #print solc_v
+        if solc_v == "v4":
+            cmd = "solc --combined-json asm %s" % cls.parent_filename
+        else:
+            cmd = "solcv5 --combined-json asm %s" % cls.parent_filename
+
         out = run_command(cmd)
         out = json.loads(out)
         return out['contracts']

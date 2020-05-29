@@ -3,8 +3,9 @@ from ast_walker import AstWalker
 import json
 
 class AstHelper:
-    def __init__(self, filename, input_type):
+    def __init__(self, filename, input_type,solidity_version=""):
         self.input_type = input_type
+        self.solc_version = solidity_version
         if input_type == "solidity":
             self.source_list = self.get_source_list(filename)
         elif input_type == "standard json":
@@ -20,7 +21,11 @@ class AstHelper:
         return out["sources"]
 
     def get_source_list(self, filename):
-        cmd = "solc --combined-json ast %s" % filename
+        if self.solc_version == "v4":
+            cmd = "solc --combined-json ast %s" % filename
+        else:
+            cmd = "solcv5 --combined-json ast %s" % filename
+            
         out = run_command(cmd)
         out = json.loads(out)
         return out["sources"]

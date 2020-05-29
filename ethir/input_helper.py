@@ -22,7 +22,8 @@ class InputHelper:
             attr_defaults = {
                 'source': None,
                 'evm': False,
-                'runtime': True
+                'runtime': True,
+                'solc_version':"v5"
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
@@ -30,7 +31,8 @@ class InputHelper:
                 'evm': False,
                 'runtime': True,
                 'root_path': "",
-                'compiled_contracts': []
+                'compiled_contracts': [],
+                'solc_version':"v5"
             }
         elif input_type == InputHelper.STANDARD_JSON:
             attr_defaults = {
@@ -39,7 +41,8 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'allow_paths': None,
-                'compiled_contracts': []
+                'compiled_contracts': [],
+                'solc_version':"v5"
             }
         elif input_type == InputHelper.STANDARD_JSON_OUTPUT:
             attr_defaults = {
@@ -48,6 +51,7 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
+                'solc_version':"v5"
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
@@ -57,9 +61,11 @@ class InputHelper:
             else:
                 setattr(self, attr, val)
 
+        self.solc_version = self._get_solidity_version()
         self.init_compiled_contracts = []
 
     def get_inputs(self):
+        
         inputs = []
         if self.input_type == InputHelper.BYTECODE:
             with open(self.source, 'r') as f:
@@ -69,6 +75,8 @@ class InputHelper:
             disasm_file = self._get_temporary_files(self.source)['disasm']
             inputs.append({'disasm_file': disasm_file})
         else:
+            self.solc_version = self._get_solidity_version()
+
             contracts = self._get_compiled_contracts()
 
             if not self.runtime:
@@ -81,7 +89,7 @@ class InputHelper:
 
                 for contract_init,_ in contracts_init:
                     if self.input_type == InputHelper.SOLIDITY:
-                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path)
+                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path,self.solc_version)
                     else:
                         source_map_init = SourceMap(contract, self.source, 'standard json', self.root_path)
 
@@ -92,7 +100,7 @@ class InputHelper:
                 c_source, cname = contract.split(':')
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
-                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path)
+                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path,self.solc_version)
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
                 disasm_file = self._get_temporary_files(contract)['disasm']
@@ -148,7 +156,11 @@ class InputHelper:
         return self.compiled_contracts
     
     def _compile_solidity_runtime(self):
-        cmd = "solc --bin-runtime %s" % self.source
+        if self.solc_version == "v4":
+            cmd = "solc --bin-runtime %s" % self.source
+        else:
+            cmd = "solcv5 --bin-runtime %s" % self.source
+
         out = run_command(cmd)
 
         libs = re.findall(r"_+(.*?)_+", out)
@@ -159,7 +171,11 @@ class InputHelper:
             return self._extract_bin_str(out)
 
     def _compile_solidity_init(self):
-        cmd = "solc --bin %s" % self.source
+        if self.solc_version == "v4":
+            cmd = "solc --bin %s" % self.source
+        else:
+            cmd = "solcv5 --bin %s" % self.source
+            
         out = run_command(cmd)
 
         libs = re.findall(r"_+(.*?)_+", out)
@@ -174,7 +190,12 @@ class InputHelper:
         FNULL = open(os.devnull, 'w')
         cmd = "cat %s" % self.source
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-        cmd = "solc --allow-paths %s --standard-json" % self.allow_paths
+
+        if self.solc_version == "v4":
+            cmd = "solc --allow-paths %s --standard-json" % self.allow_paths
+        else:
+            cmd = "solcv5 --allow-paths %s --standard-json" % self.allow_paths
+            
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0]
@@ -200,7 +221,12 @@ class InputHelper:
         return evm_without_hash
 
     def _extract_bin_str(self, s):
-        binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part: \n(.*?)\n"
+
+        if self.solc_version == "v4":
+            binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part: \n(.*?)\n"
+        else:
+            binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part:\n(.*?)\n"
+
         contracts = re.findall(binary_regex, s)
         contracts = [contract for contract in contracts if contract[1]]
         if not contracts:
@@ -227,9 +253,19 @@ class InputHelper:
             lib_address = "0x" + hex(idx+1)[2:].zfill(40)
             option += " --libraries %s:%s" % (lib, lib_address)
         FNULL = open(os.devnull, 'w')
-        cmd = "solc --bin-runtime %s" % filename
+
+        if self.solc_version == "v4":
+            cmd = "solc --bin-runtime %s" % filename
+        else:
+            cmd = "solcv5 --bin-runtime %s" % filename
+
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-        cmd = "solc --link%s" %option
+
+        if self.solc_version == "v4":
+            cmd = "solc --link%s" %option
+        else: 
+            cmd = "solcv5 --link%s" %option
+
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0].decode()
@@ -329,3 +365,5 @@ class InputHelper:
             return "v"+solc_v
             
 
+    def get_solidity_version(self):
+        return self.solc_version

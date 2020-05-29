@@ -58,14 +58,14 @@ def has_dependencies_installed():
             evm_version_modifications = True
             logging.warning("You are using evm version %s. The supported version is %s" % (evm_version, tested_evm_version))
 
-    if not cmd_exists("solc"):
+    if not cmd_exists("solc") and not cmd_exists("solcv5"):
         logging.critical("solc is missing. Please install the solidity compiler and make sure solc is in the path.")
         return False
     else:
         cmd = "solc --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
-        tested_solc_version = '0.4.25'
+        tested_solc_version = '0.5.15'
         if compare_versions(solc_version, tested_solc_version) > 0:
             logging.warning("You are using solc version %s, The latest supported version is %s" % (solc_version, tested_solc_version))
 
@@ -333,7 +333,10 @@ def analyze_solidity(input_type='solidity'):
     elif input_type == 'standard_json_output':
         helper = InputHelper(InputHelper.STANDARD_JSON_OUTPUT, source=args.source,evm=args.evm)
     inputs = helper.get_inputs()
-    hashes = process_hashes(args.source)
+
+    
+    solc_version = helper.get_solidity_version()
+    hashes = process_hashes(args.source,solc_version)
     
     y = dtimer()
     print("*************************************************************")

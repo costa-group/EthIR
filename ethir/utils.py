@@ -355,8 +355,12 @@ def get_function_names(i,lineas):
 It returns a map that for each contract, it returns a list of pairs (hash, name_function).
 Solidity file is a string that contains the name of the solidity file that is going to be analized.
 '''
-def process_hashes(solidity_file):
-    cmd = "solc --hashes "+str(solidity_file)
+def process_hashes(solidity_file,solidity_version):
+    if solidity_version == "v4":
+        cmd = "solc --hashes "+str(solidity_file)
+    else:
+        cmd = "solcv5 --hashes "+str(solidity_file)
+        
     delimiter = "======="
 
     m = {}
