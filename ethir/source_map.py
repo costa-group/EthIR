@@ -4,8 +4,9 @@ import json
 
 import global_params
 
-from utils import run_command
+from utils import run_command,get_solc_executable
 from ast_helper import AstHelper
+
 
 class Source:
     def __init__(self, filename):
@@ -155,10 +156,10 @@ class SourceMap:
     @classmethod
     def _load_position_groups(cls,solc_v):
         #print solc_v
-        if solc_v == "v4":
-            cmd = "solc --combined-json asm %s" % cls.parent_filename
-        else:
-            cmd = "solcv5 --combined-json asm %s" % cls.parent_filename
+
+        solc = get_solc_executable(solc_v)
+        
+        cmd = solc+" --combined-json asm %s" % cls.parent_filename
 
         out = run_command(cmd)
         out = json.loads(out)

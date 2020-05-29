@@ -7,7 +7,7 @@ import json
 import global_params
 import six
 from source_map import SourceMap
-from utils import run_command
+from utils import run_command, get_solc_executable
 
 class InputHelper:
     BYTECODE = 0
@@ -156,10 +156,9 @@ class InputHelper:
         return self.compiled_contracts
     
     def _compile_solidity_runtime(self):
-        if self.solc_version == "v4":
-            cmd = "solc --bin-runtime %s" % self.source
-        else:
-            cmd = "solcv5 --bin-runtime %s" % self.source
+        solc = get_solc_executable(self.solc_version)
+        
+        cmd = solc+" --bin-runtime %s" % self.source
 
         out = run_command(cmd)
 
@@ -171,10 +170,10 @@ class InputHelper:
             return self._extract_bin_str(out)
 
     def _compile_solidity_init(self):
-        if self.solc_version == "v4":
-            cmd = "solc --bin %s" % self.source
-        else:
-            cmd = "solcv5 --bin %s" % self.source
+
+        solc = get_solc_executable(self.solc_version)
+
+        cmd = solc+" --bin %s" % self.source
             
         out = run_command(cmd)
 
@@ -191,10 +190,9 @@ class InputHelper:
         cmd = "cat %s" % self.source
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
-        if self.solc_version == "v4":
-            cmd = "solc --allow-paths %s --standard-json" % self.allow_paths
-        else:
-            cmd = "solcv5 --allow-paths %s --standard-json" % self.allow_paths
+        solc = get_solc_executable(self.solc_version)
+        
+        cmd = solc+" --allow-paths %s --standard-json" % self.allow_paths
             
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
@@ -254,17 +252,13 @@ class InputHelper:
             option += " --libraries %s:%s" % (lib, lib_address)
         FNULL = open(os.devnull, 'w')
 
-        if self.solc_version == "v4":
-            cmd = "solc --bin-runtime %s" % filename
-        else:
-            cmd = "solcv5 --bin-runtime %s" % filename
+        solc = get_solc_executable(self.solc_version)
+
+        cmd = solc+" --bin-runtime %s" % filename
 
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
-        if self.solc_version == "v4":
-            cmd = "solc --link%s" %option
-        else: 
-            cmd = "solcv5 --link%s" %option
+        cmd = solc+" --link%s" %option
 
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
@@ -356,14 +350,13 @@ class InputHelper:
         lines = f.readlines()
         pragma = filter(lambda x: x.find("pragma solidity")!=-1, lines)
         if pragma == []:
-            return "v5" #Put here the highest version
+            return "v6" #Put here the highest version
         else:
             pragma_version = pragma[0].strip()
             elems = pragma_version.split()
             version = elems[-1].strip("^")
             solc_v = version.split(".")[1].strip()
             return "v"+solc_v
-            
 
     def get_solidity_version(self):
         return self.solc_version

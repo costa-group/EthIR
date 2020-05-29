@@ -1,4 +1,4 @@
-from utils import run_command
+from utils import run_command,get_solc_executable
 from ast_walker import AstWalker
 import json
 
@@ -21,10 +21,10 @@ class AstHelper:
         return out["sources"]
 
     def get_source_list(self, filename):
-        if self.solc_version == "v4":
-            cmd = "solc --combined-json ast %s" % filename
-        else:
-            cmd = "solcv5 --combined-json ast %s" % filename
+        
+        solc = get_solc_executable(self.solc_version)
+
+        cmd = solc+" --combined-json ast %s" % filename
             
         out = run_command(cmd)
         out = json.loads(out)

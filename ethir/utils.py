@@ -297,6 +297,7 @@ def get_distinct_contracts(list_of_contracts = "concurr.csv"):
     six.print_(flag)
 
 def run_command(cmd):
+
     FNULL = open(os.devnull, 'w')
     solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
     return solc_p.communicate()[0].decode()
@@ -356,10 +357,10 @@ It returns a map that for each contract, it returns a list of pairs (hash, name_
 Solidity file is a string that contains the name of the solidity file that is going to be analized.
 '''
 def process_hashes(solidity_file,solidity_version):
-    if solidity_version == "v4":
-        cmd = "solc --hashes "+str(solidity_file)
-    else:
-        cmd = "solcv5 --hashes "+str(solidity_file)
+    
+    solc = get_solc_executable(solidity_version)
+
+    cmd = solc+" --hashes "+str(solidity_file)
         
     delimiter = "======="
 
@@ -945,3 +946,11 @@ def find_first_closing_parentheses(string):
                 idx_ini = idx_ini + closing_index + 1
                 filtered_string = filtered_string[closing_index+1:]
     raise ValueError("Parentheses are not consistent")
+
+def get_solc_executable(version):
+    if version == "v4":
+        return "solc"
+    elif version == "v5":
+        return "solcv5"
+    elif version == "v6":
+        return "solcv6"
