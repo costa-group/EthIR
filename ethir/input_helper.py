@@ -314,3 +314,18 @@ class InputHelper:
         if os.path.isfile(path):
             os.unlink(path)
 
+
+    def _get_solidity_version(self):
+        f = open(self.source,"r")
+        lines = f.readlines()
+        pragma = filter(lambda x: x.find("pragma solidity")!=-1, lines)
+        if pragma == []:
+            return "v5" #Put here the highest version
+        else:
+            pragma_version = pragma[0].strip()
+            elems = pragma_version.split()
+            version = elems[-1].strip("^")
+            solc_v = version.split(".")[1].strip()
+            return "v"+solc_v
+            
+
