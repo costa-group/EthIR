@@ -804,6 +804,21 @@ def get_input_variables(idx):
         in_vars.append(var)
     return in_vars
 
+
+#if arg is a int, it transform the variable into a eth256 var
+#Otherwise, it returns the same val
+def return_correct_val(var):
+    arg = var.strip()
+    if arg.isdigit():
+        hex_value = hex(int(arg))
+        lis = fun_aux_split(hex_value)
+        sep = ','
+        lis_final = "ASSIGN(" + sep.join(lis) + ")"
+        new = lis_final
+        return new
+    else:
+        return arg
+
 #se llama a las versiones que devuelven un int para que el if funcione (GEQ,GT...)
 def translate_conditions(instr):
 
@@ -812,37 +827,55 @@ def translate_conditions(instr):
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[3:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "GT(" + var1 + "," + var2 + ")"
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "GT(" + var1_def + "," + var2_def + ")"
+        
     elif instr.startswith("sgt"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[3:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "SGT(" + var1 + "," + var2 + ")"
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "SGT(" + var1_def + "," + var2_def + ")"
+        
     elif instr.startswith("geq"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[4:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "GEQ(" + var1 + "," + var2 + ")"
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "GEQ(" + var1_def + "," + var2_def + ")"
+        
     elif instr.startswith("lt"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[3:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "LT(" + var1 + "," + var2 + ")"
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "LT(" + var1_def + "," + var2_def + ")"
+        
     elif instr.startswith("slt"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[3:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "SLT(" + var1 + "," + var2 + ")"   
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "SLT(" + var1_def + "," + var2_def + ")"
+        
     elif instr.startswith("leq"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[4:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "LEQ(" + var1 + "," + var2 + ")"
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "LEQ(" + var1_def + "," + var2_def + ")"
+        
     elif instr.startswith("eq"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
@@ -851,13 +884,18 @@ def translate_conditions(instr):
         if str(var2) == '0':
            instr = "ISZERO(" + var1 + ")"
         else:
-            instr = "EQ(" + var1 + "," + var2 + ")"
+            var1_def = return_correct_val(var1)
+            var2_def = return_correct_val(var2)
+            instr = "EQ(" + var1_def + "," + var2_def + ")"
+            
     elif instr.startswith("neq"):
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[4:])
         var2 = unbox_variable(arg2[:-1])
-        instr = "NEQ(" + var1 + "," + var2 + ")"
+        var1_def = return_correct_val(var1)
+        var2_def = return_correct_val(var2)
+        instr = "NEQ(" + var1_def + "," + var2_def + ")"
     else:
         instr = "Error in guard translation"
 
@@ -1065,8 +1103,10 @@ def process_instr_nop(instr,new_instructions,op):
     lista.append(arg2)
 
     return lista
+
 #-------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------METODO QUE PROCESA CADA LINEA DE LA RBR Y ESCRIBE EN EL C---------------------
+
 def process_instruction(instr,new_instructions,vars_to_declare,cont):
 
     if instr.find("nop(SGT")!=-1:
@@ -1525,7 +1565,7 @@ def initialize_global_variables(rules,init_fields):
     locals_vars = sorted(r.get_args_local())[::-1]
 
     nondet_fields = filter(lambda x: x not in initialized_vars,fields_id) 
-    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",nondet_fields)
+    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_256()",nondet_fields)
 
     for v in initialized_vars:
         val = init_fields[v]
