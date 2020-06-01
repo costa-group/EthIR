@@ -814,7 +814,6 @@ def translate_conditions(instr):
         var2 = unbox_variable(arg2[:-1])
         instr = "GT(" + var1 + "," + var2 + ")"
     elif instr.startswith("sgt"):
-        print("por aqui\n")
         arg1 = instr.split(",")[0].strip()
         arg2 = instr.split(",")[1].strip()
         var1 = unbox_variable(arg1[3:])
