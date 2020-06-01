@@ -141,6 +141,18 @@ int EQ( ethint256 x,  ethint256 y) {
   return res; 
 }
 
+ethint256 equals( ethint256 x,  ethint256 y) {
+  ethint256 res0 = cons(0,0,0,0,0,0,0,0);
+  ethint256 res1 = cons(0,0,0,0,0,0,0,1);
+
+  if( (x.w7 == y.w7) && (x.w6 == y.w6) && (x.w5 == y.w5) && (x.w4 == y.w4) && (x.w3 == y.w3) && (x.w2 == y.w2) && (x.w1 == y.w1) && (x.w0 == y.w0) ){ return res1;}
+
+  else {
+    return res0; //distinto
+  }
+}
+
+
 int NEQ( ethint256 x,  ethint256 y) {
   int resNEQ;
   int res1 = (x.w0 != y.w0);
@@ -321,6 +333,14 @@ ethint256 slt(ethint256 x, ethint256 y){ //< con signo
 
    return res0; //caso de igualdad
 }
+
+ int ISZERO( int x) {
+   int resZero;
+   resZero = (x == 0);
+   return resZero;
+}
+
+
 
  int ISZERO( ethint256 x) {
   int resZero;
