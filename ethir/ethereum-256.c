@@ -114,6 +114,20 @@ ethint256 SUB(ethint256 x, ethint256 y) {
   return res;
 }
 
+ ethint256 NOT( ethint256 x) {
+  ethint256 res;
+  res.w0 = ~x.w0;
+  res.w1 = ~x.w1;
+  res.w2 = ~x.w2;
+  res.w3 = ~x.w3;
+  res.w4 = ~x.w4;
+  res.w5 = ~x.w5;
+  res.w6 = ~x.w6;
+  res.w7 = ~x.w7;
+  return res;
+}
+
+
 int EQ( ethint256 x,  ethint256 y) {
   int res1 = (x.w0 == y.w0);
   int res2 = (x.w1 == y.w1);
