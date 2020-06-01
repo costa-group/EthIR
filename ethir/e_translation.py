@@ -98,7 +98,7 @@ def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm,init_fields):
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -1276,7 +1276,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
 
         arg1 = elems[1].strip()[1:-1]
         var1 = unbox_variable(arg1)
-        new = var0 + " = NOT(" + var1 + "," + var2 + ")"
+        new = var0 + " = NOT(" + var1 + ")"
         
     #se llama a las versiones que devuelven un struct (geq, gt...)
     elif instr.find("= eq(",0)!=-1:
