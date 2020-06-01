@@ -334,13 +334,6 @@ ethint256 slt(ethint256 x, ethint256 y){ //< con signo
    return res0; //caso de igualdad
 }
 
- int ISZERO( int x) {
-   int resZero;
-   resZero = (x == 0);
-   return resZero;
-}
-
-
 
  int ISZERO( ethint256 x) {
   int resZero;
