@@ -1665,7 +1665,7 @@ def initialize_global_variables(rules,init_fields):
 
     
     nondet_fields = filter(lambda x: x not in initialized_vars,fields_id) 
-    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",nondet_fields)
+    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_uint()",nondet_fields)
 
     for v in initialized_vars:
         val = init_fields[v]
