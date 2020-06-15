@@ -278,7 +278,7 @@ ethint256 leq( ethint256 x,  ethint256 y) {
   ethint256 res0 = cons(0,0,0,0,0,0,0,0);
   ethint256 res1 = cons(0,0,0,0,0,0,0,1);
 
-  if (LT(x,y) == 1) return res0;
+  if (GT(x,y) == 1) return res0;
   return res1; 
 }
 
@@ -342,25 +342,22 @@ ethint256 BYTE(ethint256 x, ethint256 y){
     unsigned int w;
     res.w1 = res.w2 = res.w3 = res.w4 = res.w5 = res.w6 = res.w7 = 0; //unicamente interesa el w0 (donde va el resultado)
 
-    if (y.w0 < 8) w = x.w7; //se empieza a contar por la izquierda
-    else if (y.w0 < 16 ) w = x.w6;
-    else if (y.w0 < 24 ) w = x.w5;
-    else if (y.w0 < 32 ) w = x.w4;
-    else if (y.w0 < 40 ) w = x.w3;
-    else if (y.w0 < 48 ) w = x.w2;
-    else if (y.w0 < 56 ) w = x.w1;
-    else if (y.w0 < 64 ) w = x.w0;
+    if (y.w0 < 4) w = x.w7; //se empieza a contar por la izquierda
+    else if (y.w0 < 8 ) w = x.w6;
+    else if (y.w0 < 12 ) w = x.w5;
+    else if (y.w0 < 16 ) w = x.w4;
+    else if (y.w0 < 20 ) w = x.w3;
+    else if (y.w0 < 24 ) w = x.w2;
+    else if (y.w0 < 28 ) w = x.w1;
+    else if (y.w0 < 32 ) w = x.w0;
+    else w = 0;
 
-    int offset = y.w0 % 8;
+    int offset = y.w0 % 4;
 
-    if (offset == 0) res.w0 = (w & 0xF0000000) >> 28;
-    if (offset == 1) res.w0 = (w & 0x0F000000) >> 24;
-    if (offset == 2) res.w0 = (w & 0x00F00000) >> 20;
-    if (offset == 3) res.w0 = (w & 0x000F0000) >> 16;
-    if (offset == 4) res.w0 = (w & 0x0000F000) >> 12;
-    if (offset == 5) res.w0 = (w & 0x00000F00) >> 8;
-    if (offset == 6) res.w0 = (w & 0x000000F0) >> 4;
-    if (offset == 7) res.w0 = (w & 0x0000000F) >> 0;
+    if (offset == 0) res.w0 = (w & 0xFF000000) >> 24;
+    if (offset == 1) res.w0 = (w & 0x00FF0000) >> 16;
+    if (offset == 2) res.w0 = (w & 0x0000FF00) >> 8;
+    if (offset == 3) res.w0 = (w & 0x000000FF);
     return res;
 }
 
@@ -383,7 +380,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
   if(v1 == 2){
     unsigned int x = v0.w0 & 0x00ffffff;
     unsigned int sx = x & 0x800000;
-    if(sx == 0){ return cons(0,0,0,0,0,0,0,x);} 
+    if(sx == 0){ return cons(0,0,0,0,0,0,0,0xff000000 | x);} 
   }
   if(v1 == 3){
     unsigned int x = v0.w0;
