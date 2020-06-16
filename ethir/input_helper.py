@@ -157,7 +157,6 @@ class InputHelper:
     
     def _compile_solidity_runtime(self):
         solc = get_solc_executable(self.solc_version)
-        
         cmd = solc+" --bin-runtime %s" % self.source
 
         out = run_command(cmd)
@@ -353,9 +352,9 @@ class InputHelper:
             return "v6" #Put here the highest version
         else:
             pragma_version = pragma[0].strip()
-            elems = pragma_version.split()
-            version = elems[-1].strip("^")
-            solc_v = version.split(".")[1].strip()
+            id_p = pragma_version.find("^")
+            elem = pragma_version[id_p+1:]
+            solc_v = elem.split(".")[1].strip()
             return "v"+solc_v
 
     def get_solidity_version(self):
