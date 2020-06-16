@@ -16,9 +16,11 @@ Download the folder source that contains a static executable of Solidity compile
 Add it to the PATH and test that it is installed.
     
 ```
- sudo cp source/solc /usr/bin/
- sudo chmod 755 /usr/bin/solc
+ sudo cp source/solc* /usr/bin/
+ sudo chmod 755 /usr/bin/solc*
  solc --version
+ solcv5 --version
+ solcv6 --version
  ```
  
 In case you want to install the latest version:
@@ -36,8 +38,8 @@ A static executable is provided in the folder source.
 Add ot to the PATh and test that it is installed.
  
  ```
- sudo cp source/evm /usr/bin/
- sudo chmod 755 /usr/bin/evm
+ sudo cp source/evm* /usr/bin/
+ sudo chmod 755 /usr/bin/evm*
  evm --version
  ```
  In case you want to install the latest version:
