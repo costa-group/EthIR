@@ -431,17 +431,19 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
 }
 
 ethint256 EXP(ethint256 x, ethint256 y){
-    ethint256 z = cons(0,0,0,0,0,0,0,1);
-    int exp = y.w0; 
-    if(exp == 0){
-      return z;
-    }
-    if(exp == 1){
-      return x;
-    }
-    else{
-      return __VERIFIER_nondet_256();
-    }
+  ethint256 res;
+  
+  int exp = y.w0; 
+  if(exp == 0){
+    res = cons(0,0,0,0,0,0,0,1);
+  }
+  if(exp == 1){
+    res = x;
+  }
+  else{
+    res = __VERIFIER_nondet_256();
+  }
+  return res;
 }
 
 
