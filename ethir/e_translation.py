@@ -1638,7 +1638,8 @@ def write_init(rules,execution,cname):
             s_vars = get_stack_variables(stack_vars_global,True)
             r_vars = get_rest_variables(stack_vars_global,True)    
             s = s+"".join(s_vars)+"".join(r_vars)
-            with open ('ethereum-256.c',"r") as fich :
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            with open (dir_path+'/ethereum-256.c',"r") as fich :
                 f.write(fich.read())
             fich.close()
 
