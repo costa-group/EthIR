@@ -370,59 +370,53 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     unsigned int sx = x & 0x80;
     if(sx == 0){
        res = cons(0,0,0,0,0,0,0,x);
-       return res;
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffff00 | x);
-      return res;
     }
   }
+  
   if(v1 == 1){
     unsigned int x = v0.w0 & 0x0000ffff;
     unsigned int sx = x & 0x8000;
     if(sx == 0){
       res = cons(0,0,0,0,0,0,0,x);
-      return res;
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffff0000 | x);
-      return res;
     }
   }
+  
   if(v1 == 2){
     unsigned int x = v0.w0 & 0x00ffffff;
     unsigned int sx = x & 0x800000;
     if(sx == 0){
-      cons(0,0,0,0,0,0,0,0xff000000 | x);
-      return res;
+      res = cons(0,0,0,0,0,0,0,0xff000000 | x);
     }
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xff000000 | x);
-      return res;
     }
   }
+  
   if(v1 == 3){
     unsigned int x = v0.w0;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
       res = cons(0,0,0,0,0,0,0,x);
-      return res;
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,x);
-      return res;
     }
   }
+  
   if(v1 == 7){
     unsigned int x = v0.w1;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
       res = cons(0,0,0,0,0,0,v0.w1,v0.w0);
-      return res;
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,v0.w1,v0.w0);
-      return res;
     }
   }
   if(v1 == 11){
@@ -430,11 +424,10 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
       res = cons(0,0,0,0,0,v0.w2,v0.w1,v0.w0);
-      return res;
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,v0.w2,v0.w1,v0.w0);
-      return res;
+     
     }
   }
   if(v1 == 15){
@@ -442,23 +435,24 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
       res = cons(0,0,0,0,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+     
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+     
     }
   }
+  
   if(v1 == 19){
     unsigned int x = v0.w4;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){      
       res =  cons(0,0,0,v0.w4,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res; 
+  
     } 
     else{
       res = cons(0xffffffff,0xffffffff,0xffffffff,v0.w4,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+  
     }
   }
   if(v1 == 23){
@@ -466,11 +460,11 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
       res = cons(0,0,v0.w5,v0.w4,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+  
     } 
     else{
       res = cons(0xffffffff,0xffffffff,v0.w5,v0.w4,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+  
     }
   }
   if(v1 == 27){
@@ -478,16 +472,20 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
       res = cons(0,v0.w6,v0.w5,v0.w4,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+
     } 
     else{
       res = cons(0xffffffff,v0.w6,v0.w5,v0.w4,v0.w3,v0.w2,v0.w1,v0.w0);
-      return res;
+
     }
   }
 
-  if(v1 == 31){ return v0; }
-  res = __VERIFIER_nondet_256();
+  if(v1 == 31){ res =  v0; }
+
+  else{
+    res = __VERIFIER_nondet_256();
+  }
+  
   return res; 
 }
 
