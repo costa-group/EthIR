@@ -494,47 +494,53 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
 ethint256 EXP(ethint256 x, ethint256 y){
   ethint256 res;
   
-  int exp = y.w0; 
-  if(exp == 0){
-    res = cons(0,0,0,0,0,0,0,1);
-  }
-  if(exp == 1){
-    res = x;
-  }
-  else{
+  //  int exp = y.w0; 
+  //if(exp == 0){
+  //  res = cons(0,0,0,0,0,0,0,1);
+  // }
+  //if(exp == 1){
+  //  res = x;
+  //}
+  //else{
     res = __VERIFIER_nondet_256();
-  }
+    //}
   return res;
 }
 
 
 ethint256 MOD(ethint256 x, ethint256 y){
-   ethint256 res = __VERIFIER_nondet_256();
+  ethint256 res;
+  res = __VERIFIER_nondet_256();
    return res;
 }
 
 ethint256 MODX(ethint256 x, ethint256 y, ethint256 z){
-   ethint256 res = __VERIFIER_nondet_256();
+  ethint256 res;
+  res = __VERIFIER_nondet_256();
    return res;
 }
 
 ethint256 SMOD(ethint256 x, ethint256 y){
-   ethint256 res = __VERIFIER_nondet_256();
+  ethint256 res;
+  res = __VERIFIER_nondet_256();
    return res;
 }
 
 ethint256 MUL(ethint256 x, ethint256 y){
-   ethint256 res = __VERIFIER_nondet_256();
+  ethint256 res;
+  res = __VERIFIER_nondet_256();
    return res;
 }
 
 ethint256 DIV(ethint256 x, ethint256 y){
-   ethint256 res = __VERIFIER_nondet_256();
+  ethint256 res;
+  res = __VERIFIER_nondet_256();
    return res;
 }
 
 ethint256 SDIV(ethint256 x, ethint256 y){
-   ethint256 res = __VERIFIER_nondet_256();
+  ethint256 res;
+  res = __VERIFIER_nondet_256();
    return res;
 }
 
