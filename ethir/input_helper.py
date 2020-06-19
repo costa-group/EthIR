@@ -62,6 +62,7 @@ class InputHelper:
                 setattr(self, attr, val)
 
         self.solc_version = self._get_solidity_version()
+        print self.solc_version
         self.init_compiled_contracts = []
 
     def get_inputs(self):
@@ -349,7 +350,7 @@ class InputHelper:
         lines = f.readlines()
         pragma = filter(lambda x: x.find("pragma solidity")!=-1, lines)
         if pragma == []:
-            return "v6" #Put here the highest version
+            return "v4" #Put here the highest version
         else:
             pragma_version = pragma[0].strip()
             id_p = pragma_version.find("^")
