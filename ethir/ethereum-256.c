@@ -568,3 +568,16 @@ ethint256 ASSIGN(int x0,int x1,int x2,int x3,int x4,int x5,int x6, int x7){
   res.w7 = x0; 
   return res;
 }
+
+//OVERFLOWS
+/* if ((b > 0 && a <= INT_MAX / b && a >= INT_MIN / b) || */
+/*     (b == 0) || */
+/*     (b == -1 && a >= -INT_MAX) || */
+/*     (b < -1 && a >= INT_MAX / b && a <= INT_MIN / b)) */
+/* { */
+/*     result = a * b; */
+/* } */
+/* else */
+/* { */
+/*     /\* calculation would overflow *\/ */
+/* } */
