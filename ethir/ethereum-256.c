@@ -376,7 +376,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  if(v1 == 1){
+  else if(v1 == 1){
     unsigned int x = v0.w0 & 0x0000ffff;
     unsigned int sx = x & 0x8000;
     if(sx == 0){
@@ -387,7 +387,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  if(v1 == 2){
+  else if(v1 == 2){
     unsigned int x = v0.w0 & 0x00ffffff;
     unsigned int sx = x & 0x800000;
     if(sx == 0){
@@ -398,7 +398,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  if(v1 == 3){
+  else if(v1 == 3){
     unsigned int x = v0.w0;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -409,7 +409,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  if(v1 == 7){
+  else if(v1 == 7){
     unsigned int x = v0.w1;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -419,7 +419,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,v0.w1,v0.w0);
     }
   }
-  if(v1 == 11){
+  else if(v1 == 11){
     unsigned int x = v0.w2;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -430,7 +430,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
      
     }
   }
-  if(v1 == 15){
+  else if(v1 == 15){
     unsigned int x = v0.w3;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -443,7 +443,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  if(v1 == 19){
+  else if(v1 == 19){
     unsigned int x = v0.w4;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){      
@@ -455,7 +455,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
   
     }
   }
-  if(v1 == 23){
+  else if(v1 == 23){
     unsigned int x = v0.w5;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -467,7 +467,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
   
     }
   }
-  if(v1 == 27){
+  else if(v1 == 27){
     unsigned int x = v0.w6;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -480,7 +480,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
 
-  if(v1 == 31){ res =  v0; }
+  else if(v1 == 31){ res =  v0; }
 
   else{
     res = __VERIFIER_nondet_256();
@@ -492,16 +492,16 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
 ethint256 EXP(ethint256 x, ethint256 y){
   ethint256 res;
   
-  //  int exp = y.w0; 
-  //if(exp == 0){
-  //  res = cons(0,0,0,0,0,0,0,1);
-  // }
-  //if(exp == 1){
-  //  res = x;
-  //}
-  //else{
+  int exp = y.w0; 
+  if(exp == 0 && y.w1 == 0 && y.w2 == 0 &&  y.w3 == 0 && y.w4 == 0 && y.w5 == 0 && y.w6 == 0 && y.w7 == 0){
+    res = cons(0,0,0,0,0,0,0,1);
+   }
+  if(exp == 1 && y.w1 == 0 && y.w2 == 0 &&  y.w3 == 0 && y.w4 == 0 && y.w5 == 0 && y.w6 == 0 && y.w7 == 0){
+    res = cons(x.w7,x.w6,x.w5,x.w4, x.w3,x.w2,x.w1,x.w0);
+  }
+  else{
     res = __VERIFIER_nondet_256();
-    //}
+  }
   return res;
 }
 
