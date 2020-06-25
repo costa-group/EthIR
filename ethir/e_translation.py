@@ -1358,7 +1358,7 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
         
         arg2 = arg12[1].strip()
         var2 = unbox_variable(arg2)
-        new = var0 + "=EXP(" + var1 + "," + var2 + ")"
+        new = var0 + " = EXP(" + var1 + "," + var2 + ")"
               
 
     elif instr.find("+")!=-1:
