@@ -28,6 +28,30 @@ void print_eth( ethint256 x) {
     printf("%8x %8x %8x %8x %8x %8x %8x %8x\n",x.w7, x.w6 , x.w5,x.w4, x.w3, x.w2, x.w1, x.w0);
 }
 
+ethint256 __VERIFIER_nondet_256(){
+  ethint256 resultado;
+  resultado.w0 = __VERIFIER_nondet_uint();
+  resultado.w1 = __VERIFIER_nondet_uint();
+  resultado.w2 = __VERIFIER_nondet_uint();
+  resultado.w3 = __VERIFIER_nondet_uint();
+  resultado.w4 = __VERIFIER_nondet_uint();
+  resultado.w5 = __VERIFIER_nondet_uint();
+  resultado.w6 = __VERIFIER_nondet_uint();
+  resultado.w7 = __VERIFIER_nondet_uint();
+  return resultado;
+}
+
+int IS_NONDET(ethint256 x){
+  int res;
+  if (x.w0 == __VERIFIER_nondet_uint()){
+    res = 1;
+  } else {
+    res = 0;
+  }
+  return res;
+    
+     
+}
 
 ethint256 ADD(ethint256 x, ethint256 y) {
   ethint256 resAdd;
@@ -129,15 +153,25 @@ ethint256 SUB(ethint256 x, ethint256 y) {
 
 
 int EQ( ethint256 x,  ethint256 y) {
-  int res1 = (x.w0 == y.w0);
-  int res2 = (x.w1 == y.w1);
-  int res3 = (x.w2 == y.w2);
-  int res4 = (x.w3 == y.w3);
-  int res5 = (x.w4 == y.w4);
-  int res6 = (x.w5 == y.w5);
-  int res7 = (x.w6 == y.w6);
-  int res8 = (x.w7 == y.w7);
-  int res = res1 && res2 && res3 && res4 && res5 && res6 && res7 && res8; 
+  int non1 = IS_NONDET(x);
+  int non2 = IS_NONDET(y);
+  int res;
+
+  if (non1 || non2){
+    res = __VERIFIER_nondet_uint();
+  }
+  else{
+    int res1 = (x.w0 == y.w0);
+    int res2 = (x.w1 == y.w1);
+    int res3 = (x.w2 == y.w2);
+    int res4 = (x.w3 == y.w3);
+    int res5 = (x.w4 == y.w4);
+    int res6 = (x.w5 == y.w5);
+    int res7 = (x.w6 == y.w6);
+    int res8 = (x.w7 == y.w7);
+    res = res1 && res2 && res3 && res4 && res5 && res6 && res7 && res8;
+  }
+  
   return res; 
 }
 
@@ -155,37 +189,56 @@ ethint256 equals( ethint256 x,  ethint256 y) {
 
 int NEQ( ethint256 x,  ethint256 y) {
   int resNEQ;
-  int res1 = (x.w0 != y.w0);
-  int res2 = (x.w1 != y.w1);
-  int res3 = (x.w2 != y.w2);
-  int res4 = (x.w3 != y.w3);
-  int res5 = (x.w4 != y.w4);
-  int res6 = (x.w5 != y.w5);
-  int res7 = (x.w6 != y.w6);
-  int res8 = (x.w7 != y.w7);
-  resNEQ = res1 || res2 || res3 || res4 || res5 || res6 || res7 || res8; 
+  int non1 = IS_NONDET(x);
+  int non2 = IS_NONDET(y);
+
+  if (non1 || non2){
+    resNEQ = __VERIFIER_nondet_uint();
+  }
+
+  else {
+    int res1 = (x.w0 != y.w0);
+    int res2 = (x.w1 != y.w1);
+    int res3 = (x.w2 != y.w2);
+    int res4 = (x.w3 != y.w3);
+    int res5 = (x.w4 != y.w4);
+    int res6 = (x.w5 != y.w5);
+    int res7 = (x.w6 != y.w6);
+    int res8 = (x.w7 != y.w7);
+    resNEQ = res1 || res2 || res3 || res4 || res5 || res6 || res7 || res8; 
+  }
   return resNEQ; 
 }
 
 int GT( ethint256 x,  ethint256 y) {
+  int res;
 
-  if( x.w7 > y.w7) return 1;
-  if( x.w7 < y.w7) return 0;
-  if( x.w6 > y.w6) return 1;
-  if( x.w6 < y.w6) return 0;
-  if( x.w5 > y.w5) return 1;
-  if( x.w5 < y.w5) return 0;
-  if( x.w4 > y.w4) return 1;
-  if( x.w4 < y.w4) return 0;
-  if( x.w3 > y.w3) return 1;
-  if( x.w3 < y.w3) return 0;
-  if( x.w2 > y.w2) return 1;
-  if( x.w2 < y.w2) return 0;
-  if( x.w1 > y.w1) return 1;
-  if( x.w1 < y.w1) return 0;
-  if( x.w0 > y.w0) return 1;
-  if( x.w0 < y.w0) return 0;
-  return 0; 
+  int non1 = IS_NONDET(x);
+  int non2 = IS_NONDET(y);
+
+  if (non1 || non2){
+    return __VERIFIER_nondet_uint();
+  }
+
+
+  if( x.w7 > y.w7) res = 1;
+  else if( x.w7 < y.w7) res = 0;
+  else if( x.w6 > y.w6) res = 1;
+  else if( x.w6 < y.w6) res = 0;
+  else if( x.w5 > y.w5) res = 1;
+  else if( x.w5 < y.w5) res = 0;
+  else if( x.w4 > y.w4) res = 1;
+  else if( x.w4 < y.w4) res = 0;
+  else if( x.w3 > y.w3) res = 1;
+  else if( x.w3 < y.w3) res = 0;
+  else if( x.w2 > y.w2) res = 1;
+  else if( x.w2 < y.w2) res = 0;
+  else if( x.w1 > y.w1) res = 1;
+  else if( x.w1 < y.w1) res = 0;
+  else if( x.w0 > y.w0) res = 1;
+  else if( x.w0 < y.w0) res = 0;
+  else res = 0;
+  return res;
 }
 
 ethint256 gt( ethint256 x,  ethint256 y) {
@@ -225,24 +278,35 @@ ethint256 geq( ethint256 x,  ethint256 y) {
 }
 
 
- int LT( ethint256 x,  ethint256 y) {
-  if( x.w7 < y.w7) return 1;
-  if( x.w7 > y.w7) return 0;
-  if( x.w6 < y.w6) return 1;
-  if( x.w6 > y.w6) return 0;
-  if( x.w5 < y.w5) return 1;
-  if( x.w5 > y.w5) return 0;
-  if( x.w4 < y.w4) return 1;
-  if( x.w4 > y.w4) return 0;
-  if( x.w3 < y.w3) return 1;
-  if( x.w3 > y.w3) return 0;
-  if( x.w2 < y.w2) return 1;
-  if( x.w2 > y.w2) return 0;
-  if( x.w1 < y.w1) return 1;
-  if( x.w1 > y.w1) return 0;
-  if( x.w0 < y.w0) return 1;
-  if( x.w0 > y.w0) return 0;
-  return 0; 
+int LT( ethint256 x,  ethint256 y) {
+  int res;
+  
+  int non1 = IS_NONDET(x);
+  int non2 = IS_NONDET(y);
+   
+  if (non1 || non2){
+    return __VERIFIER_nondet_uint();
+  }
+
+
+  if( x.w7 < y.w7) res = 1;
+  else if( x.w7 > y.w7) res = 0;
+  else if( x.w6 < y.w6) res = 1;
+  else if( x.w6 > y.w6) res = 0;
+  else if( x.w5 < y.w5) res = 1;
+  else if( x.w5 > y.w5) res = 0;
+  else if( x.w4 < y.w4) res = 1;
+  else if( x.w4 > y.w4) res = 0;
+  else if( x.w3 < y.w3) res = 1;
+  else if( x.w3 > y.w3) res = 0;
+  else if( x.w2 < y.w2) res = 1;
+  else if( x.w2 > y.w2) res = 0;
+  else if( x.w1 < y.w1) res = 1;
+  else if( x.w1 > y.w1) res = 0;
+  else if( x.w0 < y.w0) res = 1;
+  else if( x.w0 > y.w0) res = 0;
+  else res = 0;
+  return res;
 }
 
 ethint256 lt( ethint256 x,  ethint256 y) {
@@ -269,9 +333,10 @@ ethint256 lt( ethint256 x,  ethint256 y) {
 }
 
 int LEQ( ethint256 x,  ethint256 y) {
-
-  if (GT(x,y) == 1) return 0;
-  return 1; 
+  int res;
+  if (GT(x,y) == 1) res = 0;
+  else res = 1;
+  return res;
 }
 
 ethint256 leq( ethint256 x,  ethint256 y) {
@@ -323,20 +388,6 @@ ethint256 slt(ethint256 x, ethint256 y){ //< con signo
   return resZero;
 }
 
-
-ethint256 __VERIFIER_nondet_256(){
-  ethint256 resultado;
-  resultado.w0 = __VERIFIER_nondet_uint();
-  resultado.w1 = __VERIFIER_nondet_uint();
-  resultado.w2 = __VERIFIER_nondet_uint();
-  resultado.w3 = __VERIFIER_nondet_uint();
-  resultado.w4 = __VERIFIER_nondet_uint();
-  resultado.w5 = __VERIFIER_nondet_uint();
-  resultado.w6 = __VERIFIER_nondet_uint();
-  resultado.w7 = __VERIFIER_nondet_uint();
-  return resultado;
-}
-
 ethint256 BYTE(ethint256 x, ethint256 y){
     ethint256 res;
     unsigned int w;
@@ -355,9 +406,9 @@ ethint256 BYTE(ethint256 x, ethint256 y){
     int offset = y.w0 % 4;
 
     if (offset == 0) res.w0 = (w & 0xFF000000) >> 24;
-    if (offset == 1) res.w0 = (w & 0x00FF0000) >> 16;
-    if (offset == 2) res.w0 = (w & 0x0000FF00) >> 8;
-    if (offset == 3) res.w0 = (w & 0x000000FF);
+    else if (offset == 1) res.w0 = (w & 0x00FF0000) >> 16;
+    else if (offset == 2) res.w0 = (w & 0x0000FF00) >> 8;
+    else if (offset == 3) res.w0 = (w & 0x000000FF);
     return res;
 }
 
@@ -376,7 +427,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  else if(v1 == 1){
+  if(v1 == 1){
     unsigned int x = v0.w0 & 0x0000ffff;
     unsigned int sx = x & 0x8000;
     if(sx == 0){
@@ -387,7 +438,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  else if(v1 == 2){
+  if(v1 == 2){
     unsigned int x = v0.w0 & 0x00ffffff;
     unsigned int sx = x & 0x800000;
     if(sx == 0){
@@ -398,7 +449,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  else if(v1 == 3){
+  if(v1 == 3){
     unsigned int x = v0.w0;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -409,7 +460,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  else if(v1 == 7){
+  if(v1 == 7){
     unsigned int x = v0.w1;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -419,7 +470,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
       res = cons(0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,v0.w1,v0.w0);
     }
   }
-  else if(v1 == 11){
+  if(v1 == 11){
     unsigned int x = v0.w2;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -430,7 +481,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
      
     }
   }
-  else if(v1 == 15){
+  if(v1 == 15){
     unsigned int x = v0.w3;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -443,7 +494,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
   
-  else if(v1 == 19){
+  if(v1 == 19){
     unsigned int x = v0.w4;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){      
@@ -455,7 +506,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
   
     }
   }
-  else if(v1 == 23){
+  if(v1 == 23){
     unsigned int x = v0.w5;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -467,7 +518,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
   
     }
   }
-  else if(v1 == 27){
+  if(v1 == 27){
     unsigned int x = v0.w6;
     unsigned int sx = x & 0x80000000;
     if(sx == 0){
@@ -480,7 +531,7 @@ ethint256 SIGNEXTEND(ethint256 v0,  ethint256 y){
     }
   }
 
-  else if(v1 == 31){ res =  v0; }
+  if(v1 == 31){ res =  v0; }
 
   else{
     res = __VERIFIER_nondet_256();
@@ -493,11 +544,11 @@ ethint256 EXP(ethint256 x, ethint256 y){
   ethint256 res;
   
   int exp = y.w0; 
-  if(exp == 0 && y.w1 == 0 && y.w2 == 0 &&  y.w3 == 0 && y.w4 == 0 && y.w5 == 0 && y.w6 == 0 && y.w7 == 0){
+  if(exp == 0 && y.w1 == 0 && y.w2 == 0 && y.w3 == 0 && y.w4 == 0 && y.w5 == 0 && y.w6 == 0 && y.w7 == 0){
     res = cons(0,0,0,0,0,0,0,1);
-   }
-  if(exp == 1 && y.w1 == 0 && y.w2 == 0 &&  y.w3 == 0 && y.w4 == 0 && y.w5 == 0 && y.w6 == 0 && y.w7 == 0){
-    res = cons(x.w7,x.w6,x.w5,x.w4, x.w3,x.w2,x.w1,x.w0);
+  }
+  if(exp == 1 && y.w1 == 0 && y.w2 == 0 && y.w3 == 0 && y.w4 == 0 && y.w5 == 0 && y.w6 == 0 && y.w7 == 0){
+    res = cons(x.w7,x.w6,x.w5,x.w4,x.w3,x.w2,x.w1,x.w0);
   }
   else{
     res = __VERIFIER_nondet_256();
