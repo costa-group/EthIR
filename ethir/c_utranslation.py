@@ -53,7 +53,7 @@ def init_global_vars():
     global potential_uncalled
     potential_uncalled = []
 
-def rbr2c(rbr,execution,cname,scc,svc_labels,gotos,fbm,init_fields):
+def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals):
     global svcomp
     global verifier
     global init_globals
