@@ -142,7 +142,6 @@ def init_globals():
     global c_words
     c_words = ["char","for","index","y1","log","rindex","round","exp"]
 
-
     global memory_intervals
     memory_intervals = False
 '''
@@ -661,6 +660,7 @@ updated. It also updated the corresponding global variables.
 def translateOpcodes50(opcode, value, index_variables,block,state_names):
     global new_fid
     global forget_memory
+    global memory_intervals
     # global unknown_mstore
     
     if opcode == "POP":        
@@ -671,8 +671,12 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1, updated_variables = get_new_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            instr = v1+ " = " + "l(l"+str(l_idx)+")"
-            update_local_variables(l_idx,block)
+            if memory_intervals:
+                instr = v1+ " = " + "l(mem"+str(value)+")"
+                update_local_variables(str(value),block)
+            else:
+                instr = v1+ " = " + "l(l"+str(l_idx)+")"
+                update_local_variables(l_idx,block)
         except ValueError:
             instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
@@ -682,8 +686,12 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            instr = "l(l"+str(l_idx)+") = "+ v1
-            update_local_variables(l_idx,block)
+            if memory_intervals:
+               instr = "l(mem"+str(value)+") = "+ v1
+               update_local_variables(str(value),block)
+            else:
+                instr = "l(l"+str(l_idx)+") = "+ v1
+                update_local_variables(l_idx,block)
         except ValueError:
             #forget_memory = True
             #instr = ["FORGET MEM","ls(1) = "+ v1, "ls(2) = "+v0]
@@ -696,8 +704,12 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            instr = "l(l"+str(l_idx)+") = "+ v1
-            update_local_variables(l_idx,block)
+            if memory_intervals:
+               instr = "l(mem"+str(value)+") = "+ v1
+               update_local_variables(str(value),block)
+            else:
+                instr = "l(l"+str(l_idx)+") = "+ v1
+                update_local_variables(l_idx,block)
         except ValueError:
             #forget_memory = True
             #instr = ["FORGET MEM","ls(1) = "+ v1, "ls(2) = "+v0]
@@ -1336,6 +1348,8 @@ def compile_block(block,state_vars):
     top_index = 0
     new_fid = 0
     finish = False
+    has_lm40 = False #mload mem40
+    has_sm40 = False #mstore mem40
     
     index_variables = block.get_stack_info()[0]-1
     block_id = block.get_start_address()
@@ -1343,6 +1357,8 @@ def compile_block(block,state_vars):
     rule = RBRRule(block_id, "block",is_string_getter,all_state_vars)
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
+
+    mem_creation = 0 #mem_abs
     
     while not(finish) and cont< len(l_instr):
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
@@ -1385,8 +1401,16 @@ def compile_block(block,state_vars):
             rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),True,state_vars)        
+                                                   index_variables,block.get_list_jumps(),True,state_vars)
+            has_lm40 = has_lm40 or is_mload40(l_instr[cont])
+            has_sm40 = has_sm40 or is_mstore40(l_instr[cont])
+            
         cont+=1
+
+        if has_lm40 and has_sm40:
+            mem_creation += 1
+            has_lm40 = False
+            has_sm40 = False
 
     if(block.get_block_type()=="falls_to"):
         instr = process_falls_to_blocks(index_variables,block.get_falls_to())
@@ -1403,7 +1427,7 @@ def compile_block(block,state_vars):
     # if forget_memory:
     #     forget_memory_blocks.append(rule)
     
-    return rule
+    return rule,mem_creation
 
 
 '''
@@ -1443,7 +1467,7 @@ def write_rbr(rbr,executions,cname = None):
     with open(name,"w") as f:
         for rules in rbr:
             for r in rules:
-                f.write(r.rule2string()+"\n")
+                f.write(r.rule2string(memory_intervals)+"\n")
 
     f.close()
         
@@ -1506,7 +1530,34 @@ def check_invalid_options(block,invalid_options):
         inv = (False, "no")
 
     return inv
-            
+
+def is_mload40(opcode):
+    opcode = opcode.split(" ")
+    opcode_name = opcode[0]
+
+    if len(opcode) == 1:
+        return False
+
+    value = opcode[1]
+    if opcode_name == "MLOAD" and value=="64":
+        return True
+    else:
+        return False
+
+def is_mstore40(opcode):
+    opcode = opcode.split(" ")
+    opcode_name = opcode[0]
+
+    if len(opcode) == 1:
+        return False
+
+    value = opcode[1]
+    if opcode_name == "MSTORE" and value == "64":
+        return True
+    else:
+        return False
+
+
 '''
 Main function that build the rbr representation from the CFG of a solidity file.
 -blocks_input contains a list with the blocks of the CFG. basicblock.py instances.
@@ -1558,8 +1609,11 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             for block in blocks:
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
-                rule = compile_block(block,mapping_state_variables)
+                rule, mem_result = compile_block(block,mapping_state_variables)
 
+                if mem_result>0:
+                    mem_creation.append((block.get_start_address(),mem_result))
+                
                 inv = check_invalid_options(block,invalid_options)
                     
                 if inv[0]:
@@ -1586,10 +1640,14 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                     if jumps_to != -1:
                         f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
                         bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
-                        l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+
+                        if memory_intervals:
+                            l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars_memabs()
+                        else:
+                            l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
                         r.set_call_to_info((f,bc,l))
 
-                    r.update_rule()
+                    r.update_rule(memory_intervals)
 
             #forget_mem_variables()
                     
@@ -1697,10 +1755,14 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
                     if jumps_to != -1:
                         f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
                         bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
-                        l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+                        
+                        if memory_intervals:
+                            l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars_memabs()
+                        else:
+                            l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
                         r.set_call_to_info((f,bc,l))
 
-                    r.update_rule()
+                    r.update_rule(memory_intervals)
 
             #forget_mem_variables()
                     

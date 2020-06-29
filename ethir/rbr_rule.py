@@ -232,10 +232,19 @@ class RBRRule:
             local_vars.append(var)
         return local_vars
 
+    def build_local_vars_memabs(self):
+        local_vars = []
+        ordered = sorted(self.arg_local)[::-1]
+        for i in ordered:
+            var = "l(mem"+str(i)+")"
+            local_vars.append(var)
+        return local_vars
+
+    
     '''
     It generates the final call instruction.
     '''
-    def update_calls(self):
+    def update_calls(self,mem_abs=False):
         instructions = []
         
         for elem in self.instr:
@@ -250,7 +259,10 @@ class RBRRule:
                 else:
                     gv_aux = self.build_field_vars()
                     bc = self.vars_to_string("data")
-                    local_vars = self.build_local_vars()
+                    if mem_abs:
+                        local_vars = self.build_local_vars_memabs()
+                    else:
+                        local_vars = self.build_local_vars()
                     
                 gv = ", ".join(gv_aux)
                 local_vars_string = ", ".join(local_vars)
@@ -282,8 +294,8 @@ class RBRRule:
         self.instr = instructions
 
 
-    def update_rule(self):
-        self.update_calls()
+    def update_rule(self,mem_abs = False):
+        self.update_calls(mem_abs)
 #        self.fresh_index = max(self.fresh_index,self.arg_input)
         if self.string_getter:
             self.include_string_getter()
@@ -348,13 +360,17 @@ class RBRRule:
     '''
     It builds a string that represent the rbr.
     '''
-    def rule2string(self):
+    def rule2string(self,mem_abs = False):
         rule = ""
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
         new_instr = ["skip"] if new_instr == [] else new_instr
         in_aux = self.build_input_vars()
-        local_vars = self.build_local_vars()
+
+        if mem_abs:
+            local_vars = self.build_local_vars_memabs()
+        else:
+            local_vars = self.build_local_vars()
         
         in_vars = self.vars_to_string("input")
         gv = self.vars_to_string("global")
