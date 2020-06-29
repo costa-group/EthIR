@@ -117,7 +117,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
     if mem_intervals and verifier == "cpa":
         create_mem_variables(mem_blocks)
 
-    print mem_blocks
+    #print mem_blocks
     mem_init_blocks = map(lambda x: x[0], mem_blocks)
     
     begin = dtimer()
@@ -138,7 +138,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
             heads = "\n"+head_c+heads
             new_rules.append(rule)
 
-        print memory_id_spec
+        #print memory_id_spec
             
         if verifier == "cpa" and len(mem_blocks)>0:
             head_mload, mload_f = mload_functions()
@@ -168,7 +168,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -1877,11 +1877,14 @@ def initialize_global_variables(rules,init_fields):
     for v in initialized_vars:
         val = init_fields[v]
         fields.append("\tg"+str(v)+" = "+str(val))
-                      
-    if mem_abs:
+
+    if mem_abs and verifier == "cpa":
+        l_vars = ["\tmem64 = "+init_mem40]
+    elif mem_abs:
         l_vars = map(lambda x: "\tmem"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
     else:
-            l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
+        l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
+
     bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_int()",bc_data)
 
     if fields != []:
@@ -1981,28 +1984,37 @@ def def_signextend_function():
     return head,f
 
 def def_exp_function():
-    head = "int exp_eth (int v0, int v1);\n"
+    if goto:
+        head = "int exp_eth (int w0, int w1);\n"
 
-    f = "int exp_eth (int v0, int v1) {\n"
-
-    if verifier == "verymax":
-        f = f+"\treturn __VERIFIER_nondet_int();\n"
+        f = "int exp_eth (int w0, int w1) {\n"
+        f = f+"\tint v0 = w0;\n"
+        f = f+"\tint v1 = w1;\n"
     else:
-        f = f+"\tif (v1 == 0) return 1;\n"
-        f = f+"\tif (v1 == 1) return v0;\n"
-        f = f+"\tif (v1 == 2) return v0*v0;\n"
-        f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
-        f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
-        f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
-        f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
-        f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
-        f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
+        head = "int exp_eth (int v0, int v1);\n"
+        f = "int exp_eth (int v0, int v1) {\n"
+        
+    f = f+"\tif (v1 == 0) return 1;\n"
+    f = f+"\tif (v1 == 1) return v0;\n"
+    f = f+"\tif (v1 == 2) return v0*v0;\n"
+    f = f+"\tif (v1 == 3) return v0*v0*v0;\n"
+    f = f+"\tif (v1 == 4) return v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 5) return v0*v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 6) return v0*v0*v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 7) return v0*v0*v0*v0*v0*v0*v0;\n"
+    f = f+"\tif (v1 == 8) return v0*v0*v0*v0*v0*v0*v0*v0;\n"
 
-        f = f+"\tint res = 1;\n"
+    f = f+"\n\tint res;\n"
+    
+    if svcomp.get("verify",-1) != -1:
+        f = f+"\tres = "+get_nondet_svcomp_label()+";\n"
+    elif not goto:
+        f = f+"\tint v2;\n\tres = v2;\n"
+        f = f+"\tres = 1\n;"
         f = f+"\tfor (int i = 0; i < v1; i ++) {\n"
         f = f+"\t\tres = res * v0;\n"
         f = f+"\t}\n"
-        f = f+"\treturn res;\n"
+    f = f+"\treturn res;\n"
     f = f+"}"
 
     return head,f
