@@ -128,7 +128,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
 
     try:
         if gotos:
-            goto = True
+            goto = gotos
             heads, new_rules = rbr2c_gotos(rbr,scc)
         else:
             heads, new_rules = rbr2c_recur(rbr)
@@ -168,7 +168,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
-        #traceback.print_exc()
+        traceback.print_exc()
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
@@ -330,17 +330,35 @@ def translate_jump_scc(r,scc,id_loop,nested = False):
 
 def translate_block_scc(rule,id_loop,multiple=False):
     
-    stack_variables = get_input_variables(rule.get_index_invars())
-    stack = map(lambda x: "int "+x,stack_variables)
-    s_head = ", ".join(stack)
+    if goto == "local":
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int i_"+x,stack_variables)
+        s_head = ", ".join(stack)
 
+    elif goto == "global":
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int "+x,stack_variables)
+        s_head = ", ".join(stack)
+
+    elif goto == "mix":
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int i_"+x,stack_variables)
+        s_head = ", ".join(stack)
+
+        
+    if goto == "local" or goto == "mix":
+        head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+        head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+    else:
     
-    # head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
-    # head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+        head_c = "void " + rule.get_rule_name()+"();\n"
+        head = "void " + rule.get_rule_name()+"(){\n"
 
-    head_c = "void " + rule.get_rule_name()+"();\n"
-    head = "void " + rule.get_rule_name()+"(){\n"
+    if goto == "local" or goto == "mix":
+        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars = "\n".join(init_vars_aux)+"\n\n"
 
+        
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
     has_string_pattern = rule.get_string_getter()
@@ -368,12 +386,20 @@ def translate_block_scc(rule,id_loop,multiple=False):
 
     update_stack_vars_global(stack_variables)
     update_stack_vars_global(variables)
-        
+
+    if goto == "local" or goto == "mix":
+        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
+        initializations = "\n".join(initializations_aux)+"\n\n"
     if not multiple:
         #rule_c = head+var_declarations+init_loop_label+body+label
-        rule_c = head+init_loop_label+body+label
+        if goto == "local" or goto == "mix":
+            rule_c = head+initializations+init_vars+init_loop_label+body+label
+        else:
+            rule_c = head+init_loop_label+body+label
         return head_c,rule_c
     else:
+        if goto == "local" or goto == "mix":
+            init_loop_label = initializations+init_vars+init_loop_label
         return head_c,[head,init_loop_label+body+label],variables_d
 
 
@@ -929,7 +955,7 @@ def filter_call(call_instruction):
     s_vars = map(lambda x: unbox_variable(x.strip()),s_vars)
     
     s_string = ", ".join(s_vars)
-    if goto:
+    if goto == "global":
         call = block[:pos_open]+"()"
     else:
         call = block[:pos_open]+"("+s_string+")"
@@ -955,7 +981,7 @@ def process_jumps(rules):
     stack = map(lambda x: "int "+x,stack_variables)
     s_head = ", ".join(stack)
 
-    if goto:
+    if goto == "global":
         head_c ="void " + jump1.get_rule_name()+"();\n"
         head = "void " + jump1.get_rule_name()+"(){\n"
     else:
@@ -982,13 +1008,21 @@ def process_jumps(rules):
 
     
 def process_rule_c(rule):
-    stack_variables = get_input_variables(rule.get_index_invars())
-    stack = map(lambda x: "int "+x,stack_variables)
-    s_head = ", ".join(stack)
-
-    if goto:
+    if goto == "global":
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int "+x,stack_variables)
+        s_head = ", ".join(stack)
+    else:
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int i_"+x,stack_variables)
+        s_head = ", ".join(stack)
+        
+    if goto == "global":
         head_c = "void " + rule.get_rule_name()+"();\n"
         head = "void " + rule.get_rule_name()+"(){\n"
+    elif goto == "mix":
+        head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+        head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
     else:
         head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
         head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
@@ -1015,10 +1049,23 @@ def process_rule_c(rule):
         
     end ="\n}\n"
 
-    if goto:
+    if goto == "global":
         update_stack_vars_global(stack_variables)
         update_stack_vars_global(variables)
         rule_c = head
+        
+    elif goto == "mix":
+        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
+        initializations = "\n".join(initializations_aux)+"\n\n"
+
+        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars = "\n".join(init_vars_aux)+"\n\n"
+
+
+        rule_c = head+initializations+init_vars
+
+    elif goto == "local":
+        pass
     else:
         rule_c = head+var_declarations
     
@@ -1205,7 +1252,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         stack_variables = filter(lambda x: x.startswith("s("),vars_aux)
         variables = map(lambda x : unbox_variable(x.strip()),stack_variables)
         new_variables = ", ".join(variables)
-        if goto:
+        if goto == "global":
             new = block+"()"
         else:
             new = block+"("+new_variables+")"
@@ -1896,7 +1943,7 @@ def initialize_global_variables(rules,init_fields):
     if bc != []:
         s = s+";\n".join(bc)+";\n"
 
-    if goto:
+    if goto == "global":
         for e in stack_vars_global:
             s = s+"\t"+e+" = __VERIFIER_nondet_int();\n"
         
@@ -1949,7 +1996,7 @@ def write_init(rules,execution,cname,num_mem_vars):
         if svcomp == {}:
             f.write("#include <stdio.h>\n\n")
 
-        if goto:
+        if goto == "global":
             s_vars = get_stack_variables(stack_vars_global,True)
             r_vars = get_rest_variables(stack_vars_global,True)    
             s = s+"".join(s_vars)+"".join(r_vars)
@@ -2289,3 +2336,12 @@ def get_mem_instruction_identifier(already_def):
             meminstr_id+=1
 
     return result
+
+def generate_initializations(stack_vars):
+    vars_def = []
+    for s in stack_vars:
+        if s.strip() not in vars_def:
+            vars_def.append(s)
+
+    l_vars = map(lambda x: "\tint "+x+";",vars_def)
+    return l_vars
