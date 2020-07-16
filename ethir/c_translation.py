@@ -333,31 +333,48 @@ def translate_block_scc(rule,id_loop,multiple=False):
     if goto == "local":
         stack_variables = get_input_variables(rule.get_index_invars())
         stack = map(lambda x: "int i_"+x,stack_variables)
-        s_head = ", ".join(stack)
+
+        fields_variables = get_field_variables(rule)
+        fields = map(lambda x: "int i_"+x,fields_variables)[::-1]
+        #build memory
+        if not mem_abs:
+            local_variables = get_local_variables(rule)
+            local = map(lambda x: "int i_"+x, local_variables)
+        else:
+            local = []
+            
+        #build blockchain
+        bc_variables = get_blockchain_variables(rule)
+        bc = map(lambda x: "int i_"+x, bc_variables)
+
+        r_vars = stack+fields+local+bc
+        s_head = ",".join(r_vars)
+        head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+        head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
 
     elif goto == "global":
         stack_variables = get_input_variables(rule.get_index_invars())
         stack = map(lambda x: "int "+x,stack_variables)
         s_head = ", ".join(stack)
 
+        head_c = "void " + rule.get_rule_name()+"();\n"
+        head = "void " + rule.get_rule_name()+"(){\n"
+        
     elif goto == "mix":
         stack_variables = get_input_variables(rule.get_index_invars())
         stack = map(lambda x: "int i_"+x,stack_variables)
         s_head = ", ".join(stack)
 
-        
-    if goto == "local" or goto == "mix":
         head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
         head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
+
     else:
-    
-        head_c = "void " + rule.get_rule_name()+"();\n"
-        head = "void " + rule.get_rule_name()+"(){\n"
+        head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
+        head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
 
-    if goto == "local" or goto == "mix":
-        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
-        init_vars = "\n".join(init_vars_aux)+"\n\n"
-
+        stack_variables = get_input_variables(rule.get_index_invars())
+        stack = map(lambda x: "int "+x,stack_variables)
+        
         
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
@@ -387,9 +404,40 @@ def translate_block_scc(rule,id_loop,multiple=False):
     update_stack_vars_global(stack_variables)
     update_stack_vars_global(variables)
 
-    if goto == "local" or goto == "mix":
+    if goto == "mix":
+        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars = "\n".join(init_vars_aux)+"\n\n"
+
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
         initializations = "\n".join(initializations_aux)+"\n\n"
+        
+    elif goto == "local":
+        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
+
+
+        initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
+
+        init_fvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
+        
+        #build memory
+        if not mem_abs:
+            initializations_local = map(lambda x: "\tint "+x+";", local_variables)
+
+            init_lvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
+
+        else:
+            initializations_local = []
+            init_lvars_aux = ""
+            
+        #build blockchain
+        initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
+
+        init_bvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
+
+        initializations = "\n".join(initializations_aux+initializations_fields+initializations_local+initializations_bc)+"\n\n"
+        init_vars = "\n".join(init_vars_aux+init_fvars_aux+init_lvars_aux+init_bvars_aux)+"\n\n"
+        
     if not multiple:
         #rule_c = head+var_declarations+init_loop_label+body+label
         if goto == "local" or goto == "mix":
