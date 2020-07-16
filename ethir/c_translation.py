@@ -891,6 +891,28 @@ def get_input_variables(idx):
         in_vars.append(var)
     return in_vars
 
+def get_field_variables(rule):
+    
+    name_fields, numeric_fields = rule.get_global_arg()
+    fields_id = name_fields[::-1]+numeric_fields[::-1]
+
+    new = map(lambda x: "g"+x, fields_id)
+    
+    return new
+
+#No memory intervals abstraction
+def get_local_variables(rule):
+    locals_vars = sorted(rule.get_args_local())[::-1]
+    l_vars = map(lambda x: "l"+str(x),locals_vars)
+
+    return l_vars
+    
+def get_blockchain_variables(rule):
+    bc_data = rule.get_bc()
+
+    return bc_data
+
+    
 def translate_conditions(instr):
 
     if instr.startswith("gt"):
@@ -951,12 +973,30 @@ def filter_call(call_instruction):
     pos_open = block.find("(")
     arguments = block[pos_open+1:-1]
     variables = arguments.split(",")
-    s_vars = filter(lambda x: x.strip().startswith("s("),variables)
-    s_vars = map(lambda x: unbox_variable(x.strip()),s_vars)
+    stack_variables = filter(lambda x: x.strip().startswith("s("),variables)
+    s_vars = map(lambda x: unbox_variable(x.strip()),stack_variables)
     
     s_string = ", ".join(s_vars)
     if goto == "global":
         call = block[:pos_open]+"()"
+    elif goto == "mix":
+        call = block[:pos_open]+"("+s_string+")"
+    elif goto == "local":
+        field_variables = filter(lambda x: x.strip().startswith("g("),variables)
+        f_vars = map(lambda x: unbox_variable(x.strip()),field_variables)
+
+        if not mem_abs:
+            local_variables = filter(lambda x: x.strip().startswith("l("),variables)
+            l_vars = map(lambda x: x.strip()[2:-1],local_variables)
+        else:
+            l_vars = []
+            
+        other = stack_variables+field_variables+local_variables
+        bc_vars = filter(lambda x: x not in other,variables)
+        
+        v_vars = s_vars+f_vars+l_vars+bc_vars
+        s_string = ", ".join(v_vars)
+        call = block[:pos_open]+"("+s_string+")"
     else:
         call = block[:pos_open]+"("+s_string+")"
     return call
@@ -984,6 +1024,29 @@ def process_jumps(rules):
     if goto == "global":
         head_c ="void " + jump1.get_rule_name()+"();\n"
         head = "void " + jump1.get_rule_name()+"(){\n"
+    elif goto == "mix":
+        head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
+        head = "void " + jump1.get_rule_name()+"("+s_head+"){\n"
+    elif goto == "local":
+        fields_variables = get_field_variables(jump1)[::-1]
+        fields = map(lambda x: "int "+x,fields_variables)
+        #build memory
+        if not mem_abs:
+            local_variables = get_local_variables(jump1)
+            local = map(lambda x: "int "+x, local_variables)
+        else:
+            local = []
+            
+        #build blockchain
+        bc_variables = get_blockchain_variables(jump1)
+        bc = map(lambda x: "int "+x, bc_variables)
+
+        r_vars = stack+fields+local+bc
+        r_head = ",".join(r_vars)
+
+        head_c ="void " + jump1.get_rule_name()+"("+r_head+");\n"
+        head = "void " + jump1.get_rule_name()+"("+r_head+"){\n"
+        
     else:
         head_c ="void " + jump1.get_rule_name()+"("+s_head+");\n"
         head = "void " + jump1.get_rule_name()+"("+s_head+"){\n"
@@ -1023,10 +1086,33 @@ def process_rule_c(rule):
     elif goto == "mix":
         head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
         head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
-    else:
+    elif goto == "local": #local
+
+        #build fields
+        fields_variables = get_field_variables(rule)
+        fields = map(lambda x: "int i_"+x,fields_variables)[::-1]
+        #build memory
+        if not mem_abs:
+            local_variables = get_local_variables(rule)
+            local = map(lambda x: "int i_"+x, local_variables)
+        else:
+            local = []
+            
+        #build blockchain
+        bc_variables = get_blockchain_variables(rule)
+        bc = map(lambda x: "int i_"+x, bc_variables)
+
+        r_vars = stack+fields+local+bc
+        r_head = ",".join(r_vars)
+        
+        head_c = "void " + rule.get_rule_name()+"("+r_head+");\n"
+        head = "void " + rule.get_rule_name()+"("+r_head+"){\n"
+
+    else: #no gotos
         head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
         head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
-    
+
+        
     cont = rule.get_fresh_index()+1
     instructions = rule.get_instructions()
     has_string_pattern = rule.get_string_getter()
@@ -1065,7 +1151,37 @@ def process_rule_c(rule):
         rule_c = head+initializations+init_vars
 
     elif goto == "local":
-        pass
+        #stack variables
+        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
+        initializations = "\n".join(initializations_aux)+"\n\n"
+        init_svars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_svars = "\n".join(init_svars_aux)+"\n\n"
+
+        
+        initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
+        i_fields = "\n".join(initializations_fields)+"\n\n"
+        init_fvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
+        init_fvars = "\n".join(init_fvars_aux)+"\n\n"
+        
+        #build memory
+        if not mem_abs:
+            initializations_local = map(lambda x: "\tint "+x+";", local_variables)
+            i_local = "\n".join(initializations_local)+"\n\n"
+            init_lvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
+            init_lvars = "\n".join(init_lvars_aux)+"\n\n"
+        else:
+            i_local = ""
+            init_lvars = ""
+            
+        #build blockchain
+        initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
+        i_bc = "\n".join(initializations_bc)+"\n\n"
+        init_bvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
+        init_bvars = "\n".join(init_bvars_aux)+"\n\n"
+
+        rule_c = head+initializations+i_fields+i_local+i_bc+init_svars+init_fvars+init_lvars+init_bvars
+        #aniadir declaracion de variables y asignaciones nuevas
+    
     else:
         rule_c = head+var_declarations
     
@@ -1254,6 +1370,28 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         new_variables = ", ".join(variables)
         if goto == "global":
             new = block+"()"
+        elif goto == "mix":
+            new = block+"("+new_variables+")"
+        elif goto == "local":
+            s_variables = map(lambda x : unbox_variable(x.strip()),stack_variables)
+            
+            field_variables = filter(lambda x: x.strip().startswith("g("),vars_aux)
+            f_variables = map(lambda x: unbox_variable(x.strip()),field_variables)
+
+            if not mem_abs:
+                local_variables = filter(lambda x: x.strip().startswith("l("),vars_aux)
+                l_variables = map(lambda x: x.strip()[2:-1],local_variables)
+
+            else:
+                l_variables = []
+                
+            other = stack_variables+field_variables+local_variables
+            bc_variables = filter(lambda x: x not in other,vars_aux)
+
+            variables = s_variables+f_variables+l_variables+bc_variables
+            
+            new_variables = ", ".join(variables)
+            new = block+"("+new_variables+")"
         else:
             new = block+"("+new_variables+")"
 
@@ -1983,15 +2121,9 @@ def write_init(rules,execution,cname,num_mem_vars):
             l_vars = map(lambda x: "int l"+str(x),locals_vars)
         bc = map(lambda x: "int "+x,bc_data)
         
-        
-        if fields != []:
-            s = s+";\n".join(fields)+";\n"
 
-        if l_vars != []:
-            s = s+";\n".join(l_vars)+";\n"
-
-        if bc != []:
-            s = s+";\n".join(bc)+";\n"
+        s_vars = build_vars_to_initialize(fields,l_vars,bc)
+        s = s+s_vars
 
         if svcomp == {}:
             f.write("#include <stdio.h>\n\n")
@@ -2008,6 +2140,26 @@ def write_init(rules,execution,cname,num_mem_vars):
         
     f.close()
 
+def build_vars_to_initialize(fields,local,blockchain):
+    s = ""
+
+    if goto == "global" or goto == "mix":
+        if fields != []:
+            s = s+";\n".join(fields)+";\n"
+
+        if local != []:
+            s = s+";\n".join(local)+";\n"
+
+        if blockchain != []:
+            s = s+";\n".join(blockchain)+";\n"
+
+    else: #all variables local except interval memory
+        if mem_abs:
+            s = s+";\n".join(local)+";\n"
+        
+    return s
+
+        
 def def_signextend_function():
     head = "int signextend_eth(int v0, int v1);\n"
     f = "int signextend_eth(int v0, int v1){\n"
