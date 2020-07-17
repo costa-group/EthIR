@@ -133,7 +133,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         else:
             heads, new_rules = rbr2c_recur(rbr)
 
-        if svcomp!={}:
+        if svcomp!={} and goto != "local":
             head_c , rule = initialize_globals(rbr,init_fields)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
@@ -414,7 +414,6 @@ def translate_block_scc(rule,id_loop,multiple=False):
     elif goto == "local":
         init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
-
 
         initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
 
@@ -1193,48 +1192,44 @@ def process_rule_c(rule):
         initializations = "\n".join(initializations_aux)+"\n\n"
 
         init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
-        init_vars = "\n".join(init_vars_aux)+"\n\n"
+        init_vars = "\n".join(init_vars_aux)+"\n" if init_vars_aux != [] else ""
 
 
         rule_c = head+initializations+init_vars
 
     elif goto == "local":
         #stack variables
-        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
-        initializations = "\n".join(initializations_aux)+"\n\n"
-        init_svars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
-        init_svars = "\n".join(init_svars_aux)+"\n\n"
-
+        initializations_stack = generate_initializations(stack_variables[::-1]+variables)
+        init_svars = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
         
         initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
-        i_fields = "\n".join(initializations_fields)+"\n\n"
-        init_fvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
-        init_fvars = "\n".join(init_fvars_aux)+"\n\n"
+        init_fvars = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
         
         #build memory
         if not mem_abs:
             initializations_local = map(lambda x: "\tint "+x+";", local_variables)
-            i_local = "\n".join(initializations_local)+"\n\n"
-            init_lvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
-            init_lvars = "\n".join(init_lvars_aux)+"\n\n"
+            init_lvars = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
         else:
-            i_local = ""
-            init_lvars = ""
+            initializations_local = []
+            init_lvars = []
             
         #build blockchain
         initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
-        i_bc = "\n".join(initializations_bc)+"\n\n"
-        init_bvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
-        init_bvars = "\n".join(init_bvars_aux)+"\n\n"
+        init_bvars = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
 
-        rule_c = head+initializations+i_fields+i_local+i_bc+init_svars+init_fvars+init_lvars+init_bvars
+        initializations = "\n".join(initializations_stack+initializations_fields+initializations_local+initializations_bc)+"\n\n"
+        init_vars = "\n".join(init_svars+init_fvars+init_lvars+init_bvars)+"\n\n"
+        rule_c = head+initializations+init_vars
         #aniadir declaracion de variables y asignaciones nuevas
     
     else:
         rule_c = head+var_declarations
     
     if (rule.get_Id() in blocks2init) and (svcomp!={}):
-        init = "\tinit_globals();\n"
+        if goto == "local":
+            init = ""
+        else:
+            init = "\tinit_globals();\n"
         rule_c = rule_c+init+body+label+end
     else:
         rule_c = rule_c+body+label+end
@@ -2453,16 +2448,17 @@ def write_main(execution,cname):
     else:
         name = costabs_path+cname+".c"
 
-    with open(name,"a") as f:
-        init = "\tinit_globals();"
+    if svcomp != {}:
+        with open(name,"a") as f:
+            init = "\tinit_globals();"
         
-        s = "\nint main(){\n"
-        if svcomp!={} :
-            s = s+"\n"+init+"\n"
-        s = s+"\tblock0();\n"
-        s = s+"\treturn 0;\n}"
-        f.write(s)
-    f.close()
+            s = "\nint main(){\n"
+            if goto != "local":
+                s = s+"\n"+init+"\n"
+            s = s+"\tblock0();\n"
+            s = s+"\treturn 0;\n}"
+            f.write(s)
+        f.close()
 
 def write(head,rules,execution,cname):
     
