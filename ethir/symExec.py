@@ -278,6 +278,11 @@ def change_format(evm_version):
             line = line.replace('Missing opcode 0xfd', 'REVERT')
             line = line.replace('Missing opcode 0xfe', 'ASSERTFAIL')
             line = line.replace('Missing opcode', 'INVALID')
+
+            #Newer versions
+            line = line.replace('opcode 0xfe not defined', 'ASSERTFAIL')
+            line = line.replace('opcode 0xfd not defined', 'REVERT')
+            
             line = line.replace(':', '')
             lineParts = line.split(' ')
             try: # removing initial zeroes
@@ -912,7 +917,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     instr_idx = 0
     for instr in block_ins:
-
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
         
