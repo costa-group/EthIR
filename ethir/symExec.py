@@ -917,6 +917,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     instr_idx = 0
     for instr in block_ins:
+        
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
         
@@ -934,7 +935,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
 
-        if instr.strip() == "STOP":
+        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL":
             new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
             vertices[block].set_instructions(new_block_ins)
             break
