@@ -911,6 +911,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     bl = vertices[block]
 
     for instr in block_ins:
+        print instr
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
         
@@ -2828,7 +2829,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 computed = second*(2**first) % (2**256)
             else:
                 computed = "shl("+str(first)+","+str(second)+")"
-            #computed = simplify(computed) if is_expr(computed) else computed
+                c_val = BitVec(computed, 256)
+                computed = simplify(c_val) if is_expr(c_val) else computed
+                #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
             
         else:
@@ -2851,7 +2854,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 computed = math.floor(second/(2**first))
             else:
                 computed = "shr("+str(first)+","+str(second)+")"
-            #computed = simplify(computed) if is_expr(computed) else computed
+                c_val = BitVec(computed, 256)
+                computed = simplify(c_val) if is_expr(c_val) else computed
             stack.insert(0, computed)
             
         else:
@@ -2870,7 +2874,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 #computed = second >> first
                 computed = math.floor(second/(2**first))
             else:
-                computed = "shr("+str(first)+","+str(second)+")"
+                computed = "sar("+str(first)+","+str(second)+")"
+                c_val = BitVec(computed, 256)
+                computed = simplify(c_val) if is_expr(c_val) else computed
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
             
