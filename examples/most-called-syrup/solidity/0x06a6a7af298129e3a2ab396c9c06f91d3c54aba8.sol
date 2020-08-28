@@ -2,7 +2,7 @@
  *Submitted for verification at Etherscan.io on 2019-09-22
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 // File: contracts/Auction/ISaleClockAuction.sol
 

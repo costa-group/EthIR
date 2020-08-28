@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 pragma experimental ABIEncoderV2;
 
 /*
@@ -37,7 +37,7 @@ pragma experimental ABIEncoderV2;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 // solhint-disable max-line-length
@@ -87,7 +87,7 @@ contract LibConstants {
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -107,7 +107,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract ReentrancyGuard {
@@ -154,9 +154,9 @@ contract ReentrancyGuard {
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract SafeMath {
@@ -295,7 +295,7 @@ contract LibFillResults is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -315,7 +315,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract LibEIP712 {
@@ -528,7 +528,7 @@ contract LibOrder is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -782,7 +782,7 @@ contract LibMath is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -804,7 +804,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -998,7 +998,7 @@ contract MExchangeCore is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -1018,7 +1018,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract ISignatureValidator {
@@ -1130,7 +1130,7 @@ contract MSignatureValidator is
   limitations under the License.
 
 */
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -1149,7 +1149,7 @@ pragma solidity 0.4.24;
   limitations under the License.
 
 */
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract ITransactions {
@@ -1225,7 +1225,7 @@ contract MTransactions is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -1245,7 +1245,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract IAssetProxyDispatcher {
@@ -1808,7 +1808,7 @@ contract MixinExchangeCore is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -1828,7 +1828,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 library LibBytes {
@@ -2399,7 +2399,7 @@ library LibBytes {
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract IWallet {
@@ -2435,7 +2435,7 @@ contract IWallet {
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract IValidator {
@@ -2816,7 +2816,7 @@ contract MixinSignatureValidator is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -2840,7 +2840,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -3056,7 +3056,7 @@ contract LibAbiEncoder {
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -3078,7 +3078,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -3655,11 +3655,11 @@ contract MixinWrapperFunctions is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 contract IOwnable {
@@ -3718,7 +3718,7 @@ contract Ownable is
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -3738,7 +3738,7 @@ pragma solidity 0.4.24;
 
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -3968,7 +3968,7 @@ contract MixinAssetProxyDispatcher is
   limitations under the License.
 
 */
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 /*
 
@@ -3989,7 +3989,7 @@ pragma solidity 0.4.24;
 */
 
 // solhint-disable
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 /// @dev This contract documents the revert reasons used in the Exchange contract.
@@ -4187,7 +4187,7 @@ contract MixinTransactions is
   limitations under the License.
 */
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -4212,7 +4212,7 @@ pragma solidity 0.4.24;
   limitations under the License.
 
 */
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
@@ -4233,7 +4233,7 @@ pragma solidity 0.4.24;
   limitations under the License.
 
 */
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 
 
