@@ -1,4 +1,4 @@
-pragma solidity 0.5.2;
+pragma solidity ^0.5.2;
 
 // File: contracts/lib/github.com/OpenZeppelin/openzeppelin-solidity-2.1.1/contracts/cryptography/ECDSA.sol
 
