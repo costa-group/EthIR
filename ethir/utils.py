@@ -430,6 +430,9 @@ def write_cfg(it,vertices,name = False,cloned = False):
                     i+=1
                 else:
                     f.write(instr+"\n")
+
+                if instr.strip() == "STOP":
+                    break
     f.close()
 
 

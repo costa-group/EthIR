@@ -910,8 +910,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     bl = vertices[block]
 
+    instr_idx = 0
     for instr in block_ins:
-        print instr
+
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
         
@@ -929,6 +930,12 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
 
+        if instr.strip() == "STOP":
+            new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
+            vertices[block].set_instructions(new_block_ins)
+            break
+
+        instr_idx+=1
     if not bl.get_pcs_stored():
         bl.set_pcs_stored(True)
 
@@ -2786,7 +2793,6 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stack.pop(0)
             stack.pop(0)
             # TODO
-            pass
         else:
             raise ValueError('STACK underflow')
     elif opcode == "SUICIDE":
@@ -3480,4 +3486,9 @@ def get_evm_block():
         f = open(bl_path+"/block_"+str(b)+".bl","w")
         f.write(blocks[b])
         f.close()
-        
+
+def remove_unnecesary_opcodes(idx, instructions):
+    if idx < len(instructions):
+        return instructions[:idx+1]
+    else:
+        return instructions
