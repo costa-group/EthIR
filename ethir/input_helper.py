@@ -307,7 +307,7 @@ class InputHelper:
         disasm_out = ""
         try:
             disasm_p = subprocess.Popen(
-                ["evm", "disasm", evm_file], stdout=subprocess.PIPE)
+                ["evm1.9.14", "disasm", evm_file], stdout=subprocess.PIPE)
             disasm_out = disasm_p.communicate()[0].decode()
         except:
             logging.critical("Disassembly failed.")
