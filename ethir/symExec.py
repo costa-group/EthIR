@@ -1972,10 +1972,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                             
                     
                     param_idx = (position - 4) // 32
-
+                    
                     # print("Param idx")
                     # print param_idx
-                    new_var_name = replicated_params_list[param_idx]
+                    # print replicated_params_list
+                    if param_idx < len(replicated_params_list):
+                        new_var_name = replicated_params_list[param_idx]
+                    else:
+                        new_var_name = gen.gen_data_var(position)
                     g_src_map.var_names.append(new_var_name)
                     param_abs = (block,new_var_name)
                 else:
