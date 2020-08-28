@@ -73,7 +73,7 @@ def init_globals():
     opcodesF = ["CREATE", "CALL", "CALLCODE", "RETURN", "REVERT",
                 "ASSERTFAIL", "DELEGATECALL", "BREAKPOINT", "RNGSEED", "SSIZEEXT",
                 "SLOADBYTES", "SSTOREBYTES", "SSIZE", "STATEROOT", "TXEXECGAS",
-                "CALLSTATIC", "INVALID", "SUICIDE"]
+                "CALLSTATIC", "INVALID", "SUICIDE","STATICCALL"]
 
     global opcodesZ
     opcodesZ = ["RETURNDATACOPY","RETURNDATASIZE"]
@@ -644,6 +644,15 @@ def translateOpcodes40(opcode, index_variables,block):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gaslimit"
         update_bc_in_use("gaslimit",block)
+    elif opcode == "SELFBALANCE":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = selfbalance"
+        update_bc_in_use("selfbalance",block)
+    elif opcode == "CHAINID":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = chainid"
+        update_bc_in_use("chainid",block)
+
     else:
         instr = "Error opcodes40: "+opcode
         updated_variables = index_variables
@@ -879,6 +888,17 @@ def translateOpcodesF(opcode, index_variables, addr):
         _, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         instr = v1 +" = 1"
+
+    elif opcode == "STATICCALL":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1 +" = 1"
+
     # elif opcode == "BREAKPOINT":
     #     pass
     # elif opcode == "RNGSEED":

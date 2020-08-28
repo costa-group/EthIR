@@ -49,6 +49,8 @@ opcodes = {
     "NUMBER": [0x43, 0, 1],
     "DIFFICULTY": [0x44, 0, 1],
     "GASLIMIT": [0x45, 0, 1],
+    "CHAINID": [0x46,0,1],
+    "SELFBALANCE": [0x47,0,1],
     "POP": [0x50, 1, 0],
     "MLOAD": [0x51, 1, 1],
     "MSTORE": [0x52, 2, 0],
@@ -74,7 +76,6 @@ opcodes = {
     "CALL": [0xf1, 7, 1],
     "CALLCODE": [0xf2, 7, 1],
     "RETURN": [0xf3, 2, 0],
-    "REVERT": [0xfd, 2, 0],
     "ASSERTFAIL": [0xfe, 0, 0],
     "DELEGATECALL": [0xf4, 6, 1],
     "BREAKPOINT": [0xf5, 0, 0],
@@ -82,9 +83,11 @@ opcodes = {
     "SSIZEEXT": [0xf7, 2, 1],
     "SLOADBYTES": [0xf8, 3, 0],
     "SSTOREBYTES": [0xf9, 3, 0],
+    "STATICCALL": [0xfa, 6, 1],
     "SSIZE": [0xfa, 1, 1],
     "STATEROOT": [0xfb, 1, 1],
     "TXEXECGAS": [0xfc, 0, 1],
+    "REVERT": [0xfd, 2, 0],
     "CALLSTATIC": [0xfd, 7, 1],
     "INVALID": [0xfe, 0, 0],  # Not an opcode use to cause an exception
     "SUICIDE": [0xff, 1, 0],
@@ -100,7 +103,7 @@ GCOST = {
     "Glow": 5,
     "Gmid": 8,
     "Ghigh": 10,
-    "Gextcode": 20,
+    "Gextcode": 700,
     "Gbalance": 400,
     "Gsload": 50,
     "Gjumpdest": 1,
@@ -136,13 +139,13 @@ Wzero = ("STOP", "RETURN", "REVERT", "ASSERTFAIL")
 
 Wbase = ("ADDRESS", "ORIGIN", "CALLER", "CALLVALUE", "CALLDATASIZE",
          "CODESIZE", "GASPRICE", "COINBASE", "TIMESTAMP", "NUMBER",
-         "DIFFICULTY", "GASLIMIT", "POP", "PC", "MSIZE", "GAS")
+         "DIFFICULTY", "GASLIMIT", "POP", "PC", "MSIZE", "GAS","CHAINID")
 
 Wverylow = ("ADD", "SUB", "NOT", "LT", "GT", "SLT", "SGT", "EQ",
             "ISZERO", "AND", "OR", "XOR", "BYTE", "CALLDATALOAD",
             "MLOAD", "MSTORE", "MSTORE8", "PUSH", "DUP", "SWAP")
 
-Wlow = ("MUL", "DIV", "SDIV", "MOD", "SMOD", "SIGNEXTEND")
+Wlow = ("MUL", "DIV", "SDIV", "MOD", "SMOD", "SIGNEXTEND","SELFBALANCE")
 
 Wmid = ("ADDMOD", "MULMOD", "JUMP")
 
@@ -150,7 +153,7 @@ Whigh = ("JUMPI")
 
 Wext = ("EXTCODESIZE")
 
-Wext = ("EXTCODHASH")
+Wexthash = ("EXTCODEHASH")
 
 def get_opcode(opcode):
     if opcode in opcodes:
