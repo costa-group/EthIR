@@ -1810,7 +1810,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 second = to_symbolic(second)
                 # solver.push()
                 # solver.add( Not (Or( first >= 32, first < 0 ) ) )
-                if byte_index < 0:
+                
+                if isReal(byte_index) and byte_index < 0:
                     computed = 0
                 else:
                     computed = second & (255 << (8 * byte_index))
