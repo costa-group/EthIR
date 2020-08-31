@@ -62,7 +62,6 @@ class InputHelper:
                 setattr(self, attr, val)
 
         self.solc_version = self._get_solidity_version()
-        print self.solc_version
         self.init_compiled_contracts = []
 
     def get_inputs(self):
@@ -260,7 +259,6 @@ class InputHelper:
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
         cmd = solc+" --link%s" %option
-        print cmd
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0].decode()
