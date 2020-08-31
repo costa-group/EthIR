@@ -226,6 +226,7 @@ class InputHelper:
             binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part:\n(.*?)\n"
 
         contracts = re.findall(binary_regex, s)
+        
         contracts = [contract for contract in contracts if contract[1]]
         if not contracts:
             logging.critical("Solidity compilation failed")
@@ -259,7 +260,7 @@ class InputHelper:
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
         cmd = solc+" --link%s" %option
-
+        print cmd
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0].decode()
@@ -306,8 +307,14 @@ class InputHelper:
 
         disasm_out = ""
         try:
-            disasm_p = subprocess.Popen(
-                ["evm1.9.14", "disasm", evm_file], stdout=subprocess.PIPE)
+
+            if self.solc_version == "v4":
+                disasm_p = subprocess.Popen(
+                    ["evm", "disasm", evm_file], stdout=subprocess.PIPE)
+            else:
+                disasm_p = subprocess.Popen(
+                    ["evm1.9.14", "disasm", evm_file], stdout=subprocess.PIPE)
+
             disasm_out = disasm_p.communicate()[0].decode()
         except:
             logging.critical("Disassembly failed.")
