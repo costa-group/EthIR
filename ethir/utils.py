@@ -957,3 +957,5 @@ def get_solc_executable(version):
         return "solcv5"
     elif version == "v6":
         return "solcv6"
+    elif version == "v7":
+        return "solcv7"
