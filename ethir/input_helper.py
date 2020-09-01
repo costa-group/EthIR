@@ -160,9 +160,9 @@ class InputHelper:
         cmd = solc+" --bin-runtime %s" % self.source
 
         out = run_command(cmd)
-
         libs = re.findall(r"_+(.*?)_+", out)
         libs = set(libs)
+        
         if libs:
             return self._link_libraries(self.source, libs)
         else:
@@ -359,8 +359,13 @@ class InputHelper:
         else:
             pragma_version = pragma[0].strip()
             id_p = pragma_version.find("^")
-            elem = pragma_version[id_p+1:]
-            solc_v = elem.split(".")[1].strip()
+            if id_p != -1:
+                elem = pragma_version[id_p+1:]
+                solc_v = elem.split(".")[1].strip()
+            else:
+                elem = pragma_version.split()[-1]
+                solc_v = elem.split(".")[1].strip()
+                
             return "v"+solc_v
 
     def get_solidity_version(self):
