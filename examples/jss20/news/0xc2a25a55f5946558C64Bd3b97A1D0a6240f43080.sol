@@ -78,7 +78,7 @@ contract Ownable {
 
 // File: original_contracts/Partner.sol
 
-pragma solidity 0.5.11;
+pragma solidity ^0.5.11;
 
 
 
