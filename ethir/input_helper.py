@@ -247,6 +247,7 @@ class InputHelper:
     
     def _link_libraries(self, filename, libs):
         option = ""
+        print libs
         for idx, lib in enumerate(libs):
             lib_address = "0x" + hex(idx+1)[2:].zfill(40)
             option += " --libraries %s:%s" % (lib, lib_address)
@@ -259,6 +260,9 @@ class InputHelper:
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
         cmd = solc+" --link%s" %option
+        print cmd
+        out = p1.communicate()[0].decode()
+        print out
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0].decode()
@@ -356,7 +360,8 @@ class InputHelper:
         pragma = filter(lambda x: x.find("pragma solidity")!=-1, lines)
         if pragma == []:
             return "v4" #Put here the highest version
-        else:
+
+        elif len(pragma) == 1:
             pragma_version = pragma[0].strip()
             id_p = pragma_version.find("^")
             if id_p != -1:
@@ -368,5 +373,27 @@ class InputHelper:
                 
             return "v"+solc_v
 
+        else:
+            v = self._get_suitable_version(pragma)
+            return v
+            
     def get_solidity_version(self):
         return self.solc_version
+
+    def _get_suitable_version(self,pragmas):
+        v4 = len(filter(lambda x: x.find("0.4")!=-1,pragmas))
+        v5 = len(filter(lambda x: x.find("0.5")!=-1,pragmas))
+        v6 = len(filter(lambda x: x.find("0.6")!=-1,pragmas))
+        v7 = len(filter(lambda x: x.find("0.7")!=-1,pragmas))
+        m = max([v4,v5,v6,v7])
+
+        if m == v4:
+            return "v4"
+        elif m == v5:
+            return "v5"
+        elif m == v6:
+            return "v6"
+        elif m == v7:
+            return "v7"
+        else:
+            return "Error"
