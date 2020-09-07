@@ -25,7 +25,9 @@ def ceil32(x):
     return x if x % 32 == 0 else x + 32 - (x % 32)
 
 def isSymbolic(value):
-    return not isinstance(value, six.integer_types)
+    int_type = isinstance(value, six.integer_types)
+    float_type = isinstance(value,float)
+    return (not int_type) and (not float_type)
 
 def isReal(value):
     return isinstance(value, six.integer_types)
