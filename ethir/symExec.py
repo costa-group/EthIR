@@ -259,6 +259,9 @@ def initGlobalVars():
 
     global update_fields
     update_fields = {}
+
+    global source_n
+    source_n = ""
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -2957,6 +2960,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         
     else:
         log.debug("UNKNOWN INSTRUCTION: " + opcode)
+        print "UNKNOWN : "+source_n
         # if global_params.UNIT_TEST == 2 or global_params.UNIT_TEST == 3:
         #     log.critical("Unknown instruction: %s" % opcode)
         #     exit(UNKNOWN_INSTRUCTION)
@@ -3309,7 +3313,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global name
     global public_fields
     global invalid_option
-
+    global source_n
 
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
@@ -3326,8 +3330,10 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     name = cname
 
     if source_name != None:
+        source_n = source_name
         s_name = source_name.split("/")[-1].split(".")[0]
     else:
+        source_n = source_name
         s_name = source_name
         
     if hashes != None:
