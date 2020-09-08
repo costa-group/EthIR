@@ -935,8 +935,11 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
 
-        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL":
-            new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
+        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "REVERT":
+            j,new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
+            if j == "jump" or j == "jumpi":
+                vertices[block].set_block_type("terminal")
+                jump_type[block] = "terminal"
             vertices[block].set_instructions(new_block_ins)
             break
 
@@ -3535,7 +3538,21 @@ def get_evm_block():
         f.close()
 
 def remove_unnecesary_opcodes(idx, instructions):
+    # print "HOLA"
+    # print idx
+    # print len(instructions)
+    # print instructions[:idx+1]
+    # print instructions
     if idx < len(instructions):
-        return instructions[:idx+1]
+
+        new_ins = map(lambda x: x.strip(), instructions[idx+1:])
+        
+        if "JUMP" in new_ins:
+            j = "jump"
+        elif "JUMPI" in new_ins:
+            j = "jumpi"
+        else:
+            j = ""
+        return (j,instructions[:idx+1])
     else:
-        return instructions
+        return ("",instructions)
