@@ -78,7 +78,8 @@ opcodes = {
     "RETURN": [0xf3, 2, 0],
     "ASSERTFAIL": [0xfe, 0, 0],
     "DELEGATECALL": [0xf4, 6, 1],
-    "BREAKPOINT": [0xf5, 0, 0],
+    "CREATE2": [0xf5,4,1],
+    "BREAKPOINT": [0xf5b, 0, 0],
     "RNGSEED": [0xf6, 1, 1],
     "SSIZEEXT": [0xf7, 2, 1],
     "SLOADBYTES": [0xf8, 3, 0],
@@ -129,6 +130,7 @@ GCOST = {
     "Glogdata": 8,
     "Glogtopic": 375,
     "Gsha3": 30,
+    "Gcreate2":32060,
     "Gsha3word": 6,
     "Gcopy": 3,
     "Gblockhash": 20,
@@ -208,6 +210,8 @@ def get_ins_cost(opcode):
         return GCOST["Gsha3"]
     elif opcode == "CREATE":
         return GCOST["Gcreate"]
+    elif opcode == "CREATE2":
+        return GCOST["Gcreate2"]
     elif opcode in ("CALL", "CALLCODE"):
         return GCOST["Gcall"]
     elif opcode in ("LOG0", "LOG1", "LOG2", "LOG3", "LOG4"):
