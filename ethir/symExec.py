@@ -1290,6 +1290,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 first = BitVecVal(first, 256)
             elif isSymbolic(first) and isReal(second):
                 second = BitVecVal(second, 256)
+
+            
+            if isReal(first):
+                first = long(first)
+            if isReal(second):
+                second = long(second)
             computed = first * second & UNSIGNED_BOUND_NUMBER
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
@@ -1931,59 +1937,64 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     # print("Source code without comments")
                     # print(source_code)
 
+                    try:
+                        idx1 = source_code.index("(") + 1
                     
-                    idx1 = source_code.index("(") + 1
-                    idx2 = find_first_closing_parentheses(source_code)
+                        idx2 = find_first_closing_parentheses(source_code)
                     
-                    params = source_code[idx1:idx2]
+                        params = source_code[idx1:idx2]
 
-                    # print("Args")
-                    # print(params)
+                        # print("Args")
+                        # print(params)
                         
-                    params_list = params.split(",")
-                    params_list_aux = []
-                    for param in params_list:
-                        comments = param.split("\n")
-                        params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
+                        params_list = params.split(",")
+                        params_list_aux = []
+                        for param in params_list:
+                            comments = param.split("\n")
+                            params_list_aux+= filter(lambda x: (not x.strip().startswith("//")) and x != "",comments)
 
-                    params_list_aux = filter(lambda x: x.strip() != "",params_list_aux)
-                    # print("Params list aux")
-                    # print params_list_aux
+                        params_list_aux = filter(lambda x: x.strip() != "",params_list_aux)
+                        # print("Params list aux")
+                        # print params_list_aux
                     
-                    params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
+                        params_list = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[-1] for param in params_list_aux]
 
-                    params_type = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[0] for param in params_list_aux]
+                        params_type = [param.split("//")[0].rstrip().rstrip("\n").split(" ")[0] for param in params_list_aux]
 
-                    replicated_params_list = []
-                    for param_name, param_type in zip(params_list,params_type):
-                        # Means current param is an array
-                        if param_type.find("[") != -1:
-                            number_init = param_type.find("[") + 1
-                            number_end = param_type.find("]")
-                            # If both numbers are the same, then argument forma is type[], so we just add the name.
-                            if number_init == number_end:
-                                replicated_params_list.append(param_name)
+                        replicated_params_list = []
+                        for param_name, param_type in zip(params_list,params_type):
+                            # Means current param is an array
+                            if param_type.find("[") != -1:
+                                number_init = param_type.find("[") + 1
+                                number_end = param_type.find("]")
+                                # If both numbers are the same, then argument forma is type[], so we just add the name.
+                                if number_init == number_end:
+                                    replicated_params_list.append(param_name)
+                                else:
+                                    number = int(param_type[number_init:number_end])
+                                    for i in range(number):
+                                        replicated_params_list.append(param_name + "[" +  str(i) + "]")
                             else:
-                                number = int(param_type[number_init:number_end])
-                                for i in range(number):
-                                    replicated_params_list.append(param_name + "[" +  str(i) + "]")
-                        else:
-                            replicated_params_list.append(param_name)
-                    # print("Duplicated params list")
-                    # print(replicated_params_list)
+                                replicated_params_list.append(param_name)
+                            # print("Duplicated params list")
+                            # print(replicated_params_list)
                             
                     
-                    param_idx = (position - 4) // 32
+                            param_idx = (position - 4) // 32
                     
-                    # print("Param idx")
-                    # print param_idx
-                    # print replicated_params_list
-                    if param_idx < len(replicated_params_list):
-                        new_var_name = replicated_params_list[param_idx]
-                    else:
+                            # print("Param idx")
+                            # print param_idx
+                            # print replicated_params_list
+                            if param_idx < len(replicated_params_list):
+                                new_var_name = replicated_params_list[param_idx]
+                            else:
+                                new_var_name = gen.gen_data_var(position)
+                            g_src_map.var_names.append(new_var_name)
+                            param_abs = (block,new_var_name)
+                    except:
                         new_var_name = gen.gen_data_var(position)
-                    g_src_map.var_names.append(new_var_name)
-                    param_abs = (block,new_var_name)
+                        g_src_map.var_names.append(new_var_name)
+                        param_abs = (block,new_var_name)
                 else:
                     if param_abs[1] != "":
                         new_var_name = param_abs[1]
