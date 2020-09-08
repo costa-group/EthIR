@@ -914,10 +914,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
 
     bl = vertices[block]
-
+    
     instr_idx = 0
     for instr in block_ins:
-        
+        #print instr
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
         
@@ -1340,6 +1340,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 # if check_sat(solver) == unsat:
                 #     computed = 0
                 # else:
+
                 computed = UDiv(first, second)
                 #solver.pop()
             #computed = simplify(computed) if is_expr(computed) else computed
@@ -2625,6 +2626,20 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stack.insert(0, new_var)
         else:
             raise ValueError('STACK underflow')
+
+    elif opcode == "CREATE2":
+        if len(stack) > 3:
+            global_state["pc"] += 1
+            stack.pop(0)
+            stack.pop(0)
+            stack.pop(0)
+            stack.pop(0)
+            new_var_name = gen.gen_arbitrary_var()
+            new_var = BitVec(new_var_name, 256)
+            stack.insert(0, new_var)
+        else:
+            raise ValueError('STACK underflow')
+
     elif opcode == "CALL":
         # TODO: Need to handle miu_i
         if len(stack) > 6:

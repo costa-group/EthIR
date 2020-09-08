@@ -73,7 +73,7 @@ def init_globals():
     opcodesF = ["CREATE", "CALL", "CALLCODE", "RETURN", "REVERT",
                 "ASSERTFAIL", "DELEGATECALL", "BREAKPOINT", "RNGSEED", "SSIZEEXT",
                 "SLOADBYTES", "SSTOREBYTES", "SSIZE", "STATEROOT", "TXEXECGAS",
-                "CALLSTATIC", "INVALID", "SUICIDE","STATICCALL"]
+                "CALLSTATIC", "INVALID", "SUICIDE","STATICCALL","CREATE2"]
 
     global opcodesZ
     opcodesZ = ["RETURNDATACOPY","RETURNDATASIZE"]
@@ -144,6 +144,9 @@ def init_globals():
 
     global memory_intervals
     memory_intervals = False
+
+    global c_address
+    c_address = 0
 '''
 Given a block it returns a list containingn the height of its
 stack when arriving and leaving the block.
@@ -839,13 +842,35 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodesF(opcode, index_variables, addr):
+def translateOpcodesF(opcode, index_variables, addr,block):
+    global c_address
+
     if opcode == "CREATE":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr=""
+
+        val = "c_address"+str(c_address)
+        
+        instr = v1+" = "+val
+        c_address+=1
+        update_bc_in_use(val,block)
+
+
+    elif opcode == "CREATE2":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+
+        val = "c_address"+str(c_address)
+        
+        instr = v1+" = "+val
+        c_address+=1
+        update_bc_in_use(val,block)
+
     elif opcode == "CALL": #Suppose that all the calls are executed without errors
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
@@ -1125,7 +1150,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
         value, index_variables = translateOpcodesA(opcode_name, variables)
         rule.add_instr(value)
     elif opcode_name in opcodesF:
-        value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest)
+        value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest,rule.get_Id())
         #RETURN
         rule.add_instr(value)
     elif opcode_name in opcodesZ:
