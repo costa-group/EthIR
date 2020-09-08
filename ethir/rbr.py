@@ -50,7 +50,7 @@ def init_globals():
 
     global opcodes40
     opcodes40 = ["BLOCKHASH", "COINBASE", "TIMESTAMP", "NUMBER",
-                 "DIFFICULTY", "GASLIMIT"]
+                 "DIFFICULTY", "GASLIMIT","SELFBALANCE","CHAINID"]
 
     global opcodes50
     opcodes50 = ["POP", "MLOAD", "MSTORE", "MSTORE8", "SLOAD",
@@ -177,6 +177,7 @@ index_variables contains the index of current stack variable.
 '''
 def get_consume_variable(index_variables):
     current = index_variables
+
     if current >= 0 :
         variable = "s(" + str(current) + ")"
         current = current-1
@@ -1108,7 +1109,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
-
+    
     if len(opcode) > 1:
         opcode_rest = opcode[1]
 
@@ -1162,7 +1163,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
         rule.add_instr(value)
 
     rule.add_instr("nop("+opcode_name+")")
-    
+
     return index_variables
 
 
@@ -1730,7 +1731,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         if len(e.args)>1:
             arg = e[1]
             if arg == 5:
@@ -1823,7 +1824,7 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         raise Exception("Error in RBR generation for init fields",4)
 
 
