@@ -2765,7 +2765,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             start_data_input = stack.pop(0)
             size_data_input = stack.pop(0)
             start_data_output = stack.pop(0)
-            size_data_ouput = stack.pop(0)
+            size_data_output = stack.pop(0)
 
             transfer_amount = get_push_value(transfer_amount)
             start_data_input = get_push_value(start_data_input)
