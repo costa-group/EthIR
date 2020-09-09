@@ -1,4 +1,4 @@
-pragma solidity ^0.5;
+pragma solidity ^0.5.0;
 // author: Shayan Eskandari, Moe Adham, Dylan Seago
 // dylan@bitaccess.co
 // Version: 0.6 (July 2020)
