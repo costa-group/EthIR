@@ -1726,7 +1726,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             
             print("*************************************************************")
 
-            return rbr_blocks
+            return rbr
         
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
@@ -1878,45 +1878,72 @@ def rename_init_fields(mapping_state_variables):
 
     return initialized_fields
 
+def get_info_lines(rbr,source_map,f):
+    for rules in rbr:
+        for rule in rules:
+            if 'block' in rule.get_rule_name(): 
+                cont_rbr = 0
+                offset=0
+                i = 0
+                nBq = rule.get_Id()
+                bq=''
+                if '_' in str(nBq): #Caso con _X
+                    while nBq[i] != '_' :
+                        bq = bq + nBq[i]
+                        i = i+1
+                    nBq = bq
+
+                for inst in rule.get_instructions(): 
+                    if not('nop' in inst):
+                        continue;
+							
+                    pc = int(nBq)+offset
+                        
+                    try:
+                        nLineCom = source_map.get_init_pos(pc)
+                        nLineFin = source_map.get_end_pos(pc)
+                        nLine = source_map.get_location(pc)['begin']['line']
+                        nLine = nLine+1
+                            # bloque = rule.get_rule_name()[5:]
+                        f.write("solidityline(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLine) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + " % " + str(offset) + " " + str(inst) + "	\n")  
+
+                    except:
+                        continue;
+
+                    if 'nop'in inst:
+                        offset = offset + get_inc_offset(inst);
+                                
+                    cont_rbr = cont_rbr +1          
+
+def get_fun_lines_info(rbr, source_map,f):
+    functions = []
+    
+    for rules in rbr:
+        for rule in rules:
+            if 'block' in rule.get_rule_name(): 
+                nBq = get_block_id(rule)
+                
+                source = source_map.get_source_code(nBq)
+                lines = source.split("\n")
+
+                if lines[0].find("function ")!=-1:
+                    fun_name = get_func_name(lines[0])
+
+                    init_pos = source_map.get_init_pos(nBq)
+                    end_pos =  source_map.get_end_pos(nBq)
+
+                    if (fun_name,init_pos,end_pos) not in functions:
+                        functions.append((fun_name,init_pos,end_pos))
+
+    lines = map(lambda x: "solidityfunctionline("+x[0]+","+str(x[1])+","+str(x[2])+").",functions)
+    f.write("\n".join(lines))
+
+
 def write_info_lines(rbr,source_map,contract_name):
     final_path = costabs_path + "/" + contract_name + "_lines.pl"
     f = open (final_path, "w")
-
-    for rules in rbr:
-            for rule in rules:
-                if 'block' in rule.get_rule_name(): 
-                    cont_rbr = 0
-                    offset=0
-                    i = 0
-                    nBq = rule.get_Id()
-                    bq=''
-                    if '_' in str(nBq): #Caso con _X
-                        while nBq[i] != '_' :
-                            bq = bq + nBq[i]
-                            i = i+1
-                        nBq = bq
-
-                    for inst in rule.get_instructions(): 
-                        if not('nop' in inst):
-                            continue;
-							
-                        pc = int(nBq)+offset
-                        
-                        try:
-                            nLineCom = source_map.get_init_pos(pc)
-                            nLineFin = source_map.get_end_pos(pc)
-                            nLine = source_map.get_location(pc)['begin']['line']
-                            nLine = nLine+1
-                            # bloque = rule.get_rule_name()[5:]
-                            f.write("solidityline(" + str(rule.get_rule_name()) + "," + str(cont_rbr) + "," + str(nLine) + "," + str(nLineCom)  + "," + str(nLineFin) + ").  " + " % " + str(offset) + " " + str(inst) + "	\n")  
-
-                        except:
-                           continue;
-
-                        if 'nop'in inst:
-                            offset = offset + get_inc_offset(inst);
-                                
-                        cont_rbr = cont_rbr +1          
+    get_info_lines(rbr,source_map,f)
+    get_fun_lines_info(rbr,source_map,f)
     f.close()
 
 
@@ -1926,3 +1953,31 @@ def get_inc_offset(op):
         n=op[8:-1]
         return int(n)+1
     return 1; 
+
+def get_block_id(rule) :
+    nBq = str(rule.get_Id())
+    pos = nBq.find("_")
+    if pos == -1:
+        return int(nBq)
+    else:
+        return int(nBq[0:pos])
+    
+def get_func_name(line):
+    pos_func = line.find("function")
+    
+    pos_init = line.find("(",pos_func+8)
+
+    if pos_init !=-1:
+        name = line[pos_func+8:pos_init].strip()
+
+    else:
+        pos_init = line.find("\\")
+        pos_init2 = line.find("\*")
+        if pos_init!=-1:
+             name = line[pos_func+8:pos_init].strip()
+        elif pos_init2 !=-1:
+            name = line[pos_func+8:pos_init2].strip()
+        else:
+            name = line[pos_func+8::].strip()
+
+    return name
