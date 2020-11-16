@@ -53,7 +53,7 @@ def has_dependencies_installed():
         cmd = "evm --version"
         out = run_command(cmd).strip()
         evm_version = re.findall(r"evm version (\d*.\d*.\d*)", out)[0]
-        tested_evm_version = '1.8.18'
+        tested_evm_version = '1.9.23'
         if compare_versions(evm_version, tested_evm_version) > 0:
             evm_version_modifications = True
             logging.warning("You are using evm version %s. The supported version is %s" % (evm_version, tested_evm_version))
@@ -65,7 +65,7 @@ def has_dependencies_installed():
         cmd = "solc --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
-        tested_solc_version = '0.5.15'
+        tested_solc_version = '0.7.4'
         if compare_versions(solc_version, tested_solc_version) > 0:
             logging.warning("You are using solc version %s, The latest supported version is %s" % (solc_version, tested_solc_version))
 
@@ -201,7 +201,7 @@ def run_solidity_analysis(inputs,hashes):
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval)
             
         except Exception as e:
-            #traceback.print_exc()
+            traceback.print_exc()
 
             if len(e.args)>1:
                 return_code = e.args[1]
@@ -221,7 +221,7 @@ def run_solidity_analysis(inputs,hashes):
                 result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval)
                 
             except Exception as e:
-                #traceback.print_exc()
+                traceback.print_exc()
                 if len(e.args)>1:
                     return_code = e.args[1]
                 else:
@@ -306,7 +306,7 @@ def run_solidity_analysis_optimized(inp,hashes):
             results[c_source] = {c_name: result}
         
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
 
         if len(e.args)>1:
             return_code = e.args[1]
