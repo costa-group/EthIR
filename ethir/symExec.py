@@ -1734,6 +1734,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             first_aux = get_push_value(first)
             second_aux = get_push_value(second)
+
+            
+            if isReal(first_aux):
+                first_aux = long(first_aux)
+            if isReal(second_aux):
+                second_aux = long(second_aux)
+
             
             computed = first_aux & second_aux
 
@@ -1813,6 +1820,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             second = get_push_value(second)
             
             if isAllReal(first, second):
+
+                first = long(first)
+                second = long(second)
+
                 if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
                 else:
