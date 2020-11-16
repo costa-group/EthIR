@@ -1034,7 +1034,7 @@ def translateOpcodesZ(opcode, index_variables,block):
         update_bc_in_use("returndatasize",block)
     elif opcode == "RETURNDATACOPY":
         _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         instr = ""
     else:
