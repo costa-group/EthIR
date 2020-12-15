@@ -11,11 +11,9 @@ import c_utranslation
 import e_translation
 from timeit import default_timer as dtimer
 from graph_scc import get_entry_scc
+import global_params
 import traceback
 
-
-costabs_path = "/tmp/costabs/" 
-tmp_path = "/tmp/"
 init_fields = []
 
 '''
@@ -1501,15 +1499,15 @@ for each smart contract.
 -executions refers to the number of smart contract that has been translated. int.
 '''
 def write_rbr(rbr,executions,cname = None):
-    if "costabs" not in os.listdir(tmp_path):
-        os.mkdir(costabs_path)
+    if "costabs" not in os.listdir(global_params.tmp_path):
+        os.mkdir(global_params.costabs_path)
 
     if executions == None:
-        name = costabs_path+"rbr.rbr"
+        name = global_params.costabs_path+"rbr.rbr"
     elif cname == None:
-        name = costabs_path+"rbr"+str(executions)+".rbr"
+        name = global_params.costabs_path+"rbr"+str(executions)+".rbr"
     else:
-        name = costabs_path+cname+".rbr"
+        name = global_params.costabs_path+cname+".rbr"
     with open(name,"w") as f:
         for rules in rbr:
             for r in rules:
@@ -1940,7 +1938,7 @@ def get_fun_lines_info(rbr, source_map,f):
 
 
 def write_info_lines(rbr,source_map,contract_name):
-    final_path = costabs_path + "/" + contract_name + "_lines.pl"
+    final_path = global_params.costabs_path + "/" + contract_name + "_lines.pl"
     f = open (final_path, "w")
     get_info_lines(rbr,source_map,f)
     get_fun_lines_info(rbr,source_map,f)
