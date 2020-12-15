@@ -54,3 +54,9 @@ GENERATE_TEST_CASES = 0
 
 # Run Oyente in parallel
 PARALLEL = 0
+
+
+#Paths to generate the files
+tmp_path = "/tmp/"
+
+costabs_path = tmp_path+"costabs/"
