@@ -1634,7 +1634,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None,mem_abs = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None,mem_abs = None,sto = None):
     global rbr_blocks
     global stack_index
     global vertices
@@ -1740,9 +1740,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr == "int":
-                c_translation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,storage_arrays)
+                c_translation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,sto,storage_arrays)
             elif c_rbr == "uint":
-                c_utranslation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,storage_arrays)
+                c_utranslation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,sto,storage_arrays)
             elif c_rbr == "uint256":
                 e_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm,init_fields_def)
             

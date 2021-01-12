@@ -91,7 +91,7 @@ def init_global_vars():
     global mem_abs
     mem_abs = False
     
-def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals,storage_arrays):
+def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals,sto_abs,storage_arrays):
     global svcomp
     global verifier
     global init_globals
@@ -2673,3 +2673,15 @@ def generate_initializations(stack_vars):
 
     l_vars = map(lambda x: "\tint "+x+";",vars_def)
     return l_vars
+
+def generate_storage_address(storage_arrays):
+    ids_dict = {}
+    
+    ids = storage_arrays["ids"]
+    vals = storage_arrays["vals"]
+    
+    for bl in ids:
+        ids_list = ids[bl]
+        vals_list = vals[bl]
+    
+        ids_dict[bl] = zip(ids_list,vals_list)
