@@ -263,7 +263,7 @@ def initGlobalVars():
 
     #Model storage arrays in c
     global st_arr
-    st_arr = False
+    st_arr = (False,False)
 
     global st_id
     st_id = -1
@@ -866,7 +866,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     analysis = params.analysis
     calls = params.calls
     param_abs = ("","")
-    st_arr = False
+    st_arr = (False,False)
     st_id = -1
 
 
@@ -1286,6 +1286,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first = stack.pop(0)
             second = stack.pop(0)
 
+            st_arr = (st_arr[0], True)
+            
             first = get_push_value(first)
             second = get_push_value(second)
             # Type conversion is needed when they are mismatched
@@ -1877,7 +1879,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             s0 = get_push_value(s0)
             s1 = get_push_value(s1)
 
-            st_arr = True
+            st_arr = (True,st_arr[1])
             
             # if isAllReal(s0, s1):
             #     # simulate the hashing of sha3
@@ -2413,13 +2415,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             position = get_push_value(position)
 
             #Model storage arrays in C
-            if st_id !=-1 and st_arr:
+            if st_id !=-1 and st_arr[0] and st_arr[1]:
                 st = storage_arrays.get(block,[])
                 st.append(st_id)
                 storage_arrays[block] = st
 
                 st_id = -1
-                st_arr = False
+                st_arr = (False,False)
                 
             #Added by PG
             try:    
@@ -2509,13 +2511,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
 
             #Model storage arrays in C
-            if st_id !=-1 and st_arr:
+            if st_id !=-1 and st_arr[0] and st_arr[1]:
                 st = storage_arrays.get(block,[])
                 st.append(st_id)
                 storage_arrays[block] = st
 
                 st_id = -1
-                st_arr = False
+                st_arr = (False,False)
 
             # print stored_address
             # print stored_value
