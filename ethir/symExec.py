@@ -38,9 +38,7 @@ UNSIGNED_BOUND_NUMBER = 2**256 - 1
 CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
-ebso_path = "/tmp/costabs/blocks"
-costabs_path = "/tmp/costabs/"
-tmp_path = "/tmp/"
+ebso_path = global_params.costabs_path+"blocks"
 
 
 class Parameter:
@@ -1756,6 +1754,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             first_aux = get_push_value(first)
             second_aux = get_push_value(second)
+
+            
+            if isReal(first_aux):
+                first_aux = long(first_aux)
+            if isReal(second_aux):
+                second_aux = long(second_aux)
+
             
             computed = first_aux & second_aux
 
@@ -1835,6 +1840,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             second = get_push_value(second)
             
             if isAllReal(first, second):
+
+                first = long(first)
+                second = long(second)
+
                 if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
                 else:
@@ -3256,13 +3265,13 @@ def component_of_aux(block,visited):
     return visited
             
 def generate_saco_config_file(cname):
-    if "costabs" not in os.listdir(tmp_path):
-        os.mkdir(costabs_path)
+    if "costabs" not in os.listdir(global_params.tmp_path):
+        os.mkdir(global_params.costabs_path)
         
     if cname == None:
-        name = costabs_path+"config_block.config"
+        name = global_params.costabs_path+"config_block.config"
     else:
-        name = costabs_path+cname+".config"
+        name = global_params.costabs_path+cname+".config"
 
     with open(name,"w") as f:
         elems = map(lambda (x,y): "("+process_argument_function(x)+";"+str(y[0])+";"+str(y[1])+")", function_block_map.items())
@@ -3293,13 +3302,13 @@ def process_argument_function(arg):
 def generate_verify_config_file(cname):
     to_write = []
     remove_getters_has_invalid()
-    if "costabs" not in os.listdir(tmp_path):
-        os.mkdir(costabs_path)
+    if "costabs" not in os.listdir(global_params.tmp_path):
+        os.mkdir(global_params.costabs_path)
         
     if cname == None:
-        name = costabs_path+"config_block.config"
+        name = global_params.costabs_path+"config_block.config"
     else:
-        name = costabs_path+cname+".config"
+        name = global_params.costabs_path+cname+".config"
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
@@ -3578,9 +3587,9 @@ def get_evm_block():
             str_b = str_b+op_val+num
         blocks[b] = str_b
 
-    if "costabs" not in os.listdir(tmp_path):
-        os.mkdir(costabs_path)
-    if "blocks" not in os.listdir(costabs_path):
+    if "costabs" not in os.listdir(global_params.tmp_path):
+        os.mkdir(global_params.costabs_path)
+    if "blocks" not in os.listdir(global_params.costabs_path):
         os.mkdir(ebso_path)
     for b in blocks:
         bl_path = ebso_path+"/block"+str(b)

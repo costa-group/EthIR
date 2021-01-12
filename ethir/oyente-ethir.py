@@ -15,8 +15,6 @@ from utils import run_command, process_hashes
 from input_helper import InputHelper
 import traceback
 
-costabs_path = "/tmp/costabs/"
-tmp_path = "/tmp/"
 
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
@@ -53,7 +51,7 @@ def has_dependencies_installed():
         cmd = "evm --version"
         out = run_command(cmd).strip()
         evm_version = re.findall(r"evm version (\d*.\d*.\d*)", out)[0]
-        tested_evm_version = '1.8.18'
+        tested_evm_version = '1.9.23'
         if compare_versions(evm_version, tested_evm_version) > 0:
             evm_version_modifications = True
             logging.warning("You are using evm version %s. The supported version is %s" % (evm_version, tested_evm_version))
@@ -65,7 +63,7 @@ def has_dependencies_installed():
         cmd = "solc --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
-        tested_solc_version = '0.5.15'
+        tested_solc_version = '0.7.4'
         if compare_versions(solc_version, tested_solc_version) > 0:
             logging.warning("You are using solc version %s, The latest supported version is %s" % (solc_version, tested_solc_version))
 
@@ -73,11 +71,11 @@ def has_dependencies_installed():
 
 def clean_dir():
     ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl"]
-    if "costabs" in os.listdir(tmp_path):
-        for elem in os.listdir(costabs_path):
+    if "costabs" in os.listdir(global_params.tmp_path):
+        for elem in os.listdir(global_params.costabs_path):
             last = elem.split(".")[-1]
             if last in ext:
-                os.remove(costabs_path+elem)
+                os.remove(global_params.costabs_path+elem)
 
 
 '''
@@ -201,7 +199,7 @@ def run_solidity_analysis(inputs,hashes):
             result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval)
             
         except Exception as e:
-            #traceback.print_exc()
+            traceback.print_exc()
 
             if len(e.args)>1:
                 return_code = e.args[1]
@@ -221,7 +219,7 @@ def run_solidity_analysis(inputs,hashes):
                 result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval)
                 
             except Exception as e:
-                #traceback.print_exc()
+                traceback.print_exc()
                 if len(e.args)>1:
                     return_code = e.args[1]
                 else:
@@ -306,7 +304,7 @@ def run_solidity_analysis_optimized(inp,hashes):
             results[c_source] = {c_name: result}
         
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
 
         if len(e.args)>1:
             return_code = e.args[1]
@@ -386,7 +384,7 @@ def process_fields(src_map):
     return fields
 
 def generate_saco_hashes_file(dicc):
-    with open(costabs_path+"solidity_functions.txt", "w") as f:
+    with open(global_params.costabs_path+"solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
             cf_names1 = map(process_name,f_names)
@@ -399,6 +397,7 @@ def main():
     # TODO: Implement -o switch.
     
     global args
+
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
 
@@ -426,6 +425,7 @@ def main():
     parser.add_argument("-cname", "--contract_name", type=str, help="Name of the contract that is going to be optimized")
     parser.add_argument("-bl", "--block", type=str, help="block to be optimized")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
+    parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
 
 
     args = parser.parse_args()
@@ -468,6 +468,12 @@ def main():
     #     if args.global_timeout:
     #         global_params.GLOBAL_TIMEOUT = args.global_timeout
 
+
+    if args.path_out:
+        global_params.tmp_path = args.path_out
+        global_params.costabs_path = global_params.tmp_path+"costabs/"
+
+        
     if not has_dependencies_installed():
         return
 
@@ -499,7 +505,7 @@ def main():
         
     else:
         exit_code = analyze_solidity()
-    six.print_("The files generated by EthIR are stored in the following directory: "+costabs_path)
+    six.print_("The files generated by EthIR are stored in the following directory: "+global_params.costabs_path)
 
     exit(exit_code)
     
