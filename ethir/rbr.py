@@ -147,6 +147,12 @@ def init_globals():
 
     global c_address
     c_address = 0
+
+    global storage_arrays
+    storage_arrays = {"ids":{},"vals":{}}
+
+    global str_arr
+    str_arr = False
 '''
 Given a block it returns a list containingn the height of its
 stack when arriving and leaving the block.
@@ -311,12 +317,21 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes0(opcode,index_variables):
+def translateOpcodes0(opcode,index_variables,block):
+    global str_arr
     if opcode == "ADD":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = " + v1 + "+" + v2
+
+        if str_arr and block in storage_arrays["ids"]:
+            st = storage_arrays["vals"].get(block,[])
+            st.append(v2)
+            storage_arrays["vals"][block] = st
+
+            str_arr = False
+            
     elif opcode == "MUL":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
@@ -502,12 +517,17 @@ corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes20(opcode, index_variables):
+    global str_arr
+    
     if opcode == "SHA3":
+        
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
         instr = v3+" = sha3("+ v1+", "+v2+")"
 
+        str_arr = True
+        
     else:
         instr = "Error opcodes20: "+opcode
         updated_variables = index_variables
@@ -1114,7 +1134,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
         opcode_rest = opcode[1]
 
     if opcode_name in opcodes0:
-        value, index_variables = translateOpcodes0(opcode_name, variables)
+        value, index_variables = translateOpcodes0(opcode_name, variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes10:
         value, index_variables = translateOpcodes10(opcode_name, variables,cond)
@@ -1389,6 +1409,9 @@ def compile_block(block,state_vars):
     global top_index
     global new_fid
     global forget_memory_blocks
+    global str_arr
+
+    str_arr = False
     
     cont = 0
     top_index = 0
@@ -1621,7 +1644,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global all_state_vars
     global forget_memory
     global memory_intervals
-        
+    global storage_arrays    
     
     init_globals()
     c_trans = c_rbr
@@ -1635,7 +1658,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
     mapping_state_variables = source_info["name_state_variables"]
 
-    memory_intervals = mem_abs
+    memory_intervals = mem_abs[0]
+    storage_arrays["ids"] = mem_abs[1]
     
     begin = dtimer()
     blocks_dict = blocks_input
@@ -1731,7 +1755,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
         else :
             print ("Error, you have to provide the CFG associated with the solidity file analyzed")
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         if len(e.args)>1:
             arg = e[1]
             if arg == 5:

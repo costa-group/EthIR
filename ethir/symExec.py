@@ -27,7 +27,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack
+from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -262,6 +262,16 @@ def initGlobalVars():
 
     global source_n
     source_n = ""
+
+    #Model storage arrays in c
+    global st_arr
+    st_arr = False
+
+    global st_id
+    st_id = -1
+
+    global storage_arrays
+    storage_arrays = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -471,6 +481,11 @@ def mapping_non_push_instruction(current_line_content, current_ins_address, idx,
             idx += 1
         else:
             instr_name = current_line_content.split(" ")[0]
+            # print positions[idx]
+            # print name
+            # print current_line_content
+            # print instr_name
+            # print "**********"
             if name == instr_name or name == "INVALID" and instr_name == "ASSERTFAIL" or name == "KECCAK256" and instr_name == "SHA3" or name == "SELFDESTRUCT" and instr_name == "SUICIDE":
                 g_src_map.instr_positions[current_ins_address] = g_src_map.positions[idx]
                 idx += 1
@@ -839,7 +854,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global stack_h
     global calldataload_values
     global jump_type
-
+    global st_arr
+    global st_id
+            
     visited = params.visited
     stack = params.stack
     stack_old = list(params.stack)
@@ -851,7 +868,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     analysis = params.analysis
     calls = params.calls
     param_abs = ("","")
-    
+    st_arr = False
+    st_id = -1
+
+
     vertices[block].add_stack(list(stack))
     vertices[block].add_path(path)
     
@@ -1212,7 +1232,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global update_fields
     global push_jump_relations
     global jump_addresses
-
+    global st_id
+    global st_arr
+    global storage_arrays
     
     stack = params.stack
     mem = params.mem
@@ -1845,6 +1867,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             s0 = get_push_value(s0)
             s1 = get_push_value(s1)
+
+            st_arr = True
             
             # if isAllReal(s0, s1):
             #     # simulate the hashing of sha3
@@ -2281,9 +2305,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
-
+            
             stored_address = get_push_value(stored_address)
             stored_value = get_push_value(stored_value)
+
+            st_id = stored_value
             
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
@@ -2376,7 +2402,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             position = stack.pop(0)
             position = get_push_value(position)
-            
+
+            #Model storage arrays in C
+            if st_id !=-1 and st_arr:
+                st = storage_arrays.get(block,[])
+                st.append(st_id)
+                storage_arrays[block] = st
+
+                st_id = -1
+                st_arr = False
+                
             #Added by PG
             try:    
                 val = int(position)
@@ -2462,7 +2497,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             stored_address = get_push_value(stored_address)
             stored_value = get_push_value(stored_value)
-            
+
+
+            #Model storage arrays in C
+            if st_id !=-1 and st_arr:
+                st = storage_arrays.get(block,[])
+                st.append(st_id)
+                storage_arrays[block] = st
+
+                st_id = -1
+                st_arr = False
+
             # print stored_address
             # print stored_value
              
@@ -3421,10 +3466,11 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         source_info["source_map"] = source_map
         source_info["name_state_variables"] = mapping_state_variables
-
         
-        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = mem_abs)
-
+        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays))
+        
+        #gasol.print_methods(rbr_rules,source_map,cname)
+        
         if opt!= None:
         # fields = ["field1","field2"]
         # block = 70
