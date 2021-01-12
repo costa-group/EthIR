@@ -91,7 +91,7 @@ def init_global_vars():
     global mem_abs
     mem_abs = False
     
-def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals):
+def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals,storage_arrays):
     global svcomp
     global verifier
     global init_globals
@@ -1903,7 +1903,51 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             new = var0+" = s"+str(cont)
             check_declare_variable("s"+str(cont),vars_to_declare)
             cont+=1
+
+
+    elif instr.find("shl",0)!=-1:
+        pos = instr.find("=",0)
+        arg0 = instr[:pos].strip()
+        var0 = unbox_variable(arg0)
+
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
+
         
+        # new = instr[:pos+1]+var
+        # cont+=1
+
+    elif instr.find("shr")!=-1:
+        pos = instr.find("=",0)
+        arg0 = instr[:pos].strip()
+        var0 = unbox_variable(arg0)
+
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
+
+
+    elif instr.find("sar")!=-1:
+        pos = instr.find("=",0)
+        arg0 = instr[:pos].strip()
+        var0 = unbox_variable(arg0)
+
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
+
+
+            
     elif instr.find("+")!=-1:
         if instr.find("%")!=-1:#mulmod
             elems = instr.split("%")

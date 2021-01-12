@@ -1502,7 +1502,52 @@ def process_instruction(instr,new_instructions,vars_to_declare,cont):
             new = var0+" = s"+str(cont)
             check_declare_variable("s"+str(cont),vars_to_declare)
             cont+=1
+
+
+    elif instr.find("shl",0)!=-1:
+        pos = instr.find("=",0)
+        arg0 = instr[:pos].strip()
+        var0 = unbox_variable(arg0)
+
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
+
         
+        # new = instr[:pos+1]+var
+        # cont+=1
+
+    elif instr.find("shr")!=-1:
+        pos = instr.find("=",0)
+        arg0 = instr[:pos].strip()
+        var0 = unbox_variable(arg0)
+
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
+
+
+    elif instr.find("sar")!=-1:
+        pos = instr.find("=",0)
+        arg0 = instr[:pos].strip()
+        var0 = unbox_variable(arg0)
+
+        if svcomp!={}:
+            new = var0+" = "+get_nondet_svcomp_label()
+        else:
+            new = var0+" = s"+str(cont)
+            check_declare_variable("s"+str(cont),vars_to_declare)
+            cont+=1
+
+
+
+            
     elif instr.find("skip")!=-1:
         new = ""
 
