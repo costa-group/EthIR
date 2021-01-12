@@ -1740,9 +1740,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr == "int":
-                c_translation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals)
+                c_translation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,storage_arrays)
             elif c_rbr == "uint":
-                c_utranslation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals)
+                c_utranslation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,storage_arrays)
             elif c_rbr == "uint256":
                 e_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm,init_fields_def)
             
