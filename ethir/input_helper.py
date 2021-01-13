@@ -23,7 +23,7 @@ class InputHelper:
                 'source': None,
                 'evm': False,
                 'runtime': True,
-                'solc_version':"v5"
+                'solc_version':"v8"
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
@@ -32,7 +32,7 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
-                'solc_version':"v5"
+                'solc_version':"v8"
             }
         elif input_type == InputHelper.STANDARD_JSON:
             attr_defaults = {
@@ -42,7 +42,7 @@ class InputHelper:
                 'root_path': "",
                 'allow_paths': None,
                 'compiled_contracts': [],
-                'solc_version':"v5"
+                'solc_version':"v8"
             }
         elif input_type == InputHelper.STANDARD_JSON_OUTPUT:
             attr_defaults = {
@@ -51,7 +51,7 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
-                'solc_version':"v5"
+                'solc_version':"v8"
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
@@ -371,7 +371,7 @@ class InputHelper:
         lines = f.readlines()
         pragma = filter(lambda x: x.find("pragma solidity")!=-1, lines)
         if pragma == []:
-            return "v7" #Put here the highest version
+            return "v8" #Put here the highest version
 
         elif len(pragma) == 1:
             pragma_version = pragma[0].strip()
@@ -397,7 +397,8 @@ class InputHelper:
         v5 = len(filter(lambda x: x.find("0.5")!=-1,pragmas))
         v6 = len(filter(lambda x: x.find("0.6")!=-1,pragmas))
         v7 = len(filter(lambda x: x.find("0.7")!=-1,pragmas))
-        m = max([v4,v5,v6,v7])
+        v8 = len(filter(lambda x: x.find("0.8")!=-1,pragmas))
+        m = max([v4,v5,v6,v7,v8])
 
         if m == v4:
             return "v4"
@@ -407,5 +408,7 @@ class InputHelper:
             return "v6"
         elif m == v7:
             return "v7"
+        elif m == v8:
+            return "v8"
         else:
             return "Error"
