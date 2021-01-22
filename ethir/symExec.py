@@ -270,6 +270,9 @@ def initGlobalVars():
 
     global storage_arrays
     storage_arrays = {}
+
+    global optimization
+    optimization = False
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
