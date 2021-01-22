@@ -23,7 +23,8 @@ class InputHelper:
                 'source': None,
                 'evm': False,
                 'runtime': True,
-                'solc_version':"v8"
+                'solc_version':"v8",
+                'opt_options':{}
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
@@ -32,7 +33,8 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
-                'solc_version':"v8"
+                'solc_version':"v8",
+                'opt_options':{}
             }
         elif input_type == InputHelper.STANDARD_JSON:
             attr_defaults = {
@@ -42,7 +44,8 @@ class InputHelper:
                 'root_path': "",
                 'allow_paths': None,
                 'compiled_contracts': [],
-                'solc_version':"v8"
+                'solc_version':"v8",
+                'opt_options':{}
             }
         elif input_type == InputHelper.STANDARD_JSON_OUTPUT:
             attr_defaults = {
@@ -51,7 +54,8 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
-                'solc_version':"v8"
+                'solc_version':"v8",
+                'opt_options':{}
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
@@ -174,7 +178,11 @@ class InputHelper:
 
         solc = get_solc_executable(self.solc_version)
 
-        cmd = solc+" --bin %s" % self.source
+        options = ""
+
+        options = self._get_optimize_options()
+        
+        cmd = solc+" --bin-runtime "+options+" %s" % self.source
             
         out = run_command(cmd)
 
@@ -412,3 +420,28 @@ class InputHelper:
             return "v8"
         else:
             return "Error"
+
+    def _get_optimize_options(self):
+        opt = ""
+        compiler_opt = self.opt_options
+
+        if (compiler_opt["no-yul"] or compiler_opt["runs"]!=-1) and not compiler_opt["optimize"]:
+            print("Flags --no-yul and --runs should go with the flag --optimize")
+            exit()
+
+        optimization = compiler_opt["optimize"]
+        run = compiler_opt["runs"]
+        yul = compiler_opt["no-yul"]
+            
+        if compiler_opt["optimize"] and run==-1:
+            opt = "--optimize"
+        elif run !=-1:
+            opt = "--optimize-run "+str(run)
+
+        if yul and (self.solc_version != "v4" and self.solc_version != "v5"):
+            opt+=" --no-optimize-yul"
+
+        if not yul and (self.solc_version == "v5"):
+            opt+=" --optimize-yul"
+
+        return opt

@@ -196,7 +196,7 @@ def run_solidity_analysis(inputs,hashes):
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run)
             
         except Exception as e:
             traceback.print_exc()
@@ -216,7 +216,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run)
                 
             except Exception as e:
                 traceback.print_exc()
@@ -323,9 +323,14 @@ def analyze_solidity(input_type='solidity'):
 
     x = dtimer()
     is_runtime = not(args.init)
-    
+
+    compiler_opt = {}
+    compiler_opt["optimize"] = args.optimize_run
+    compiler_opt["no-yul"] = args.no_yul_opt
+    compiler_opt["runs"] = args.run
+            
     if input_type == 'solidity':
-         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm=args.evm,runtime=is_runtime)
+        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
     elif input_type == 'standard_json':
         helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
     elif input_type == 'standard_json_output':
@@ -422,6 +427,9 @@ def main():
     parser.add_argument("-mem", "--mem_interval",             help="Translate the memory into an interval representation. Use with flag -c", action="store_true")
     parser.add_argument("-sto", "--storage_arrays", help="Translate storage arrays into arrays representation. Use with flag -c", action="store_true")
     parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
+    parser.add_argument("-optimize-run", "--optimize-run",             help="Enable optimization flag in solc compiler", action="store_true")
+    parser.add_argument("-run", "--run",             help="Set for how many contract runs to optimize (200 by default if --optimize-run)", default=-1,action="store",type=int)
+    parser.add_argument("-no-yul-opt", "--no-yul-opt",             help="Disable yul optimization in solc compiler (when possible)", action="store_true")
     parser.add_argument("-f", "--fields", type=str, help="Fields to be optimized by Gasol")
     parser.add_argument("-cname", "--contract_name", type=str, help="Name of the contract that is going to be optimized")
     parser.add_argument("-bl", "--block", type=str, help="block to be optimized")
