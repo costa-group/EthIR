@@ -481,25 +481,25 @@ def translateOpcodes10(opcode, index_variables,cond):
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_consume_variable(updated_variables)
         v2, updated_variables = get_new_variable(updated_variables)
-        instr = v2+" = byte(" + v1 + " , " + v0 + ")" 
+        instr = v2+" = byte(" + v0 + " , " + v1 + ")" 
 
     elif opcode == "SHL":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_consume_variable(updated_variables)
         v2, updated_variables = get_new_variable(updated_variables)
-        instr = v2+" = shl(" + v1 + " , " + v0 + ")" 
+        instr = v2+" = shl(" + v0 + " , " + v1 + ")" 
 
     elif opcode == "SHR":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_consume_variable(updated_variables)
         v2, updated_variables = get_new_variable(updated_variables)
-        instr = v2+" = shr(" + v1 + " , " + v0 + ")" 
+        instr = v2+" = shr(" + v0 + " , " + v1 + ")" 
 
     elif opcode == "SAR":
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_consume_variable(updated_variables)
         v2, updated_variables = get_new_variable(updated_variables)
-        instr = v2+" = sar(" + v1 + " , " + v0 + ")" 
+        instr = v2+" = sar(" + v0 + " , " + v1 + ")" 
         
     else:    
         instr = "Error opcodes10: "+ opcode
