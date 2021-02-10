@@ -722,19 +722,29 @@ def get_idx_from_address(address):
     idx = parts[1]
     return int(idx)
 
+# Two stacks are equivalent if they share the same jump elements in the same positions
+# of each stack. This function is used to return the same element if it is a jump element,
+# or None otherwise. This is useful for applying a mask to compare two different stacks.
+def mask_not_jump_elements(x, blocks_info):
+    # An element is a jump element if it is a tuple (which means it comes from a PUSHx instruction),
+    # its associated pushed value (x[0]) belongs to the set of blocks and it is not 0, as there's never
+    # a jump to block 0 and this value tends to appear really often.
+    if isinstance(x, tuple) and (x[0] in blocks_info) and x[0] != 0:
+        return x[0]
+    else:
+        return None
+
 # For checking if they are same stack, we just focus on
 # tuples that contains a block address
 def check_if_same_stack(stack1, stack2, blocks_info):
-    s1_aux = filter(lambda x: isinstance(x,tuple) and (x[0] in blocks_info) and x[0]!=0,stack1)
-    s2_aux = filter(lambda x: isinstance(x,tuple) and (x[0] in blocks_info) and x[0]!=0,stack2)
+    s1_aux = list(map(lambda x: mask_not_jump_elements(x, blocks_info), stack1))
+    s2_aux = list(map(lambda x: mask_not_jump_elements(x, blocks_info), stack2))
     # print "S1"
     # print s1_aux
     # print "S2"
     # print s2_aux
-    #return s1_aux == s2_aux
-    s1_dir = [get_initial_block_address(x[0]) for x in s1_aux]
-    s2_dir = [get_initial_block_address(x[0]) for x in s2_aux]
-    return (s1_dir == s2_dir and len(stack1) == len(stack2))
+    return s1_aux == s2_aux
+
 
 def show_graph(blocks_input):
     for address in blocks_input:
