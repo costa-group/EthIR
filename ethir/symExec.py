@@ -1028,9 +1028,15 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             getter_blocks.append(ch_block)
         s = vertices[block].get_block_gas()+vertices[pre_block].get_cost()
         vertices[block].set_cost(s)
-        
-        function_block_map[signature]=(ch_block,s)
-#        function_block_map[name]=vertices[block].get_jump_target()
+
+        elem = function_block_map.get(signature,-1)
+        if elem == -1:
+            function_block_map[signature] = (ch_block,s)
+        else:
+            if elem[0]>ch_block:
+                function_block_map[signature] = (ch_block,s)
+                
+        #        function_block_map[name]=vertices[block].get_jump_target()
         function_info = (False,"")
     
     # Go to next Basic Block(s)
