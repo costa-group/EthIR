@@ -107,11 +107,23 @@ def check_cg_dependency():
         return True
 
 
+'''
+The flag -a has to be used with the flag -c
+'''    
+def check_ca_dependency():
+    if args.cfile == None:
+        return not args.args
+    else:
+        return True
+
+    
+    
 def check_c_translation_dependencies():
     r = check_cv_dependency()
     r = r and check_vi_dependency()
     r = r and check_cg_dependency()
-
+    r = r and check_ca_dependency()
+    
     return r
 
 def check_optimize_dependencies():
@@ -139,7 +151,12 @@ def analyze_disasm_bytecode():
         if args.invalid:
             svc_options["invalid"]=args.invalid
 
-        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays)
+
+        c_translation_opt = {}
+        c_translation_opt["gotos"] = args.goto
+        c_translation_opt["args"] = args.args
+            
+        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays)
     else:
         exit_code = -1
         print("Option Error: --verify, --goto or --invalid options are only applied to c translation.\n")
@@ -167,8 +184,12 @@ def analyze_bytecode():
             svc_options["verify"]=args.verify
         if args.invalid:
             svc_options["invalid"]=args.invalid
-        
-        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto, mem_abs = args.mem_interval,sto=args.storage_arrays)
+
+        c_translation_opt = {}
+        c_translation_opt["gotos"] = args.goto
+        c_translation_opt["args"] = args.args
+            
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt, mem_abs = args.mem_interval,sto=args.storage_arrays)
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -191,12 +212,16 @@ def run_solidity_analysis(inputs,hashes):
     if args.invalid:
         svc_options["invalid"]=args.invalid
 
+    c_translation_opt = {}
+    c_translation_opt["gotos"] = args.goto
+    c_translation_opt["args"] = args.args
+        
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run)
             
         except Exception as e:
             traceback.print_exc()
@@ -216,7 +241,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run)
                 
             except Exception as e:
                 traceback.print_exc()
@@ -292,7 +317,7 @@ def run_solidity_analysis_optimized(inp,hashes):
     # print opt_info["c_source"]
     
     function_names = hashes[inp["c_name"]]
-
+    
     try:
         result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_opt,go = args.goto,opt= opt_info)
 
@@ -424,6 +449,7 @@ def main():
     parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with flag -c", choices = ["cpa","verymax","seahorn"])
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with flag -c", choices = ["array","div0","all"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with flag -c", choices = ["local","global","mix"])
+    parser.add_argument("-a", "--args",             help="Transform of the parameters of the rules. Use with flag -c", choices = ["local","global","mix"])
     parser.add_argument("-mem", "--mem_interval",             help="Translate the memory into an interval representation. Use with flag -c", action="store_true")
     parser.add_argument("-sto", "--storage_arrays", help="Translate storage arrays into arrays representation. Use with flag -c", action="store_true")
     parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
