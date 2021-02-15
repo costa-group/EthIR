@@ -341,6 +341,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
             local_variables = get_local_variables(rule)
             local = map(lambda x: "unsigned int i_"+x, local_variables)
         else:
+            local_variables = []
             local = []
             
         #build blockchain
@@ -1046,6 +1047,7 @@ def filter_call(call_instruction):
             local_variables = filter(lambda x: x.strip().startswith("l("),variables)
             l_vars = map(lambda x: x.strip()[2:-1],local_variables)
         else:
+            local_variables = []
             l_vars = []
             
         other = stack_variables+field_variables+local_variables
@@ -1502,6 +1504,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                 l_variables = map(lambda x: x.strip()[2:-1],local_variables)
 
             else:
+                local_variables = []
                 l_variables = []
                 
             other = stack_variables+field_variables+local_variables
