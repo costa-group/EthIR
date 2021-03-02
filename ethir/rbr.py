@@ -141,7 +141,7 @@ def init_globals():
     c_words = ["char","for","index","y1","log","rindex","round","exp"]
 
     global memory_intervals
-    memory_intervals = False
+    memory_intervals = None
 
     global c_address
     c_address = 0
@@ -702,7 +702,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1, updated_variables = get_new_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            if memory_intervals:
+            if memory_intervals == "arrays":
                 instr = v1+ " = " + "l(mem"+str(value)+")"
                 update_local_variables(str(value),block)
             else:
@@ -717,7 +717,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            if memory_intervals:
+            if memory_intervals == "arrays":
                instr = "l(mem"+str(value)+") = "+ v1
                update_local_variables(str(value),block)
             else:
@@ -735,7 +735,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            if memory_intervals:
+            if memory_intervals == "arrays":
                instr = "l(mem"+str(value)+") = "+ v1
                update_local_variables(str(value),block)
             else:
@@ -1710,7 +1710,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                         f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
                         bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
 
-                        if memory_intervals:
+                        if memory_intervals == "arrays":
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars_memabs()
                         else:
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
@@ -1825,7 +1825,7 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
                         f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
                         bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
                         
-                        if memory_intervals:
+                        if memory_intervals == "arrays":
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars_memabs()
                         else:
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()

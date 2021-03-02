@@ -450,7 +450,7 @@ def main():
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with flag -c", choices = ["array","div0","all"])
     parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with flag -c", action="store_true")
     parser.add_argument("-a", "--args",             help="Transform of the parameters of the rules. Use with flag -c", choices = ["local","global","mix"])
-    parser.add_argument("-mem", "--mem_interval",             help="Translate the memory into an interval representation. Use with flag -c", action="store_true")
+    parser.add_argument("-mem", "--mem_interval",             help="Translate the memory into an interval representation. Use with flag -c", choices = ["length","arrays"], default="length")
     parser.add_argument("-sto", "--storage_arrays", help="Translate storage arrays into arrays representation. Use with flag -c", action="store_true")
     parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
     parser.add_argument("-optimize-run", "--optimize-run",             help="Enable optimization flag in solc compiler", action="store_true")
@@ -464,7 +464,6 @@ def main():
 
 
     args = parser.parse_args()
-
     # if args.root_path:
     #     if args.root_path[-1] != '/':
     #         args.root_path += '/'

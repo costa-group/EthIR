@@ -244,7 +244,7 @@ class RBRRule:
     '''
     It generates the final call instruction.
     '''
-    def update_calls(self,mem_abs=False):
+    def update_calls(self,mem_abs="length"):
         instructions = []
         
         for elem in self.instr:
@@ -259,7 +259,7 @@ class RBRRule:
                 else:
                     gv_aux = self.build_field_vars()
                     bc = self.vars_to_string("data")
-                    if mem_abs:
+                    if mem_abs == "arrays":
                         local_vars = self.build_local_vars_memabs()
                     else:
                         local_vars = self.build_local_vars()
@@ -294,7 +294,7 @@ class RBRRule:
         self.instr = instructions
 
 
-    def update_rule(self,mem_abs = False):
+    def update_rule(self,mem_abs = "length"):
         self.update_calls(mem_abs)
 #        self.fresh_index = max(self.fresh_index,self.arg_input)
         if self.string_getter:
@@ -360,14 +360,14 @@ class RBRRule:
     '''
     It builds a string that represent the rbr.
     '''
-    def rule2string(self,mem_abs = False):
+    def rule2string(self,mem_abs = "length"):
         rule = ""
         
         new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
         new_instr = ["skip"] if new_instr == [] else new_instr
         in_aux = self.build_input_vars()
 
-        if mem_abs:
+        if mem_abs == "arrays":
             local_vars = self.build_local_vars_memabs()
         else:
             local_vars = self.build_local_vars()

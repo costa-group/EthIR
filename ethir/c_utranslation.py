@@ -111,9 +111,10 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
 
     components = component_of
 
-    mem_abs = mem_intervals
+    if mem_intervals == "arrays":
+        mem_abs = True
 
-    if mem_intervals and verifier == "cpa":
+    if mem_intervals == "arrays" and verifier == "cpa":
         create_mem_variables(mem_blocks)
 
     #print mem_blocks
