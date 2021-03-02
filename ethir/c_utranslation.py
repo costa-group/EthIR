@@ -127,7 +127,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         blocks2init = fbm
 
     try:
-        if gotos["gotos"]:
+        if gotos["gotos"]== "iterative":
             goto = gotos["args"] if gotos["args"]!= None else "global"
             heads, new_rules = rbr2c_gotos(rbr,scc)
         else:
