@@ -116,13 +116,20 @@ def check_ca_dependency():
     else:
         return True
 
+def check_cexec_dependency():
+    if args.cfile == None:
+        return not args.c_executable
+    else:
+        return True
+
     
-    
+
 def check_c_translation_dependencies():
     r = check_cv_dependency()
     r = r and check_vi_dependency()
     r = r and check_cg_dependency()
     r = r and check_ca_dependency()
+    r = r and check_cexec_dependency()
     
     return r
 
@@ -150,7 +157,8 @@ def analyze_disasm_bytecode():
             svc_options["verify"]=args.verify
         if args.invalid:
             svc_options["invalid"]=args.invalid
-
+        if args.c_executable:
+            svc_options["exec"]=args.c_executable
 
         c_translation_opt = {}
         c_translation_opt["gotos"] = args.goto
@@ -184,7 +192,11 @@ def analyze_bytecode():
             svc_options["verify"]=args.verify
         if args.invalid:
             svc_options["invalid"]=args.invalid
+        if args.c_executable:
+            svc_options["exec"]=args.c_executable
 
+
+            
         c_translation_opt = {}
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
@@ -211,7 +223,10 @@ def run_solidity_analysis(inputs,hashes):
         svc_options["verify"]=args.verify
     if args.invalid:
         svc_options["invalid"]=args.invalid
+    if args.c_executable:
+        svc_options["exec"]=args.c_executable
 
+        
     c_translation_opt = {}
     c_translation_opt["gotos"] = args.goto
     c_translation_opt["args"] = args.args
@@ -452,6 +467,7 @@ def main():
     parser.add_argument("-a", "--args",             help="Transform of the parameters of the rules. Use with flag -c", choices = ["local","global","mix"])
     parser.add_argument("-mem", "--mem_interval",             help="Translate the memory into an interval representation. Use with flag -c", choices = ["length","arrays"], default="length")
     parser.add_argument("-storage", "--storage_arrays", help="Translate storage arrays into arrays representation. Use with flag -c", choices = ["length","arrays"], default="length")
+    parser.add_argument("-cexec", "--c-executable", help="Generate a C program that can be executed. Use with flag -c",action = "store_true")
     parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
     parser.add_argument("-optimize-run", "--optimize-run",             help="Enable optimization flag in solc compiler", action="store_true")
     parser.add_argument("-run", "--run",             help="Set for how many contract runs to optimize (200 by default if --optimize-run)", default=-1,action="store",type=int)
