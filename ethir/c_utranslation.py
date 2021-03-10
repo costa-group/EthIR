@@ -134,7 +134,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
             goto = gotos["args"] if gotos["args"]!= None else "global"
             heads, new_rules = rbr2c_recur(rbr)
         
-        if svcomp!={} and goto != "local":
+        if not svcomp["exec"] and goto != "local":
             head_c , rule = initialize_globals(rbr,init_fields)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
@@ -397,7 +397,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
     body = "\n".join(new_instructions)
 
     init_loop_label = "  init_loop_"+str(id_loop)+":\n"
-    if rule.has_invalid() and svcomp!={}:
+    if rule.has_invalid() and not svcomp["exec"]:
         source = rule.get_invalid_source()
         label = get_error_svcomp_label()+"; //"+source+"\n"
     else:
@@ -1188,7 +1188,7 @@ def process_rule_c(rule):
     new_instructions = map(lambda x: "\t"+x,new_instructions)
     body = "\n".join(new_instructions)
 
-    if rule.has_invalid() and svcomp!={}:
+    if rule.has_invalid() and not svcomp["exec"]:
         source = rule.get_invalid_source()
         label = get_error_svcomp_label()+"; //"+source+"\n"
     else:
@@ -1239,7 +1239,7 @@ def process_rule_c(rule):
     else:
         rule_c = head+var_declarations
     
-    if (rule.get_Id() in blocks2init) and (svcomp!={}):
+    if (rule.get_Id() in blocks2init) and not svcomp["exec"]:
         if goto == "local":
             init = ""
         else:
@@ -1271,7 +1271,7 @@ def abstract_integer(var):
         if len(hexadec)<=10:
             new_var = str(r)
         else:
-            if svcomp!={}:
+            if not svcomp["exec"]:
                 new_var = get_nondet_svcomp_label()
             else:
                 new_var = "4294967295"
@@ -1658,7 +1658,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             var0 = var0_aux[1:]
 
             if instr[pos_eq+1:].strip().startswith("fresh("):
-                if svcomp!={}:
+                if not svcomp["exec"]:
                     new = var0+" = "+get_nondet_svcomp_label()
                 else:
                     new = var0+" = s"+str(cont)
@@ -1733,7 +1733,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             var0 = var0_aux[1:]
 
             if instr[pos_eq+1:].strip().startswith("fresh("):
-                if svcomp!={}:
+                if not svcomp["exec"]:
                     new = var0+" = "+get_nondet_svcomp_label()
                 else:
                     new = var0+" = s"+str(cont)
@@ -1834,7 +1834,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -1954,7 +1954,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
 
         # new = var0+" = exp_eth("+var1+", "+var2+")"
         # exp_function = True
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -1967,7 +1967,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -1981,7 +1981,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -1994,7 +1994,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -2010,7 +2010,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -2023,7 +2023,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         arg0 = instr[:pos].strip()
         var0 = unbox_variable(arg0)
 
-        if svcomp!={}:
+        if not svcomp["exec"]:
             new = var0+" = "+get_nondet_svcomp_label()
         else:
             new = var0+" = s"+str(cont)
@@ -2261,7 +2261,7 @@ def initialize_global_variables(rules,init_fields):
 def write_init(rules,execution,cname,num_mem_vars):
     s = "\n"
 
-    if svcomp!={}:
+    if not svcomp["exec"]:
         s = add_svcomp_labels()
         s = s+"\n"
         
@@ -2303,7 +2303,7 @@ def write_init(rules,execution,cname,num_mem_vars):
         if bc != []:
             s = s+";\n".join(bc)+";\n"
 
-        if svcomp == {}:
+        if svcomp["exec"]:
             f.write("#include <stdio.h>\n\n")
 
         if goto == "global":
@@ -2585,7 +2585,7 @@ def write_main(execution,cname):
     else:
         name = global_params.costabs_path+cname+".c"
 
-    if svcomp != {}:
+    if not svcomp["exec"]:
         with open(name,"a") as f:
             init = "\tinit_globals();"
         
