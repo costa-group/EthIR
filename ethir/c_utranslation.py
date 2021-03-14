@@ -55,6 +55,10 @@ def init_global_vars():
     global potential_uncalled
     potential_uncalled = []
 
+    global max_stack_idx
+    max_stack_idx = 0
+
+    
     global mem_id
     mem_id = 0
 
@@ -163,7 +167,9 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         write_init(rbr,execution,cname,num)
         write(heads,new_rules,execution,cname)
 
-        write_main(execution,cname)
+        s_init = build_init_main(rbr)
+        
+        write_main(execution,cname,s_init)
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
     except:
@@ -171,6 +177,8 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         raise Exception("Error in C_trnalsation",6)
 
 def rbr2c_gotos(rbr,scc):
+    global max_stack_idx
+    
     heads = "\n"
     new_rules = []
 
@@ -191,6 +199,8 @@ def rbr2c_gotos(rbr,scc):
         getId = rules[0].get_Id()
         type_rule = rules[0].get_type()
 
+        max_stack_idx = max(max_stack_idx,rules[0].get_fresh_index())
+        
         if getId in scc_ids :
             if (heads_u.get(getId,-1)!=-1) and (type_rule == "block") :
                 heads = heads+heads_u[getId]
@@ -223,18 +233,22 @@ def build_headers(l,rbr):
         i = rbr_aux.index(r)
         rule = rbr_aux[i]
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int "+x,stack_variables)
+        stack = map(lambda x: "unsigned int "+x,stack_variables)
         s_head = ", ".join(stack) 
         head_c ="void " + rule.get_rule_name()+"();\n"
         heads = heads+head_c
     return heads
 
 def rbr2c_recur(rbr):
+    global max_stack_idx
+    
     heads = "\n"
     new_rules = []
     
     for rules in rbr: #it contains list of two elemtns (jumps) or unitary lists (standard rule)
 
+        max_stack_idx = max(max_stack_idx,rules[0].get_fresh_index())
+        
         if len(rules) == 2:
             head,new_rule = process_jumps(rules)
         else:
@@ -1100,7 +1114,7 @@ def process_jumps(rules):
             
         #build blockchain
         bc_variables = get_blockchain_variables(jump1)
-        bc = map(lambda x: "int "+x, bc_variables)
+        bc = map(lambda x: "unsigned int "+x, bc_variables)
 
         r_vars = stack+fields+local+bc
         r_head = ",".join(r_vars)
@@ -2293,16 +2307,8 @@ def write_init(rules,execution,cname,num_mem_vars):
         
         bc = map(lambda x: "unsigned int "+x,bc_data)
         
+        build_vars_to_initialize(fields,l_vars,bc)
         
-        if fields != []:
-            s = s+";\n".join(fields)+";\n"
-
-        if l_vars != []:
-            s = s+";\n".join(l_vars)+";\n"
-
-        if bc != []:
-            s = s+";\n".join(bc)+";\n"
-
         if svcomp["exec"]:
             f.write("#include <stdio.h>\n\n")
 
@@ -2577,7 +2583,7 @@ def update_stack_vars_global(vs):
             stack_vars_global.append(v.strip())
             
 
-def write_main(execution,cname):
+def write_main(execution,cname,init_vars):
     if execution == None:
         name = global_params.costabs_path+"rbr.c"
     elif cname == None:
@@ -2590,8 +2596,13 @@ def write_main(execution,cname):
             init = "\tinit_globals();"
         
             s = "\nint main(){\n"
+
             if goto != "local":
                 s = s+"\n"+init+"\n"
+            if goto != "global":
+                s = s+"\n"+init_vars+"\n"
+
+
             s = s+"\tblock0();\n"
             s = s+"\treturn 0;\n}"
             f.write(s)
@@ -2676,7 +2687,7 @@ def generate_initializations(stack_vars):
         if s.strip() not in vars_def:
             vars_def.append(s)
 
-    l_vars = map(lambda x: "\tint "+x+";",vars_def)
+    l_vars = map(lambda x: "\tunsigned int "+x+";",vars_def)
     return l_vars
 
 def generate_storage_address(storage_arrays):
@@ -2690,3 +2701,52 @@ def generate_storage_address(storage_arrays):
         vals_list = vals[bl]
     
         ids_dict[bl] = zip(ids_list,vals_list)
+
+
+
+def build_init_main(rules):
+    if(len(rules)>1):
+        r = rules[1][0]
+    else:
+        r = rules[0][0]
+
+    name_fields, numeric_fields = r.get_global_arg()
+    fields_id = name_fields[::-1]+numeric_fields[::-1]
+    bc_data = r.get_bc()
+    locals_vars = sorted(r.get_args_local())[::-1]
+                                
+    fields = map(lambda x: "unsigned int g"+str(x),fields_id)
+
+    if mem_abs and verifier == "cpa":
+        l_vars = ["unsigned int mem64"]
+    elif mem_abs:
+        l_vars = map(lambda x: "unsigned int mem"+str(x),locals_vars)
+    else:
+        l_vars = map(lambda x: "unsigned int l"+str(x),locals_vars)
+        
+    bc = map(lambda x: "unsigned int "+x,bc_data)
+    
+    s_vars = vars_in_main(fields,l_vars,bc)
+    return s_vars
+    
+def vars_in_main(fields,local,blockchain):
+    s = ""
+    
+    #It has to be initialize in local and mix
+    stack_vars = []
+    for x in xrange(0,max_stack_idx+1):
+        stack_vars.append("\tunsigned int i_s"+str(x)+" = "+get_nondet_svcomp_label())
+        
+    if goto == "local":
+        
+        all_vars = map(lambda x: "\t"+x.split()[0]+" "+x.split()[1]+" i_"+x.split()[-1]+" = "+get_nondet_svcomp_label(),fields+local+blockchain)
+
+        s = s+";\n".join(stack_vars+all_vars)
+
+        if mem_abs:
+            s = s+";\n".join(local)+";\n"
+
+    else:
+        s = s+";\n".join(stack_vars)
+
+    return s
