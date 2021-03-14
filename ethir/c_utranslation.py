@@ -2572,7 +2572,7 @@ def build_mem_vars(num):
 
     non_interval_memvars.sort()
     for i in non_interval_memvars:
-        f = f + "unsigned int p"+i+";\n"
+        f = f + "unsigned int "+i+";\n"
 
     f+="\n"
 
@@ -2755,12 +2755,12 @@ def vars_in_main(fields,local,blockchain):
         all_vars = map(lambda x: "\t"+x.split()[0]+" "+x.split()[1]+" i_"+x.split()[-1]+" = "+get_nondet_svcomp_label(),fields+local+blockchain)
 
         s = s+";\n".join(stack_vars+all_vars)+";\n"
-
+        
         if mem_abs:
             local_aux = map(lambda x: "\t"+x,local)
             s = s+";\n".join(local_aux)+";\n"
 
     else:
-        s = s+";\n".join(stack_vars)
+        s = s+";\n".join(stack_vars)+";\n"
 
     return s
