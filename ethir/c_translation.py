@@ -1059,19 +1059,22 @@ def filter_call(call_instruction):
         field_variables = filter(lambda x: x.strip().startswith("g("),variables)
         f_vars = map(lambda x: unbox_variable(x.strip()),field_variables)
 
+        local_variables_mem = filter(lambda x: x.strip().startswith("l("),variables)
+        
         if not mem_abs:
             local_variables = filter(lambda x: x.strip().startswith("l("),variables)
             l_vars = map(lambda x: x.strip()[2:-1],local_variables)
         else:
             local_variables = []
             l_vars = []
-            
-        other = stack_variables+field_variables+local_variables
+
+        other = stack_variables+field_variables+local_variables+local_variables_mem
         bc_vars = filter(lambda x: x not in other,variables)
-        
+
         v_vars = s_vars+f_vars+l_vars+bc_vars
         s_string = ", ".join(v_vars)
         call = block[:pos_open]+"("+s_string+")"
+        
     else:
         call = block[:pos_open]+"("+s_string+")"
     return call
@@ -1451,6 +1454,8 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             field_variables = filter(lambda x: x.strip().startswith("g("),vars_aux)
             f_variables = map(lambda x: unbox_variable(x.strip()),field_variables)
 
+
+            local_variables_mem = filter(lambda x: x.strip().startswith("l("),vars_aux)
             if not mem_abs:
                 local_variables = filter(lambda x: x.strip().startswith("l("),vars_aux)
                 l_variables = map(lambda x: x.strip()[2:-1],local_variables)
@@ -1459,7 +1464,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                 local_variables = []
                 l_variables = []
                 
-            other = stack_variables+field_variables+local_variables
+            other = stack_variables+field_variables+local_variables+local_variables_mem
             bc_variables = filter(lambda x: x not in other,vars_aux)
 
             variables = s_variables+f_variables+l_variables+bc_variables
@@ -2494,7 +2499,7 @@ def build_mem_vars(num):
 
     non_interval_memvars.sort()
     for i in non_interval_memvars:
-        f = f + "unsigned int "+i+";\n"
+        f = f + "int "+i+";\n"
 
     f+="\n"
 
