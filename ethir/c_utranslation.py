@@ -58,6 +58,9 @@ def init_global_vars():
     global max_stack_idx
     max_stack_idx = 0
 
+    global block0_header
+    block0_header = ""
+
     
     global mem_id
     mem_id = 0
@@ -178,6 +181,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
 
 def rbr2c_gotos(rbr,scc):
     global max_stack_idx
+    global block0_header
     
     heads = "\n"
     new_rules = []
@@ -218,6 +222,8 @@ def rbr2c_gotos(rbr,scc):
             heads = heads+head
             new_rules.append(new_rule)
 
+        if getId == 0 and len(rules) == 1:
+            block0_header =  head[4:]
     # ll = filter(lambda x: heads.find("void "+x)==-1,potential_uncalled)
     # heads = heads+build_headers(ll,rbr)
     return heads, new_rules
@@ -241,6 +247,7 @@ def build_headers(l,rbr):
 
 def rbr2c_recur(rbr):
     global max_stack_idx
+    global block0_header
     
     heads = "\n"
     new_rules = []
@@ -253,6 +260,9 @@ def rbr2c_recur(rbr):
             head,new_rule = process_jumps(rules)
         else:
             head,new_rule = process_rule_c(rules[0])
+
+            if rules[0].get_Id() == 0:
+                block0_header =  head[4:]
                 
         heads = heads+head
         new_rules.append(new_rule)
@@ -443,7 +453,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
 
         else:
             initializations_local = []
-            init_lvars_aux = ""
+            init_lvars_aux = []
             
         #build blockchain
         initializations_bc = map(lambda x: "\tunsigned int "+x+";", bc_variables)
@@ -2602,8 +2612,11 @@ def write_main(execution,cname,init_vars):
             if goto != "global":
                 s = s+"\n"+init_vars+"\n"
 
+            if goto == "global":
+                s = s+"\tblock0();\n"
+            else:
+                s = s+"\t"+block0_header.replace("unsigned int","")+"\n"
 
-            s = s+"\tblock0();\n"
             s = s+"\treturn 0;\n}"
             f.write(s)
         f.close()
@@ -2741,10 +2754,11 @@ def vars_in_main(fields,local,blockchain):
         
         all_vars = map(lambda x: "\t"+x.split()[0]+" "+x.split()[1]+" i_"+x.split()[-1]+" = "+get_nondet_svcomp_label(),fields+local+blockchain)
 
-        s = s+";\n".join(stack_vars+all_vars)
+        s = s+";\n".join(stack_vars+all_vars)+";\n"
 
         if mem_abs:
-            s = s+";\n".join(local)+";\n"
+            local_aux = map(lambda x: "\t"+x,local)
+            s = s+";\n".join(local_aux)+";\n"
 
     else:
         s = s+";\n".join(stack_vars)
