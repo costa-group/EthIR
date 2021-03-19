@@ -157,6 +157,7 @@ def analyze_disasm_bytecode():
             svc_options["verify"]=args.verify
         if args.invalid:
             svc_options["invalid"]=args.invalid
+
         if args.c_executable:
             svc_options["exec"]=args.c_executable
 
@@ -223,10 +224,9 @@ def run_solidity_analysis(inputs,hashes):
         svc_options["verify"]=args.verify
     if args.invalid:
         svc_options["invalid"]=args.invalid
-    if args.c_executable:
-        svc_options["exec"]=args.c_executable
 
-        
+    svc_options["exec"]=args.c_executable
+    
     c_translation_opt = {}
     c_translation_opt["gotos"] = args.goto
     c_translation_opt["args"] = args.args
