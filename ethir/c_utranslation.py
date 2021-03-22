@@ -2218,12 +2218,16 @@ def get_nondet_svcomp_label():
     return "__VERIFIER_nondet_uint()"
 
 def get_error_svcomp_label():
-    return "ERROR: __VERIFIER_error()"
+    # return "ERROR: __VERIFIER_error()"
+    return "ERROR: {reach_error();abort();}"
 
 def add_svcomp_labels():
     labels = "";
     labels = labels+"extern unsigned int __VERIFIER_nondet_uint();\n"
-    labels = labels + "extern void __VERIFIER_error();\n"
+    # labels = labels + "extern void __VERIFIER_error();\n"
+    labels = labels +"extern void abort(void);\n"
+    labels = labels+"extern void __assert_fail(const char *, const char *, unsigned int, const char *) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));\n"
+    labels = labels+'void reach_error() { __assert_fail("0", "c", 0, "reach_error"); }\n'
 
     return labels
 
