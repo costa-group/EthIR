@@ -662,6 +662,21 @@ def annotate_invalid(path):
     if len(annotate_invalids)>0 and (annotate_invalids[0] not in has_invalid):
         has_invalid.append(annotate_invalids[0])
 
+def get_functions_with_loop(scc):
+    block_with_loop = []
+    entry_multiples = scc['multiple'].keys()
+    scc_blocks = scc['unary']+entry_multiples
+    
+    entry_points = map(lambda x: function_block_map[x][0], function_block_map.keys())
+
+    for b in scc_blocks:
+        entry_block = filter(lambda x: x in entry_points,component_of_blocks[b])
+        if len(entry_block) > 0:
+            block_with_loop.append(entry_block[0])
+
+    return block_with_loop
+
+        
 def remove_getters_has_invalid():
     global has_invalid
 
@@ -3312,7 +3327,7 @@ def process_argument_function(arg):
                 
     return arg[:posInit+1]+",".join(new_args)+")"
     
-def generate_verify_config_file(cname):
+def generate_verify_config_file(cname,scc):
     to_write = []
     remove_getters_has_invalid()
     if "costabs" not in os.listdir(global_params.tmp_path):
@@ -3322,14 +3337,25 @@ def generate_verify_config_file(cname):
         name = global_params.costabs_path+"config_block.config"
     else:
         name = global_params.costabs_path+cname+".config"
+
+    entry_loops = get_functions_with_loop(scc)
+        
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
             fun_arg = process_argument_function(elem[0])
             if block_fun in has_invalid:
-                to_write.append("("+fun_arg+";"+str(elem[1][0])+"; YES)")
+                invalid_tag = "REACH"
+                # to_write.append("("+fun_arg+";"+str(elem[1][0])+"; YES)")
             else:
-                to_write.append("("+fun_arg+";"+str(elem[1][0])+"; NO)")
+                invalid_tag = "NO"
+                # to_write.append("("+fun_arg+";"+str(elem[1][0])+"; NO)")
+            if block_fun in entry_loops:
+                loop_tag = "TERMIN"
+            else:
+                loop_tag = "NO"
+                
+            to_write.append("("+fun_arg+";"+str(elem[1][0])+"; "+invalid_tag+"; "+loop_tag+")")
         elems2write = "\n".join(to_write)
         f.write(elems2write)
     f.close()
@@ -3460,24 +3486,24 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     #update_edges(vertices, edges)
 
     scc = {}
-    if go:
-        try:
-            scc_multiple = get_scc(edges)
-            scc_unary_new = update_scc_unary(scc_unary,vertices)
+    # if go:
+    try:
+        scc_multiple = get_scc(edges)
+        scc_unary_new = update_scc_unary(scc_unary,vertices)
 
-            scc["unary"] = scc_unary_new
-            scc["multiple"] = scc_multiple
-            # g = Graph_SCC(edges)
-            # scc_multiple = g.getSCCs()
-            # scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
-            # scc_multiple = get_entry_all(scc_multiple,vertices)
+        scc["unary"] = scc_unary_new
+        scc["multiple"] = scc_multiple
+        # g = Graph_SCC(edges)
+        # scc_multiple = g.getSCCs()
+        # scc_multiple = filter(lambda x: len(x)>1,scc_multiple)
+        # scc_multiple = get_entry_all(scc_multiple,vertices)
 
-            # scc["unary"] = scc_unary
-            # scc["multiple"] = scc_multiple
+        # scc["unary"] = scc_unary
+        # scc["multiple"] = scc_multiple
             
-        except:
-            #traceback.print_exc()
-            raise Exception("Error in SCC generation",7)
+    except:
+        #traceback.print_exc()
+        raise Exception("Error in SCC generation",7)
 
     if function_block_map != {}:
         val = function_block_map.values()
@@ -3511,7 +3537,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             generate_saco_config_file(cname)
 
         elif verify and not(saco):
-            generate_verify_config_file(cname)
+            generate_verify_config_file(cname,scc)
 
         ##Add when both are != None
   
