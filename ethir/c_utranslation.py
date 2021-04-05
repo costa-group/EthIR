@@ -354,6 +354,12 @@ def translate_jump_scc(r,scc,id_loop,nested = False):
 
 
 def translate_block_scc(rule,id_loop,multiple=False):
+
+    stack_variables = []
+    fields_variables = []
+    local_variables = []
+    bc_variables = []
+    variables = []
     
     if goto == "local":
         stack_variables = get_input_variables(rule.get_index_invars())

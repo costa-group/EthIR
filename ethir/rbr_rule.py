@@ -295,10 +295,10 @@ class RBRRule:
         self.instr = instructions
 
 
-    def update_rule(self,mem_abs = "length"):
+    def update_rule(self,saco_flag,mem_abs = "length"):
         self.update_calls(mem_abs)
 #        self.fresh_index = max(self.fresh_index,self.arg_input)
-        if self.string_getter and mem_abs == "length":
+        if self.string_getter and saco_flag:
             self.include_string_getter()
 
         # if self.rule_name == "block1552":

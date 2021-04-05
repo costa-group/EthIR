@@ -1424,7 +1424,7 @@ def compile_block(block,state_vars):
     rule = RBRRule(block_id, "block",is_string_getter,all_state_vars)
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
-
+    
     mem_creation = 0 #mem_abs
     
     while not(finish) and cont< len(l_instr):
@@ -1493,7 +1493,7 @@ def compile_block(block,state_vars):
 
     # if forget_memory:
     #     forget_memory_blocks.append(rule)
-    
+
     return rule,mem_creation
 
 
@@ -1704,6 +1704,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
             for rule in rbr_blocks.values():
                 for r in rule:
+                    # if r.get_Id() == 1552 and r.get_type() == "block":
+                    #     print "HOLAAAAAAA"
+                    #     r.display()
+                    #     print r.get_call_to()
                     jumps_to = r.get_call_to()
                 
                     if jumps_to != -1:
@@ -1714,12 +1718,19 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars_memabs()
                         else:
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
+
                         r.set_call_to_info((f,bc,l))
 
-                    r.update_rule(memory_intervals)
+                    r.update_rule(saco_rbr,memory_intervals)
 
             #forget_mem_variables()
-                    
+
+            # for rule in rbr_blocks.values():
+            #     for r in rule:
+            #         if r.get_Id() == 1552 and r.get_type() == "block":
+            #             print "HOLAAAAAAA"
+            #             r.display()
+            
             rbr = sorted(rbr_blocks.values(),key = orderRBR)
             write_rbr(rbr,exe,contract_name)
         
