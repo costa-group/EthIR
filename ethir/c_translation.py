@@ -407,7 +407,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
     instructions = rule.get_instructions()
     has_string_pattern = rule.get_string_getter()
     new_instructions,variables = process_body_c(rule.get_Id(),instructions,cont,has_string_pattern)
-
+    
     if multiple:
         variables_d = get_variables_to_be_declared(stack_variables,variables,True)
     else:
@@ -431,39 +431,21 @@ def translate_block_scc(rule,id_loop,multiple=False):
     update_stack_vars_global(stack_variables)
     update_stack_vars_global(variables)
 
-    if goto == "mix":
+    list_variables = {}
+
+    list_variables["stack"] = stack_variables
+    list_variables["variables_dec"] = variables
+    list_variables["fields"] = fields_variables
+    list_variables["local"] = local_variables
+    list_variables["blockchain"] = bc_variables
+    
+    if goto == "mix" or goto == "local":
         init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
         init_vars = "\n".join(init_vars_aux)+"\n\n"
 
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
         initializations = "\n".join(initializations_aux)+"\n\n"
-        
-    elif goto == "local":
-        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
-        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
-
-        initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
-
-        init_fvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
-        
-        #build memory
-        if not mem_abs:
-            initializations_local = map(lambda x: "\tint "+x+";", local_variables)
-
-            init_lvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
-
-        else:
-            initializations_local = []
-            init_lvars_aux = []
             
-        #build blockchain
-        initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
-
-        init_bvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
-
-        initializations = "\n".join(initializations_aux+initializations_fields+initializations_local+initializations_bc)+"\n\n"
-        init_vars = "\n".join(init_vars_aux+init_fvars_aux+init_lvars_aux+init_bvars_aux)+"\n\n"
-        
     if not multiple:
         #rule_c = head+var_declarations+init_loop_label+body+label
         if goto == "local" or goto == "mix":
@@ -472,9 +454,11 @@ def translate_block_scc(rule,id_loop,multiple=False):
             rule_c = head+init_loop_label+body+label
         return head_c,rule_c
     else:
-        if goto == "local" or goto == "mix":
-            init_loop_label = initializations+init_vars+init_loop_label
-        return head_c,[head,init_loop_label+body+label],variables_d
+        # if goto == "local" or goto == "mix":
+            #init_loop_label = initializations+init_vars+init_loop_label
+        return head_c,[head,list_variables,init_loop_label+body+label],variables_d
+
+
 
 
     
@@ -531,6 +515,7 @@ def compute_sccs_multiple(rbr,scc,scc_unit_keys,out_in):
         entry = get_rule_from_scc(s,rbr_scc)
 
         head, entry_part,vars_declaration = translate_block_scc(entry,init_loop,True)
+        list_vars = entry_part[1]
         outer_id = out_in.get(s,-1)
 
         #if entry is unconditional, it gets the next block and call to
@@ -575,10 +560,19 @@ def compute_sccs_multiple(rbr,scc,scc_unit_keys,out_in):
         init_label = "\tgoto init_loop_"+str(init_loop)+";\n"
         end_label = "  end_loop_"+str(init_loop)+": \n"
 
-        vars_declaration = delete_dup(vars_declaration)
-        varsd_string = "\t".join(vars_declaration)
+        vars_entry = list_vars["variables_dec"] 
+
+        # print("*********")
+        vars_declaration = map(lambda x: x.strip(";\n").strip("int").strip(),vars_declaration)
         
-        body = entry_part[0]+entry_part[1]+"\n"
+        vars_declaration = delete_dup(vars_entry+vars_declaration)
+
+        list_vars["variables_dec"] = vars_declaration
+        # varsd_string = "\t".join(vars_declaration)
+        
+        decs_and_init = get_declaration_and_init(list_vars)
+            
+        body = entry_part[0]+decs_and_init+entry_part[2]+"\n"
         body = body+entry_jump+part_block
         body = body+init_label+"\n"
         body = body+end_label
@@ -598,6 +592,52 @@ def compute_sccs_multiple(rbr,scc,scc_unit_keys,out_in):
     return heads,rules
 
 
+def get_declaration_and_init(list_vars):
+    stack_variables = list_vars["stack"]
+    variables = list_vars["variables_dec"]
+    fields_variables = list_vars["fields"]
+    local_variables = list_vars["local"]
+    bc_variables = list_vars["blockchain"]   
+    
+    if goto == "mix":
+        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars = "\n".join(init_vars_aux)+"\n\n"
+
+        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
+        initializations = "\n".join(initializations_aux)+"\n\n"
+        
+    elif goto == "local":
+        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        initializations_aux = generate_initializations(stack_variables[::-1]+variables)
+
+        initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
+
+        init_fvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
+        
+        #build memory
+        if not mem_abs:
+            initializations_local = map(lambda x: "\tint "+x+";", local_variables)
+
+            init_lvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
+
+        else:
+            initializations_local = []
+            init_lvars_aux = []
+            
+        #build blockchain
+        initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
+
+        init_bvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
+
+        initializations = "\n".join(initializations_aux+initializations_fields+initializations_local+initializations_bc)+"\n\n"
+        init_vars = "\n".join(init_vars_aux+init_fvars_aux+init_lvars_aux+init_bvars_aux)+"\n\n"
+
+    elif goto == "global":
+        initializations = ""
+        init_vars = ""
+        
+    return initializations+init_vars
+        
 def get_next_scc(scc,to_translate):
     if to_translate == []:
         return -1
