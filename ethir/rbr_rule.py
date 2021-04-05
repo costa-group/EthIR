@@ -263,7 +263,7 @@ class RBRRule:
                         local_vars = self.build_local_vars_memabs()
                     else:
                         local_vars = self.build_local_vars()
-                    
+                                                
                 gv = ", ".join(gv_aux)
                 local_vars_string = ", ".join(local_vars)
 
@@ -291,14 +291,20 @@ class RBRRule:
                 new_instr = elem
                 
             instructions.append(new_instr)
+
         self.instr = instructions
 
 
     def update_rule(self,mem_abs = "length"):
         self.update_calls(mem_abs)
 #        self.fresh_index = max(self.fresh_index,self.arg_input)
-        if self.string_getter:
+        if self.string_getter and mem_abs == "length":
             self.include_string_getter()
+
+        # if self.rule_name == "block1552":
+        #     print "A VER A VER"
+        #     print self.instr
+
             
     def include_string_getter(self):
         #Patter defined in symExec.py
