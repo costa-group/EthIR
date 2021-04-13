@@ -371,6 +371,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
         if not mem_abs:
             local_variables = get_local_variables(rule)
             local = map(lambda x: "int i_"+x, local_variables)
+
         else:
             local_variables = []
             local = []
@@ -452,11 +453,14 @@ def translate_block_scc(rule,id_loop,multiple=False):
         initializations = "\n".join(initializations_aux)+"\n\n"
             
     if not multiple:
+
+        init = get_declaration_and_init(list_variables)
+        
         #rule_c = head+var_declarations+init_loop_label+body+label
-        if goto == "local" or goto == "mix":
-            rule_c = head+initializations+init_vars+init_loop_label+body+label
-        else:
-            rule_c = head+init_loop_label+body+label
+        # if goto == "local" or goto == "mix":
+        rule_c = head+init+init_loop_label+body+label
+        # else:
+        #     rule_c = head+init_loop_label+body+label
         return head_c,rule_c
     else:
         # if goto == "local" or goto == "mix":
