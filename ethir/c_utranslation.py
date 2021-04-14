@@ -2561,13 +2561,13 @@ def mstore_functions():
 
         values = memory_id_spec[a]
         non_interval = filter(lambda x: str(x).startswith("mem"),values)
-        is_first = False
+        is_first = True
         for mvars in non_interval:
             int_val = mvars[3:].strip()
-            if not is_first:
+            if is_first:
                 f = f+"\tif ( pos == "+int_val+" ){\n"
                 f = f+"\t\tp"+mvars+" = val;\n"
-                is_first = True
+                is_first = False
             else:
                 f = f+"\t}else if ( pos == "+int_val+" ){\n"
                 f = f+"\t\tp"+mvars+" = val;\n"
@@ -2579,10 +2579,10 @@ def mstore_functions():
             first_val = "fv"+str(x)
             arr = "m"+str(x)
 
-            if not is_first:
-                f = f + "\t}if ("+start_idx+" == pos) {\n"
+            if is_first:
+                f = f + "\tif ("+start_idx+" == pos) {\n"
                 f = f + "\t\t"+first_val+" = val;\n"
-                is_first = True
+                is_first = False
             else:
                 f = f + "\t}else if ("+start_idx+" == pos) {\n"
                 f = f + "\t\t"+first_val+" = val;\n"
