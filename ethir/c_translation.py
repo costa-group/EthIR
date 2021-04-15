@@ -2319,7 +2319,7 @@ def write_init(rules,execution,cname,num_mem_vars):
             r_vars = get_rest_variables(stack_vars_global,True)    
             s = s+"".join(s_vars)+"".join(r_vars)
             
-        if verifier == "cpa":
+        if verifier == "cpa" and mem_abs:
             s = s+"\n"+build_mem_vars(num_mem_vars)
             
         f.write(s)
@@ -2725,12 +2725,14 @@ def build_init_main(rules):
                                 
     fields = map(lambda x: "int g"+str(x),fields_id)
 
-    if mem_abs and verifier == "cpa":
-        l_vars = ["int mem64"]
-    elif mem_abs:
-        l_vars = map(lambda x: "int mem"+str(x),locals_vars)
-    else:
+    # if mem_abs and verifier == "cpa":
+    #     l_vars = ["int mem64"]
+    # elif mem_abs:
+    #     l_vars = map(lambda x: "int mem"+str(x),locals_vars)
+    if not mem_abs:
         l_vars = map(lambda x: "int l"+str(x),locals_vars)
+    else:
+        l_vars = []
     bc = map(lambda x: "int "+x,bc_data)
         
 

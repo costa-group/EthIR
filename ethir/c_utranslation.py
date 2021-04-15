@@ -2396,7 +2396,7 @@ def write_init(rules,execution,cname,num_mem_vars):
             r_vars = get_rest_variables(stack_vars_global,True)    
             s = s+"".join(s_vars)+"".join(r_vars)
 
-        if verifier == "cpa":
+        if verifier == "cpa" and mem_abs:
             s = s+"\n"+build_mem_vars(num_mem_vars)
             
         f.write(s)
