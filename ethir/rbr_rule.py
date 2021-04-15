@@ -298,15 +298,15 @@ class RBRRule:
     def update_rule(self,saco_flag,mem_abs = "length"):
         self.update_calls(mem_abs)
 #        self.fresh_index = max(self.fresh_index,self.arg_input)
-        if self.string_getter and saco_flag:
-            self.include_string_getter()
+        if self.string_getter:# and saco_flag:
+            self.include_string_getter(mem_abs)
 
         # if self.rule_name == "block1552":
         #     print "A VER A VER"
         #     print self.instr
 
             
-    def include_string_getter(self):
+    def include_string_getter(self,mem_abs):
         #Patter defined in symExec.py
         #Pattern identified by Oyente
         evm = filter(lambda x: x.split("(")[0] != "nop",self.instr)
@@ -314,11 +314,20 @@ class RBRRule:
         instr2_aux = evm[-22] #by definition of the pattern. It corresponds to l(z) = s(w)
         field = instr1.split("=")[1].strip()
 
+        # print instr1
+        # print instr2_aux
+        
         instr2 = instr2_aux.split("=")[0]+"= "+field #We replace in the second instr the element s(w) by the corresponding field g(y)
 
         instr = self.instr[::-1]
         idx = instr.index("nop(DUP1)")
-        new_instr = instr[:idx]+[instr1,instr2]+instr[idx:]
+        if mem_abs != "length":
+            mem_idx = instr2.split("=")[0].strip()[5:-1]
+            f = field[2:-1]
+            vs = str(mem_idx)+",g"+str(f)
+            new_instr = instr[:idx]+[instr1,"STRMSTORE("+vs+")"]+instr[idx:]
+        else:
+            new_instr = instr[:idx]+[instr1,instr2]+instr[idx:]
         self.instr = new_instr[::-1]
         
     '''
