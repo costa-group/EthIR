@@ -2155,7 +2155,12 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             new = var0+" = "+ get_nondet_svcomp_label()
         else:
             new = var0+" = "+var1+" % "+var2
-                
+
+    elif instr.startswith("STRMSTORE"):
+        elems = instr.strip("STRMSTORE")[1:-1] #to delelte (, )
+        args = elems.split(",")
+        new = "mem"+str(args[0])+" = "+args[1]
+            
     elif len(instr.split("=")) > 1:
         slices = instr.split("=")
         
@@ -2172,6 +2177,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
 
         new = var1+" = "+var2
         check_declare_variable(var1,vars_to_declare)
+
         
     elif instr.find("skip")!=-1:
         new = ""
