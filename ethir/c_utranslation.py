@@ -1802,7 +1802,9 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
 
                     new = var0+" = mload"+str(mload_id)+"("+var0+")"
 
-            else:    
+            else:
+                if var1 != "mem64" and var1 not in non_interval_memvars:
+                    non_interval_memvars.append(var1)
                 new = var0+" = "+var1
         else: #MSTORE
             arg0 = instr[:pos_eq].strip()
@@ -1887,6 +1889,8 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                         new = "mstore"+str(mstore_id)+"(s"+str(var1p)+" , "+var1+")"
                     
                 else:
+                    if var0 != "mem64" and var0 not in non_interval_memvars:
+                        non_interval_memvars.append(var0)
                     new = var0+" = "+var1
 
 
@@ -2381,7 +2385,8 @@ def write_init(rules,execution,cname,num_mem_vars):
         
         bc = map(lambda x: "unsigned int "+x,bc_data)
         
-        build_vars_to_initialize(fields,l_vars,bc)
+        s_vars = build_vars_to_initialize(fields,l_vars,bc)
+        s = s+s_vars
         
         if svcomp["exec"]:
             f.write("#include <stdio.h>\n\n")
