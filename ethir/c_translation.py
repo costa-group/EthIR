@@ -1729,7 +1729,9 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
 
                     new = var0+" = mload"+str(mload_id)+"("+var0+")"
 
-            else:    
+            else:
+                if var1!="mem64" and var1 not in non_interval_memvars:
+                    non_interval_memvars.append(var1)
                 new = var0+" = "+var1
         else: #MSTORE
             arg0 = instr[:pos_eq].strip()
@@ -1792,6 +1794,8 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                             # print var0
                             if var0.startswith("mem"):
                                 if var0 not in non_interval_memvars:
+                                    # print "HOLA"
+                                    # print var0
                                     non_interval_memvars.append(var0)
                                     
                                 al = mem_vars_per_block.get(rule_id,[])
@@ -1814,6 +1818,8 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                         new = "mstore"+str(mstore_id)+"(s"+str(var1p)+" , "+var1+")"
                     
                 else:
+                    if var0 != "mem64" and var0 not in non_interval_memvars:
+                        non_interval_memvars.append(var0)
                     new = var0+" = "+var1
                 
     elif instr.find("ls(",0)!=-1:
@@ -2235,7 +2241,6 @@ def initialize_global_variables(rules,init_fields):
     fields_id = name_fields[::-1]+numeric_fields[::-1]
     bc_data = r.get_bc()
     locals_vars = sorted(r.get_args_local())[::-1]
-
 
     nondet_fields = filter(lambda x: x not in initialized_vars,fields_id) 
     fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",nondet_fields)
