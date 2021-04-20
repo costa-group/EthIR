@@ -2501,11 +2501,11 @@ def mload_functions():
             int_val = mvars[3:].strip()
             if is_first:
                 f = f+"\tif ( pos == "+int_val+" ){\n"
-                f = f+"\t\tval = p"+mvars+";\n"
+                f = f+"\t\tval = "+mvars+";\n"
                 is_first = False
             else:
                 f = f+"\t}else if ( pos == "+int_val+" ){\n"
-                f = f+"\t\tval = p"+mvars+";\n"
+                f = f+"\t\tval = "+mvars+";\n"
 
         interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
         for x in interval_vars:
