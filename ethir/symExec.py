@@ -1831,6 +1831,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first_aux = get_push_value(first)
             second_aux = get_push_value(second)
 
+
+            if isAllReal(first_aux,second_aux):
+                if type(first_aux) != type(second_aux):
+                    first_aux = int(first_aux)
+                    second_aux = int(second_aux)
+                    
             computed = first_aux ^ second_aux
 
             if computed == first_aux:
