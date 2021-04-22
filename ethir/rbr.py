@@ -138,7 +138,7 @@ def init_globals():
     c_trans = False
 
     global c_words
-    c_words = ["char","for","index","y1","log","rindex","round","exp"]
+    c_words = ["char","for","index","y1","log","rindex","round","exp","long"]
 
     global memory_intervals
     memory_intervals = None
