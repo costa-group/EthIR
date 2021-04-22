@@ -177,7 +177,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         print("C RBR: "+str(end-begin)+"s")
     except:
         traceback.print_exc()
-        raise Exception("Error in C_trnalsation",6)
+        raise Exception("Error in C_translation",6)
 
 def rbr2c_gotos(rbr,scc):
     global max_stack_idx
@@ -1692,10 +1692,12 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                         new1 = var0+" = "+var1+";"
                         new_instructions.append(new1)
                         id_var = mem_vars_per_block[rule_id] 
-                        new = "p"+str(id_var[mem_id])+" = mem64"
-                        mem40_status = True
-                        mem_defined.append(id_var[mem_id])
-                        
+                        try:
+                            new = "p"+str(id_var[mem_id])+" = mem64"
+                            mem40_status = True
+                            mem_defined.append(id_var[mem_id])
+                        except:
+                            new = var0+" = "+var1
                     else:
                         new = var0+" = "+var1
                 else:
