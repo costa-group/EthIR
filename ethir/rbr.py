@@ -134,6 +134,9 @@ def init_globals():
     global blockhash_cont
     blockhash_cont = 0
 
+    global extcodehash_cont
+    extcodehash_cont = 0
+    
     global c_trans
     c_trans = False
 
@@ -539,6 +542,7 @@ corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes30(opcode, value, index_variables,block):
+    global extcodehash_cont
     
     if opcode == "ADDRESS":
         v1, updated_variables = get_new_variable(index_variables)
@@ -614,8 +618,14 @@ def translateOpcodes30(opcode, value, index_variables,block):
     elif opcode == "EXTCODEHASH":
         _, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1+" = extcodehash("+v1+")"
 
+        # if not c_rbr and not saco:
+        #     instr = v1+" = extcodehash("+v1+")"
+        # else:
+        instr = v1+" = extcodehash"+str(extcodehash_cont)
+        update_bc_in_use("extcodehash"+str(extcodehash_cont),block)
+        extcodehash_cont +=1
+        
     elif opcode == "EXTCODECOPY":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
