@@ -1499,7 +1499,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         signextend_function = True
         new = instr
 
-    elif instr.find("nop(MLOAD)")!=-1 and mem_abs:
+    elif instr.find("nop(MLOAD)")!=-1 and mem_abs and verifier == "cpa":
         pre_instr_bad = new_instructions.pop()
         pre_instr = new_instructions.pop()
 
@@ -1528,7 +1528,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             
         new = instr
 
-    elif instr.find("nop(MSTORE")!=-1 and mem_abs:
+    elif instr.find("nop(MSTORE")!=-1 and mem_abs and verifier == "cpa":
         pre_instr1 = new_instructions.pop()
         pre_instr2 = new_instructions.pop()
 
