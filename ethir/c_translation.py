@@ -1761,7 +1761,8 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                             
                             new1 = var0+" = "+var1+";"
                             new2 = "p"+str(id_var[mem_id])+"p = mem64;"
-                            new3 = "if (p"+str(id_var[mem_id])+"p < p"+str(id_var[mem_id])+") exit(0);"
+                            # new3 = "if (p"+str(id_var[mem_id])+"p < p"+str(id_var[mem_id])+") exit(0);"
+                            new3 = "if (p"+str(id_var[mem_id])+"p < p"+str(id_var[mem_id])+") return;"
                             new4 = "unsigned int m"+str(id_var[mem_id])+"static[p"+str(id_var[mem_id])+"p-p"+str(id_var[mem_id])+"];"
 
                             new_instructions.append(new1)
