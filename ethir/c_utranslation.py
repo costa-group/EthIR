@@ -2585,7 +2585,7 @@ def mstore_functions():
                 is_first = False
             else:
                 f = f+"\t}else if ( pos == "+int_val+" ){\n"
-                f = f+"\t\tp"+mvars+" = val;\n"
+                f = f+"\t\t"+mvars+" = val;\n"
 
         interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
         for x in interval_vars:
