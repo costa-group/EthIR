@@ -2414,12 +2414,21 @@ def mload_functions():
     for a in memory_id_spec.keys():
         head = head+"int mload"+str(a)+"(int pos);\n"
 
-
-        f = f+"int mload"+str(a)+"(int pos){\n"
-        f = f+"\tint val;\n\n"
-
         values = memory_id_spec[a]
         non_interval = filter(lambda x: str(x).startswith("mem"),values)
+        interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
+
+        f = f+"int mload"+str(a)+"(int pos){\n"
+
+        empty = False
+        
+        if non_interval == [] and interval_vars == []:
+            f = f+"\tint val = "+get_nondet_svcomp_label()+";\n\n"
+            empty = True
+            
+        else:
+            f = f+"\tint val;\n\n"
+            
         is_first = True
         
         for mvars in non_interval:
@@ -2433,7 +2442,7 @@ def mload_functions():
                 f = f+"\t}else if ( pos == "+int_val+" ){\n"
                 f = f+"\t\tval = "+mvars+";\n"
 
-        interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
+
         for x in interval_vars:
             start_idx = "p"+str(x)
             end_idx = "p"+str(x)+"p"
@@ -2450,7 +2459,11 @@ def mload_functions():
 
             f = f + "\t}else if ("+start_idx+" < pos && pos < "+end_idx+") {\n"
             f = f + "\t\tval = "+arr+"[pos-"+start_idx+"];\n"
-        f = f+"\t}\n\treturn val;\n"+"}\n"
+        if empty:
+            f = f+"\treturn val;\n"+"}\n"
+        else:
+            f = f+"\t}\n\treturn val;\n"+"}\n"
+
 
     return head, f
             
@@ -2493,41 +2506,49 @@ def mstore_functions():
     f = ""
     
     for a in memory_id_spec.keys():
+        
         head = head+"void mstore"+str(a)+"(int pos, int val);\n"
-
-        f = f +"void mstore"+str(a)+"(int pos, int val){\n"
 
         values = memory_id_spec[a]
         non_interval = filter(lambda x: str(x).startswith("mem"),values)
-        is_first = True
-        for mvars in non_interval:
-            int_val = mvars[3:].strip()
-            if is_first:
-                f = f+"\tif ( pos == "+int_val+" ){\n"
-                f = f+"\t\t"+mvars+" = val;\n"
-                is_first = False
-            else:
-                f = f+"\t}else if ( pos == "+int_val+" ){\n"
-                f = f+"\t\t"+mvars+" = val;\n"
-
         interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
-        for x in interval_vars:
-            start_idx = "p"+str(x)
-            end_idx = "p"+str(x)+"p"
-            first_val = "fv"+str(x)
-            arr = "m"+str(x)
 
-            if is_first:
-                f = f + "\tif ("+start_idx+" == pos) {\n"
-                f = f + "\t\t"+first_val+" = val;\n"
-                is_first = False
-            else:
-                f = f + "\t}else if ("+start_idx+" == pos) {\n"
-                f = f + "\t\t"+first_val+" = val;\n"
+        f = f +"void mstore"+str(a)+"(int pos, int val){\n"
 
-            f = f + "\t}else if ("+start_idx+" < pos && pos < "+end_idx+") {\n"
-            f = f + "\t\t"+arr+"[pos-"+start_idx+"] = val;\n"
-        f = f + "\t}\n}\n"
+        if non_interval == [] and interval_vars == []:
+            f = f+"\n}"
+
+        else:
+            
+            is_first = True
+            for mvars in non_interval:
+                int_val = mvars[3:].strip()
+                if is_first:
+                    f = f+"\tif ( pos == "+int_val+" ){\n"
+                    f = f+"\t\t"+mvars+" = val;\n"
+                    is_first = False
+                else:
+                    f = f+"\t}else if ( pos == "+int_val+" ){\n"
+                    f = f+"\t\t"+mvars+" = val;\n"
+
+
+            for x in interval_vars:
+                start_idx = "p"+str(x)
+                end_idx = "p"+str(x)+"p"
+                first_val = "fv"+str(x)
+                arr = "m"+str(x)
+
+                if is_first:
+                    f = f + "\tif ("+start_idx+" == pos) {\n"
+                    f = f + "\t\t"+first_val+" = val;\n"
+                    is_first = False
+                else:
+                    f = f + "\t}else if ("+start_idx+" == pos) {\n"
+                    f = f + "\t\t"+first_val+" = val;\n"
+
+                f = f + "\t}else if ("+start_idx+" < pos && pos < "+end_idx+") {\n"
+                f = f + "\t\t"+arr+"[pos-"+start_idx+"] = val;\n"
+            f = f + "\t}\n}\n"
 
     return head, f
 
