@@ -2299,7 +2299,7 @@ def write_init(rules,execution,cname,num_mem_vars):
         fields_id = name_fields[::-1]+numeric_fields[::-1]
         bc_data = r.get_bc()
         locals_vars = sorted(r.get_args_local())[::-1]
-                                
+        
         fields = map(lambda x: "int g"+str(x),fields_id)
 
         if mem_abs and verifier == "cpa":
@@ -2612,7 +2612,10 @@ def write_main(execution,cname, init_vars):
             if goto == "global":
                 s = s+"\tblock0();\n"
             else:
-                s = s+"\t"+block0_header.replace("int","")+"\n"
+                s = s+"\t"+block0_header.replace("int ","")+"\n"
+
+
+                
             s = s+"\treturn 0;\n}"
             f.write(s)
         f.close()
@@ -2754,7 +2757,7 @@ def vars_in_main(fields,local,blockchain):
     if goto == "local":
         
         all_vars = map(lambda x: "\t"+x.split()[0]+" i_"+x.split()[1]+" = "+get_nondet_svcomp_label(),fields+local+blockchain)
-
+        
         s = s+";\n".join(stack_vars+all_vars)+";\n"
 
         if mem_abs:
