@@ -175,6 +175,9 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         write_main(execution,cname,s_init)
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
+
+        get_invalids_entry_functions(component_of, rbr,cname)
+        
     except:
         traceback.print_exc()
         raise Exception("Error in C_translation",6)
@@ -2790,3 +2793,51 @@ def vars_in_main(fields,local,blockchain):
         s = s+";\n".join(stack_vars)
             
     return s
+
+
+def get_invalids_entry_functions(components_of, rbr,cname):
+
+    if cname == None:
+        name = global_params.costabs_path+"config_block.config"
+    else:
+        name = global_params.costabs_path+cname+".config"
+
+
+    f = open(name,"r")
+
+    lines = f.readlines()
+
+    new_lines = []
+    
+    for l in lines:
+        if l.find("REACH") != -1:
+            elems = l.split(";")
+            block = int(elems[1])
+            blocks = []
+            invalids = []
+            for b in components_of:
+                if block in components_of[b]:
+                    blocks.append(b)
+
+            for rules in rbr:
+                if len(rules) == 1 and rules[0].get_Id() in blocks:
+                    invalid_source = rules[0].get_invalid_source()
+                    if invalid_source != "" and invalid_source not in invalids:
+                        invalids.append(invalid_source)
+
+            # print invalids
+            sources = "-".join(invalids)
+            new_line = l.replace("REACH","REACH-"+sources)
+            new_lines.append(new_line)
+        else:
+            new_lines.append(l)
+
+    f.close()
+
+    f = open(name,"w")
+    f.write("".join(new_lines))
+    f.close()
+            
+    # print new_lines
+    # print components_of
+    # print rbr
