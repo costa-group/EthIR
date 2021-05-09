@@ -1007,6 +1007,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             ins = []
 
         if ("ASSERTFAIL " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
+            print "CUCUCUCU"
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
@@ -3521,6 +3522,14 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         source_info["source_map"] = source_map
         source_info["name_state_variables"] = mapping_state_variables
+
+
+        if hashes != None:
+            if saco != None and not(verify): #Hashes is != None only if source file is solidity
+                generate_saco_config_file(cname)
+
+            elif verify and not(saco):
+                generate_verify_config_file(cname,scc)
         
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays),sto = sto)
         
@@ -3538,12 +3547,6 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         traceback.print_exc()
         raise e
     
-    if hashes != None:
-        if saco != None and not(verify): #Hashes is != None only if source file is solidity
-            generate_saco_config_file(cname)
-
-        elif verify and not(saco):
-            generate_verify_config_file(cname,scc)
 
         ##Add when both are != None
   
