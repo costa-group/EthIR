@@ -1981,7 +1981,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             position = stack.pop(0)
 
             position = get_push_value(position)
-
+            new_var_name = ""
             if g_src_map:
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
                 if source_code.startswith("function") and isReal(position):
@@ -2055,6 +2055,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     
                             param_idx = (position - 4) // 32
                     
+
                             # print("Param idx")
                             # print param_idx
                             # print replicated_params_list
@@ -2068,6 +2069,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         new_var_name = gen.gen_data_var(position)
                         g_src_map.var_names.append(new_var_name)
                         param_abs = (block,new_var_name)
+
                 else:
                     if param_abs[1] != "":
                         new_var_name = param_abs[1]
@@ -2075,6 +2077,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         new_var_name = gen.gen_data_var(position)
             else:
                 new_var_name = gen.gen_data_var(position)
+
             if new_var_name in path_conditions_and_vars:
                 new_var = path_conditions_and_vars[new_var_name]
             else:
