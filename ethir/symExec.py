@@ -273,6 +273,9 @@ def initGlobalVars():
 
     global optimization
     optimization = False
+
+    global blocks_memArr
+    blocks_memArr = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -341,7 +344,8 @@ def build_cfg_and_analyze(evm_version):
     if g_src_map:
         correct_map_fields1(mapping_state_variables,g_src_map._get_var_names())
     #print mapping_state_variables
-    
+
+    compute_access2arrays_mem()
     delete_uncalled()
     update_block_info()
     build_push_jump_relations()
@@ -874,6 +878,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global jump_type
     global st_arr
     global st_id
+    global blocks_memArr
             
     visited = params.visited
     stack = params.stack
@@ -949,11 +954,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     #Access to array
     fake_stack = []
+    fake_stack_mem = []
     sha_identify = False
     result = False
     instr_index = 0
 
-
+    mem_access = False
+    
     bl = vertices[block]
     
     instr_idx = 0
@@ -964,6 +971,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         
         sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
         instr_index+=1
+
+        mem_access = access_array_mem(instr.strip(),fake_stack_mem)
+
         if sha_identify and not result:
             result =  access_array_sim(instr.strip(),fake_stack)
 
@@ -988,7 +998,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     if not bl.get_pcs_stored():
         bl.set_pcs_stored(True)
 
-
     if result:
 
         falls = vertices[pre_block].get_falls_to()
@@ -1007,7 +1016,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             ins = []
 
         if ("ASSERTFAIL " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
-            print "CUCUCUCU"
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
@@ -1016,7 +1024,16 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 if invalid_option == "array":
                     annotate_invalid(path)
 
+    if mem_access:
+        falls = vertices[block].get_falls_to()
+        jump = vertices[block].get_jump_target()
 
+        if falls != None:
+            ins = vertices[falls].get_instructions()
+            invalid_block = falls
+
+        if "ASSERTFAIL " in ins:
+            blocks_memArr[block] = (jump,falls)
                 
     if invalid_option == "all" and "ASSERTFAIL " in block_ins:
         annotate_invalid(path)
@@ -3147,6 +3164,83 @@ def access_array_sim(opcode_ins,fake_stack):
     # print fake_stack
     return end
 
+def access_array_mem(opcode,fake_stack):
+    access = False
+    if opcode == "MLOAD":
+        if len(fake_stack)>0:
+            fake_stack.pop(0)
+            fake_stack.insert(0,1)
+        else:
+            fake_stack.insert(0,1)
+    elif opcode.startswith("DUP"):
+        position = int(opcode[3:], 10) - 1
+        if len(fake_stack) > position:
+            duplicate = fake_stack[position]
+            fake_stack.insert(0, duplicate)
+        else:
+            fake_stack.insert(0,0)
+
+    elif opcode.startswith("SWAP",0):
+        position = int(opcode[4:], 10)
+        if len(fake_stack) > position:
+            temp = fake_stack[position]
+            fake_stack[position] = fake_stack[0]
+            fake_stack[0] = temp
+        else:
+            for _ in range(position):
+                fake_stack.insert(0,0) 
+
+
+    elif opcode in ["LT","GT"]:
+        if len(fake_stack) > 1:
+            elem1 = fake_stack.pop(0)
+            elem2 = fake_stack.pop(0)
+            if elem1 == 1 or elem2 == 1:
+                fake_stack.insert(0,1)
+            else:
+                fake_stack.insert(0,0)
+        elif len(fake_stack) == 1:
+            elem1 = fake_stack.pop(0)
+            if elem1 == 1:
+                fake_stack.insert(0,1)
+            else:
+                fake_stack.insert(0,0)
+        else:
+            fake_stack.insert(0,0)
+
+    elif opcode == "ISZERO":
+        if len(fake_stack) >0:
+            elem1 = fake_stack.pop(0)
+            if elem1 == 1:
+                fake_stack.insert(0,1)
+            else:
+                fake_stack.insert(0,0)
+        else:
+            fake_stack.insert(0,0)
+
+
+    elif opcode == "JUMPI":
+        if len(fake_stack) > 1:
+            if fake_stack[0] == 1 or fake_stack[1] == 1:
+                access = True
+        elif len(fake_stack) == 1:
+            if fake_stack[0] == 1:
+                access = True
+                
+    else:
+        op = opcode.split(" ")[0]
+        ret = get_opcode(op)
+        consume = ret[1]
+        gen = ret[2]
+        if len(fake_stack)>=consume:
+            for _ in range(0,consume):
+                fake_stack.pop(0)
+        else:
+            fake_stack = []
+        if gen == 1:
+            fake_stack.insert(0,0)
+
+    return access
 
 class TimeoutError(Exception):
     pass
@@ -3349,7 +3443,7 @@ def generate_verify_config_file(cname,scc):
         name = global_params.costabs_path+cname+".config"
 
     entry_loops = get_functions_with_loop(scc)
-        
+
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
@@ -3669,3 +3763,20 @@ def remove_unnecesary_opcodes(idx, instructions):
         return (j,instructions[:idx+1])
     else:
         return ("",instructions)
+
+
+def compute_access2arrays_mem():
+    
+    values = blocks_memArr.values()
+    values_jumps = map(lambda x: x[0], values)
+    values_falls = map(lambda x: x[1], values)
+    
+    for b in blocks_memArr:
+        if b in values_jumps or b in values_falls:
+            ins = vertices[b].get_instructions()
+            ins_mem = filter(lambda x: x.find("MLOAD") != -1 or x.find("MSTORE")!=-1, ins)
+            if len(ins_mem) >1:
+                vertices[blocks_memArr[b][1]].activate_access_array()
+        else:
+            vertices[blocks_memArr[b][1]].activate_access_array()
+            
