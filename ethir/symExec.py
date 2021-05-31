@@ -2145,16 +2145,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             code_from = get_push_value(code_from)
             no_bytes = get_push_value(no_bytes)
             
-            current_miu_i = global_state["miu_i"]
+            # current_miu_i = global_state["miu_i"]
 
-            if isAllReal(mem_location, current_miu_i, code_from, no_bytes):
+            # if isAllReal(mem_location, current_miu_i, code_from, no_bytes):
+            if isAllReal(mem_location, code_from, no_bytes):
                 if six.PY2:
                     temp = long(math.ceil((mem_location + no_bytes) / float(32)))
                 else:
                     temp = int(math.ceil((mem_location + no_bytes) / float(32)))
 
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
 
                 if g_disasm_file.endswith('.disasm'):
                     evm_file_name = g_disasm_file[:-7]
@@ -2177,17 +2178,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     path_conditions_and_vars[new_var_name] = new_var
 
                 temp = ((mem_location + no_bytes) / 32) + 1
-                current_miu_i = to_symbolic(current_miu_i)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                    # if check_sat(solver) != unsat:
-                    current_miu_i = If(expression, temp, current_miu_i)
+                # current_miu_i = to_symbolic(current_miu_i)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                #     # if check_sat(solver) != unsat:
+                #     current_miu_i = If(expression, temp, current_miu_i)
                 #solver.pop()
                 mem.clear() # very conservative
                 mem[str(mem_location)] = new_var
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "RETURNDATACOPY":
@@ -2241,9 +2242,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             code_from = get_push_value(code_from)
             no_bytes = get_push_value(no_bytes)
             
-            current_miu_i = global_state["miu_i"]
-
-            if isAllReal(address, mem_location, current_miu_i, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
+            # current_miu_i = global_state["miu_i"]
+            # if isAllReal(address, mem_location, current_miu_i, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
+            if isAllReal(address, mem_location, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
                 if six.PY2:
                     temp = long(math.ceil((mem_location + no_bytes) / float(32)))
                 else:
@@ -2266,17 +2267,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     path_conditions_and_vars[new_var_name] = new_var
 
                 temp = ((mem_location + no_bytes) / 32) + 1
-                current_miu_i = to_symbolic(current_miu_i)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                    # if check_sat(solver) != unsat:
-                    current_miu_i = If(expression, temp, current_miu_i)
+                # current_miu_i = to_symbolic(current_miu_i)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                #     # if check_sat(solver) != unsat:
+                #     current_miu_i = If(expression, temp, current_miu_i)
                 #solver.pop()
                 mem.clear() # very conservative
                 mem[str(mem_location)] = new_var
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     #
@@ -2329,26 +2330,27 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
-            current_miu_i = global_state["miu_i"]
-            if isAllReal(address, current_miu_i) and address in mem:
+            # current_miu_i = global_state["miu_i"]
+            #if isAllReal(address, current_miu_i) and address in mem:
+            if isAllReal(address) and address in mem:
                 if six.PY2:
                     temp = long(math.ceil((address + 32) / float(32)))
                 else:
                     temp = int(math.ceil((address + 32) / float(32)))
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
                 value = mem[address]
                 stack.insert(0, value)
             else:
                 temp = ((address + 31) / 32) + 1
-                current_miu_i = to_symbolic(current_miu_i)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                    # if check_sat(solver) != unsat:
-                        # this means that it is possibly that current_miu_i < temp
-                    current_miu_i = If(expression,temp,current_miu_i)
+                # current_miu_i = to_symbolic(current_miu_i)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                #     # if check_sat(solver) != unsat:
+                #         # this means that it is possibly that current_miu_i < temp
+                #     current_miu_i = If(expression,temp,current_miu_i)
                 #solver.pop()
                 new_var_name = gen.gen_mem_var(address)
                 if new_var_name in path_conditions_and_vars:
@@ -2361,7 +2363,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     mem[address] = new_var
                 else:
                     mem[str(address)] = new_var
-            global_state["miu_i"] = current_miu_i
+#            global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "MSTORE":
@@ -2378,7 +2380,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
-            current_miu_i = global_state["miu_i"]
+            #current_miu_i = global_state["miu_i"]
             if isReal(stored_address):
                 # preparing data for hashing later
                 old_size = len(memory) // 32
@@ -2395,27 +2397,33 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     for i in range(31, -1, -1):
                         mem[str(stored_address + i)] = value % 256
                         value /= 256
-            if isAllReal(stored_address, current_miu_i):
+            # if isAllReal(stored_address, current_miu_i):
+            if isAllReal(stored_address):
                 if six.PY2:
                     temp = long(math.ceil((stored_address + 32) / float(32)))
                 else:
                     temp = int(math.ceil((stored_address + 32) / float(32)))
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
                 mem[stored_address] = stored_value  # note that the stored_value could be symbolic
             else:
                 temp = ((stored_address + 31) / 32) + 1
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-#                    if check_sat(solver) != unsat:
-                        # this means that it is possibly that current_miu_i < temp
-                    current_miu_i = If(expression,temp,current_miu_i)
+                if isReal(temp):
+                    temp = BitVecVal(temp,256)
+                # if isReal(current_miu_i):
+                #     current_miu_i = BitVecVal(current_miu_i, 256)
+                
+#                 expression = current_miu_i < temp
+#                 # solver.push()
+#                 # solver.add(expression)
+#                 if MSIZE:
+# #                    if check_sat(solver) != unsat:
+#                         # this means that it is possibly that current_miu_i < temp
+#                     current_miu_i = If(expression,temp,current_miu_i)
                 #solver.pop()
                 mem.clear()  # very conservative
                 mem[str(stored_address)] = stored_value
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "MSTORE8":
@@ -2432,30 +2440,31 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
             
-            current_miu_i = global_state["miu_i"]
-            if isAllReal(stored_address, current_miu_i):
+            # current_miu_i = global_state["miu_i"]
+            # if isAllReal(stored_address, current_miu_i):
+            if isAllReal(stored_address):
                 if six.PY2:
                     temp = long(math.ceil((stored_address + 1) / float(32)))
                 else:
                     temp = int(math.ceil((stored_address + 1) / float(32)))
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
                 mem[stored_address] = stored_value  # note that the stored_value could be symbolic
             else:
                 temp = (stored_address / 32) + 1
-                if isReal(current_miu_i):
-                    current_miu_i = BitVecVal(current_miu_i, 256)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                #    if check_sat(solver) != unsat:
-                        # this means that it is possibly that current_miu_i < temp
-                    current_miu_i = If(expression,temp,current_miu_i)
+                # if isReal(current_miu_i):
+                #     current_miu_i = BitVecVal(current_miu_i, 256)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                # #    if check_sat(solver) != unsat:
+                #         # this means that it is possibly that current_miu_i < temp
+                #     current_miu_i = If(expression,temp,current_miu_i)
                 #solver.pop()
                 mem.clear()  # very conservative
                 mem[str(stored_address)] = stored_value
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "SLOAD":
