@@ -760,6 +760,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
+
             val = value.split("_")
             if len(val)==1:
                 int(value)
@@ -767,6 +768,10 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
+
+            if var_name == "":
+                var_name = idx
+
             instr = v1+" = " + "g(" + str(var_name) + ")"
             update_field_index(str(var_name),block)
         except ValueError:
@@ -783,6 +788,10 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
+
+            if var_name == "":
+                var_name = idx
+
             instr = "g(" + str(var_name) + ") = " + v1
             update_field_index(str(var_name),block)
         except ValueError:
@@ -1914,6 +1923,7 @@ def rename_init_fields(mapping_state_variables):
         name = mapping_state_variables.get(f_index,f_index)
         initialized_fields[name]  = val
 
+    print initialized_fields
         # if name not in name_vars:
         #     name_vars.append(name)
             
