@@ -962,14 +962,25 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     mem_access = False
     
     bl = vertices[block]
-    
+
+    # print("--------")
+    # print("BLOCK"+str(block))
+    # # print(stack)
+    # print(len(stack))
+    # print("--------")
     instr_idx = 0
+
+
+    # consumed_elems = compute_elements(block_ins)
+    # init_stack = len(stack)
     for instr in block_ins:
-        #print instr
+        # print instr
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
-        
+        # print(instr)
+        # print(stack)
         sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
+        # print(len(stack))
         instr_index+=1
 
         mem_access = access_array_mem(instr.strip(),fake_stack_mem)
@@ -995,6 +1006,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             break
 
         instr_idx+=1
+
+    # if init_stack+consumed_elems != len(stack):
+    #     print ("ERROR HERE")
+    #     raise Exception("ERROR HERE")
+    # else:
+    #     print "BLOCK "+str(block)
+    #     print "TRUE"
     if not bl.get_pcs_stored():
         bl.set_pcs_stored(True)
 
@@ -1418,8 +1436,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 # if check_sat(solver) == unsat:
                 #     computed = 0
                 # else:
-
+                
                 computed = UDiv(first, second)
+                
                 #solver.pop()
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
@@ -2659,14 +2678,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     raise TypeError("Target address must be an integer")
             vertices[block].set_jump_target(target_address)
             flag = stack.pop(0)
-            branch_expression = (BitVecVal(0, 1) == BitVecVal(1, 1))
-            if isReal(flag):
-                if flag != 0:
-                    branch_expression = True
-            else:
-                branch_expression = (flag != 0)
+            # branch_expression = (BitVecVal(0, 1) == BitVecVal(1, 1))
+            # if isReal(flag):
+            #     if flag != 0:
+            #         branch_expression = True
+            # else:
+            #     branch_expression = (flag != 0)
 
-            vertices[block].set_branch_expression(branch_expression)
+            # vertices[block].set_branch_expression(branch_expression)
             if target_address not in edges[block]:
                 edges[block].append(target_address)
         else:
@@ -3789,3 +3808,13 @@ def compute_access2arrays_mem():
         else:
             vertices[blocks_memArr[b][1]].activate_access_array()
             
+
+def compute_elements(instrs):
+    elems = 0
+    for i in instrs:
+        # print i
+        # print "MIRAAAA"
+        vals = get_opcode(i.split()[0].strip())
+        elems = elems-vals[1]+vals[2]
+
+    return elems
