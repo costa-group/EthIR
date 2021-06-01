@@ -1846,7 +1846,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             first_aux = get_push_value(first)
             second_aux = get_push_value(second)
+
+            if type(first_aux) == float:
+                first_aux = int(first_aux)
+
+            if type(second_aux) == float:
+                second_aux = int(second_aux)
             
+
             computed = first_aux | second_aux
 
             if computed == first_aux:
