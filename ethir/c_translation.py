@@ -2648,7 +2648,7 @@ def write_main(execution,cname, init_vars):
                 s = s+"\n"+init_vars+"\n"
 
             if goto == "global":
-                s = s+"\tblock0();\n"
+                s = s+"\t block0();\n"
             else:
                 s = s+"\t"+block0_header.replace("int ","")+"\n"
 
