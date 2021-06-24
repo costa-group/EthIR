@@ -1728,8 +1728,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                     #     r.display()
                     #     print r.get_call_to()
                     jumps_to = r.get_call_to()
-                
-                    if jumps_to != -1:
+                    if jumps_to != -1 and jumps_to !="-1":
                         f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
                         bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
 
