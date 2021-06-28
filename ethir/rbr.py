@@ -760,6 +760,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
+
             val = value.split("_")
             if len(val)==1:
                 int(value)
@@ -767,6 +768,10 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
+
+            if var_name == "":
+                var_name = idx
+
             instr = v1+" = " + "g(" + str(var_name) + ")"
             update_field_index(str(var_name),block)
         except ValueError:
@@ -783,6 +788,10 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
+
+            if var_name == "":
+                var_name = idx
+
             instr = "g(" + str(var_name) + ") = " + v1
             update_field_index(str(var_name),block)
         except ValueError:
@@ -1719,8 +1728,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                     #     r.display()
                     #     print r.get_call_to()
                     jumps_to = r.get_call_to()
-                
-                    if jumps_to != -1:
+                    if jumps_to != -1 and jumps_to !="-1":
                         f = rbr_blocks["block"+str(jumps_to)][0].build_field_vars()
                         bc = rbr_blocks["block"+str(jumps_to)][0].vars_to_string("data")
 
@@ -1914,6 +1922,7 @@ def rename_init_fields(mapping_state_variables):
         name = mapping_state_variables.get(f_index,f_index)
         initialized_fields[name]  = val
 
+    print initialized_fields
         # if name not in name_vars:
         #     name_vars.append(name)
             

@@ -273,6 +273,9 @@ def initGlobalVars():
 
     global optimization
     optimization = False
+
+    global blocks_memArr
+    blocks_memArr = {}
     
 def is_testing_evm():
     return global_params.UNIT_TEST != 0
@@ -341,7 +344,8 @@ def build_cfg_and_analyze(evm_version):
     if g_src_map:
         correct_map_fields1(mapping_state_variables,g_src_map._get_var_names())
     #print mapping_state_variables
-    
+
+    compute_access2arrays_mem()
     delete_uncalled()
     update_block_info()
     build_push_jump_relations()
@@ -874,6 +878,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global jump_type
     global st_arr
     global st_id
+    global blocks_memArr
             
     visited = params.visited
     stack = params.stack
@@ -949,21 +954,37 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     #Access to array
     fake_stack = []
+    fake_stack_mem = []
     sha_identify = False
     result = False
     instr_index = 0
 
-
-    bl = vertices[block]
+    mem_access = False
     
+    bl = vertices[block]
+
+    # print("--------")
+    # print("BLOCK"+str(block))
+    # # print(stack)
+    # print(len(stack))
+    # print("--------")
     instr_idx = 0
+
+
+    # consumed_elems = compute_elements(block_ins)
+    # init_stack = len(stack)
     for instr in block_ins:
-        #print instr
+        # print instr
         if not bl.get_pcs_stored():
             bl.add_pc(hex(global_state["pc"]))
-        
+        # print(instr)
+        # print(stack)
         sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
+        # print(len(stack))
         instr_index+=1
+
+        mem_access = access_array_mem(instr.strip(),fake_stack_mem)
+
         if sha_identify and not result:
             result =  access_array_sim(instr.strip(),fake_stack)
 
@@ -985,9 +1006,15 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             break
 
         instr_idx+=1
+
+    # if init_stack+consumed_elems != len(stack):
+    #     print ("ERROR HERE")
+    #     raise Exception("ERROR HERE")
+    # else:
+    #     print "BLOCK "+str(block)
+    #     print "TRUE"
     if not bl.get_pcs_stored():
         bl.set_pcs_stored(True)
-
 
     if result:
 
@@ -1007,7 +1034,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             ins = []
 
         if ("ASSERTFAIL " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
-            print "CUCUCUCU"
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
@@ -1016,7 +1042,16 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 if invalid_option == "array":
                     annotate_invalid(path)
 
+    if mem_access:
+        falls = vertices[block].get_falls_to()
+        jump = vertices[block].get_jump_target()
 
+        if falls != None:
+            ins = vertices[falls].get_instructions()
+            invalid_block = falls
+
+        if "ASSERTFAIL " in ins:
+            blocks_memArr[block] = (jump,falls)
                 
     if invalid_option == "all" and "ASSERTFAIL " in block_ins:
         annotate_invalid(path)
@@ -1401,8 +1436,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 # if check_sat(solver) == unsat:
                 #     computed = 0
                 # else:
-
+                
                 computed = UDiv(first, second)
+                
                 #solver.pop()
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
@@ -1810,7 +1846,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             first_aux = get_push_value(first)
             second_aux = get_push_value(second)
+
+            if type(first_aux) == float:
+                first_aux = int(first_aux)
+
+            if type(second_aux) == float:
+                second_aux = int(second_aux)
             
+
             computed = first_aux | second_aux
 
             if computed == first_aux:
@@ -1982,7 +2025,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             position = stack.pop(0)
 
             position = get_push_value(position)
-
+            new_var_name = ""
             if g_src_map:
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
                 if source_code.startswith("function") and isReal(position):
@@ -2056,6 +2099,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     
                             param_idx = (position - 4) // 32
                     
+
                             # print("Param idx")
                             # print param_idx
                             # print replicated_params_list
@@ -2069,6 +2113,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         new_var_name = gen.gen_data_var(position)
                         g_src_map.var_names.append(new_var_name)
                         param_abs = (block,new_var_name)
+
                 else:
                     if param_abs[1] != "":
                         new_var_name = param_abs[1]
@@ -2076,6 +2121,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         new_var_name = gen.gen_data_var(position)
             else:
                 new_var_name = gen.gen_data_var(position)
+
             if new_var_name in path_conditions_and_vars:
                 new_var = path_conditions_and_vars[new_var_name]
             else:
@@ -2125,16 +2171,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             code_from = get_push_value(code_from)
             no_bytes = get_push_value(no_bytes)
             
-            current_miu_i = global_state["miu_i"]
+            # current_miu_i = global_state["miu_i"]
 
-            if isAllReal(mem_location, current_miu_i, code_from, no_bytes):
+            # if isAllReal(mem_location, current_miu_i, code_from, no_bytes):
+            if isAllReal(mem_location, code_from, no_bytes):
                 if six.PY2:
                     temp = long(math.ceil((mem_location + no_bytes) / float(32)))
                 else:
                     temp = int(math.ceil((mem_location + no_bytes) / float(32)))
 
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
 
                 if g_disasm_file.endswith('.disasm'):
                     evm_file_name = g_disasm_file[:-7]
@@ -2157,17 +2204,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     path_conditions_and_vars[new_var_name] = new_var
 
                 temp = ((mem_location + no_bytes) / 32) + 1
-                current_miu_i = to_symbolic(current_miu_i)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                    # if check_sat(solver) != unsat:
-                    current_miu_i = If(expression, temp, current_miu_i)
+                # current_miu_i = to_symbolic(current_miu_i)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                #     # if check_sat(solver) != unsat:
+                #     current_miu_i = If(expression, temp, current_miu_i)
                 #solver.pop()
                 mem.clear() # very conservative
                 mem[str(mem_location)] = new_var
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "RETURNDATACOPY":
@@ -2221,9 +2268,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             code_from = get_push_value(code_from)
             no_bytes = get_push_value(no_bytes)
             
-            current_miu_i = global_state["miu_i"]
-
-            if isAllReal(address, mem_location, current_miu_i, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
+            # current_miu_i = global_state["miu_i"]
+            # if isAllReal(address, mem_location, current_miu_i, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
+            if isAllReal(address, mem_location, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
                 if six.PY2:
                     temp = long(math.ceil((mem_location + no_bytes) / float(32)))
                 else:
@@ -2246,17 +2293,17 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     path_conditions_and_vars[new_var_name] = new_var
 
                 temp = ((mem_location + no_bytes) / 32) + 1
-                current_miu_i = to_symbolic(current_miu_i)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                    # if check_sat(solver) != unsat:
-                    current_miu_i = If(expression, temp, current_miu_i)
+                # current_miu_i = to_symbolic(current_miu_i)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                #     # if check_sat(solver) != unsat:
+                #     current_miu_i = If(expression, temp, current_miu_i)
                 #solver.pop()
                 mem.clear() # very conservative
                 mem[str(mem_location)] = new_var
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     #
@@ -2309,26 +2356,27 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
-            current_miu_i = global_state["miu_i"]
-            if isAllReal(address, current_miu_i) and address in mem:
+            # current_miu_i = global_state["miu_i"]
+            #if isAllReal(address, current_miu_i) and address in mem:
+            if isAllReal(address) and address in mem:
                 if six.PY2:
                     temp = long(math.ceil((address + 32) / float(32)))
                 else:
                     temp = int(math.ceil((address + 32) / float(32)))
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
                 value = mem[address]
                 stack.insert(0, value)
             else:
                 temp = ((address + 31) / 32) + 1
-                current_miu_i = to_symbolic(current_miu_i)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                    # if check_sat(solver) != unsat:
-                        # this means that it is possibly that current_miu_i < temp
-                    current_miu_i = If(expression,temp,current_miu_i)
+                # current_miu_i = to_symbolic(current_miu_i)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                #     # if check_sat(solver) != unsat:
+                #         # this means that it is possibly that current_miu_i < temp
+                #     current_miu_i = If(expression,temp,current_miu_i)
                 #solver.pop()
                 new_var_name = gen.gen_mem_var(address)
                 if new_var_name in path_conditions_and_vars:
@@ -2341,7 +2389,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     mem[address] = new_var
                 else:
                     mem[str(address)] = new_var
-            global_state["miu_i"] = current_miu_i
+#            global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "MSTORE":
@@ -2358,7 +2406,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
-            current_miu_i = global_state["miu_i"]
+            #current_miu_i = global_state["miu_i"]
             if isReal(stored_address):
                 # preparing data for hashing later
                 old_size = len(memory) // 32
@@ -2375,27 +2423,33 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     for i in range(31, -1, -1):
                         mem[str(stored_address + i)] = value % 256
                         value /= 256
-            if isAllReal(stored_address, current_miu_i):
+            # if isAllReal(stored_address, current_miu_i):
+            if isAllReal(stored_address):
                 if six.PY2:
                     temp = long(math.ceil((stored_address + 32) / float(32)))
                 else:
                     temp = int(math.ceil((stored_address + 32) / float(32)))
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
                 mem[stored_address] = stored_value  # note that the stored_value could be symbolic
             else:
                 temp = ((stored_address + 31) / 32) + 1
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-#                    if check_sat(solver) != unsat:
-                        # this means that it is possibly that current_miu_i < temp
-                    current_miu_i = If(expression,temp,current_miu_i)
+                if isReal(temp):
+                    temp = BitVecVal(temp,256)
+                # if isReal(current_miu_i):
+                #     current_miu_i = BitVecVal(current_miu_i, 256)
+                
+#                 expression = current_miu_i < temp
+#                 # solver.push()
+#                 # solver.add(expression)
+#                 if MSIZE:
+# #                    if check_sat(solver) != unsat:
+#                         # this means that it is possibly that current_miu_i < temp
+#                     current_miu_i = If(expression,temp,current_miu_i)
                 #solver.pop()
                 mem.clear()  # very conservative
                 mem[str(stored_address)] = stored_value
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "MSTORE8":
@@ -2412,30 +2466,31 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
             
-            current_miu_i = global_state["miu_i"]
-            if isAllReal(stored_address, current_miu_i):
+            # current_miu_i = global_state["miu_i"]
+            # if isAllReal(stored_address, current_miu_i):
+            if isAllReal(stored_address):
                 if six.PY2:
                     temp = long(math.ceil((stored_address + 1) / float(32)))
                 else:
                     temp = int(math.ceil((stored_address + 1) / float(32)))
-                if temp > current_miu_i:
-                    current_miu_i = temp
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
                 mem[stored_address] = stored_value  # note that the stored_value could be symbolic
             else:
                 temp = (stored_address / 32) + 1
-                if isReal(current_miu_i):
-                    current_miu_i = BitVecVal(current_miu_i, 256)
-                expression = current_miu_i < temp
-                # solver.push()
-                # solver.add(expression)
-                if MSIZE:
-                #    if check_sat(solver) != unsat:
-                        # this means that it is possibly that current_miu_i < temp
-                    current_miu_i = If(expression,temp,current_miu_i)
+                # if isReal(current_miu_i):
+                #     current_miu_i = BitVecVal(current_miu_i, 256)
+                # expression = current_miu_i < temp
+                # # solver.push()
+                # # solver.add(expression)
+                # if MSIZE:
+                # #    if check_sat(solver) != unsat:
+                #         # this means that it is possibly that current_miu_i < temp
+                #     current_miu_i = If(expression,temp,current_miu_i)
                 #solver.pop()
                 mem.clear()  # very conservative
                 mem[str(stored_address)] = stored_value
-            global_state["miu_i"] = current_miu_i
+            # global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
     elif opcode == "SLOAD":
@@ -2630,14 +2685,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     raise TypeError("Target address must be an integer")
             vertices[block].set_jump_target(target_address)
             flag = stack.pop(0)
-            branch_expression = (BitVecVal(0, 1) == BitVecVal(1, 1))
-            if isReal(flag):
-                if flag != 0:
-                    branch_expression = True
-            else:
-                branch_expression = (flag != 0)
+            # branch_expression = (BitVecVal(0, 1) == BitVecVal(1, 1))
+            # if isReal(flag):
+            #     if flag != 0:
+            #         branch_expression = True
+            # else:
+            #     branch_expression = (flag != 0)
 
-            vertices[block].set_branch_expression(branch_expression)
+            # vertices[block].set_branch_expression(branch_expression)
             if target_address not in edges[block]:
                 edges[block].append(target_address)
         else:
@@ -3144,6 +3199,83 @@ def access_array_sim(opcode_ins,fake_stack):
     # print fake_stack
     return end
 
+def access_array_mem(opcode,fake_stack):
+    access = False
+    if opcode == "MLOAD":
+        if len(fake_stack)>0:
+            fake_stack.pop(0)
+            fake_stack.insert(0,1)
+        else:
+            fake_stack.insert(0,1)
+    elif opcode.startswith("DUP"):
+        position = int(opcode[3:], 10) - 1
+        if len(fake_stack) > position:
+            duplicate = fake_stack[position]
+            fake_stack.insert(0, duplicate)
+        else:
+            fake_stack.insert(0,0)
+
+    elif opcode.startswith("SWAP",0):
+        position = int(opcode[4:], 10)
+        if len(fake_stack) > position:
+            temp = fake_stack[position]
+            fake_stack[position] = fake_stack[0]
+            fake_stack[0] = temp
+        else:
+            for _ in range(position):
+                fake_stack.insert(0,0) 
+
+
+    elif opcode in ["LT","GT"]:
+        if len(fake_stack) > 1:
+            elem1 = fake_stack.pop(0)
+            elem2 = fake_stack.pop(0)
+            if elem1 == 1 or elem2 == 1:
+                fake_stack.insert(0,1)
+            else:
+                fake_stack.insert(0,0)
+        elif len(fake_stack) == 1:
+            elem1 = fake_stack.pop(0)
+            if elem1 == 1:
+                fake_stack.insert(0,1)
+            else:
+                fake_stack.insert(0,0)
+        else:
+            fake_stack.insert(0,0)
+
+    elif opcode == "ISZERO":
+        if len(fake_stack) >0:
+            elem1 = fake_stack.pop(0)
+            if elem1 == 1:
+                fake_stack.insert(0,1)
+            else:
+                fake_stack.insert(0,0)
+        else:
+            fake_stack.insert(0,0)
+
+
+    elif opcode == "JUMPI":
+        if len(fake_stack) > 1:
+            if fake_stack[0] == 1 or fake_stack[1] == 1:
+                access = True
+        elif len(fake_stack) == 1:
+            if fake_stack[0] == 1:
+                access = True
+                
+    else:
+        op = opcode.split(" ")[0]
+        ret = get_opcode(op)
+        consume = ret[1]
+        gen = ret[2]
+        if len(fake_stack)>=consume:
+            for _ in range(0,consume):
+                fake_stack.pop(0)
+        else:
+            fake_stack = []
+        if gen == 1:
+            fake_stack.insert(0,0)
+
+    return access
 
 class TimeoutError(Exception):
     pass
@@ -3346,7 +3478,7 @@ def generate_verify_config_file(cname,scc):
         name = global_params.costabs_path+cname+".config"
 
     entry_loops = get_functions_with_loop(scc)
-        
+
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
@@ -3666,3 +3798,30 @@ def remove_unnecesary_opcodes(idx, instructions):
         return (j,instructions[:idx+1])
     else:
         return ("",instructions)
+
+
+def compute_access2arrays_mem():
+    
+    values = blocks_memArr.values()
+    values_jumps = map(lambda x: x[0], values)
+    values_falls = map(lambda x: x[1], values)
+    
+    for b in blocks_memArr:
+        if b in values_jumps or b in values_falls:
+            ins = vertices[b].get_instructions()
+            ins_mem = filter(lambda x: x.find("MLOAD") != -1 or x.find("MSTORE")!=-1, ins)
+            if len(ins_mem) >1:
+                vertices[blocks_memArr[b][1]].activate_access_array()
+        else:
+            vertices[blocks_memArr[b][1]].activate_access_array()
+            
+
+def compute_elements(instrs):
+    elems = 0
+    for i in instrs:
+        # print i
+        # print "MIRAAAA"
+        vals = get_opcode(i.split()[0].strip())
+        elems = elems-vals[1]+vals[2]
+
+    return elems

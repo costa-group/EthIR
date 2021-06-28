@@ -972,3 +972,12 @@ def get_solc_executable(version):
         return "solcv7"
     elif version == "v8":
         return "solcv8"
+
+def is_executed_by(block,init_blocks,components):
+    is_reached_by = set(components[block])
+    init_blocks_set = set(init_blocks)
+
+    public_blocks = init_blocks_set.intersection(is_reached_by)
+    
+    return list(public_blocks)
+    

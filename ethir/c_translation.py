@@ -1,7 +1,7 @@
 from rbr_rule import RBRRule
 import os
 from timeit import default_timer as dtimer
-from utils import delete_dup
+from utils import delete_dup, is_executed_by
 import global_params
 import  traceback
 
@@ -96,6 +96,9 @@ def init_global_vars():
 
     global mem_abs
     mem_abs = False
+
+    global mapping_ethirui
+    mapping_ethirui = []
     
 def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals,sto_abs,storage_arrays):
     global svcomp
@@ -130,7 +133,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
     if fbm != []:
         init_globals = True
         blocks2init = fbm
-
+        
     try:
         if gotos["gotos"] == "iterative":
             goto = gotos["args"] if gotos["args"]!= None else "global"
@@ -166,13 +169,16 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
 
         ap = map(lambda x: x[1],mem_blocks)
         num = sum(ap)
-            
+
         write_init(rbr,execution,cname,num)
         write(heads,new_rules,execution,cname)
 
         s_init = build_init_main(rbr)
         
         write_main(execution,cname,s_init)
+
+        write_ethirui_config(cname,execution)
+        
         end = dtimer()
         print("C RBR: "+str(end-begin)+"s")
 
@@ -253,6 +259,7 @@ def build_headers(l,rbr):
 def rbr2c_recur(rbr):
     global max_stack_idx
     global block0_header
+    global mapping_ethirui
     
     heads = "\n"
     new_rules = []
@@ -269,7 +276,9 @@ def rbr2c_recur(rbr):
             if rules[0].get_Id() == 0:
                 block0_header =  head[4:]
 
-            
+        ethir_ui = process_blocks_ethirui_recur(rules,new_rule)
+        mapping_ethirui= mapping_ethirui + ethir_ui
+
         heads = heads+head
         new_rules.append(new_rule)
 
@@ -432,8 +441,11 @@ def translate_block_scc(rule,id_loop,multiple=False):
 
     init_loop_label = "  init_loop_"+str(id_loop)+":\n"
     if rule.has_invalid() and not svcomp["exec"]:
+
+        public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
+        public_blocks = map(lambda x: str(x),public_blocks_aux)
         source = rule.get_invalid_source()
-        label = get_error_svcomp_label()+"; //"+source+"\n"
+        label = get_error_svcomp_label()+"; //"+source+" "+" ".join(public_blocks)+"\n"
     else:
         label = ""
 
@@ -1261,7 +1273,9 @@ def process_rule_c(rule):
 
     if rule.has_invalid() and not svcomp["exec"]:
         source = rule.get_invalid_source()
-        label = get_error_svcomp_label()+"; //"+source+"\n"
+        public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
+        public_blocks = map(lambda x: str(x),public_blocks_aux)
+        label = get_error_svcomp_label()+"; //"+source+" "+" ".join(public_blocks)+"\n"
     else:
         label = ""
         
@@ -2634,7 +2648,7 @@ def write_main(execution,cname, init_vars):
                 s = s+"\n"+init_vars+"\n"
 
             if goto == "global":
-                s = s+"\tblock0();\n"
+                s = s+"\t block0();\n"
             else:
                 s = s+"\t"+block0_header.replace("int ","")+"\n"
 
@@ -2841,3 +2855,142 @@ def get_invalids_entry_functions(components_of, rbr,cname):
     # print new_lines
     # print components_of
     # print rbr
+
+def process_blocks_ethirui_recur(rbr,new_rule):
+    new_rule = new_rule.split("\n")
+    new_rule_aux = map(lambda x: x.strip("\t"), new_rule)
+
+    head = new_rule_aux[0]
+    body = new_rule_aux[1::]
+
+    mappings = []
+    if len(rbr) == 2: #jump rule
+        if_rule = rbr[0]
+        else_rule = rbr[1]
+
+        if_name = if_rule.get_rule_name()
+        else_name = else_rule.get_rule_name()
+
+
+        mappings.append(if_name+"(0,0)")
+        mappings.append(if_name+"(0,1)")
+        mappings.append(else_name+"(0,2)")
+        mappings.append(else_name+"(0,3)")
+
+        return mappings
+    
+    else: #block rule
+
+        rbr_instructions = rbr[0].get_instructions()
+        # print("*********")
+        # print(body)
+        # print(rbr_instructions)
+
+        new_rbr_instructions = filter(lambda x: x !="" and not x.startswith("nop("),rbr_instructions)
+        # print(new_rbr_instructions)
+        if goto == "local" or goto == "mix":
+            i = 0
+            end = False
+        
+            while not end and i<len(body): #It removes declaratio of local variables
+                if not body[i].startswith("int "):
+                    end = True
+                else:
+                    i+=1
+
+            end = False
+            i+=1 #it is an empty line
+        
+            while not end and i<len(body):
+                if body[i].find("= i_") ==-1:
+                    end = True
+                else:
+                    i+=1
+            i+=1 #it is an empty line
+
+            offset = i
+            # print(i)
+            # print(body[:i])
+            # print(body[i:])
+
+            end_index = body.index("}")
+            real_body = body[i:end_index]
+        else:
+            offset = 0
+            end_index = body.index("}")
+            real_body = body[:end_index]
+            
+        mappings = []
+        if mem_abs == False:
+
+            name = rbr[0].get_rule_name()
+            if(len(real_body ) == len(new_rbr_instructions)):
+                for i in xrange(len(real_body)):
+                    line = name+"("+str(i)+","+str(i+offset)+")"
+                    mappings.append(line)
+            else:
+                if new_rbr_instructions == []:
+                    for i in xrange(len(real_body)):
+                        line = name+"(0,"+str(i+offset)+")"
+                        mappings.append(line)
+
+        else:
+
+            name = rbr[0].get_rule_name()
+
+            c = 0
+            rbr = 0
+            while rbr < len(new_rbr_instructions):
+                # print(name)
+                # print c
+                # print rbr
+                if (c+1) < len(real_body) and new_rbr_instructions[rbr].find("= l(mem64)")!=-1 and real_body[c+1].find("p")!=-1 and real_body[c+1].find("= mem64")!=-1:
+                    
+                    new_line = name+"("+str(rbr)+","+str(c+offset)+")"
+                    mappings.append(new_line)
+                    new_line = name+"("+str(rbr)+","+str(c+offset+1)+")"
+                    mappings.append(new_line)
+                    c+=2
+                    rbr+=1
+
+                elif (c+1) < len(real_body) and new_rbr_instructions[rbr].startswith("l(mem64) =")!=-1 and real_body[c+1].find("p")!=-1 and real_body[c+1].find("= mem64")!=-1:
+                    new_line = name+"("+str(rbr)+","+str(c+offset)+")"
+                    mappings.append(new_line)
+                    new_line = name+"("+str(rbr)+","+str(c+offset+1)+")"
+                    mappings.append(new_line)
+                    new_line = name+"("+str(rbr)+","+str(c+offset+2)+")"
+                    mappings.append(new_line)
+                    new_line = name+"("+str(rbr)+","+str(c+offset+3)+")"
+                    mappings.append(new_line)
+                    new_line = name+"("+str(rbr)+","+str(c+offset+4)+")"
+                    mappings.append(new_line)
+                    c+=5
+                    rbr+=1
+                
+                elif new_rbr_instructions[rbr].startswith("ll =") or new_rbr_instructions[rbr].startswith("ls("):
+                    new_line = name+"("+str(rbr)+","+str(c+offset)+")"
+                    mappings.append(new_line)
+                    new_line = name+"("+str(rbr+1)+","+str(c+offset)+")"
+                    mappings.append(new_line)
+                    c+=1
+                    rbr+=2
+
+                else:
+                    new_line = name+"("+str(rbr)+","+str(c+offset)+")"
+                    mappings.append(new_line)
+                    c+=1
+                    rbr+=1
+       
+        return mappings
+
+
+def write_ethirui_config(cname,execution):
+    if execution == None:
+        name = global_params.costabs_path+"rbr.ethirui"
+    elif cname == None:
+        name = global_params.costabs_path+"rbr"+str(execution)+".ethirui"
+    else:
+        name = global_params.costabs_path+cname+".ethirui"
+    with open(name,"w") as f:
+        lines = "\n".join(mapping_ethirui)
+        f.write(lines)
