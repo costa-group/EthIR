@@ -57,4 +57,5 @@ class Generator:
         return "code_" + str(address) + "_" + str(position) + "_" + str(bytecount)
 
     def gen_code_size_var(self, address):
-        return "code_size_" + str(address)
+        self.count += 1
+        return "code_size_address" + str(self.count)
