@@ -442,9 +442,9 @@ def translate_block_scc(rule,id_loop,multiple=False):
     init_loop_label = "  init_loop_"+str(id_loop)+":\n"
     if rule.has_invalid() and not svcomp["exec"]:
         public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
-        public_blocks = map(lambda x: str(x),public_blocks_aux)
+        public_blocks = map(lambda x: "block"+str(x),public_blocks_aux)
         source = rule.get_invalid_source()
-        label = get_error_svcomp_label()+"; //"+source+" "+" ".join(public_blocks)+"\n"
+        label = get_error_svcomp_label()+"; //"+source+" "+rule.get_rule_name()+" ["+" ".join(public_blocks)+"]\n"
     else:
         label = ""
 
@@ -1281,9 +1281,9 @@ def process_rule_c(rule):
 
     if rule.has_invalid() and not svcomp["exec"]:
         public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
-        public_blocks = map(lambda x: str(x),public_blocks_aux)
+        public_blocks = map(lambda x: "block"+str(x),public_blocks_aux)
         source = rule.get_invalid_source()
-        label = get_error_svcomp_label()+"; //"+source+" "+" ".join(public_blocks)+"\n"
+        label = get_error_svcomp_label()+"; //"+source+" "+rule.get_rule_name()+" ["+" ".join(public_blocks)+"]\n"
     else:
         label = ""
         
