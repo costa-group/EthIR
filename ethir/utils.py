@@ -13,11 +13,8 @@ import re
 import difflib
 import six
 import global_params
-#from z3 import *
-#from z3.z3util import get_vars
-from z3 import unknown
-
 from dot_tree import Tree, build_tree
+import opcodes
 
 
 def ceil32(x):
@@ -41,7 +38,7 @@ def to_symbolic(number):
     if isReal(number):
         # print number
         # print BitVecVal(number, 256)
-        return number#BitVecVal(number, 256)
+        return str(number)#BitVecVal(number, 256)
     return number
 
 def to_unsigned(number):
@@ -54,17 +51,6 @@ def to_signed(number):
         return (2**(256) - number) * (-1)
     else:
         return number
-
-def check_sat(solver, pop_if_exception=True):
-    try:
-        ret = solver.check()
-        if ret == unknown:
-            raise Z3Exception(solver.reason_unknown())
-    except Exception as e:
-        if pop_if_exception:
-            solver.pop()
-        raise e
-    return ret
 
 def custom_deepcopy(input):
     output = {}
@@ -981,3 +967,16 @@ def is_executed_by(block,init_blocks,components):
     
     return list(public_blocks)
     
+
+def compute_stack_size(evm_instructions, init_size):
+    current_size = init_size
+    for op in evm_instructions:
+        opcode_info = opcodes.get_opcode(op.strip())
+
+        consumed_elements = opcode_info[1]
+        produced_elements = opcode_info[2]
+            
+        current_size-=consumed_elements
+        current_size+=produced_elements
+        
+    return current_size
