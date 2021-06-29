@@ -168,6 +168,9 @@ def get_opcode(opcode):
     elif opcode == "RETURNDATACOPY":
         return [0x3e, 3, 0]
 
+    elif opcode.startswith("PUSH"):
+        return [hex(0x60),0,1]
+    
     # check PUSHi
     for i in range(32):
         if opcode == 'PUSH' + str(i + 1):
