@@ -98,6 +98,13 @@ def init_global_vars():
     global mem_abs
     mem_abs = False
 
+    global storage_abs
+    storage_abs = False
+
+    global storage_abs_mapping
+    storage_abs_mapping = {}
+
+    
     global mapping_ethirui
     mapping_ethirui = []
     
@@ -111,6 +118,8 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
     global mem_init_blocks
     global components
     global mem_abs
+    global storage_abs
+    global storage_abs_mapping
 
     
     init_global_vars()
@@ -127,6 +136,12 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
     if mem_intervals == "arrays" and verifier == "cpa":
         create_mem_variables(mem_blocks)
 
+    if sto_abs == "arrays" and verifier == "cpa":
+        storage_abs = True
+        print("HOLAA")
+        storage_abs_mapping = generate_storage_address(storage_arrays)
+        print storage_abs_mapping
+        
     #print mem_blocks
     mem_init_blocks = map(lambda x: x[0], mem_blocks)
     
@@ -1713,6 +1728,14 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         #     new = var0+" = ~"+ var1
 
         check_declare_variable(var0,vars_to_declare)
+
+
+    elif instr.find("STORAGEABS(")!=-1:
+        arg0 = instr.strip("STORAGEABS(").strip(")")
+        var0 = unbox_variable(arg0)
+        
+        new = "storage_offset = "+var0
+
         
     elif instr.find("gs(",0)!=-1:
         pos = instr.find("=")
@@ -1721,10 +1744,35 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
 
         arg1 = instr[pos+1:].strip()
         var1 = unbox_variable(arg1)
-        
-        new = var0 +" = "+ var1
-        check_declare_variable(var0,vars_to_declare)
-        
+
+        if storage_abs and verifier == "cpa":
+            if new_instructions[-1].find("storage_offset") ==-1:
+                array = storage_abs_mapping[rule_id]
+                if len(array) == 1:
+                    array_id = array[0][0]
+                    offset = unbox_variable(array[0][1].strip())
+                    val_int = int(offset[1:])
+                    val_var = "s"+str(val_int+1)
+                    new = "storage"+str(array_id)+"[storage_offset] = "+val_var
+
+                else:
+                    raise Exception("Ver arrays storage")
+            else:
+                new = ""
+        else:
+            new = var0 +" = "+ var1
+            check_declare_variable(var0,vars_to_declare)
+
+
+
+
+    elif instr.find("gl =",0)!=-1 and storage_abs and verifier == "cpa": #otherwise it goes to fresh variable case
+        array = storage_abs_mapping[rule_id]
+        if len(array) == 1:
+            array_id = array[0][0]
+            offset = unbox_variable(array[0][1].strip())
+            new = offset + " = storage"+str(array_id)+"[storage_offset]"
+
     # elif instr.find("gl =",0)!=-1:
     #     pos = instr.find("=")
     #     arg0 = instr[:pos].strip()
@@ -2352,7 +2400,26 @@ def initialize_global_variables(rules,init_fields):
         l_vars = map(lambda x: "\tmem"+str(x)+" = __VERIFIER_nondet_uint()",locals_vars)
     else:
         l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_uint()",locals_vars)
-        
+
+
+    if storage_abs and verifier == "cpa":
+        vals = storage_abs_mapping.values()
+        already = []
+        storage_arr = []
+        for v in vals:
+            for elems in v:
+                ident = elems[0]
+                if ident not in already:
+                    instr2 = "\tif (g"+str(ident)+" < 0) return;"
+                    instr1 = "\tunsigned int g"+str(ident)+"static[g"+str(ident)+"]"
+                    instr = "\tstorage"+str(ident)+" = g"+str(ident)+"static"
+                    storage_arr.append(instr2)
+                    storage_arr.append(instr1)
+                    storage_arr.append(instr)
+
+                    already.append(ident)
+
+            
     bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_uint()",bc_data)
 
     if fields != []:
@@ -2364,6 +2431,9 @@ def initialize_global_variables(rules,init_fields):
     if bc != []:
         s = s+";\n".join(bc)+";\n"
 
+    if storage_arr != []:
+        s = s+";\n".join(storage_arr)+";\n"
+    
     if goto == "global":
         for e in stack_vars_global:
             s = s+"\t"+e+" = __VERIFIER_nondet_uint();\n"
@@ -2419,10 +2489,12 @@ def write_init(rules,execution,cname,num_mem_vars):
         if verifier == "cpa" and mem_abs:
             s = s+"\n"+build_mem_vars(num_mem_vars)
             
+        if verifier == "cpa" and storage_abs:
+            s = s+"\n"+build_storage_arr_vars()
+    
         f.write(s)
 
-        
-        
+                
     f.close()
 
 def build_vars_to_initialize(fields,local,blockchain):
@@ -2679,6 +2751,22 @@ def mstore_functions():
 #     f = f + "\t}\n}\n"
 #     return head, f
 
+
+def build_storage_arr_vars():
+    vals = storage_abs_mapping.values()
+    already = []
+    f = ""
+    for v in vals:
+        for elems in v:
+            ident = elems[0]
+            if ident not in already:
+                instr = "unsigned int *storage"+str(ident)+";\n"
+                f+=instr
+
+                already.append(ident)
+    return f
+
+
 def build_mem_vars(num):    
     f = ""
 
@@ -2827,7 +2915,7 @@ def generate_storage_address(storage_arrays):
     
         ids_dict[bl] = zip(ids_list,vals_list)
 
-
+    return ids_dict
 
 def build_init_main(rules):
     if(len(rules)>1):
