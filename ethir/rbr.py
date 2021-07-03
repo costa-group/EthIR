@@ -324,15 +324,23 @@ def translateOpcodes0(opcode,index_variables,block):
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
-        instr = v3+" = " + v1 + "+" + v2
-
+       
+        instr2 = v3+" = " + v1 + "+" + v2
+        
         if str_arr and block in storage_arrays["ids"]:
             st = storage_arrays["vals"].get(block,[])
             st.append(v2)
             storage_arrays["vals"][block] = st
 
+            instr1 = "STORAGEABS("+v2+")\n"
+
             str_arr = False
-            
+
+        else:
+            instr1 = ""
+
+        instr = [instr1,instr2]
+        
     elif opcode == "MUL":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
@@ -1152,7 +1160,12 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
 
     if opcode_name in opcodes0:
         value, index_variables = translateOpcodes0(opcode_name, variables,rule.get_Id())
-        rule.add_instr(value)
+        if type(value) is list:
+            for ins in value:
+                rule.add_instr(ins)
+        else:
+            rule.add_instr(value)
+            
     elif opcode_name in opcodes10:
         value, index_variables = translateOpcodes10(opcode_name, variables,cond)
         rule.add_instr(value)
@@ -1765,7 +1778,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 init_fields_def = rename_init_fields(mapping_state_variables)
             else:
                 init_fields_def ={}
-                
+
+
+            # print "********************************************"
+            # print storage_arrays
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr == "int":
