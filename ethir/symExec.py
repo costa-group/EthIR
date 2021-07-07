@@ -2453,7 +2453,6 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 st_arr = (False,False)
 
             elif stored_address in mapping_address_sto.keys() and mapping_address_sto.get(stored_address,-1) !=-1:
-                print block
                 st_id = mapping_address_sto[stored_address][0]
                 st = storage_arrays.get(block,[])
                 st.append(st_id)
