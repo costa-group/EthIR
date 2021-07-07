@@ -154,6 +154,10 @@ def init_globals():
 
     global str_arr
     str_arr = False
+
+    global sha3_blocks_arr
+    sha3_blocks_arr = {}
+    
 '''
 Given a block it returns a list containingn the height of its
 stack when arriving and leaving the block.
@@ -319,27 +323,12 @@ corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes0(opcode,index_variables,block):
-    global str_arr
     if opcode == "ADD":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
        
-        instr2 = v3+" = " + v1 + "+" + v2
-        
-        if str_arr and block in storage_arrays["ids"]:
-            st = storage_arrays["vals"].get(block,[])
-            st.append(v2)
-            storage_arrays["vals"][block] = st
-
-            instr1 = "STORAGEABS("+v2+")\n"
-
-            str_arr = False
-
-        else:
-            instr1 = ""
-
-        instr = [instr1,instr2]
+        instr = v3+" = " + v1 + "+" + v2
         
     elif opcode == "MUL":
         v1, updated_variables = get_consume_variable(index_variables)
@@ -525,7 +514,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes20(opcode, index_variables):
+def translateOpcodes20(opcode, index_variables,block):
     global str_arr
     
     if opcode == "SHA3":
@@ -533,9 +522,14 @@ def translateOpcodes20(opcode, index_variables):
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
-        instr = v3+" = sha3("+ v1+", "+v2+")"
 
-        str_arr = True
+        blocks_sha3 = map(lambda x: x[1],sha3_blocks_arr.values())
+
+        if block in blocks_sha3:
+            instr = v3+" = 0"
+        else:
+            instr = v3+" = sha3("+ v1+", "+v2+")"
+
         
     else:
         instr = "Error opcodes20: "+opcode
@@ -1160,17 +1154,13 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
 
     if opcode_name in opcodes0:
         value, index_variables = translateOpcodes0(opcode_name, variables,rule.get_Id())
-        if type(value) is list:
-            for ins in value:
-                rule.add_instr(ins)
-        else:
-            rule.add_instr(value)
+        rule.add_instr(value)
             
     elif opcode_name in opcodes10:
         value, index_variables = translateOpcodes10(opcode_name, variables,cond)
         rule.add_instr(value)
     elif opcode_name in opcodes20:
-        value, index_variables = translateOpcodes20(opcode_name, variables)
+        value, index_variables = translateOpcodes20(opcode_name, variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes30:
         value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables,rule.get_Id())
@@ -1675,6 +1665,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global forget_memory
     global memory_intervals
     global storage_arrays    
+    global sha3_blocks_arr
     
     init_globals()
     c_trans = c_rbr
@@ -1690,6 +1681,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
     memory_intervals = mem_abs[0]
     storage_arrays["ids"] = mem_abs[1]
+
+    sha3_blocks_arr = (mem_abs[2])
     
     begin = dtimer()
     blocks_dict = blocks_input
@@ -1701,8 +1694,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             invalid_options = "all"
     else:
         invalid_options = False
-
-
+        
     try:
         if blocks_dict and stack_info:
             blocks = sorted(blocks_dict.values(), key = getKey)
@@ -1785,9 +1777,9 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name)
             if c_rbr == "int":
-                c_translation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,sto,storage_arrays)
+                c_translation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,sto,storage_arrays,mapping_state_variables)
             elif c_rbr == "uint":
-                c_utranslation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,sto,storage_arrays)
+                c_utranslation.rbr2c(rbr,exe,contract_name,component_of,scc,svc_labels,gotos,fbm,init_fields_def,mem_creation,memory_intervals,sto,storage_arrays,mapping_state_variables)
             elif c_rbr == "uint256":
                 e_translation.rbr2c(rbr,exe,contract_name,scc,svc_labels,gotos,fbm,init_fields_def)
             
@@ -1833,6 +1825,7 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
 
     mapping_state_variables = source_info["name_state_variables"]
 
+   
 
 
     try:
@@ -1938,7 +1931,7 @@ def rename_init_fields(mapping_state_variables):
         name = mapping_state_variables.get(f_index,f_index)
         initialized_fields[name]  = val
 
-    print initialized_fields
+    # print initialized_fields
         # if name not in name_vars:
         #     name_vars.append(name)
             
