@@ -1858,10 +1858,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             s0 = get_push_value(s0)
             s1 = get_push_value(s1)
 
-            st_arr = (True,st_arr[1])
-            
+
             new_var_name = gen.gen_arbitrary_var()
-            mapping_address_sto[new_var_name] = (st_id,block)
+
+            if s1 <64:
+                st_arr = (True,st_arr[1])
+                mapping_address_sto[new_var_name] = (st_id,block)
+
                 # path_conditions_and_vars[new_var_name] = new_var
             stack.insert(0, new_var_name)
         else:
@@ -2449,7 +2452,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 st_id = -1
                 st_arr = (False,False)
 
-            elif stored_address in mapping_address_sto.keys() and mapping_address_sto.get(stored_address,-1) !=-1: 
+            elif stored_address in mapping_address_sto.keys() and mapping_address_sto.get(stored_address,-1) !=-1:
+                print block
                 st_id = mapping_address_sto[stored_address][0]
                 st = storage_arrays.get(block,[])
                 st.append(st_id)

@@ -1672,7 +1672,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         # print("+++++++++++++++++++*")
         # print rule_id
 
-        if storage_abs and verifier == "cpa":
+        if storage_abs and verifier == "cpa" and rule_id in storage_abs_mapping:
             if new_instructions[-1].find("storage") ==-1:
                 array = storage_abs_mapping[rule_id]
                 if len(array) == 1:
@@ -1689,7 +1689,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             new = var0 +" = "+ var1
             check_declare_variable(var0,vars_to_declare)
         
-    elif instr.find("gl =",0)!=-1 and storage_abs and verifier == "cpa": #otherwise it goes to fresh variable case
+    elif instr.find("gl =",0)!=-1 and storage_abs and verifier == "cpa" and rule_id in storage_abs_mapping: #otherwise it goes to fresh variable case
         var = instr.split("=")[-1].strip()
         
         array = storage_abs_mapping[rule_id]
