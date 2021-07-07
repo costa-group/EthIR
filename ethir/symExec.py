@@ -257,6 +257,9 @@ def initGlobalVars():
     global storage_arrays
     storage_arrays = {}
 
+    global mapping_address_sto
+    mapping_address_sto = {}
+
     global optimization
     optimization = False
 
@@ -328,12 +331,11 @@ def build_cfg_and_analyze(evm_version):
     update_block_info()
     build_push_jump_relations()
 
-    if debug_info:
-        print "*****************************"
-        print "Graph"
-        show_graph(vertices)
-        print "Is Graph consistent?"
-        print check_graph_consistency(vertices)
+    # if debug_info:
+    #     print "*****************************"
+    #     print "Graph"
+    #     print "Is Graph consistent?"
+    #     print check_graph_consistency(vertices)
 
 
 #Added by Pablo Gordillo
@@ -859,8 +861,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     path_conditions_and_vars = params.path_conditions_and_vars
     calls = params.calls
     param_abs = ("","")
-    st_arr = (False,False)
-    st_id = -1
+    # st_arr = (False,False)
+    # st_id = -1
 
     # print("BLOCK"+str(block))
     
@@ -1256,6 +1258,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global st_id
     global st_arr
     global storage_arrays
+    global mapping_address_sto
     
     stack = params.stack
     mem = params.mem
@@ -1297,7 +1300,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first = stack.pop(0)
             second = stack.pop(0)
 
-            st_arr = (st_arr[0], True)
+            # print"!*/*/*/**/*/*/*/*/*/*/!"
+            # print(first)
+            # print(second)
+
+            if first in mapping_address_sto or second in mapping_address_sto: 
+                st_arr = (st_arr[0], True)
             
             first = get_push_value(first)
             second = get_push_value(second)
@@ -1853,6 +1861,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             st_arr = (True,st_arr[1])
             
             new_var_name = gen.gen_arbitrary_var()
+            mapping_address_sto[new_var_name] = (st_id,block)
                 # path_conditions_and_vars[new_var_name] = new_var
             stack.insert(0, new_var_name)
         else:
@@ -2337,7 +2346,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 storage_arrays[block] = st
                 st_id = -1
                 st_arr = (False,False)
-                
+
+            
             #Added by PG
             try:    
                 val = int(position)
@@ -2418,11 +2428,18 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             global_state["pc"] = global_state["pc"] + 1
             stored_address = stack.pop(0)
             stored_value = stack.pop(0)
-
+                            
             stored_address = get_push_value(stored_address)
             stored_value = get_push_value(stored_value)
 
+            # print("STORE ADDRESS")
+            # print(stored_address)
+            # print(block)
 
+            # print(st_id)
+            # print(st_arr)
+            # print(mapping_address_sto.get(stored_address,-1))
+            
             #Model storage arrays in C
             if isinstance(st_id,int) and st_id !=-1 and st_arr[0] and st_arr[1]:
                 st = storage_arrays.get(block,[])
@@ -2432,6 +2449,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 st_id = -1
                 st_arr = (False,False)
 
+            elif stored_address in mapping_address_sto.keys() and mapping_address_sto.get(stored_address,-1) !=-1: 
+                st_id = mapping_address_sto[stored_address][0]
+                st = storage_arrays.get(block,[])
+                st.append(st_id)
+                storage_arrays[block] = st
+
+                st_id = -1
+                st_arr = (False,False)
+                
             # print stored_address
             # print stored_value
              
@@ -3429,8 +3455,8 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
-        
-        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays),sto = sto)
+
+        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)
         
