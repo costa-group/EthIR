@@ -106,7 +106,7 @@ def init_global_vars():
     global mapping_ethirui
     mapping_ethirui = []
     
-def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals,sto_abs,storage_arrays):
+def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,mem_blocks,mem_intervals,sto_abs,storage_arrays,field_names):
     global svcomp
     global verifier
     global init_globals
@@ -155,7 +155,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
             heads, new_rules = rbr2c_recur(rbr)
 
         if not svcomp["exec"] and goto != "local":
-            head_c , rule = initialize_globals(rbr,init_fields)
+            head_c , rule = initialize_globals(rbr,init_fields,field_names)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
 
@@ -182,7 +182,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         ap = map(lambda x: x[1],mem_blocks)
         num = sum(ap)
 
-        write_init(rbr,execution,cname,num)
+        write_init(rbr,execution,cname,num,field_names)
         write(heads,new_rules,execution,cname)
 
         s_init = build_init_main(rbr)
@@ -1655,11 +1655,11 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         check_declare_variable(var0,vars_to_declare)
 
 
-    elif instr.find("STORAGEABS(")!=-1:
-        arg0 = instr.strip("STORAGEABS(").strip(")")
-        var0 = unbox_variable(arg0)
+    # elif instr.find("STORAGEABS(")!=-1:
+    #     arg0 = instr.strip("STORAGEABS(").strip(")")
+    #     var0 = unbox_variable(arg0)
         
-        new = "storage_offset = "+var0
+    #     new = "storage_offset = "+var0
         
     elif instr.find("gs(",0)!=-1:
         pos = instr.find("=")
@@ -1673,14 +1673,13 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         # print rule_id
 
         if storage_abs and verifier == "cpa":
-            if new_instructions[-1].find("storage_offset") ==-1:
+            if new_instructions[-1].find("storage") ==-1:
                 array = storage_abs_mapping[rule_id]
                 if len(array) == 1:
                     array_id = array[0][0]
-                    offset = unbox_variable(array[0][1].strip())
-                    val_int = int(offset[1:])
+                    val_int = int(var1[1:])
                     val_var = "s"+str(val_int+1)
-                    new = "storage"+str(array_id)+"[storage_offset] = "+val_var
+                    new = "storage"+str(array_id)+"["+var1+"] = "+val_var
 
                 else:
                     raise Exception("Ver arrays storage")
@@ -1691,11 +1690,13 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             check_declare_variable(var0,vars_to_declare)
         
     elif instr.find("gl =",0)!=-1 and storage_abs and verifier == "cpa": #otherwise it goes to fresh variable case
+        var = instr.split("=")[-1].strip()
+        
         array = storage_abs_mapping[rule_id]
         if len(array) == 1:
             array_id = array[0][0]
-            offset = unbox_variable(array[0][1].strip())
-            new = offset + " = storage"+str(array_id)+"[storage_offset]"
+            offset = unbox_variable(var)
+            new = offset + " = storage"+str(array_id)+"["+offset+"]"
 
     elif instr.find("l(l")!=-1:
         pos_local = instr.find("l(l")
@@ -1892,16 +1893,20 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
     #     new = "l("+instr[:pos].strip()+") "+instr[pos:]        
 
     elif instr.find("fresh",0)!=-1:
-        pos = instr.find("=")
-        arg0 = instr[:pos].strip()
-        var0 = unbox_variable(arg0)
+        if storage_abs and new_instructions[-1].find("storage")!=-1:
+            new = ""
 
-        if not svcomp["exec"]:
-            new = var0+" = "+get_nondet_svcomp_label()
         else:
-            new = var0+" = s"+str(cont)
-            check_declare_variable("s"+str(cont),vars_to_declare)
-            cont+=1
+            pos = instr.find("=")
+            arg0 = instr[:pos].strip()
+            var0 = unbox_variable(arg0)
+
+            if not svcomp["exec"]:
+                new = var0+" = "+get_nondet_svcomp_label()
+            else:
+                new = var0+" = s"+str(cont)
+                check_declare_variable("s"+str(cont),vars_to_declare)
+                cont+=1
         
     elif instr.find("= eq(",0)!=-1:
         elems = instr.split("= eq")
@@ -2272,16 +2277,16 @@ def add_svcomp_labels():
 
     return labels
 
-def initialize_globals(rules,init_fields):
+def initialize_globals(rules,init_fields, field_names):
     head_c = "void init_globals();"
     head = "void init_globals(){\n"
     
-    vars_init = initialize_global_variables(rules,init_fields)
+    vars_init = initialize_global_variables(rules,init_fields, field_names)
     method = head+vars_init+"}\n"
 
     return head_c, method
     
-def initialize_global_variables(rules,init_fields):
+def initialize_global_variables(rules,init_fields, field_names):
     s = ""
 
     initialized_vars = init_fields.keys()
@@ -2318,15 +2323,16 @@ def initialize_global_variables(rules,init_fields):
         for v in vals:
             for elems in v:
                 ident = elems[0]
-                if ident not in already:
-                    instr2 = "\tif (g"+str(ident)+" < 0) return;"
-                    instr1 = "\tunsigned int g"+str(ident)+"static[g"+str(ident)+"]"
+                name = field_names.get(str(ident), ident)
+                if name not in already:
+                    instr2 = "\tif (g"+str(name)+" < 0) return"
+                    instr1 = "\tunsigned int g"+str(ident)+"static[g"+str(name)+"]"
                     instr = "\tstorage"+str(ident)+" = g"+str(ident)+"static"
                     storage_arr.append(instr2)
                     storage_arr.append(instr1)
                     storage_arr.append(instr)
 
-                    already.append(ident)
+                    already.append(name)
         
     bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_int()",bc_data)
 
@@ -2349,7 +2355,7 @@ def initialize_global_variables(rules,init_fields):
         
     return s
 
-def write_init(rules,execution,cname,num_mem_vars):
+def write_init(rules,execution,cname,num_mem_vars,field_names):
     s = "\n"
 
     if not svcomp["exec"]:
@@ -2399,7 +2405,7 @@ def write_init(rules,execution,cname,num_mem_vars):
             s = s+"\n"+build_mem_vars(num_mem_vars)
 
         if verifier == "cpa" and storage_abs:
-            s = s+"\n"+build_storage_arr_vars()
+            s = s+"\n"+build_storage_arr_vars(field_names)
             
         f.write(s)
         
@@ -2660,14 +2666,14 @@ def mstore_functions():
 #     return head, f
 
 
-def build_storage_arr_vars():
+def build_storage_arr_vars(field_names):
     vals = storage_abs_mapping.values()
     already = []
     f = ""
     for v in vals:
         for elems in v:
             ident = elems[0]
-            if ident not in already:
+            if ident not in already:    
                 instr = "unsigned int *storage"+str(ident)+";\n"
                 f+=instr
 
@@ -2819,10 +2825,13 @@ def generate_storage_address(storage_arrays):
     
     ids = storage_arrays["ids"]
     vals = storage_arrays["vals"]
+
+    # print ids
+    # print vals
     
     for bl in ids:
         ids_list = ids[bl]
-        vals_list = vals[bl]
+        vals_list = vals.get(bl,["0"])
     
         ids_dict[bl] = zip(ids_list,vals_list)
 
