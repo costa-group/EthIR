@@ -2409,7 +2409,17 @@ def initialize_global_variables(rules,init_fields,field_names):
         l_vars = map(lambda x: "\tmem"+str(x)+" = __VERIFIER_nondet_uint()",locals_vars)
     else:
         l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_uint()",locals_vars)
+            
+    bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_uint()",bc_data)
 
+    if fields != []:
+        s = s+";\n".join(fields)+";\n"
+
+    if l_vars != []:
+        s = s+";\n".join(l_vars)+";\n"
+
+    if bc != []:
+        s = s+";\n".join(bc)+";\n"
 
     if storage_abs and verifier == "cpa":
         vals = storage_abs_mapping.values()
@@ -2430,20 +2440,9 @@ def initialize_global_variables(rules,init_fields,field_names):
 
                     already.append(name)
 
-            
-    bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_uint()",bc_data)
-
-    if fields != []:
-        s = s+";\n".join(fields)+";\n"
-
-    if l_vars != []:
-        s = s+";\n".join(l_vars)+";\n"
-
-    if bc != []:
-        s = s+";\n".join(bc)+";\n"
-
-    if storage_arr != []:
-        s = s+";\n".join(storage_arr)+";\n"
+        
+        if storage_arr != []:
+            s = s+";\n".join(storage_arr)+";\n"
     
     if goto == "global":
         for e in stack_vars_global:
