@@ -15,6 +15,9 @@ from utils import run_command, process_hashes
 from input_helper import InputHelper
 import traceback
 
+import sys
+sys.setrecursionlimit(5000)
+
 
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
@@ -70,7 +73,7 @@ def has_dependencies_installed():
     return True
 
 def clean_dir():
-    ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl"]
+    ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl","ethirui"]
     if "costabs" in os.listdir(global_params.tmp_path):
         for elem in os.listdir(global_params.costabs_path):
             last = elem.split(".")[-1]
