@@ -509,7 +509,10 @@ def collect_vertices(tokens):
                     current_line_content += push_val + ' '
                     instructions[current_ins_address] = current_line_content
                     if not optimization:
-                        idx = mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length) if g_src_map else None
+                        try:
+                            idx = mapping_push_instruction(current_line_content, current_ins_address, idx, positions, length) if g_src_map else None
+                        except:
+                            continue
                     log.debug(current_line_content)
                     current_line_content = ""
                     wait_for_push = False
@@ -538,7 +541,10 @@ def collect_vertices(tokens):
             log.debug(current_line_content)
             instructions[current_ins_address] = current_line_content
             if not optimization:
-                idx = mapping_non_push_instruction(current_line_content, current_ins_address, idx, positions, length) if g_src_map else None
+                try:
+                    idx = mapping_non_push_instruction(current_line_content, current_ins_address, idx, positions, length) if g_src_map else None
+                except:
+                    continue
             current_line_content = ""
             continue
         elif tok_type == NAME:
