@@ -1298,7 +1298,7 @@ def process_rule_c(rule):
         public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
         public_blocks = map(lambda x: "block"+str(x),public_blocks_aux)
         source = rule.get_invalid_source()
-        label = get_error_svcomp_label()+"; //"+source+" "+rule.get_rule_name()+" ["+" ".join(public_blocks)+"]\n"
+        label = get_error_svcomp_label()+"; //"+source+" "+rule.get_rule_name().replace("block","INV")+" ["+" ".join(public_blocks)+"]\n"
     else:
         label = ""
         
