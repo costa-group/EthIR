@@ -34,6 +34,19 @@ ebso_path = global_params.costabs_path+"blocks"
 
 # sys.setrecursionlimit(10**6)
 
+global num_jumps
+num_jumps = 0
+global num_jumpis
+num_jumpis = 0
+global num_sloads
+num_sloads = 0
+global num_sstores
+num_sstores = 0
+global num_calls
+num_calls = 0
+global num_loops
+num_loops = 0
+
 class Parameter:
     def __init__(self, **kwargs):
         attr_defaults = {
@@ -307,9 +320,39 @@ def change_format(evm_version):
     with open(g_disasm_file, 'w') as disasm_file:
         disasm_file.write("\n".join(file_contents))
 
-        
+
+def count_daos():
+
+    global num_jumps
+    global num_jumpis    
+    global num_sloads
+    global num_sstores
+    global num_calls
+    
+    with open(g_disasm_file, 'r') as disasm_file:
+        lines = disasm_file.readlines()[1:]
+
+        jumps = filter(lambda x: x.find("JUMP")!=-1 and x.find("JUMPI")==-1, lines)
+        num_jumps+=len(jumps)
+        jumpis = filter(lambda x: x.find("JUMPI")!=-1, lines)
+        num_jumpis+=len(jumpis)
+        sloads = filter(lambda x: x.find("SLOAD")!=-1, lines)
+        num_sloads+=len(sloads)
+        sstores = filter(lambda x: x.find("SSTORE")!=-1, lines)
+        num_sstores+=len(sstores)
+        calls = filter(lambda x: x.find("CALL")!=-1, lines)
+        num_calls+=len(calls)
+
+def print_daos():
+    print("NUM JUMP: "+str(num_jumps))
+    print("NUM JUMPI: "+str(num_jumpis))
+    print("NUM SLOAD: "+str(num_sloads))
+    print("NUM SSTORE: "+str(num_sstores))
+    print("NUM CALLS: "+str(num_calls))
+    print("NUM LOOPS: "+str(num_loops))
 def build_cfg_and_analyze(evm_version):
     change_format(evm_version)
+    count_daos()
     with open(g_disasm_file, 'r') as disasm_file:
         disasm_file.readline()  # Remove first line
         tokens = tokenize.generate_tokens(disasm_file.readline)
@@ -3349,7 +3392,8 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global invalid_option
     global source_n
     global optimization
-
+    global num_loops
+    
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
     
@@ -3441,11 +3485,13 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         # scc["unary"] = scc_unary
         # scc["multiple"] = scc_multiple
-            
+
+        num_loops+=len(scc_unary_new)+len(scc_multiple)
+
     except:
         #traceback.print_exc()
         raise Exception("Error in SCC generation",7)
-
+    
     if function_block_map != {}:
         val = function_block_map.values()
         f2blocks = map(lambda x: x[0],val)

@@ -312,7 +312,9 @@ def run_solidity_analysis(inputs,hashes):
         exit_code = 5
     elif (6 in returns):
         exit_code = 6
-    
+
+    symExec.print_daos()
+        
 #    print exit_code
     return results, exit_code
 
