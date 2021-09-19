@@ -1678,7 +1678,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                 if len(array) == 1:
                     array_id = array[0][0]
                     val_int = int(var1[1:])
-                    val_var = "s"+str(val_int+1)
+                    val_var = "s"+str(val_int-1)
                     new = "storage"+str(array_id)+"["+var1+"] = "+val_var
 
                 else:

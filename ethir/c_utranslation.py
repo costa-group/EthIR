@@ -1753,7 +1753,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                     # offset = unbox_variable(array[0][1].strip())
                     # val_int = int(offset[1:])
                     val_int = int(var1[1:])
-                    val_var = "s"+str(val_int+1)
+                    val_var = "s"+str(val_int-1)
                     # new = "storage"+str(array_id)+"[storage_offset] = "+val_var
                     new = "storage"+str(array_id)+"["+var1+"] = "+val_var
 
