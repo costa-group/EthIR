@@ -2986,7 +2986,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
             # print ins_new
             # print memory_unknown
             
-            if ("MLOAD" in ins_new or "MSTORE" in ins_new) and successor not in memory_unknown:
+            if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
                 memory_unknown.append(successor)
