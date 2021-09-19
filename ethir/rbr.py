@@ -157,6 +157,9 @@ def init_globals():
 
     global sha3_blocks_arr
     sha3_blocks_arr = {}
+
+    global val_mem40
+    val_mem40 = ""
     
 '''
 Given a block it returns a list containingn the height of its
@@ -709,14 +712,20 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     if opcode == "POP":        
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
-    elif opcode == "MLOAD":
+    elif opcode == "MLOAD":        
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            if memory_intervals == "arrays":
+
+            if memory_intervals == "arrays" and val_mem40 != value:
                 instr = v1+ " = " + "l(mem"+str(value)+")"
                 update_local_variables(str(value),block)
+
+            elif memory_intervals == "arrays" and val_mem40 == value:
+                instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
+                new_fid+=1
+
             else:
                 instr = v1+ " = " + "l(l"+str(l_idx)+")"
                 update_local_variables(l_idx,block)
@@ -729,9 +738,11 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
             l_idx = get_local_variable(value)
-            if memory_intervals == "arrays":
+            if memory_intervals == "arrays" and val_mem40 != value:
                instr = "l(mem"+str(value)+") = "+ v1
                update_local_variables(str(value),block)
+            elif memory_intervals == "arrays" and val_mem40 == value:
+                instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
             else:
                 instr = "l(l"+str(l_idx)+") = "+ v1
                 update_local_variables(l_idx,block)
@@ -1666,6 +1677,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global memory_intervals
     global storage_arrays    
     global sha3_blocks_arr
+    global val_mem40
+
     
     init_globals()
     c_trans = c_rbr
@@ -1683,6 +1696,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     storage_arrays["ids"] = mem_abs[1]
 
     sha3_blocks_arr = (mem_abs[2])
+    val_mem40 = mem_abs[3]
+
     
     begin = dtimer()
     blocks_dict = blocks_input
