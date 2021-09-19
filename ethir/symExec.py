@@ -281,6 +281,9 @@ def initGlobalVars():
 
     global memory_unknown
     memory_unknown = []
+
+    global val_mem40
+    val_mem40 = ""
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -1314,6 +1317,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global st_arr
     global storage_arrays
     global mapping_address_sto
+    global val_mem40
+
     
     stack = params.stack
     mem = params.mem
@@ -2314,6 +2319,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stored_value = get_push_value(stored_value)
 
             st_id = stored_value
+
+            if stored_address == 64 and val_mem40 == "":
+                val_mem40 = str(st_id)
             
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
@@ -3543,7 +3551,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
 
-        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto),sto = sto)
+        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)
         
