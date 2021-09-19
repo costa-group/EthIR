@@ -278,6 +278,9 @@ def initGlobalVars():
 
     global blocks_memArr
     blocks_memArr = {}
+
+    global memory_unknown
+    memory_unknown = []
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -899,7 +902,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global st_arr
     global st_id
     global blocks_memArr
-            
+
+    # print"BLOCK"
+    # print block
+    
     visited = params.visited
     stack = params.stack
     stack_old = list(params.stack)
@@ -2960,15 +2966,41 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     global visited_blocks
     global vertices
     global blocks_to_create
-
+    global memory_unknown
+    
     if successor in visited_blocks:
+
+        same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
+        
+        # print successor
+        # print same_stack_successors
+        
+        if len(same_stack_successors) > 0:
+
+            instructions = vertices[successor].get_instructions()
+            ins_new = map(lambda x: x.strip(),instructions)
+
+            # print "HOLA"
+            # # print block
+            # print successor
+            # print ins_new
+            # print memory_unknown
+            
+            if ("MLOAD" in ins_new or "MSTORE" in ins_new) and successor not in memory_unknown:
+                # print "ENTRO"
+                # print successor
+                memory_unknown.append(successor)
+                path.append((block,successor))
+                sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
+                path.pop()
+
+            else:
+
+        # else:
         # We filter all nodes with same beginning, and check if there's one of those
         # nodes with same stack. Notice that one block may contain several stacks
 
-        same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
-
-        if len(same_stack_successors) > 0:
-            update_matching_successor(successor, same_stack_successors[0], block, jump_type)
+                update_matching_successor(successor, same_stack_successors[0], block, jump_type)
         else:
             copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, jump_type)
 
