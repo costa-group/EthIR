@@ -2975,7 +2975,10 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     global vertices
     global blocks_to_create
     global memory_unknown
-    
+
+    # print(block)
+    # print(successor)
+    # print("--------")
     if successor in visited_blocks:
 
         same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
@@ -2986,10 +2989,11 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
         if len(same_stack_successors) > 0:
 
             instructions = vertices[successor].get_instructions()
-            ins_new = map(lambda x: x.strip(),instructions)
+            instructions1 = vertices[block].get_instructions()
+            ins_new = map(lambda x: x.strip(),instructions+instructions1)
 
             # print "HOLA"
-            # # print block
+            # print block
             # print successor
             # print ins_new
             # print memory_unknown
