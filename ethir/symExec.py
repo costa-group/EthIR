@@ -2979,6 +2979,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     # print(block)
     # print(successor)
     # print("--------")
+
     if successor in visited_blocks:
 
         same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
@@ -2997,22 +2998,32 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
             # print successor
             # print ins_new
             # print memory_unknown
+
+            # We filter all nodes with same beginning, and check if there's one of those
+            # nodes with same stack. Notice that one block may contain several stacks
+
+            update_matching_successor(successor, same_stack_successors[0], block, jump_type)
             
             if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
                 memory_unknown.append(successor)
                 path.append((block,successor))
+
+                # old_target = vertices[successor].get_jump_target()
+                # old_falls_to = vertices[successor].get_falls_to()
+                # comes_from = vertices[successor].get_comes_from()
+                
                 sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
                 path.pop()
 
-            else:
+                # vertices[successor].set_jump_target(old_target)
+                # vertices[successor].set_falls_to(old_falls_to)
+                # vertices[successor].set_comes_from(comes_from)
+                
 
         # else:
-        # We filter all nodes with same beginning, and check if there's one of those
-        # nodes with same stack. Notice that one block may contain several stacks
 
-                update_matching_successor(successor, same_stack_successors[0], block, jump_type)
         else:
             copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, jump_type)
 
@@ -3032,7 +3043,6 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
         if successor not in blocks_to_create:
             blocks_to_create.append(successor)
 
-    
 
 def access_array_sim(opcode_ins,fake_stack):
     end = False
@@ -3554,6 +3564,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
+
 
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
