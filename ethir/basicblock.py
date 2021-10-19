@@ -113,7 +113,7 @@ class BasicBlock:
         
     def compute_list_jump(self,edges):
         for el in edges:
-            if (el!=self.falls_to):
+            if (el!=self.falls_to) and el not in self.list_jumps:
                 self.list_jumps.append(el)
 
     def update_list_jump_cloned(self,val):
@@ -130,8 +130,8 @@ class BasicBlock:
                 i = self.list_jumps.index(address)
                 self.list_jumps[i]=val
 
-    def set_comes_from(self, new_comes_from):
-        self.comes_from = new_comes_from
+    # def set_comes_from(self, new_comes_from):
+    #     self.comes_from = new_comes_from
 
     def add_jump(self, val):
         if val not in self.list_jumps:
