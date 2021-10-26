@@ -733,8 +733,9 @@ def add_falls_to():
     for i, key in enumerate(key_list):
         if jump_type[key] != "terminal" and jump_type[key] != "unconditional" and i+1 < length:
             target = key_list[i+1]
-            edges[key].append(target)
-            vertices[key].set_falls_to(target)
+            if vertices[key].get_falls_to() == None:
+                edges[key].append(target)
+                vertices[key].set_falls_to(target)
 
 
 def get_init_global_state(path_conditions_and_vars):
@@ -1232,7 +1233,7 @@ def update_matching_successor(successor, matching_successor, block, t):
     #If it's already cloned, we just have to update info
     vertices[matching_successor].add_origin(block)
     if t == "falls_to":
-        vertices[block].set_falls_to(matching_successor)
+        vertices[block].set_falls_to(matching_successor, True)
     else:
         vertices[block].set_jump_target(matching_successor, True)
         
@@ -1267,7 +1268,7 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
     new_successor.set_comes_from([block])
     vertices[new_successor_address] = new_successor
     if t == "falls_to":
-        vertices[block].set_falls_to(new_successor_address)
+        vertices[block].set_falls_to(new_successor_address,True)
     else:
         vertices[block].set_jump_target(new_successor_address, True)
         
