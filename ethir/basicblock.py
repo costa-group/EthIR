@@ -66,12 +66,7 @@ class BasicBlock:
         return self.type
 
     def set_falls_to(self, address, cloning = None):
-        if cloning:
-            self.falls_to = address
-        elif cloning == None and self.falls_to == None:
-            self.falls_to = address
-        elif cloning == None and self.falls_to != None:
-            pass
+        self.falls_to = address
         
     def get_falls_to(self):
         return self.falls_to
@@ -82,8 +77,6 @@ class BasicBlock:
             self.jump_target = address
         elif cloning:
             self.jump_target = address
-        elif cloning == None and (self.jump_target !=-1 or self.jump_target != 0):
-            pass
         else:
             self.jump_target = -1
 
