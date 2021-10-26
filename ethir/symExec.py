@@ -398,6 +398,7 @@ def update_block_info():
         
     for block in vert:    
         block.compute_list_jump(edges[block.get_start_address()])
+        
         c = block.compute_cloning()
         if c:
             blocks_to_clone.append(block)
@@ -3025,7 +3026,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
         # else:
 
-        else:
+        elif successor == 0 and successor not in memory_unknown:
             copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, jump_type)
 
     elif successor in vertices:
