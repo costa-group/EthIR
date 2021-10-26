@@ -3026,7 +3026,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
         # else:
 
-        elif successor == 0 and successor not in memory_unknown:
+        elif len(same_stack_successors) == 0 and successor not in memory_unknown:
             copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, jump_type)
 
     elif successor in vertices:
