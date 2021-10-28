@@ -711,6 +711,7 @@ def get_functions_with_loop(scc):
 
     for b in scc_blocks:
         entry_block = filter(lambda x: x in entry_points,component_of_blocks[b])
+
         if len(entry_block) > 0:
             block_with_loop.append(entry_block[0])
 
@@ -1126,11 +1127,23 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         s = vertices[block].get_block_gas()+vertices[pre_block].get_cost()
         vertices[block].set_cost(s)
 
+        # print(signature)
         elem = function_block_map.get(signature,-1)
+        # print(elem)
+        # print("*********")
         if elem == -1:
+            #if ch_block == 113:
+                # print("JOJOJO")
+                # print(ch_block)
+                # print(signature)
             function_block_map[signature] = (ch_block,s)
         else:
-            if elem[0]>ch_block:
+            # print(elem[0])
+            # print(jump_type[elem[0]])
+            # print(ch_block)
+            # print(jump_type[ch_block]) == "unconditional"
+            if elem[0]>ch_block or (jump_type[elem[0]] == "conditional"):
+                # print("BOOOM")
                 function_block_map[signature] = (ch_block,s)
                 
         #        function_block_map[name]=vertices[block].get_jump_target()
@@ -3381,7 +3394,7 @@ def generate_verify_config_file(cname,scc):
         name = global_params.costabs_path+cname+".config"
 
     entry_loops = get_functions_with_loop(scc)
-
+    
     with open(name,"w") as f:
         for elem in function_block_map.items():
             block_fun = elem[1][0]
@@ -3396,11 +3409,20 @@ def generate_verify_config_file(cname,scc):
                 loop_tag = "TERMIN"
             else:
                 loop_tag = "NO"
-                
+            # print(invalid_tag)
+            # print("("+fun_arg+";"+str(elem[1][0])+"; "+invalid_tag+"; "+loop_tag+")")
             to_write.append("("+fun_arg+";"+str(elem[1][0])+"; "+invalid_tag+"; "+loop_tag+")")
+        # print(to_write)
         elems2write = "\n".join(to_write)
+        # print(elems2write)
+        # print(name)
         f.write(elems2write)
     f.close()
+
+    # f1 = open(name,"r")
+    # lines = f1.readlines()
+    # print("**************")
+    # print(lines)
     
 def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
     if cfg and (not cloned):
