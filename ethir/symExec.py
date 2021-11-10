@@ -3009,9 +3009,9 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
         
         if len(same_stack_successors) > 0:
 
-            instructions = vertices[successor].get_instructions()
-            instructions1 = vertices[block].get_instructions()
-            ins_new = map(lambda x: x.strip(),instructions+instructions1)
+            # instructions = vertices[successor].get_instructions()
+            # instructions1 = vertices[block].get_instructions()
+            # ins_new = map(lambda x: x.strip(),instructions+instructions1)
 
             # print "HOLA"
             # print block
