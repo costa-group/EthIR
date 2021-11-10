@@ -282,6 +282,9 @@ def initGlobalVars():
     global memory_unknown
     memory_unknown = []
 
+    global repeated
+    repeated = []
+    
     global val_mem40
     val_mem40 = ""
     
@@ -356,6 +359,8 @@ def print_daos():
     print("NUM SSTORE: "+str(num_sstores))
     print("NUM CALLS: "+str(num_calls))
     print("NUM LOOPS: "+str(num_loops))
+
+    
 def build_cfg_and_analyze(evm_version):
     change_format(evm_version)
     count_daos()
@@ -2990,7 +2995,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     global vertices
     global blocks_to_create
     global memory_unknown
-
+    global repeated
     # print(block)
     # print(successor)
     # print("--------")
@@ -3018,14 +3023,14 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
             # nodes with same stack. Notice that one block may contain several stacks
 
 
-            if ("MLOAD" not in ins_new and "MSTORE" not in ins_new and "SLOAD" not in ins_new and "SSTORE" not in ins_new) or successor in memory_unknown:
+            if successor not in repeated:
                 update_matching_successor(successor, same_stack_successors[0], block, jump_type)
-            
-            if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
+                repeated.append(successor)
+            # if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
 
-                memory_unknown.append(successor)
+                # memory_unknown.append(successor)
                 path.append((block,successor))
 
                 # old_target = vertices[successor].get_jump_target()
@@ -3042,9 +3047,9 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
         # else:
 
-        elif len(same_stack_successors) == 0 and successor not in memory_unknown:
+        elif len(same_stack_successors) == 0 and successor not in repeated:
             copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, jump_type)
-
+            repeated.append(successor)
     elif successor in vertices:
 
         vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
@@ -3338,7 +3343,7 @@ def compute_component_of_cfg():
     component_of_blocks = {}
     
     for block in vertices.keys():
-        print(block)
+        # print(block)
         comp = component_of(block)
         component_of_blocks[block] = comp
 
@@ -3603,7 +3608,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
                 generate_verify_config_file(cname,scc)
 
 
-        print(component_of_blocks)
+        # print(component_of_blocks)
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)
