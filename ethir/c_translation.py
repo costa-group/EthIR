@@ -2287,6 +2287,8 @@ def initialize_globals(rules,init_fields, field_names,num):
     
     vars_init = initialize_global_variables(rules,init_fields, field_names)
 
+    f = ""
+    
     if verifier == "cpa" and mem_abs:
         f = "\n"
         non_interval_memvars.sort()
