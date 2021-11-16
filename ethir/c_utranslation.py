@@ -152,6 +152,10 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         blocks2init = fbm
 
     try:
+
+        ap = map(lambda x: x[1],mem_blocks)
+        num = sum(ap)
+        
         if gotos["gotos"]== "iterative":
             goto = gotos["args"] if gotos["args"]!= None else "global"
             heads, new_rules = rbr2c_gotos(rbr,scc)
@@ -160,7 +164,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
             heads, new_rules = rbr2c_recur(rbr)
         
         if not svcomp["exec"] and goto != "local":
-            head_c , rule = initialize_globals(rbr,init_fields,field_names)
+            head_c , rule = initialize_globals(rbr,init_fields,field_names,num)
             heads = "\n"+head_c+heads
             new_rules.append(rule)
 
@@ -181,14 +185,11 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
             head, f = def_signextend_function()
             heads = heads+head
             new_rules.append(f)
-
-        ap = map(lambda x: x[1],mem_blocks)
-        num = sum(ap)
             
         write_init(rbr,execution,cname,num)
         write(heads,new_rules,execution,cname)
 
-        s_init = build_init_main(rbr)
+        s_init = build_init_main(rbr,num)
         
         write_main(execution,cname,s_init)
 
@@ -2374,7 +2375,21 @@ def initialize_globals(rules,init_fields,field_names):
     head = "void init_globals(){\n"
     
     vars_init = initialize_global_variables(rules,init_fields,field_names)
-    method = head+vars_init+"}\n"
+
+    f = ""
+    
+    if verifier == "cpa" and mem_abs:
+        f = "\n"
+        non_interval_memvars.sort()
+        for i in non_interval_memvars:
+            f = f +"\t"+i+" = __VERIFIER_nondet_uint();\n"
+
+        for i in range(num):
+            f = f + "\tfv"+str(i)+"= __VERIFIER_nondet_uint();\n"
+
+
+    method = head+vars_init+f+"}\n"
+
 
     return head_c, method
     
@@ -2928,7 +2943,7 @@ def generate_storage_address(storage_arrays):
 
     return ids_dict
 
-def build_init_main(rules):
+def build_init_main(rules,num):
     if(len(rules)>1):
         r = rules[1][0]
     else:
@@ -2950,10 +2965,10 @@ def build_init_main(rules):
         
     bc = map(lambda x: "unsigned int "+x,bc_data)
     
-    s_vars = vars_in_main(fields,l_vars,bc)
+    s_vars = vars_in_main(fields,l_vars,bc,num)
     return s_vars
     
-def vars_in_main(fields,local,blockchain):
+def vars_in_main(fields,local,blockchain,num):
     s = ""
     
     #It has to be initialize in local and mix
@@ -2967,10 +2982,22 @@ def vars_in_main(fields,local,blockchain):
 
         s = s+";\n".join(stack_vars+all_vars)+";\n"
         
+
         if mem_abs:
             local_aux = map(lambda x: "\t"+x,local)
-            s = s+";\n".join(local_aux)+";\n"
+            if local_aux != []:
+                s = s+";\n".join(local_aux)+";\n"
 
+            f = "\n"
+            non_interval_memvars.sort()
+            for i in non_interval_memvars:
+                f = f +"\t"+i+" = __VERIFIER_nondet_uint();\n"
+
+            for i in range(num):
+                f = f + "\tfv"+str(i)+"= __VERIFIER_nondet_uint();\n"
+            s+=f+"\n"
+
+        
     else:
         s = s+";\n".join(stack_vars)+";\n"
 
