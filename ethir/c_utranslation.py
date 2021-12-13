@@ -2370,7 +2370,7 @@ def add_svcomp_labels():
 
     return labels
 
-def initialize_globals(rules,init_fields,field_names):
+def initialize_globals(rules,init_fields,field_names,num):
     head_c = "void init_globals();"
     head = "void init_globals(){\n"
     
