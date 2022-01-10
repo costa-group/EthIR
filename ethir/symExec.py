@@ -3022,10 +3022,11 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
             # We filter all nodes with same beginning, and check if there's one of those
             # nodes with same stack. Notice that one block may contain several stacks
 
-
-            if successor not in repeated:
+            src_block = block.split("_")[0] if str(block).find("_")!=-1 else block
+            
+            if (src_block,successor) not in repeated:
                 update_matching_successor(successor, same_stack_successors[0], block, jump_type)
-                repeated.append(successor)
+                repeated.append((src_block,successor))
             # if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
@@ -3607,8 +3608,6 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
 
-
-        # print(component_of_blocks)
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)
