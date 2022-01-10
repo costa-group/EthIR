@@ -3021,12 +3021,10 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
             # We filter all nodes with same beginning, and check if there's one of those
             # nodes with same stack. Notice that one block may contain several stacks
-
-            src_block = block.split("_")[0] if str(block).find("_")!=-1 else block
             
-            if (src_block,successor) not in repeated:
+            if (block,successor) not in repeated:
                 update_matching_successor(successor, same_stack_successors[0], block, jump_type)
-                repeated.append((src_block,successor))
+                repeated.append((block,successor))
             # if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
