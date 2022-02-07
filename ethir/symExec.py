@@ -1268,7 +1268,7 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
     global calldataload_values
     global edges
     global jump_type
-    
+    global repeated
     # We make a copy for the successor
     new_successor = vertices[successor].copy()
 
@@ -1307,6 +1307,8 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
     # Finally, we keep on cloning
     path.append((block, new_successor_address))
 
+    repeated.append((block,new_successor_address))
+    
     if debug_info:
         print "LLegue aqui con" + str(new_successor_address)
         print block
@@ -2999,11 +3001,11 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     # print(block)
     # print(successor)
     # print("--------")
-
+    
     if successor in visited_blocks:
 
         same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
-        
+
         # print successor
         # print same_stack_successors
         
@@ -3024,19 +3026,19 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
             
             if (block,successor) not in repeated:
                 update_matching_successor(successor, same_stack_successors[0], block, jump_type)
-                repeated.append((block,successor))
+                repeated.append((block,same_stack_successors[0]))
             # if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
 
                 # memory_unknown.append(successor)
-                path.append((block,successor))
+                path.append((block,same_stack_successors[0]))
 
                 # old_target = vertices[successor].get_jump_target()
                 # old_falls_to = vertices[successor].get_falls_to()
                 # comes_from = vertices[successor].get_comes_from()
                 
-                sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
+                sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
                 path.pop()
 
                 # vertices[successor].set_jump_target(old_target)
@@ -3048,16 +3050,11 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
         elif len(same_stack_successors) == 0 and successor not in repeated:
             copy_already_visited_node(successor, new_params, block, depth, func_call,current_level,path, jump_type)
-            repeated.append(successor)
+
     elif successor in vertices:
 
         vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
 
-        # if successor == 5132:
-        #     print "HOLA"
-        #     print(block)
-        #     raise Exception
-        
         path.append((block,successor))
         sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
         path.pop()
