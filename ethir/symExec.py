@@ -287,6 +287,15 @@ def initGlobalVars():
     
     global val_mem40
     val_mem40 = ""
+
+    global has_lm40
+    has_lm40 = False
+    
+    global has_sm40
+    has_sm40 = False
+
+    global memory_creation
+    memory_creation = []
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -913,7 +922,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global st_arr
     global st_id
     global blocks_memArr
-
+    global has_lm40
+    global has_sm40
+    global memory_creation
+    
     # print"BLOCK"
     # print block
     
@@ -1012,6 +1024,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     instr_idx = 0
 
 
+    has_lm40 = False
+    has_sm40 = False
+
     # consumed_elems = compute_elements(block_ins)
     # init_stack = len(stack)
     for instr in block_ins:
@@ -1049,8 +1064,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         instr_idx+=1
 
 
+    if has_lm40 and has_sm40 and block not in memory_creation:
+        memory_creation.append(block)
 
-    
     # after_stack =  compute_stack_size(block_ins, len(init_stack))
     # if after_stack != len(stack):
     #     raise Exception("The final stacks have different lenght")
@@ -1340,6 +1356,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global storage_arrays
     global mapping_address_sto
     global val_mem40
+    global has_lm40
+    global has_sm40
 
     
     stack = params.stack
@@ -2301,6 +2319,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             address = stack.pop(0)
 
             address = get_push_value(address)
+
+            if address == 64 and not has_sm40:
+                has_lm40 = True
             
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
@@ -2342,9 +2363,14 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             st_id = stored_value
 
+            if stored_address == 64 and has_lm40:
+                has_sm40 = True
+                print("MEMBASE")
+                print(st_id)
+                print("----------------")
             if stored_address == 64 and val_mem40 == "":
                 val_mem40 = str(st_id)
-            
+                
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
@@ -3603,6 +3629,9 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
 
+        print((mem_abs,val_mem40))
+
+        print(memory_creation)
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)
