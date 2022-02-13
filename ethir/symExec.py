@@ -294,6 +294,9 @@ def initGlobalVars():
     global has_sm40
     has_sm40 = False
 
+    global creation_block
+    creation_block = 0
+    
     global memory_creation
     memory_creation = []
     
@@ -924,6 +927,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global blocks_memArr
     global has_lm40
     global has_sm40
+    global creation_block
     global memory_creation
     
     # print"BLOCK"
@@ -1022,10 +1026,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     # print(len(stack))
     # print("--------")
     instr_idx = 0
-
-
-    has_lm40 = False
-    has_sm40 = False
 
     # consumed_elems = compute_elements(block_ins)
     # init_stack = len(stack)
@@ -1357,6 +1357,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global mapping_address_sto
     global val_mem40
     global has_lm40
+    global creation_block
     global has_sm40
 
     
@@ -2322,7 +2323,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             if address == 64 and not has_sm40:
                 has_lm40 = True
-            
+                creation_block = block
+                
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
@@ -2364,7 +2366,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             st_id = stored_value
 
             if stored_address == 64 and has_lm40:
-                has_sm40 = True
+                has_lm40 = False
+                memory_creation.append((creation_block,block))
                 print("MEMBASE")
                 print(st_id)
                 print("----------------")
