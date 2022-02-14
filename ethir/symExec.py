@@ -2367,7 +2367,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             if stored_address == 64 and has_lm40:
                 has_lm40 = False
-                memory_creation.append((creation_block,block))
+                if (creation_block, block) not in memory_creation:
+                    memory_creation.append((creation_block,block))
                 print("MEMBASE")
                 print(st_id)
                 print("----------------")
