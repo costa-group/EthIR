@@ -299,6 +299,13 @@ def initGlobalVars():
     
     global memory_creation
     memory_creation = []
+
+    global base_refs
+    base_refs = {}
+
+    global base_ref_cont
+    base_ref_cont = 0
+
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -1359,7 +1366,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global has_lm40
     global creation_block
     global has_sm40
-
+    global base_refs
+    global base_ref_cont
     
     stack = params.stack
     mem = params.mem
@@ -2110,7 +2118,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     else:
                         new_var_name = gen.gen_data_var(position)
             else:
-                new_var_name = gen.gen_data_var(position)
+                new_var_name = "CALLDATALOAD("+str(position)+")"#gen.gen_data_var(position)
 
             if new_var_name in path_conditions_and_vars:
                 new_var = path_conditions_and_vars[new_var_name]
@@ -2324,10 +2332,19 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             if address == 64 and not has_sm40:
                 has_lm40 = True
                 creation_block = block
-                
+                new_base_ref = "baseref"+str(base_ref_cont)
+                base_ref_cont+=1
+                val = new_base_ref
+            else:
+                val = "mem("+str(address)+")"
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
+            #stack.insert(0,val)
+            
+            print("MLOAD")
+            print(address)
+            
             # current_miu_i = global_state["miu_i"]
             #if isAllReal(address, current_miu_i) and address in mem:
             if isAllReal(address) and address in mem:
@@ -2339,6 +2356,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 #     current_miu_i = temp
                 value = mem[address]
                 stack.insert(0, value)
+                print(val)
+                print(value)
+                print("----------------")
             else:
                 new_var_name = gen.gen_mem_var(address)
                 if new_var_name in path_conditions_and_vars:
@@ -2347,6 +2367,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     new_var = new_var_name
                     path_conditions_and_vars[new_var_name] = new_var
                 stack.insert(0, new_var)
+                print(val)
+                print(new_var)
+                print("----------------")
                 if isReal(address):
                     mem[address] = new_var
                 else:
@@ -2369,12 +2392,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 has_lm40 = False
                 if (creation_block, block) not in memory_creation:
                     memory_creation.append((creation_block,block))
-                print("MEMBASE")
-                print(st_id)
-                print("----------------")
+                # print("MEMBASE")
+                # print(st_id)
+                # print("----------------")
             if stored_address == 64 and val_mem40 == "":
                 val_mem40 = str(st_id)
-                
+
+            print("MSTORE")
+            print(stored_address)
+            print(stored_value)
+            print("-----------")
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
