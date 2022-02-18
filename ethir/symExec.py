@@ -3706,6 +3706,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         print(memory_creation)
         print(memory_sets)
+        identify_memory_pos_no_baseref(memory_sets)
         print("---------------")
         print(base_refs)
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
@@ -3870,3 +3871,18 @@ def compute_elements(instrs):
         elems = elems-vals[1]+vals[2]
 
     return elems
+
+
+def identify_memory_pos_no_baseref(memory_set):
+    for elem in memory_set:
+        mem_addresses = memory_set[elem]
+        for a in mem_addresses:
+            try:
+                x = int(a)
+                if a > 64:
+                    print("[NO MEMBASE]: "+str(elem))
+            except:
+                if a.find("baseref")==-1:
+                    print("[NO MEMBASE]: "+str(elem))
+
+                    
