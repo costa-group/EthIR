@@ -306,6 +306,11 @@ def initGlobalVars():
     global base_ref_cont
     base_ref_cont = 0
 
+    global memory_usage
+    memory_usage = {}
+
+    global memory_sets
+    memory_sets = {}
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -1036,6 +1041,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     # consumed_elems = compute_elements(block_ins)
     # init_stack = len(stack)
+
     for instr in block_ins:
         # print instr
         if not bl.get_pcs_stored():
@@ -1069,7 +1075,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             break
 
         instr_idx+=1
-
 
     if has_lm40 and has_sm40 and block not in memory_creation:
         memory_creation.append(block)
@@ -1292,6 +1297,7 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
     global edges
     global jump_type
     global repeated
+    global memory_usage
     # We make a copy for the successor
     new_successor = vertices[successor].copy()
 
@@ -1335,7 +1341,10 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
     if debug_info:
         print "LLegue aqui con" + str(new_successor_address)
         print block
+    # print(path)
+    old_mem = dict(memory_usage)
     sym_exec_block(new_params, new_successor_address, block, depth, func_call,current_level+1,path)
+    memory_usage = old_mem
     path.pop()
         
         
@@ -1368,6 +1377,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global has_sm40
     global base_refs
     global base_ref_cont
+    global memory_usage
+    global memory_sets
     
     stack = params.stack
     mem = params.mem
@@ -2329,51 +2340,70 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             address = get_push_value(address)
 
+            memory_val = memory_usage.get(address,"mem("+str(address)+")")
+
+            # print(memory_usage)
             if address == 64 and not has_sm40:
                 has_lm40 = True
                 creation_block = block
-                new_base_ref = "baseref"+str(base_ref_cont)
-                base_ref_cont+=1
-                val = new_base_ref
+
+                if memory_val not in base_refs.values():
+                    new_base_ref = "baseref"+str(base_ref_cont)
+                    base_refs[new_base_ref] = memory_val
+                    base_ref_cont+=1
+                    val = new_base_ref
+                    memory_usage[address] = new_base_ref
+                    print("CREATION BLOCK: "+str(block)+"  BASEREF: "+new_base_ref)
+                else:
+                    # print(list(base_refs.keys())[list(base_refs.values()).index(memory_val)])
+                    val = list(base_refs.keys())[list(base_refs.values()).index(memory_val)]
+                    memory_usage[address] = val
+
+
             else:
-                val = "mem("+str(address)+")"
+                val = memory_usage.get(address,"mem("+str(address)+")")
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
             #stack.insert(0,val)
+
+            already_contained = memory_sets.get("MLOAD:"+str(block)+":"+str(instr_index),[])
+            already_contained.append(address)
+            memory_sets["MLOAD:"+str(block)+":"+str(instr_index)] = already_contained
             
-            print("MLOAD")
-            print(address)
+            # print("MLOAD")
+            # print(address)
             
             # current_miu_i = global_state["miu_i"]
             #if isAllReal(address, current_miu_i) and address in mem:
-            if isAllReal(address) and address in mem:
-                if six.PY2:
-                    temp = long(math.ceil((address + 32) / float(32)))
-                else:
-                    temp = int(math.ceil((address + 32) / float(32)))
-                # if temp > current_miu_i:
-                #     current_miu_i = temp
-                value = mem[address]
-                stack.insert(0, value)
-                print(val)
-                print(value)
-                print("----------------")
-            else:
-                new_var_name = gen.gen_mem_var(address)
-                if new_var_name in path_conditions_and_vars:
-                    new_var = path_conditions_and_vars[new_var_name]
-                else:
-                    new_var = new_var_name
-                    path_conditions_and_vars[new_var_name] = new_var
-                stack.insert(0, new_var)
-                print(val)
-                print(new_var)
-                print("----------------")
-                if isReal(address):
-                    mem[address] = new_var
-                else:
-                    mem[str(address)] = new_var
+            # if isAllReal(address) and address in mem:
+            #     if six.PY2:
+            #         temp = long(math.ceil((address + 32) / float(32)))
+            #     else:
+            #         temp = int(math.ceil((address + 32) / float(32)))
+            #     # if temp > current_miu_i:
+            #     #     current_miu_i = temp
+            #     value = mem[address]
+            #     stack.insert(0, value)
+            #     print(val)
+            #     print(value)
+            #     print("----------------")
+            # else:
+            #     new_var_name = gen.gen_mem_var(address)
+            #     if new_var_name in path_conditions_and_vars:
+            #         new_var = path_conditions_and_vars[new_var_name]
+            #     else:
+            #         new_var = new_var_name
+            #         path_conditions_and_vars[new_var_name] = new_var
+            #     stack.insert(0, new_var)
+            #     print(val)
+            #     print(new_var)
+            #     print("----------------")
+            #     if isReal(address):
+            #         mem[address] = new_var
+            #     else:
+            #         mem[str(address)] = new_var
+            stack.insert(0,val)
 #            global_state["miu_i"] = current_miu_i
         else:
             raise ValueError('STACK underflow')
@@ -2392,16 +2422,24 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 has_lm40 = False
                 if (creation_block, block) not in memory_creation:
                     memory_creation.append((creation_block,block))
-                # print("MEMBASE")
-                # print(st_id)
-                # print("----------------")
+
             if stored_address == 64 and val_mem40 == "":
                 val_mem40 = str(st_id)
 
-            print("MSTORE")
-            print(stored_address)
-            print(stored_value)
-            print("-----------")
+            
+            # print(base_refs)
+            # print(memory_usage)
+            memory_usage[stored_address] = stored_value
+
+            already_contained = memory_sets.get("MSTORE:"+str(block)+":"+str(instr_index),[])
+            already_contained.append(stored_address)
+            memory_sets["MSTORE:"+str(block)+":"+str(instr_index)] = already_contained
+
+            
+            # print("MSTORE")
+            # print(stored_address)
+            # print(stored_value)
+            # print("-----------")
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mstore",ls_cont[1],stored_address)
             ls_cont[1]+=1
@@ -3055,6 +3093,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     global blocks_to_create
     global memory_unknown
     global repeated
+    global memory_usage
     # print(block)
     # print(successor)
     # print("--------")
@@ -3094,8 +3133,9 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
                 # old_target = vertices[successor].get_jump_target()
                 # old_falls_to = vertices[successor].get_falls_to()
                 # comes_from = vertices[successor].get_comes_from()
-                
+                old_mem = dict(memory_usage)
                 sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
+                memory_usage = old_mem
                 path.pop()
 
                 # vertices[successor].set_jump_target(old_target)
@@ -3113,7 +3153,9 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
         vertices[successor].add_origin(block) #to compute which are the blocks that leads to successor
 
         path.append((block,successor))
+        old_mem = dict(memory_usage)
         sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
+        memory_usage = old_mem
         path.pop()
             # else:
             #     if vertices[successor].get_depth_level()<(current_level+1): 
@@ -3663,6 +3705,9 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         print((mem_abs,val_mem40))
 
         print(memory_creation)
+        print(memory_sets)
+        print("---------------")
+        print(base_refs)
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)
