@@ -3710,7 +3710,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         print("--------------")
         print("MEMORY SETS")
         print(memory_sets)
-        identify_memory_pos_no_baseref(memory_sets)
+        identify_memory_pos_no_baseref(memory_sets, source_map)
         print("---------------")
         print("BASE REF VALUES")
         print(base_refs)
@@ -3879,16 +3879,33 @@ def compute_elements(instrs):
     return elems
 
 
-def identify_memory_pos_no_baseref(memory_set):
+def identify_memory_pos_no_baseref(memory_set, source_map):
     for elem in memory_set:
         mem_addresses = memory_set[elem]
         for a in mem_addresses:
+
+            nLineBeg = ""
+            nLineEnd = ""
             try:
+                i, blk, offset = elem.split(":");
+                blkok = blk.split("_")[0]
+                pc = int(blkok)+int(offset)
+                nLineBeg = source_map.get_init_pos(pc)
+                nLineEnd = source_map.get_end_pos(pc)
+                pass
+            except Exception as exception:
+                print(exception)
+                pass
+
+
+
+            try:
+                print("a vale " + str(a))
                 x = int(a)
-                if a > 64:
-                    print("[NO MEMBASE]: "+str(elem))
+                if x > 64:
+                    print("[NO MEMBASE]: "+ str(elem) + " -- " + str(nLineBeg) + ":" + str(nLineEnd))
             except:
                 if a.find("baseref")==-1:
-                    print("[NO MEMBASE]: "+str(elem))
+                    print("[NO MEMBASE]: "+str(elem) + " -- " + nLineBeg + "-" + nLineEnd)
 
                     
