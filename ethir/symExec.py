@@ -3894,18 +3894,14 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
                 nLineEnd = source_map.get_end_pos(pc)
                 pass
             except Exception as exception:
-                print(exception)
                 pass
 
-
-
             try:
-                print("a vale " + str(a))
                 x = int(a)
                 if x > 64:
-                    print("[NO MEMBASE]: "+ str(elem) + " -- " + str(nLineBeg) + ":" + str(nLineEnd))
+                    print("[NO MEMBASE]: "+ str(elem) + " -- " + source_map.parent_filename + " " + str(nLineBeg) + ":" + str(nLineEnd))
             except:
                 if a.find("baseref")==-1:
-                    print("[NO MEMBASE]: "+str(elem) + " -- " + nLineBeg + "-" + nLineEnd)
+                    print("[NO MEMBASE]: "+str(elem) + " -- " + source_map.parent_filename + " " + nLineBeg + "-" + nLineEnd)
 
                     
