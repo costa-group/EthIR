@@ -2355,6 +2355,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     memory_usage[address] = new_base_ref
                     print("CREATION BLOCK: "+str(block)+"  BASEREF: "+new_base_ref)
                 else:
+                    print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS"
                     # print(list(base_refs.keys())[list(base_refs.values()).index(memory_val)])
                     val = list(base_refs.keys())[list(base_refs.values()).index(memory_val)]
                     memory_usage[address] = val
