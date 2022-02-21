@@ -2347,7 +2347,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 has_lm40 = True
                 creation_block = block
 
-                if memory_val not in base_refs.values():
+                if memory_val in base_refs:
+                    print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
+                    val = memory_val
+                
+                else if memory_val not in base_refs.values():
                     new_base_ref = "baseref"+str(base_ref_cont)
                     base_refs[new_base_ref] = memory_val
                     base_ref_cont+=1
