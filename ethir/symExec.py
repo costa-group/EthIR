@@ -3541,7 +3541,7 @@ def generate_verify_config_file(cname,scc):
     # print(lines)
     
 def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
-    if cfg and (not cloned):
+    if cfg[0] and (not cloned):
         if cname == None:
             write_cfg(execution,vertices)
             cfg_dot(execution,vertices)
@@ -3550,7 +3550,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
             write_cfg(execution,vertices,name = cname)
             cfg_dot(execution,vertices,name = cname)
 
-    elif cfg and cloned:
+    elif cfg[0] and cloned:
         if blocks_to_clone != []:
             if cname == None:
                 write_cfg(execution,vertices,cloned = True)
@@ -3560,6 +3560,14 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
+    elif cfg[1]:
+        if cname == None:
+            cfg_memory_dot(execution,vertices)
+
+        else:
+            cfg_memory_dot(execution,vertices,name = cname)
+
+                
 def get_scc(edges):
     g = Graph_SCC(edges)
     scc_multiple = g.getSCCs()
@@ -3603,7 +3611,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     source_info = {}
     
     name = cname
-
+    
     if source_name != None:
         source_n = source_name
         s_name = source_name.split("/")[-1].split(".")[0]
@@ -3613,7 +3621,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
     if hashes != None:
         f_hashes = hashes
-
+        
     optimization = opt_bytecode
         
     if cname != None:

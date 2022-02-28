@@ -508,6 +508,36 @@ def cfg_dot(it,block_input,name = False,cloned = False):
     tree.generatedot(f)
     f.close()
 
+
+def cfg_memory_dot(it,block_input,memory_sets,base_refs,name = False,cloned = False):
+    vert = sorted(block_input.values(), key = getKey)
+
+    if "costabs" not in os.listdir(global_params.tmp_path):
+        os.mkdir(global_params.costabs_path)
+    
+    if not cloned:
+
+        if it == None:
+            name = global_params.costabs_path+"cfg_memory.dot"
+        elif name == False:
+            name = global_params.costabs_path+"cfg"+str(it)+"_memory.dot"
+        else:
+            name = global_params.costabs_path+name+"_memory.dot"
+    else:
+
+        if it == None:
+            name = global_params.costabs_path+"cfg_cloned_memory.dot"
+        elif name == False:
+            name = global_params.costabs_path+"cfg_cloned_"+str(it)+"_memory.dot"
+        else:
+            name = global_params.costabs_path+name+"_cloned_memory.dot"
+        
+    f = open(name,"wb")
+    tree = build_tree(vert[0],[("st",0)],block_input)
+    tree.generatedot(f)
+    f.close()
+
+    
 def update_map(m,key,val):
     l = m.get(key,[])
     l.append(val)
