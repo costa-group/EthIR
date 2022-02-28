@@ -2373,7 +2373,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #stack.insert(0,val)
 
             already_contained = memory_sets.get("MLOAD:"+str(block)+":"+str(instr_index),[])
-            already_contained.append(address)
+            already_contained.append((address,val))
             memory_sets["MLOAD:"+str(block)+":"+str(instr_index)] = already_contained
             
             # print("MLOAD")
@@ -2437,7 +2437,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             memory_usage[stored_address] = stored_value
 
             already_contained = memory_sets.get("MSTORE:"+str(block)+":"+str(instr_index),[])
-            already_contained.append(stored_address)
+            already_contained.append((stored_address,stored_value))
             memory_sets["MSTORE:"+str(block)+":"+str(instr_index)] = already_contained
 
             
@@ -3902,11 +3902,11 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
                 pass
 
             try:
-                x = int(a)
+                x = int(a[0])
                 if x > 64:
                     print("[NO MEMBASE]: "+ str(elem) + " -- " + source_map.parent_filename + " " + str(nLineBeg) + ":" + str(nLineEnd))
             except:
-                if a.find("baseref")==-1:
+                if a[0].find("baseref")==-1:
                     print("[NO MEMBASE]: "+str(elem) + " -- " + source_map.parent_filename + " " + nLineBeg + "-" + nLineEnd)
 
                     
