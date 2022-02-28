@@ -13,7 +13,7 @@ import re
 import difflib
 import six
 import global_params
-from dot_tree import Tree, build_tree
+from dot_tree import Tree, build_tree, build_tree_memory
 import opcodes
 
 
@@ -533,7 +533,7 @@ def cfg_memory_dot(it,block_input,memory_sets,base_refs,name = False,cloned = Fa
             name = global_params.costabs_path+name+"_cloned_memory.dot"
         
     f = open(name,"wb")
-    tree = build_tree(vert[0],[("st",0)],block_input)
+    tree = build_tree_memory(vert[0],[("st",0)],block_input,memory_sets,base_refs)
     tree.generatedot(f)
     f.close()
 
