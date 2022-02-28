@@ -373,8 +373,10 @@ def analyze_solidity(input_type='solidity'):
     compiler_opt["optimize"] = args.optimize_run
     compiler_opt["no-yul"] = args.no_yul_opt
     compiler_opt["runs"] = args.run
-            
+
+
     if input_type == 'solidity':
+        print(args)
         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
     elif input_type == 'standard_json':
         helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
@@ -384,7 +386,7 @@ def analyze_solidity(input_type='solidity'):
 
     
     solc_version = helper.get_solidity_version()
-    print solc_version
+
     hashes = process_hashes(args.source,solc_version)
     
     y = dtimer()
@@ -554,7 +556,18 @@ def main():
     # elif args.standard_json_output:
     #     exit_code = analyze_solidity(input_type='standard_json_output')
     elif hashes_cond(args):
-        mp = process_hashes(args.source)
+
+        is_runtime = not(args.init)
+
+        compiler_opt = {}
+        compiler_opt["optimize"] = args.optimize_run
+        compiler_opt["no-yul"] = args.no_yul_opt
+        compiler_opt["runs"] = args.run
+        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
+
+        solc_version = helper.get_solidity_version()
+        
+        mp = process_hashes(args.source, solc_version)
         generate_saco_hashes_file(mp)
         exit_code = 0
         
