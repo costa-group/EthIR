@@ -207,10 +207,26 @@ def build_tree_memory(block,visited,block_input,memory_sets,base_refs,condTrue =
     
     type_block = block.get_block_type()
 
+    cond = "\n"
+    if start in base_refs:
+        cond+=base_refs[start]+"\n"
+
+    l = filter(lambda x : str(x).split(":")[1] == str(start),memory_sets.keys())
+
+    m = []
+    for e in l:
+        for v in memory_sets[e]:
+            if e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")" not in m:
+                m.append(e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")")
+
+    m.sort(key= (lambda x: int(x.split("(")[0].split(":")[-1])))
+    print(m)
+    m_instructions = "\n".join(m)
+    
     if condTrue == "u":
-        r = Tree(str(start),"",start,type_block)        
+        r = Tree(str(start)+cond+m_instructions,"",start,type_block)        
     else:
-        r = Tree(start,condTrue,start,type_block)
+        r = Tree(str(start)+cond+m_instructions,condTrue,start,type_block)
         
     for block_id in list_jumps:
         if (start,block_id) not in visited:
