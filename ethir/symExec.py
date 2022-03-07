@@ -3918,7 +3918,7 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
 
             try:
                 x = int(a[0])
-                if x > 64:
+                if x > 127:
                     print("[NO MEMBASE]: "+ str(elem) + " -- " + source_map.parent_filename + " " + str(nLineBeg) + ":" + str(nLineEnd))
             except:
                 if a[0].find("baseref")==-1:
