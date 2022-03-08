@@ -3569,9 +3569,10 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
 
     elif cfg[1]:
         if cname == None:
+            write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(execution,vertices,memory_sets,base_refs_blocks)
-
         else:
+            write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(execution,vertices,memory_sets, base_refs_blocks, name = cname)
 
                 
