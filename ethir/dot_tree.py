@@ -78,7 +78,7 @@ def build_tree(block,visited,block_input,condTrue = "t"):
     type_block = block.get_block_type()
 
     if condTrue == "u":
-        r = Tree(start,"",start,type_block)        
+        r = Tree(str(start),"",start,type_block)        
     else:
         r = Tree(start,condTrue,start,type_block)
         
@@ -203,3 +203,59 @@ def compute_hex_vals_cfg(block):
 
 
     return start_addr,end_addr,jump_addrs,falls_addr
+
+def build_tree_memory(block,visited,block_input,memory_sets,base_refs,condTrue = "t"):
+    
+    start = block.get_start_address()   
+    falls_to = block.get_falls_to()
+    list_jumps = block.get_list_jumps()
+    # print "BUILD TREE"
+    # print start
+    # print falls_to
+    # print list_jumps
+    
+    type_block = block.get_block_type()
+
+    cond = "\n"
+    if start in base_refs:
+        cond+=base_refs[start]+"\n"
+
+    l = filter(lambda x : str(x).split(":")[1] == str(start),memory_sets.keys())
+
+    m = []
+    for e in l:
+        for v in memory_sets[e]:
+            if e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")" not in m:
+                m.append(e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")")
+
+    m.sort(key= (lambda x: int(x.split("(")[0].split(":")[-1])))
+    print(m)
+    m_instructions = "\n".join(m)
+    
+    if condTrue == "u":
+        r = Tree(str(start)+cond+m_instructions,"",start,type_block)        
+    else:
+        r = Tree(str(start)+cond+m_instructions,condTrue,start,type_block)
+        
+    for block_id in list_jumps:
+        if (start,block_id) not in visited:
+            visited.append((start,block_id))
+            if type_block == "conditional":
+                ch = build_tree_memory(block_input.get(block_id),visited,block_input,memory_sets,base_refs)
+            else:
+                ch = build_tree_memory(block_input.get(block_id),visited,block_input,memory_sets,base_refs,"u")
+            if ch not in r.get_children():
+                r.add_child(ch)
+
+    falls_to = block.get_falls_to()
+    if (falls_to != None) and (start,falls_to) not in visited:
+        visited.append((start,falls_to))
+        if type_block == "falls_to":
+            ch = build_tree_memory(block_input.get(falls_to),visited,block_input,memory_sets,base_refs,"")
+        else:
+            ch = build_tree_memory(block_input.get(falls_to),visited,block_input,memory_sets,base_refs,"f")
+        if ch not in r.get_children():
+            r.add_child(ch)
+        
+    return r
+

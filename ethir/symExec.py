@@ -21,7 +21,7 @@ import global_params
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -300,6 +300,9 @@ def initGlobalVars():
     global memory_creation
     memory_creation = []
 
+    global base_refs_blocks
+    base_refs_blocks = {}
+    
     global base_refs
     base_refs = {}
 
@@ -1379,6 +1382,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global base_ref_cont
     global memory_usage
     global memory_sets
+    global base_refs_blocks
     
     stack = params.stack
     mem = params.mem
@@ -2350,7 +2354,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 if memory_val in base_refs:
                     print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
                     val = memory_val
-                
+                    base_refs_blocks[block] = val
+                    
                 elif memory_val not in base_refs.values():
                     new_base_ref = "baseref"+str(base_ref_cont)
                     base_refs[new_base_ref] = memory_val
@@ -2358,11 +2363,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     val = new_base_ref
                     memory_usage[address] = new_base_ref
                     print("CREATION BLOCK: "+str(block)+"  BASEREF: "+new_base_ref)
+                    base_refs_blocks[block] = new_base_ref
                 else:
                     print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
                     # print(list(base_refs.keys())[list(base_refs.values()).index(memory_val)])
                     val = list(base_refs.keys())[list(base_refs.values()).index(memory_val)]
                     memory_usage[address] = val
+                    base_refs_blocks[block] = val
 
             else if address == 96:
                 memory_usage[address] = "null_val"#new_base_ref
@@ -2375,7 +2382,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #stack.insert(0,val)
 
             already_contained = memory_sets.get("MLOAD:"+str(block)+":"+str(instr_index),[])
-            already_contained.append(address)
+            already_contained.append((address,val))
             memory_sets["MLOAD:"+str(block)+":"+str(instr_index)] = already_contained
             
             # print("MLOAD")
@@ -2439,7 +2446,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             memory_usage[stored_address] = stored_value
 
             already_contained = memory_sets.get("MSTORE:"+str(block)+":"+str(instr_index),[])
-            already_contained.append(stored_address)
+            already_contained.append((stored_address,stored_value))
             memory_sets["MSTORE:"+str(block)+":"+str(instr_index)] = already_contained
 
             
@@ -3543,7 +3550,7 @@ def generate_verify_config_file(cname,scc):
     # print(lines)
     
 def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
-    if cfg and (not cloned):
+    if cfg[0] and (not cloned):
         if cname == None:
             write_cfg(execution,vertices)
             cfg_dot(execution,vertices)
@@ -3552,7 +3559,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
             write_cfg(execution,vertices,name = cname)
             cfg_dot(execution,vertices,name = cname)
 
-    elif cfg and cloned:
+    elif cfg[0] and cloned:
         if blocks_to_clone != []:
             if cname == None:
                 write_cfg(execution,vertices,cloned = True)
@@ -3562,6 +3569,15 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
+    elif cfg[1]:
+        if cname == None:
+            write_cfg(execution,vertices,name = cname)
+            cfg_memory_dot(execution,vertices,memory_sets,base_refs_blocks)
+        else:
+            write_cfg(execution,vertices,name = cname)
+            cfg_memory_dot(execution,vertices,memory_sets, base_refs_blocks, name = cname)
+
+                
 def get_scc(edges):
     g = Graph_SCC(edges)
     scc_multiple = g.getSCCs()
@@ -3605,7 +3621,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     source_info = {}
     
     name = cname
-
+    
     if source_name != None:
         source_n = source_name
         s_name = source_name.split("/")[-1].split(".")[0]
@@ -3615,7 +3631,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
     if hashes != None:
         f_hashes = hashes
-
+        
     optimization = opt_bytecode
         
     if cname != None:
@@ -3914,11 +3930,11 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
                 pass
 
             try:
-                x = int(a)
-                if x > 64:
+                x = int(a[0])
+                if x > 127:
                     print("[NO MEMBASE]: "+ str(elem) + " -- " + source_map.parent_filename + " " + str(nLineBeg) + ":" + str(nLineEnd))
             except:
-                if a.find("baseref")==-1:
+                if a[0].find("baseref")==-1:
                     print("[NO MEMBASE]: "+str(elem) + " -- " + source_map.parent_filename + " " + nLineBeg + "-" + nLineEnd)
 
                     
