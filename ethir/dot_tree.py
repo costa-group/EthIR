@@ -158,25 +158,31 @@ def compute_hex_vals_cfg(block):
     end = str(block.get_end_address()).split("_")
     
     if len(start)>1:
-        start0 = hex(int(start[0]))[2:]
+        # start0 = hex(int(start[0]))[2:]
+        start0 = str(int(start[0]))
         start_addr = start0+"_"+start[1]
     else:
-        start_addr = hex(int(start[0]))[2:]
+        # start_addr = hex(int(start[0]))[2:]
+        start_addr = str(int(start[0]))
 
     if len(end)>1:
-        end0 = hex(int(end[0]))[2:]
+        # end0 = hex(int(end[0]))[2:]
+        end0 = str((int(end[0])))
         end_addr = end0+"_"+end[1]
     else:
-        end_addr = hex(int(end[0]))[2:]
+        # end_addr = hex(int(end[0]))[2:]
+        end_addr = str(int(end[0]))
 
     jumps_hex = []
     for jump in  block.get_list_jumps():
         elems = str(jump).split("_")
         if len(elems)>1:
-            jump0 = hex(int(elems[0]))[2:]
+            # jump0 = hex(int(elems[0]))[2:]
+            jump0 = str(int(elems[0]))
             jump_addr = jump0+"_"+elems[1]
         else:
-            jump_addr = hex(int(elems[0]))[2:]
+            # jump_addr = hex(int(elems[0]))[2:]
+            jump_addr = str(int(elems[0]))
         jumps_hex.append(jump_addr)
         
     jump_addrs = " ".join(jumps_hex)
@@ -185,10 +191,13 @@ def compute_hex_vals_cfg(block):
 
     if falls!=['None']:
         if len(falls)>1:
-            falls0 = hex(int(falls[0]))[2:]
+            # falls0 = hex(int(falls[0]))[2:]
+            falls0 = str((int(falls[0])))
             falls_addr = falls0+"_"+falls[1]
         else:
-            falls_addr = hex(int(falls[0]))[2:]
+            # falls_addr = hex(int(falls[0]))[2:]
+            falls_addr = str(int(falls[0]))
+                         
     else:
         falls_addr = None
 
