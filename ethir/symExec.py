@@ -2371,7 +2371,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     memory_usage[address] = val
                     base_refs_blocks[block] = val
 
-            else if address == 96:
+            elif address == 96:
                 memory_usage[address] = "null_val"#new_base_ref
                 val = "null_val"
             else:
