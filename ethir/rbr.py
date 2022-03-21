@@ -1787,7 +1787,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
                 init_fields_def ={}
 
 
-            print(mem_creation)
+            # print(mem_creation)
                 
             # print "********************************************"
             # print storage_arrays
