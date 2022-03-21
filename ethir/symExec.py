@@ -3550,7 +3550,7 @@ def generate_verify_config_file(cname,scc):
     # print(lines)
     
 def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
-    if cfg[0] and (not cloned):
+    if cfg == "normal" and (not cloned):
         if cname == None:
             write_cfg(execution,vertices)
             cfg_dot(execution,vertices)
@@ -3559,7 +3559,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
             write_cfg(execution,vertices,name = cname)
             cfg_dot(execution,vertices,name = cname)
 
-    elif cfg[0] and cloned:
+    elif cfg== "normal" and cloned:
         if blocks_to_clone != []:
             if cname == None:
                 write_cfg(execution,vertices,cloned = True)
@@ -3569,7 +3569,7 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-    elif cfg[1]:
+    elif cfg == "memory":
         if cname == None:
             write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(execution,vertices,memory_sets,base_refs_blocks)
