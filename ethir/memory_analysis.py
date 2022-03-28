@@ -150,7 +150,11 @@ class MemoryAbstractState:
 
         # We save in the stack special memory addresses        
         if is_mload40(instr):
+            accesses.add_read_access(pc,"mem40")
             stack[top] = [slots.get_analysis_results(pc).get_slot(pc)]
+
+        elif is_mstore40(instr):
+            accesses.add_write_access(pc,"mem40")
 
         #TODO Review the compiler version. Is 0x60 always null? 
         elif op_code == "PUSH1" and instr.split()[1] == "0x60": 
@@ -296,8 +300,6 @@ class SlotsAbstractState:
         if is_mload40(instr):
             slot = None
             
-            accesses.add_read_access(pc,"mem40")
-
             # We take the slot pointed by any opened pc at this pp
             if (len(opened) > 0):
                 for item in opened:
@@ -313,10 +315,7 @@ class SlotsAbstractState:
 
         # pc != "0:2": Hack to avoid warning the initial assignment of MEM40
         elif (is_mstore40(instr) or op_code == "CALL" or op_code == "STATICCALL" or op_code == "RETURN"):
-            
-            if is_mstore40(instr):
-                accesses.add_write_access(pc,"mem40")
-                
+                    
             if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
                 print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
 
