@@ -411,12 +411,15 @@ def write_cfg(it,vertices,name = False,cloned = False):
 
             addresses = block.get_pcs()
             i = 0
+            count = 0;
             for instr in block.get_instructions():
-                if not cloned:
-                    f.write(addresses[i][2:]+": "+instr+"\n")
-                    i+=1
-                else:
-                    f.write(instr+"\n")
+                f.write(str(count)+": "+instr+"\n")
+                count+=1
+                # if not cloned:
+                #     f.write(addresses[i][2:]+": "+instr+"\n")
+                #     i+=1
+                # else:
+                #     f.write(instr+"\n")
 
                 if instr.strip() == "STOP":
                     break
