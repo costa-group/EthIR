@@ -238,7 +238,7 @@ def build_tree_memory(block,visited,block_input,memory_result,condTrue = "t"):
     # m.sort(key= (lambda x: int(x.split("(")[0].split(":")[-1])))
     # print(m)
     
-    m_instructions = "\n".join(m)
+    m_instructions = "\n"+"\n".join(m)
     
     if condTrue == "u":
         r = Tree(str(start)+m_instructions,"",start,type_block)        
