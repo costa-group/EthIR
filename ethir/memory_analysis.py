@@ -52,24 +52,27 @@ class MemoryAccesses:
 
     def get_cfg_info (self,block_in): 
         result = []
-        self.process_set(block_in,self.initset, "INIT", result)
-        self.process_set(block_in,self.closeset, "CLOSE", result)
-        self.process_set(block_in,self.readset, "READ", result)
-        self.process_set(block_in,self.writeset, "WRITE", result)
-        return result
+        self.process_set(block_in,self.initset, "I", result)
+        self.process_set(block_in,self.closeset, "C", result)
+        self.process_set(block_in,self.readset, "R", result)
+        self.process_set(block_in,self.writeset, "W", result)
+        
+        return sorted(result,key=order_accesses)
 
     def process_set (self,block_in, set_in, text, result): 
         for pc in set_in: 
             block = pc.split(":")[0]
             offset = pc.split(":")[1]
+            #instr = self.vertices[block_in].get_instructions()[offset]
             if block == block_in: 
-                result.append(text + "[" + offset + "] -> " + str(list(set_in[pc]))) 
+                #result.append(offset + " " + instr + "[" + text + "] -> " + str(list(set_in[pc]))) 
+                result.append(offset + " [" + text + "] -> " + str(list(set_in[pc]))) 
 
     def __repr__(self):
         return ("INIT ALLOC: " + str(self.initset) +
-                "\nCLOSE ALLOC:" + str(self.closeset) + 
-                "\nREAD: " + str(self.readset) + 
-                "\nWRITE: " + str(self.writeset))
+                "\n\nCLOSE ALLOC:" + str(self.closeset) + 
+                "\n\nREAD: " + str(self.readset) + 
+                "\n\nWRITE: " + str(self.writeset))
 
 
 class MemoryAbstractState:
@@ -89,14 +92,15 @@ class MemoryAbstractState:
         return self.memory
 
     def leq (self,state): 
-        for skey in state.get_stack(): 
-            if (skey not in self.stack or 
-                not (set(state.get_stack()[skey]) <= set(self.stack[skey]))):
+        print("COMPARING " + str(self) + " " + str(state))
+        for skey in self.get_stack(): 
+            if (skey not in state.stack or 
+                not (set(self.get_stack()[skey]) <= set(state.stack[skey]))):
                 return False
 
-        for mkey in state.get_memory(): 
-            if (mkey not in self.memory or 
-                not (set(state.get_memory()[mkey]) <= set(self.memory[mkey]))):
+        for mkey in self.get_memory(): 
+            if (mkey not in state.memory or 
+                not (set(self.get_memory()[mkey]) <= set(state.memory[mkey]))):
                 return False
         
         return True
@@ -159,6 +163,7 @@ class MemoryAbstractState:
         #TODO Review the compiler version. Is 0x60 always null? 
         elif op_code == "PUSH1" and instr.split()[1] == "0x60": 
             stack[self.stack_pos] = ["null"]
+            accesses.add_allocation_init(pc,"null")                                
 
         elif op_code.startswith("LOG"): 
             self.add_read_access(top,pc,stack)
@@ -184,12 +189,12 @@ class MemoryAbstractState:
                 reslist = []
                 for memaddress in stack[top]: 
                     if memaddress in memory: 
-                        reslist.append(memory[memaddress])
+                        reslist = reslist+memory[memaddress]
                 if len(reslist) > 0: 
                     stack[top] = list(set(reslist))
             else: 
                 print("WARNING: Unknown access at this point " + pc)
-                accesses.add_read_access(pc,"unknown")                                 
+                accesses.add_read_access(pc,"unknown")                                   
 
         elif op_code == "MSTORE8":
             self.add_write_access(top,pc,stack)
@@ -219,7 +224,9 @@ class MemoryAbstractState:
                         op_code + " (" + 
                         str(stack[top-1]) + "," + 
                         str(stack[top]) + ")")
+                stack[top-1] = filter(lambda x: x != "null", list(set(stack[top]+stack[top-1])))
                 #stack[top-1] = list(set(stack[top]+stack[top-1]))
+
             
         elif op_code == "POP":
             stack.pop(top,None)
@@ -355,8 +362,10 @@ class BlockAnalysisInfo:
         return self.state_per_instr[pos]
 
     ## Evaluates if a block need to be revisited or not
-    def revisit_block (self,input_state): 
+    def revisit_block (self,input_state, jump_target): 
         leq = input_state.leq(self.input_state)
+        print("Evaluating revisit to " + str(jump_target) + ": " + str(leq) + " - " + str(self.input_state) + " " + str(input_state))
+
         if leq: 
             return False
         self.input_state = self.input_state.lub(input_state)
@@ -377,7 +386,8 @@ class BlockAnalysisInfo:
         for instr in self.block_info.get_instructions(): 
             # From the current state we generate a new state by processing the instruction
             current_state = current_state.process_instruction(instr, str(idblock) + ":" + str(i))
-            print("      -- (" + str(i) + ") " + instr + " -- " + str(current_state))
+            print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
+                    instr + " -- " + str(current_state))
             self.state_per_instr.append(current_state)
             i = i + 1
 
@@ -415,14 +425,14 @@ class Analysis:
             self.pending.append(jump_target)
             self.blocks_info[jump_target] = BlockAnalysisInfo(self.vertices[jump_target], input_state)
 
-        elif jump_target != 0 and self.blocks_info.get(jump_target).revisit_block(input_state): 
+        elif jump_target != 0 and self.blocks_info.get(jump_target).revisit_block(input_state,jump_target): 
             self.pending.append(jump_target)
 
         jump_target = basic_block.get_falls_to()
         if jump_target != None and self.blocks_info.get(jump_target) == None:
             self.pending.append(jump_target)
             self.blocks_info[jump_target] = BlockAnalysisInfo(self.vertices[jump_target], input_state)
-        elif jump_target != None and self.blocks_info.get(jump_target).revisit_block(input_state): 
+        elif jump_target != None and self.blocks_info.get(jump_target).revisit_block(input_state,jump_target): 
             self.pending.append(jump_target)
                 
     def get_analysis_results(self,pc):
@@ -491,3 +501,6 @@ def is_mstore40(opcode):
 
     value = opcode[1]
     return opcode_name == "MSTORE" and value == "64"
+
+def order_accesses(text): 
+    return int(text.split()[0])
