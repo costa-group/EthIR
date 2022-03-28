@@ -518,19 +518,19 @@ def cfg_memory_dot(it,block_input,memory_sets,base_refs,name = False,cloned = Fa
     if not cloned:
 
         if it == None:
-            name = global_params.costabs_path+"cfg_memory.dot"
+            name = global_params.costabs_path+"cfg.dot"
         elif name == False:
-            name = global_params.costabs_path+"cfg"+str(it)+"_memory.dot"
+            name = global_params.costabs_path+"cfg"+str(it)+".dot"
         else:
-            name = global_params.costabs_path+name+"_memory.dot"
+            name = global_params.costabs_path+name+".dot"
     else:
 
         if it == None:
-            name = global_params.costabs_path+"cfg_cloned_memory.dot"
+            name = global_params.costabs_path+"cfg_cloned.dot"
         elif name == False:
-            name = global_params.costabs_path+"cfg_cloned_"+str(it)+"_memory.dot"
+            name = global_params.costabs_path+"cfg_cloned_"+str(it)+".dot"
         else:
-            name = global_params.costabs_path+name+"_cloned_memory.dot"
+            name = global_params.costabs_path+name+"_cloned.dot"
         
     f = open(name,"wb")
     tree = build_tree_memory(vert[0],[("st",0)],block_input,memory_sets,base_refs)
