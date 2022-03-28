@@ -204,7 +204,7 @@ def compute_hex_vals_cfg(block):
 
     return start_addr,end_addr,jump_addrs,falls_addr
 
-def build_tree_memory(block,visited,block_input,memory_sets,base_refs,condTrue = "t"):
+def build_tree_memory(block,visited,block_input,memory_result,base_refs,condTrue = "t"):
     
     start = block.get_start_address()   
     falls_to = block.get_falls_to()
@@ -220,16 +220,24 @@ def build_tree_memory(block,visited,block_input,memory_sets,base_refs,condTrue =
     if start in base_refs:
         cond+=base_refs[start]+"\n"
 
-    l = filter(lambda x : str(x).split(":")[1] == str(start),memory_sets.keys())
+    slots, memory, accesses = memory_result
+
+    mem_info = accesses.get_cfg_info(str(start))
+    # print(mem_info)
+    # raise Exception
+    # l = filter(lambda x : str(x).split(":")[1] == str(start),memory_sets.keys())
 
     m = []
-    for e in l:
-        for v in memory_sets[e]:
-            if e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")" not in m:
-                m.append(e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")")
+    for item in mem_info:
+        m.append(item)
+    # for e in l:
+    #     for v in memory_sets[e]:
+    #         if e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")" not in m:
+    #             m.append(e.split(":")[0]+":"+str(e.split(":")[-1])+"("+str(v[0])+")")
 
-    m.sort(key= (lambda x: int(x.split("(")[0].split(":")[-1])))
-    print(m)
+    # m.sort(key= (lambda x: int(x.split("(")[0].split(":")[-1])))
+    # print(m)
+    
     m_instructions = "\n".join(m)
     
     if condTrue == "u":
@@ -241,9 +249,9 @@ def build_tree_memory(block,visited,block_input,memory_sets,base_refs,condTrue =
         if (start,block_id) not in visited:
             visited.append((start,block_id))
             if type_block == "conditional":
-                ch = build_tree_memory(block_input.get(block_id),visited,block_input,memory_sets,base_refs)
+                ch = build_tree_memory(block_input.get(block_id),visited,block_input,memory_result,base_refs)
             else:
-                ch = build_tree_memory(block_input.get(block_id),visited,block_input,memory_sets,base_refs,"u")
+                ch = build_tree_memory(block_input.get(block_id),visited,block_input,memory_result,base_refs,"u")
             if ch not in r.get_children():
                 r.add_child(ch)
 
@@ -251,9 +259,9 @@ def build_tree_memory(block,visited,block_input,memory_sets,base_refs,condTrue =
     if (falls_to != None) and (start,falls_to) not in visited:
         visited.append((start,falls_to))
         if type_block == "falls_to":
-            ch = build_tree_memory(block_input.get(falls_to),visited,block_input,memory_sets,base_refs,"")
+            ch = build_tree_memory(block_input.get(falls_to),visited,block_input,memory_result,base_refs,"")
         else:
-            ch = build_tree_memory(block_input.get(falls_to),visited,block_input,memory_sets,base_refs,"f")
+            ch = build_tree_memory(block_input.get(falls_to),visited,block_input,memory_result,base_refs,"f")
         if ch not in r.get_children():
             r.add_child(ch)
         

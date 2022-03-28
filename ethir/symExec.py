@@ -3550,7 +3550,7 @@ def generate_verify_config_file(cname,scc):
     # print("**************")
     # print(lines)
     
-def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None):
+def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False, blocks_to_clone = None):
     if cfg == "normal" and (not cloned):
         if cname == None:
             write_cfg(execution,vertices)
@@ -3573,10 +3573,10 @@ def check_cfg_option(cfg,cname,execution, cloned = False, blocks_to_clone = None
     elif cfg == "memory":
         if cname == None:
             write_cfg(execution,vertices,name = cname)
-            cfg_memory_dot(execution,vertices,memory_sets,base_refs_blocks)
+            cfg_memory_dot(execution,vertices,memory_analysis,base_refs_blocks)
         else:
             write_cfg(execution,vertices,name = cname)
-            cfg_memory_dot(execution,vertices,memory_sets, base_refs_blocks, name = cname)
+            cfg_memory_dot(execution,vertices,memory_analysis, base_refs_blocks, name = cname)
 
                 
 def get_scc(edges):
@@ -3653,8 +3653,6 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
     end = dtimer()
     print("Build CFG: "+str(end-begin)+"s")
-
-    check_cfg_option(cfg,cname,execution)
         
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
     # for e in blocks2clone:
@@ -3741,14 +3739,9 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         print("\n\n\n")
 
 
-        #LLAMADA A ANALISIS DE MEMORIA
-        #Estructura del bloque: basicblock.py
-        #vertices: mapping (identificador de bloque -> bloque)
-        # en basicblock:
-        #     get_block_type: conditional, unconditional,falls_to, terminal
-        # comes_from en basic_block: identificador de todos los bloques desde los que puedes llegar
-        perform_memory_analysis(vertices)
-       
+        memory_result = perform_memory_analysis(vertices)        
+        check_cfg_option(cfg,cname,execution,memory_result)
+        
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         
         #gasol.print_methods(rbr_rules,source_map,cname)

@@ -462,14 +462,15 @@ def perform_memory_analysis(vertices):
     print(accesses)
 
     print("\n\n")
-    print("938: " + str(accesses.get_cfg_info("938")))
-    print("938_0: " + str(accesses.get_cfg_info("938_0")))
-    print("1064: " + str(accesses.get_cfg_info("1064")))
-    print("155: " + str(accesses.get_cfg_info("155")))
-    print("793: " + str(accesses.get_cfg_info("793")))
+    # print("938: " + str(accesses.get_cfg_info("938")))
+    # print("938_0: " + str(accesses.get_cfg_info("938_0")))
+    # print("1064: " + str(accesses.get_cfg_info("1064")))
+    # print("155: " + str(accesses.get_cfg_info("155")))
+    # print("793: " + str(accesses.get_cfg_info("793")))
 
     print('We are done!!\n\n')
 
+    return slots, memory, accesses
 ### Auxiliary functions 
 def is_mload40(opcode):
     opcode = opcode.split(" ")
