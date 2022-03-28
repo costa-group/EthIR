@@ -3573,10 +3573,10 @@ def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False
     elif cfg == "memory":
         if cname == None:
             write_cfg(execution,vertices,name = cname)
-            cfg_memory_dot(execution,vertices,memory_analysis,base_refs_blocks)
+            cfg_memory_dot(execution,vertices,memory_analysis)
         else:
             write_cfg(execution,vertices,name = cname)
-            cfg_memory_dot(execution,vertices,memory_analysis, base_refs_blocks, name = cname)
+            cfg_memory_dot(execution,vertices,memory_analysis, name = cname)
 
                 
 def get_scc(edges):
