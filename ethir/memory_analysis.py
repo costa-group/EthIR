@@ -1,13 +1,8 @@
 from basicblock import BasicBlock
 from opcodes import get_opcode
 
-global special_memory_addresses
-special_memory_addresses = ["0x60"]
-#special_memory_addresses = ["0x40", "0x80", "0x60"]
-
 global arithemtic_operations
 arithemtic_operations = ["ADD","SUB","MUL","DIV","AND","OR","EXP","SHR","SHL"]
-
 
 global slots 
 slots = None
@@ -25,7 +20,7 @@ class MemoryAccesses:
         self.initset = initset
         self.closeset = closeset
         self.vertices = vertices
-
+        
     def add_read_access (self,pc,slot): 
         if self.readset.get(pc) is None:
             self.readset[pc] = set([slot])
@@ -49,6 +44,46 @@ class MemoryAccesses:
             self.closeset[pc] = set([slot])
         else:    
             self.closeset[pc].add(slot)
+
+    def process_free_mstores (self): 
+        print("Evaluating potential optimizations: " + " " + str(self.writeset))
+        for writepp in self.writeset:
+            for slot in self.writeset[writepp]: 
+                visited = set({})
+                #print("**** Searching subsequent read: " + str(writepp) + " " + slot)
+                block_id = get_block_id(writepp)
+                found,pp = self.search_read(slot, block_id, visited)
+                if found: 
+                    print("MEMRES: Found read -> " + writepp + " : " + pp)
+                else: 
+                    print("MEMRES: NOT Found read (potential optimization) -> " + writepp + " : " + str(pp))
+
+    def search_read(self, slot, block_id, visited): 
+        if (block_id in visited): 
+            return False, None
+
+        
+        filtered = list(filter(lambda x: x.startswith(str(block_id)), self.readset))
+        for readblock in filtered: 
+            #print("Searching: " + slot + " " + str(block_id) + " ** " + str(self.readset[readblock]))
+            if slot in self.readset[readblock]: 
+                return True, readblock
+
+        found = False
+        pp = None
+        visited.add(block_id)
+        blockinfo = self.vertices[block_id]
+        jump_target = blockinfo.get_jump_target()        
+        if jump_target != 0:
+           found, pp = self.search_read(slot, jump_target, visited) 
+
+        jump_target = blockinfo.get_falls_to()
+        if jump_target != None and not found: 
+           found, pp = self.search_read(slot, jump_target, visited) 
+
+        return found, pp
+
+                
 
     def get_cfg_info (self,block_in): 
         result = []
@@ -160,15 +195,13 @@ class MemoryAbstractState:
         elif is_mstore40(instr):
             accesses.add_write_access(pc,"mem40")
 
-        #TODO Review the compiler version. Is 0x60 always null? 
         elif op_code == "PUSH1" and instr.split()[1] == "0x60": 
             stack[self.stack_pos] = ["null"]
             accesses.add_allocation_init(pc,"null")                                
 
-        elif op_code.startswith("LOG"): 
+        elif op_code.startswith("LOG") or op_code == "RETURN": 
             self.add_read_access(top,pc,stack)
 
-        ## TODO: Add accesses in CALL / STATIC CALL
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access(top-3,pc,stack)
             self.add_write_access(top-5,pc,stack)
@@ -177,7 +210,7 @@ class MemoryAbstractState:
             self.add_read_access(top-2,pc,stack)
             self.add_write_access(top-4,pc,stack)
 
-        elif op_code == "CALLDATACOPY" or op_code == "CODECOPY" or op_code == "RETURNDATACOPY":
+        elif op_code == "CALLDATACOPY" or op_code == "CODECOPY" or op_code == "RETURNDATACOPY" :
             self.add_write_access(top,pc,stack)
 
         elif op_code == "EXTCODECOPY" or op_code.startswith("CREATE"):
@@ -227,7 +260,6 @@ class MemoryAbstractState:
                 stack[top-1] = filter(lambda x: x != "null", list(set(stack[top]+stack[top-1])))
                 #stack[top-1] = list(set(stack[top]+stack[top-1]))
 
-            
         elif op_code == "POP":
             stack.pop(top,None)
 
@@ -321,7 +353,11 @@ class SlotsAbstractState:
             opened.add(pc)
 
         # pc != "0:2": Hack to avoid warning the initial assignment of MEM40
-        elif (is_mstore40(instr) or op_code == "CALL" or op_code == "STATICCALL" or op_code == "RETURN"):
+        elif (is_mstore40(instr) or 
+              op_code == "CALL" or 
+            op_code == "STATICCALL" or 
+            op_code == "DELEGATECALL" or 
+            op_code == "RETURN"):
                     
             if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
                 print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
@@ -478,6 +514,8 @@ def perform_memory_analysis(vertices):
     # print("155: " + str(accesses.get_cfg_info("155")))
     # print("793: " + str(accesses.get_cfg_info("793")))
 
+    accesses.process_free_mstores()
+
     print('We are done!!\n\n')
 
     return slots, memory, accesses
@@ -504,3 +542,12 @@ def is_mstore40(opcode):
 
 def order_accesses(text): 
     return int(text.split()[0])
+
+def get_block_id(pc):
+    block = pc.split(":")[0]
+    try:
+        block = int(block)
+        pass
+    except ValueError: 
+        pass
+    return block
