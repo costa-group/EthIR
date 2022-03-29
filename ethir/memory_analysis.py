@@ -56,7 +56,7 @@ class MemoryAccesses:
                 if found: 
                     print("MEMRES: Found read -> " + writepp + " : " + pp)
                 else: 
-                    print("MEMRES: NOT Found read (potential optimization) -> " + writepp + " : " + str(pp))
+                    print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp))
 
     def search_read(self, slot, block_id, visited): 
         if (block_id in visited): 
@@ -318,11 +318,25 @@ class SlotsAbstractState:
 
     def lub (self,state): 
         opened = self.opened.copy()
-        closing_pairs = self.closing_pairs.copy()
         stateopen = state.opened.copy()
         stateclose = state.closing_pairs.copy()
-        pc_slot = self.copy()
-        return SlotsAbstractState(opened.union(stateopen),closing_pairs.union(stateclose),pc_slot)
+        pc_slot = self.pc_slot.copy()
+
+        lubopen= opened.union(stateopen)
+
+        for skey in state.closing_pairs:
+            if skey in stateclose: 
+                stateclose[skey] = stateclose[skey].union(state.closing_pairs[skey])
+            else:
+                stateclose[skey] = state.closing_pairs[skey]
+
+        for skey in state.pc_slot:
+            if skey in stateclose: 
+                pc_slot[skey] = list(set(pc_slot[skey] + state.pc_slot[skey]))
+            else:
+                pc_slot[skey] = state.pc_slot[skey]
+
+        return SlotsAbstractState(lubopen,stateclose,pc_slot)
 
     def process_instruction (self,instr, pc):
 
@@ -375,7 +389,9 @@ class SlotsAbstractState:
         return self.pc_slot[pc]        
 
     def __repr__(self):
+
         return ("opened " + str(self.opened) +
+                " :: closing_pairs " + str(self.closing_pairs) + 
                 " :: pc_slot " + str(self.pc_slot))
 
 
