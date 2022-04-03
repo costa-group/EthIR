@@ -46,11 +46,10 @@ class MemoryAccesses:
             self.closeset[pc].add(slot)
 
     def process_free_mstores (self): 
-        print("Evaluating potential optimizations: " + " " + str(self.writeset))
+        #print("Evaluating potential optimizations: " + " " + str(self.writeset))
         for writepp in self.writeset:
             for slot in self.writeset[writepp]: 
                 visited = set({})
-                #print("**** Searching subsequent read: " + str(writepp) + " " + slot)
                 block_id = get_block_id(writepp)
                 found,pp = self.search_read(slot, block_id, visited)
                 if found: 
@@ -63,7 +62,7 @@ class MemoryAccesses:
             return False, None
 
         
-        filtered = list(filter(lambda x: x.startswith(str(block_id)), self.readset))
+        filtered = list(filter(lambda x: x.startswith(str(block_id)+":"), self.readset))
         for readblock in filtered: 
             #print("Searching: " + slot + " " + str(block_id) + " ** " + str(self.readset[readblock]))
             if slot in self.readset[readblock]: 
@@ -127,7 +126,6 @@ class MemoryAbstractState:
         return self.memory
 
     def leq (self,state): 
-        print("COMPARING " + str(self) + " " + str(state))
         for skey in self.get_stack(): 
             if (skey not in state.stack or 
                 not (set(self.get_stack()[skey]) <= set(state.stack[skey]))):
@@ -142,13 +140,10 @@ class MemoryAbstractState:
 
     def lub (self,state): 
         if self.stack_pos != state.get_stack_pos(): 
-            print("WARNING: Different stacks in lub !!! ")
-            print("WARNING: " + str(self))
-            print("WARNING: " + str(state))
+            print("MEM ANALYSIS WARNING: Different stacks in lub !!! ")
+            print("MEM ANALYSIS WARNING: " + str(self))
+            print("MEM ANALYSIS WARNING: " + str(state))
 
-        print("********************************* Haciendo lub + ")
-        print(str(self))
-        print(str(state))
 
         res_stack = self.stack.copy(); 
         res_memory = self.memory.copy();
@@ -164,9 +159,6 @@ class MemoryAbstractState:
                 res_memory[mkey] = list(set(res_memory[mkey] + state.get_memory()[mkey]))
             else:
                 res_memory[mkey] = state.get_memory()[mkey]
-
-        print(str(res_stack))
-        print(str(res_memory))
 
         return MemoryAbstractState(self.stack_pos, res_stack, res_memory)
 
@@ -190,7 +182,7 @@ class MemoryAbstractState:
         # We save in the stack special memory addresses        
         if is_mload40(instr):
             accesses.add_read_access(pc,"mem40")
-            stack[top] = [slots.get_analysis_results(pc).get_slot(pc)]
+            stack[top] = slots.get_analysis_results(pc).get_slot(pc)
 
         elif is_mstore40(instr):
             accesses.add_write_access(pc,"mem40")
@@ -210,7 +202,7 @@ class MemoryAbstractState:
             self.add_read_access(top-2,pc,stack)
             self.add_write_access(top-4,pc,stack)
 
-        elif op_code == "CALLDATACOPY" or op_code == "CODECOPY" or op_code == "RETURNDATACOPY" :
+        elif op_code in ["CALLDATACOPY","CODECOPY","RETURNDATACOPY"]:
             self.add_write_access(top,pc,stack)
 
         elif op_code == "EXTCODECOPY" or op_code.startswith("CREATE"):
@@ -225,9 +217,12 @@ class MemoryAbstractState:
                         reslist = reslist+memory[memaddress]
                 if len(reslist) > 0: 
                     stack[top] = list(set(reslist))
+                else:
+                    stack.pop(top,None)
             else: 
-                print("WARNING: Unknown access at this point " + pc)
+                print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
                 accesses.add_read_access(pc,"unknown")                                   
+            
 
         elif op_code == "MSTORE8":
             self.add_write_access(top,pc,stack)
@@ -243,7 +238,7 @@ class MemoryAbstractState:
                             else: 
                                 memory[memaddress] = [memitem]
             else: 
-                print("WARNING: Unknown access at this point " + pc)
+                print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
                 accesses.add_write_access(pc,"unknown")                                
 
         elif op_code in arithemtic_operations:
@@ -251,14 +246,17 @@ class MemoryAbstractState:
                 stack[top-1] = stack[top]
             elif top-1 in stack and (not top in stack): 
                 stack[top-1] = stack[top-1]
-            # TODO: Think if needed
             elif top in stack and top-1 in stack: 
-                print ("WARNING: Arithmentic operations with two slots: " + 
+                print ("MEMORY ANALYSIS WARNING: Arithmentic operations with two slots: " + 
                         op_code + " (" + 
                         str(stack[top-1]) + "," + 
                         str(stack[top]) + ")")
-                stack[top-1] = filter(lambda x: x != "null", list(set(stack[top]+stack[top-1])))
-                #stack[top-1] = list(set(stack[top]+stack[top-1]))
+                if stack[top] == ["null"] and stack[top-1] != ["null"]: 
+                    stack[top-1] = stack[top-1]
+                elif stack[top] != ["null"] and stack[top-1] == ["null"]: 
+                    stack[top-1] = stack[top]
+                elif stack[top] != ["null"] or stack[top-1] != ["null"]: 
+                    stack[top-1] = filter(lambda x: x != "null", list(set(stack[top]+stack[top-1])))
 
         elif op_code == "POP":
             stack.pop(top,None)
@@ -351,19 +349,21 @@ class SlotsAbstractState:
         opinfo = get_opcode(op_code)
 
         if is_mload40(instr):
-            slot = None
+            slots = None
             
             # We take the slot pointed by any opened pc at this pp
             if (len(opened) > 0):
+                slots = []
                 for item in opened:
-                    slot = self.pc_slot[item]
-                    break
+                    slots = slots + self.pc_slot[item]
+                slots = list(set(slots))
             else:
                 slots_autoid = slots_autoid + 1
-                slot = "slot" + str(slots_autoid)
+                slots = ["slot" + str(slots_autoid)]
 
-            accesses.add_allocation_init(pc,slot)
-            pc_slot[pc] = slot
+            for s in slots: 
+                accesses.add_allocation_init(pc,s)
+            pc_slot[pc] = slots
             opened.add(pc)
 
         # pc != "0:2": Hack to avoid warning the initial assignment of MEM40
@@ -373,11 +373,12 @@ class SlotsAbstractState:
             op_code == "DELEGATECALL" or 
             op_code == "RETURN"):
                     
-            if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
-                print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
+            #if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
+            #    print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
 
             for item in opened:
-                accesses.add_allocation_close(pc,self.pc_slot[item])
+                for slot in self.pc_slot[item]:
+                    accesses.add_allocation_close(pc,slot)
 
             closed[pc] = self.opened.copy()
 
@@ -416,7 +417,6 @@ class BlockAnalysisInfo:
     ## Evaluates if a block need to be revisited or not
     def revisit_block (self,input_state, jump_target): 
         leq = input_state.leq(self.input_state)
-        print("Evaluating revisit to " + str(jump_target) + ": " + str(leq) + " - " + str(self.input_state) + " " + str(input_state))
 
         if leq: 
             return False
@@ -430,16 +430,16 @@ class BlockAnalysisInfo:
         # We start with the initial state of the block
         current_state = self.input_state
         idblock = self.block_info.get_start_address()
-        print("\n\nProcessing " + str(idblock) + 
-            " :: " + str(current_state) + 
-            " -- " + str(self.block_info.get_stack_info()))
+        #print("\n\nProcessing " + str(idblock) + 
+        #    " :: " + str(current_state) + 
+        #    " -- " + str(self.block_info.get_stack_info()))
         
         i = 0
         for instr in self.block_info.get_instructions(): 
             # From the current state we generate a new state by processing the instruction
             current_state = current_state.process_instruction(instr, str(idblock) + ":" + str(i))
-            print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
-                    instr + " -- " + str(current_state))
+        #    print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
+        #            instr + " -- " + str(current_state))
             self.state_per_instr.append(current_state)
             i = i + 1
 
@@ -504,9 +504,8 @@ def perform_memory_analysis(vertices):
     global slots
     global memory
     global accesses
-    print('Lest go!')
     
-    print("Slots analysis started!")
+    print("Memory analysis started!")
 
     accesses = MemoryAccesses({},{},{},{},vertices)
     
@@ -517,22 +516,17 @@ def perform_memory_analysis(vertices):
 
     print(accesses)
 
-    print("Memory analysis started!")
     memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
     memory.analyze()
-    print("Memory analysis finished!")
+
+    print("Memory accesess analysis finished!\n\n")
     print(accesses)
 
     print("\n\n")
-    # print("938: " + str(accesses.get_cfg_info("938")))
-    # print("938_0: " + str(accesses.get_cfg_info("938_0")))
-    # print("1064: " + str(accesses.get_cfg_info("1064")))
-    # print("155: " + str(accesses.get_cfg_info("155")))
-    # print("793: " + str(accesses.get_cfg_info("793")))
 
     accesses.process_free_mstores()
 
-    print('We are done!!\n\n')
+    print('Free memory analyss finished\n\n')
 
     return slots, memory, accesses
 ### Auxiliary functions 
