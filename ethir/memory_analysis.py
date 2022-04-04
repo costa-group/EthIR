@@ -233,6 +233,7 @@ class MemoryAbstractState:
                 for memaddress in stack[top]:
                     if top-1 in stack: 
                         for memitem in stack[top-1]:
+                            print ("VAMOS A VER!! " + str(self))
                             if memaddress in memory:
                                 memory[memaddress] = list(set(memory[memaddress] + [memitem]))
                             else: 
@@ -245,16 +246,20 @@ class MemoryAbstractState:
             if top in stack and (not top-1 in stack): 
                 stack[top-1] = stack[top]
             elif top-1 in stack and (not top in stack): 
-                stack[top-1] = stack[top-1]
+                pass
+                #stack[top-1] = stack[top-1]
             elif top in stack and top-1 in stack: 
                 print ("MEMORY ANALYSIS WARNING: Arithmentic operations with two slots: " + 
                         op_code + " (" + 
                         str(stack[top-1]) + "," + 
                         str(stack[top]) + ")")
                 if stack[top] == ["null"] and stack[top-1] != ["null"]: 
-                    stack[top-1] = stack[top-1]
+                    #stack[top-1] = stack[top-1]
+                    pass
                 elif stack[top] != ["null"] and stack[top-1] == ["null"]: 
                     stack[top-1] = stack[top]
+                elif op_code == "SUB": 
+                    stack.pop(top-1,None)
                 elif stack[top] != ["null"] or stack[top-1] != ["null"]: 
                     stack[top-1] = filter(lambda x: x != "null", list(set(stack[top]+stack[top-1])))
 
@@ -430,16 +435,16 @@ class BlockAnalysisInfo:
         # We start with the initial state of the block
         current_state = self.input_state
         idblock = self.block_info.get_start_address()
-        #print("\n\nProcessing " + str(idblock) + 
-        #    " :: " + str(current_state) + 
-        #    " -- " + str(self.block_info.get_stack_info()))
+        print("\n\nProcessing " + str(idblock) + 
+            " :: " + str(current_state) + 
+            " -- " + str(self.block_info.get_stack_info()))
         
         i = 0
         for instr in self.block_info.get_instructions(): 
             # From the current state we generate a new state by processing the instruction
             current_state = current_state.process_instruction(instr, str(idblock) + ":" + str(i))
-        #    print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
-        #            instr + " -- " + str(current_state))
+            print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
+                    instr + " -- " + str(current_state))
             self.state_per_instr.append(current_state)
             i = i + 1
 
