@@ -180,12 +180,18 @@ class MemoryAbstractState:
         # TODO: this code should be moved to another function (passing reference parameters problem)
 
         # We save in the stack special memory addresses        
-        if is_mload40(instr):
+        if is_mload(instr,"64"):
             accesses.add_read_access(pc,"mem40")
             stack[top] = slots.get_analysis_results(pc).get_slot(pc)
 
-        elif is_mstore40(instr):
+        elif is_mstore(instr,"64"):
             accesses.add_write_access(pc,"mem40")
+
+        elif is_mstore(instr,"32"):
+            accesses.add_write_access(pc,"mem20")
+
+        elif is_mstore(instr,"0"):
+            accesses.add_write_access(pc,"mem0")
 
         elif op_code == "PUSH1" and instr.split()[1] == "0x60": 
             stack[self.stack_pos] = ["null"]
@@ -193,6 +199,13 @@ class MemoryAbstractState:
 
         elif op_code.startswith("LOG") or op_code == "RETURN": 
             self.add_read_access(top,pc,stack)
+
+        elif op_code == "SHA3": 
+            if top in stack: 
+                self.add_read_access(top,pc,stack)
+            else:  
+                accesses.add_read_access(pc,"mem0") 
+                accesses.add_read_access(pc,"mem20") 
 
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access(top-3,pc,stack)
@@ -233,7 +246,6 @@ class MemoryAbstractState:
                 for memaddress in stack[top]:
                     if top-1 in stack: 
                         for memitem in stack[top-1]:
-                            print ("VAMOS A VER!! " + str(self))
                             if memaddress in memory:
                                 memory[memaddress] = list(set(memory[memaddress] + [memitem]))
                             else: 
@@ -353,7 +365,7 @@ class SlotsAbstractState:
         op_code = instr.split()[0]
         opinfo = get_opcode(op_code)
 
-        if is_mload40(instr):
+        if is_mload(instr,"64"):
             slots = None
             
             # We take the slot pointed by any opened pc at this pp
@@ -372,7 +384,7 @@ class SlotsAbstractState:
             opened.add(pc)
 
         # pc != "0:2": Hack to avoid warning the initial assignment of MEM40
-        elif (is_mstore40(instr) or 
+        elif (is_mstore(instr,"64") or 
               op_code == "CALL" or 
             op_code == "STATICCALL" or 
             op_code == "DELEGATECALL" or 
@@ -535,7 +547,7 @@ def perform_memory_analysis(vertices):
 
     return slots, memory, accesses
 ### Auxiliary functions 
-def is_mload40(opcode):
+def is_mload(opcode,pos):
     opcode = opcode.split(" ")
     opcode_name = opcode[0]
 
@@ -543,9 +555,9 @@ def is_mload40(opcode):
         return False
 
     value = opcode[1]
-    return opcode_name == "MLOAD" and value=="64"
+    return opcode_name == "MLOAD" and value==pos
 
-def is_mstore40(opcode):
+def is_mstore(opcode, pos):
     opcode = opcode.split(" ")
     opcode_name = opcode[0]
 
@@ -553,7 +565,9 @@ def is_mstore40(opcode):
         return False
 
     value = opcode[1]
-    return opcode_name == "MSTORE" and value == "64"
+    return opcode_name == "MSTORE" and value == pos
+
+
 
 def order_accesses(text): 
     return int(text.split()[0])
