@@ -274,10 +274,8 @@ class MemoryAbstractState:
             if top in stack and (not top-1 in stack): 
                 stack[top-1] = stack[top]
                 if op_code == "SUB": 
-                    print ("MEMWARNOK " + str(stack[top]))
+                    print ("MEMORY ANALYSIS WARNING (" + pc + "): Subtracting a slot minus a number " + str(stack[top]))
             elif top-1 in stack and (not top in stack): 
-                if op_code == "SUB": 
-                    print ("MEMWARNKO " + str(stack[top-1]))
                 pass
                 #stack[top-1] = stack[top-1]
             elif top in stack and top-1 in stack: 
