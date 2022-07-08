@@ -279,7 +279,7 @@ class MemoryAbstractState:
                 pass
                 #stack[top-1] = stack[top-1]
             elif top in stack and top-1 in stack: 
-                print ("MEMORY ANALYSIS WARNING: Arithmentic operations with two slots: " + 
+                print ("MEMORY ANALYSIS WARNING (" + pc + "): Arithmentic operations with two slots: " + 
                         op_code + " (" + 
                         str(stack[top-1]) + "," + 
                         str(stack[top]) + ")")
