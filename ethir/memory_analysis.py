@@ -54,8 +54,22 @@ class MemoryAccesses:
                 found,pp = self.search_read(slot, block_id, visited)
                 if found: 
                     print("MEMRES: Found read -> " + writepp + " : " + pp)
-                else: 
+                elif (self.is_for_revert(writepp)): 
+                    print("MEMRES: Found write for revert -> " + writepp)
+                else:
                     print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp))
+
+    def is_for_revert(self,writepp): 
+        
+        block_id = get_block_id(writepp)
+        block_info = self.vertices[block_id]
+        instr = block_info.get_instructions()[-1]
+        return instr == "REVERT"
+
+    
+
+
+
 
     def search_read(self, slot, block_id, visited): 
         if (block_id in visited): 
@@ -197,8 +211,9 @@ class MemoryAbstractState:
             stack[self.stack_pos] = ["null"]
             accesses.add_allocation_init(pc,"null")                                
 
-        elif op_code.startswith("LOG") or op_code == "RETURN": 
-            self.add_read_access(top,pc,stack)
+        elif op_code.startswith("LOG") or op_code == "RETURN" or op_code == "REVERT": 
+            if top in stack: 
+                self.add_read_access(top,pc,stack)
 
         elif op_code == "SHA3": 
             if top in stack: 
@@ -255,9 +270,14 @@ class MemoryAbstractState:
                 accesses.add_write_access(pc,"unknown")                                
 
         elif op_code in arithemtic_operations:
+
             if top in stack and (not top-1 in stack): 
                 stack[top-1] = stack[top]
+                if op_code == "SUB": 
+                    print ("MEMWARNOK " + str(stack[top]))
             elif top-1 in stack and (not top in stack): 
+                if op_code == "SUB": 
+                    print ("MEMWARNKO " + str(stack[top-1]))
                 pass
                 #stack[top-1] = stack[top-1]
             elif top in stack and top-1 in stack: 
@@ -447,23 +467,28 @@ class BlockAnalysisInfo:
         # We start with the initial state of the block
         current_state = self.input_state
         idblock = self.block_info.get_start_address()
-        print("\n\nProcessing " + str(idblock) + 
-            " :: " + str(current_state) + 
-            " -- " + str(self.block_info.get_stack_info()))
+        #print("\n\nProcessing " + str(idblock) + 
+        #    " :: " + str(current_state) + 
+        #    " -- " + str(self.block_info.get_stack_info()))
         
         i = 0
         for instr in self.block_info.get_instructions(): 
             # From the current state we generate a new state by processing the instruction
             current_state = current_state.process_instruction(instr, str(idblock) + ":" + str(i))
-            print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
-                    instr + " -- " + str(current_state))
+        #    print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
+        #            instr + " -- " + str(current_state))
             self.state_per_instr.append(current_state)
             i = i + 1
 
         self.output_state = current_state
     
     def __repr__(self):
-        return "Block id: " + str(self.block_info.get_start_address()) + " States: " + str(len(self.state_per_instr))
+
+        i = 0
+        for state in self.state_per_instr: 
+            print (str(self.block_info.get_start_address()) + "." + str(i) + ": " + str(self.state_per_instr[i]))
+            i = i + 1
+        return "" # "Block id: " + str(self.block_info.get_start_address()) + " States: " + str(len(self.state_per_instr))
 
 
 class Analysis: 
@@ -517,6 +542,11 @@ class Analysis:
     def get_block_results(self,blockid): 
         return self.blocks_info[blockid]
 
+    def __repr__(self): 
+        for id in self.blocks_info:
+            print(str(self.blocks_info[id]))    
+        return ""
+
 def perform_memory_analysis(vertices): 
     global slots
     global memory
@@ -535,6 +565,10 @@ def perform_memory_analysis(vertices):
 
     memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
     memory.analyze()
+
+    print("Memory results:")
+    print(str(memory))
+    print("End Memory results:")
 
     print("Memory accesess analysis finished!\n\n")
     print(accesses)
