@@ -57,7 +57,7 @@ class MemoryAccesses:
                 elif (self.is_for_revert(writepp)): 
                     print("MEMRES: Found write for revert -> " + writepp)
                 else:
-                    print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp))
+                    print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp) + " --> " + str(g_contract_source) + " " + g_contract_name)
 
     def is_for_revert(self,writepp): 
         
@@ -545,12 +545,28 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices): 
+def perform_memory_analysis(vertices, cname, csource, smap, sinfo): 
+    
+    global g_contract_name 
+    global g_contract_source 
+    global g_source_map
+    global g_source_info 
+
+    g_contract_source = csource
+    g_contract_name = cname
+    g_source_map = smap
+    g_source_info = sinfo
+
+    print ("INFO cname: " + str(csource))
+    print ("INFO cname: " + str(cname))
+    print ("INFO smap: " + str(smap))
+    print ("INFO sinfo: " + str(sinfo))
+
     global slots
     global memory
     global accesses
-    
-    print("Memory analysis started!")
+
+    print("Slots analysis started!")
 
     accesses = MemoryAccesses({},{},{},{},vertices)
     
