@@ -57,7 +57,8 @@ class MemoryAccesses:
                 elif (self.is_for_revert(writepp)): 
                     print("MEMRES: Found write for revert -> " + writepp)
                 else:
-                    print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp) + " --> " + str(g_contract_source) + " " + g_contract_name)
+                    func = get_function_from_blockid(writepp)
+                    print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp) + " --> " + str(g_contract_source) + " " + g_contract_name + "--" + func)
 
     def is_for_revert(self,writepp): 
         
@@ -545,12 +546,14 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, smap, sinfo): 
+def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, fblockmap): 
     
     global g_contract_name 
     global g_contract_source 
     global g_source_map
     global g_source_info 
+    global g_function_block_map
+    global g_component_of_blocks
 
     debug = False
 
@@ -558,12 +561,14 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo):
     g_contract_name = cname
     g_source_map = smap
     g_source_info = sinfo
+    g_function_block_map = compblocks
+    g_component_of_blocks = fblockmap
 
-    if debug:
-        print ("INFO cname: " + str(csource))
-        print ("INFO cname: " + str(cname))
-        print ("INFO smap: " + str(smap))
-        print ("INFO sinfo: " + str(sinfo))
+    print ("INFO cname: " + str(csource))
+    print ("INFO cname: " + str(cname))
+    print ("INFO smap: " + str(smap))
+    print ("INFO sinfo: " + str(sinfo))
+
 
     global slots
     global memory
@@ -633,3 +638,18 @@ def get_block_id(pc):
     except ValueError: 
         pass
     return block
+
+
+def get_function_from_blockid (pp): 
+    blockid = get_block_id(pp)
+
+    initblock = None
+
+    pred = g_function_block_map[blockid]
+
+    for block in pred:
+        for key in g_component_of_blocks: 
+            (initblock, _) = g_component_of_blocks[key]
+            if (initblock == block): 
+                return key
+
