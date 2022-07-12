@@ -552,15 +552,18 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo):
     global g_source_map
     global g_source_info 
 
+    debug = False
+
     g_contract_source = csource
     g_contract_name = cname
     g_source_map = smap
     g_source_info = sinfo
 
-    print ("INFO cname: " + str(csource))
-    print ("INFO cname: " + str(cname))
-    print ("INFO smap: " + str(smap))
-    print ("INFO sinfo: " + str(sinfo))
+    if debug:
+        print ("INFO cname: " + str(csource))
+        print ("INFO cname: " + str(cname))
+        print ("INFO smap: " + str(smap))
+        print ("INFO sinfo: " + str(sinfo))
 
     global slots
     global memory
@@ -575,19 +578,21 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo):
 
     print("Slots analysis finished!")
 
-    print(accesses)
+    if debug:
+        print(accesses)
 
     memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
     memory.analyze()
 
-    print("Memory results:")
-    print(str(memory))
-    print("End Memory results:")
+    if debug:
+        print("Memory results:")
+        print(str(memory))
+        print("End Memory results:")
 
-    print("Memory accesess analysis finished!\n\n")
-    print(accesses)
+        print("Memory accesess analysis finished!\n\n")
+        print(accesses)
 
-    print("\n\n")
+        print("\n\n")
 
     accesses.process_free_mstores()
 

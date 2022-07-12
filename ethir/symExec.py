@@ -2353,7 +2353,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 creation_block = block
 
                 if memory_val in base_refs:
-                    print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
+                    #print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
                     val = memory_val
                     base_refs_blocks[block] = val
                     
@@ -2363,10 +2363,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     base_ref_cont+=1
                     val = new_base_ref
                     memory_usage[address] = new_base_ref
-                    print("CREATION BLOCK: "+str(block)+"  BASEREF: "+new_base_ref)
+                    #print("CREATION BLOCK: "+str(block)+"  BASEREF: "+new_base_ref)
                     base_refs_blocks[block] = new_base_ref
                 else:
-                    print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
+                    #print("CREATION BLOCK AT BLOCK "+str(block)+" ALREADY EXISTS")
                     # print(list(base_refs.keys())[list(base_refs.values()).index(memory_val)])
                     val = list(base_refs.keys())[list(base_refs.values()).index(memory_val)]
                     memory_usage[address] = val
@@ -3726,17 +3726,17 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         print((mem_abs,val_mem40))
 
-        print("\n\n\n")
-        print("BLOCKS MEMORY CREATION")
-        print(memory_creation)
-        print("--------------")
-        print("MEMORY SETS")
-        print(memory_sets)
-        identify_memory_pos_no_baseref(memory_sets, source_map)
-        print("---------------")
-        print("BASE REF VALUES")
-        print(base_refs)
-        print("\n\n\n")
+        # print("\n\n\n")
+        # print("BLOCKS MEMORY CREATION")
+        # print(memory_creation)
+        # print("--------------")
+        # print("MEMORY SETS")
+        # print(memory_sets)
+        # identify_memory_pos_no_baseref(memory_sets, source_map)
+        # print("---------------")
+        # print("BASE REF VALUES")
+        # print(base_refs)
+        # print("\n\n\n")
 
 
         memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info)        
