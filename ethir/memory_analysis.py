@@ -58,7 +58,7 @@ class MemoryAccesses:
                     print("MEMRES: Found write for revert -> " + writepp)
                 else:
                     func = get_function_from_blockid(writepp)
-                    print("MEMRES: NOT Found read (potential optimization) -> " + slot + " " + writepp + " : " + str(pp) + " --> " + str(g_contract_source) + " " + g_contract_name + "--" + func)
+                    print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " : " + str(pp) + " --> " + str(g_contract_source) + " " + str(g_contract_name) + "--" + str(func))
 
     def is_for_revert(self,writepp): 
         
