@@ -13,6 +13,18 @@ memory = None
 global accesses
 accesses = None
 
+# If we found a potential access out of a slot
+global g_found_outofslot
+g_found_outofslot = False
+
+global g_contract_name 
+global g_contract_source 
+global g_source_map
+global g_source_info 
+global g_function_block_map
+global g_component_of_blocks
+
+
 class MemoryAccesses: 
     def __init__ (self,readset,writeset,initset,closeset,vertices):
         self.readset = readset
@@ -46,17 +58,22 @@ class MemoryAccesses:
             self.closeset[pc].add(slot)
 
     def process_free_mstores (self): 
+
         #print("Evaluating potential optimizations: " + " " + str(self.writeset))
         for writepp in self.writeset:
             for slot in self.writeset[writepp]: 
+
+                # Check write block...
+
                 visited = set({})
                 block_id = get_block_id(writepp)
                 found,pp = self.search_read(slot, block_id, visited)
                 if found: 
                     print("MEMRES: Found read -> " + writepp + " : " + pp)
-                elif (self.is_for_revert(writepp)): 
+                elif self.is_for_revert(writepp): 
                     print("MEMRES: Found write for revert -> " + writepp)
-                else:
+                elif not g_found_outofslot:
+                    print ("MEMRES poten" + str(g_found_outofslot))
                     func = get_function_from_blockid(writepp)
                     print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " : " + str(pp) + " --> " + str(g_contract_source) + " " + str(g_contract_name) + "--" + str(func))
 
@@ -181,6 +198,8 @@ class MemoryAbstractState:
     def process_instruction (self,instr,pc):
         global accesses
         global slots
+        global g_found_outofslot
+        
         op_code = instr.split()[0]
 
         stack = self.stack.copy()
@@ -201,6 +220,9 @@ class MemoryAbstractState:
 
         elif is_mstore(instr,"64"):
             accesses.add_write_access(pc,"mem40")
+
+        elif is_mstore(instr,"4"):
+            accesses.add_write_access(pc,"mem4")
 
         elif is_mstore(instr,"32"):
             accesses.add_write_access(pc,"mem20")
@@ -275,15 +297,17 @@ class MemoryAbstractState:
             if top in stack and (not top-1 in stack): 
                 stack[top-1] = stack[top]
                 if op_code == "SUB": 
-                    print ("MEMORY ANALYSIS WARNING (" + pc + "): Subtracting a slot minus a number " + str(stack[top]))
+                    print ("MEMORY ANALYSIS WARNING (" + pc + "): Subtracting a slot minus a number " + str(stack[top]) + ". Ignoring optimizations of this function")
+                    g_found_outofslot = True
+
             elif top-1 in stack and (not top in stack): 
                 pass
                 #stack[top-1] = stack[top-1]
             elif top in stack and top-1 in stack: 
-                print ("MEMORY ANALYSIS WARNING (" + pc + "): Arithmentic operations with two slots: " + 
-                        op_code + " (" + 
-                        str(stack[top-1]) + "," + 
-                        str(stack[top]) + ")")
+                # print ("MEMORY ANALYSIS WARNING (" + pc + "): Arithmentic operations with two slots: " + 
+                #         op_code + " (" + 
+                #         str(stack[top-1]) + "," + 
+                #         str(stack[top]) + ")")
                 if stack[top] == ["null"] and stack[top-1] != ["null"]: 
                     #stack[top-1] = stack[top-1]
                     pass
@@ -555,6 +579,7 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     global g_function_block_map
     global g_component_of_blocks
 
+    
     debug = False
 
     g_contract_source = csource
@@ -563,6 +588,7 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     g_source_info = sinfo
     g_function_block_map = compblocks
     g_component_of_blocks = fblockmap
+    g_found_outofslot = False
 
     print ("INFO cname: " + str(csource))
     print ("INFO cname: " + str(cname))
