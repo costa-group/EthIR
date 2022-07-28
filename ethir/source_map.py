@@ -49,9 +49,9 @@ class SourceMap:
         # if not runtime:
         #     self.positions_init = self._get_positions_init()
         self.instr_positions = {}
-        self.var_names = self._get_var_names()
-        self.func_call_names = self._get_func_call_names()
-        self.callee_src_pairs = self._get_callee_src_pairs()
+        self.var_names = self._get_var_names() if sol_version !="v8" else []
+        self.func_call_names = self._get_func_call_names() if sol_version != "v8" else []
+        self.callee_src_pairs = self._get_callee_src_pairs() if sol_version != "v8" else []
  
        
 
@@ -163,6 +163,7 @@ class SourceMap:
 
         out = run_command(cmd)
         out = json.loads(out)
+
         return out['contracts']
 
     def _get_positions(self):

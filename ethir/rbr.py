@@ -1687,7 +1687,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     component_of = component
 
     source_map = source_info["source_map"]
-    if source_map:
+    if source_map and source_map.var_names !=[]:
         all_state_vars = source_map._get_var_names()
 
     mapping_state_variables = source_info["name_state_variables"]
