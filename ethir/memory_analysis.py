@@ -13,6 +13,8 @@ memory = None
 global accesses
 accesses = None
 
+global debug_info
+
 # If we found a potential access out of a slot
 global g_found_outofslot
 g_found_outofslot = False
@@ -57,7 +59,7 @@ class MemoryAccesses:
         else:    
             self.closeset[pc].add(slot)
 
-    def process_free_mstores (self): 
+    def process_free_mstores (self,smap): 
 
         #print("Evaluating potential optimizations: " + " " + str(self.writeset))
         for writepp in self.writeset:
@@ -75,6 +77,12 @@ class MemoryAccesses:
                 elif not g_found_outofslot:
                     print ("MEMRES poten" + str(g_found_outofslot))
                     func = get_function_from_blockid(writepp)
+
+                    #pc = int(writepp.split(":")[0]) # + int(writepp.split(":")[1])
+                    
+                    #print("OLEOLE *****************************" + str(pc))
+                    #print("OLEOLE " + str(pc) + " -- " + str(smap.get_source_code(pc)) + "--")
+                    #print("OLEOLE -----------------------------" + str(pc))
                     print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " : " + str(pp) + " --> " + str(g_contract_source) + " " + str(g_contract_name) + "--" + str(func))
 
     def is_for_revert(self,writepp): 
@@ -85,10 +93,6 @@ class MemoryAccesses:
         return instr == "REVERT"
 
     
-
-
-
-
     def search_read(self, slot, block_id, visited): 
         if (block_id in visited): 
             return False, None
@@ -211,8 +215,6 @@ class MemoryAbstractState:
         stack_res = self.stack_pos - stack_in + stack_out
         top = self.stack_pos-1
 
-        # TODO: this code should be moved to another function (passing reference parameters problem)
-
         # We save in the stack special memory addresses        
         if is_mload(instr,"64"):
             accesses.add_read_access(pc,"mem40")
@@ -225,7 +227,7 @@ class MemoryAbstractState:
             accesses.add_write_access(pc,"mem4")
 
         elif is_mstore(instr,"32"):
-            accesses.add_write_access(pc,"mem20")
+            accesses.add_write_access(pc,"mem0")
 
         elif is_mstore(instr,"0"):
             accesses.add_write_access(pc,"mem0")
@@ -243,7 +245,6 @@ class MemoryAbstractState:
                 self.add_read_access(top,pc,stack)
             else:  
                 accesses.add_read_access(pc,"mem0") 
-                accesses.add_read_access(pc,"mem20") 
 
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access(top-3,pc,stack)
@@ -431,10 +432,11 @@ class SlotsAbstractState:
               op_code == "CALL" or 
             op_code == "STATICCALL" or 
             op_code == "DELEGATECALL" or 
-            op_code == "RETURN"):
+            op_code == "RETURN" or 
+            op_code == "REVERT"):
                     
-            #if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
-            #    print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
+            if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
+                print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
 
             for item in opened:
                 for slot in self.pc_slot[item]:
@@ -490,16 +492,19 @@ class BlockAnalysisInfo:
         # We start with the initial state of the block
         current_state = self.input_state
         idblock = self.block_info.get_start_address()
-        #print("\n\nProcessing " + str(idblock) + 
-        #    " :: " + str(current_state) + 
-        #    " -- " + str(self.block_info.get_stack_info()))
+
+        if debug_info:
+            print("\n\nProcessing " + str(idblock) + 
+            " :: " + str(current_state) + 
+            " -- " + str(self.block_info.get_stack_info()))
         
         i = 0
         for instr in self.block_info.get_instructions(): 
             # From the current state we generate a new state by processing the instruction
             current_state = current_state.process_instruction(instr, str(idblock) + ":" + str(i))
-        #    print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
-        #            instr + " -- " + str(current_state))
+            if debug_info:
+                print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
+                        instr + " -- " + str(current_state))
             self.state_per_instr.append(current_state)
             i = i + 1
 
@@ -543,6 +548,7 @@ class Analysis:
             self.blocks_info[jump_target] = BlockAnalysisInfo(self.vertices[jump_target], input_state)
 
         elif jump_target != 0 and self.blocks_info.get(jump_target).revisit_block(input_state,jump_target): 
+            #print("REVISITING BLOCK!!! " + str(jump_target))
             self.pending.append(jump_target)
 
         jump_target = basic_block.get_falls_to()
@@ -570,7 +576,7 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, fblockmap): 
+def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, fblockmap, debug): 
     
     global g_contract_name 
     global g_contract_source 
@@ -578,10 +584,10 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     global g_source_info 
     global g_function_block_map
     global g_component_of_blocks
+    global debug_info 
 
+    debug_info = debug
     
-    debug = False
-
     g_contract_source = csource
     g_contract_name = cname
     g_source_map = smap
@@ -589,12 +595,6 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     g_function_block_map = compblocks
     g_component_of_blocks = fblockmap
     g_found_outofslot = False
-
-    print ("INFO cname: " + str(csource))
-    print ("INFO cname: " + str(cname))
-    print ("INFO smap: " + str(smap))
-    print ("INFO sinfo: " + str(sinfo))
-
 
     global slots
     global memory
@@ -615,21 +615,22 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
     memory.analyze()
 
-    if debug:
-        print("Memory results:")
-        print(str(memory))
-        print("End Memory results:")
+    # if debug:
+    #     print("Memory results:")
+    #     print(str(memory))
+    #     print("End Memory results:")
 
-        print("Memory accesess analysis finished!\n\n")
-        print(accesses)
+    #     print("Memory accesess analysis finished!\n\n")
+    #     print(accesses)
 
-        print("\n\n")
+    #     print("\n\n")
 
-    accesses.process_free_mstores()
+    accesses.process_free_mstores(smap)
 
     print('Free memory analyss finished\n\n')
 
     return slots, memory, accesses
+
 ### Auxiliary functions 
 def is_mload(opcode,pos):
     opcode = opcode.split(" ")
