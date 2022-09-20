@@ -1052,6 +1052,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             bl.add_pc(hex(global_state["pc"]))
         # print(instr)
         # print(stack)
+        # bl.add_pc(global_state["pc"])
         sym_exec_ins(params, block, instr, func_call,stack_old,instr_index)
         # print(len(stack))
         instr_index+=1
@@ -2165,6 +2166,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         else:
             raise ValueError('STACK underflow')
     elif opcode == "CODESIZE":
+        global_state["pc"] = global_state["pc"] + 1
         if g_disasm_file.endswith('.disasm'):
             evm_file_name = g_disasm_file[:-7]
         else:
@@ -2699,6 +2701,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             raise ValueError('STACK underflow')
     elif opcode == "JUMP":
         if len(stack) > 0:
+            global_state["pc"] = global_state["pc"] + 1
             push_address = stack.pop(0)
             target_address,push_block = push_address
 
@@ -2724,6 +2727,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     elif opcode == "JUMPI":
         # We need to prepare two branches
         if len(stack) > 1:
+            global_state["pc"] = global_state["pc"] + 1
             target_address = stack.pop(0)
             target_address = get_push_value(target_address)
 
