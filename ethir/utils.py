@@ -396,7 +396,7 @@ def write_cfg(it,vertices,name = False,cloned = False):
     with open(name,"w") as f:
         for block in vert:
             f.write("================\n")
-
+            pcs = block.get_pcs()
             start_addr, end_addr, jump_addr, falls_addr = compute_hex_vals_cfg(block)
             
             f.write("start address: "+ str(start_addr)+"\n")
@@ -413,7 +413,7 @@ def write_cfg(it,vertices,name = False,cloned = False):
             i = 0
             count = 0;
             for instr in block.get_instructions():
-                f.write(str(count)+": "+instr+"\n")
+                f.write(str(pcs.pop(0))+": "+instr+"\n")
                 count+=1
                 # if not cloned:
                 #     f.write(addresses[i][2:]+": "+instr+"\n")
