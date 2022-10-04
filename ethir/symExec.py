@@ -1080,9 +1080,17 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
         if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "REVERT":
             j,new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
-            if j == "jump" or j == "jumpi":
+            if j == "jump":
                 vertices[block].set_block_type("terminal")
                 jump_type[block] = "terminal"
+                vertices[block].set_jump_target(0)
+                
+            elif j == "jumpi":
+                vertices[block].set_block_type("terminal")
+                vertices[block].set_jump_target(0)
+                vertices[block].set_falls_to(None)
+                jump_type[block] = "terminal"
+                
             vertices[block].set_instructions(new_block_ins)
             break
 
