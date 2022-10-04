@@ -50,6 +50,10 @@ class BasicBlock:
     def get_end_address(self):
         return self.end
 
+    def set_end_address(self,address):
+        self.end = address
+
+    
     def add_instruction(self, instruction):
         self.instructions.append(instruction)
 
