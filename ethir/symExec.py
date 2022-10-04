@@ -321,15 +321,21 @@ def change_format(evm_version):
         file_contents = disasm_file.readlines()
         i = 0
         firstLine = file_contents[0].strip('\n')
+    
         for line in file_contents:
             line = line.replace('SELFDESTRUCT', 'SUICIDE')
             line = line.replace('Missing opcode 0xfd', 'REVERT')
             line = line.replace('Missing opcode 0xfe', 'ASSERTFAIL')
             line = line.replace('Missing opcode', 'INVALID')
+            if (line.find("Missing opcode")!=-1):
+                line = line.replace(str(line), '')
 
+            
             #Newer versions
             line = line.replace('opcode 0xfe not defined', 'ASSERTFAIL')
             line = line.replace('opcode 0xfd not defined', 'REVERT')
+            if (line.find("not defined")!=-1):
+                line = line.replace(str(line), 'REVERT')
             
             line = line.replace(':', '')
             lineParts = line.split(' ')
@@ -399,8 +405,9 @@ def build_cfg_and_analyze(evm_version):
         construct_bb()
         # if ebso_opt:
         #     get_evm_block()
+
         construct_static_edges()
-        # print_cfg()
+        #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
 
     #print mapping_state_variables
@@ -1348,7 +1355,11 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
         print block
     # print(path)
     old_mem = dict(memory_usage)
-    sym_exec_block(new_params, new_successor_address, block, depth, func_call,current_level+1,path)
+    try:
+        sym_exec_block(new_params, new_successor_address, block, depth, func_call,current_level+1,path)
+    except ValueError:
+        if debug_info:
+            print("Unfeasible path")
     memory_usage = old_mem
     path.pop()
         
@@ -2700,11 +2711,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         else:
             raise ValueError('STACK underflow')
     elif opcode == "JUMP":
+        
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             push_address = stack.pop(0)
-            target_address,push_block = push_address
-
+            try:
+                target_address,push_block = push_address
+            except:
+                vertices[block].set_block_type("terminal")
+                target_address,push_block = push_address #hack
             jump_addresses.append(target_address)
             
             #Define push-jump relations for cloning
@@ -3153,7 +3168,12 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
                 # old_falls_to = vertices[successor].get_falls_to()
                 # comes_from = vertices[successor].get_comes_from()
                 old_mem = dict(memory_usage)
-                sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
+                try:
+                    sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
+                except ValueError:
+                    if debug_info:
+                        print("Unfeasible path")
+
                 memory_usage = old_mem
                 path.pop()
 
@@ -3173,7 +3193,11 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
         path.append((block,successor))
         old_mem = dict(memory_usage)
-        sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
+        try:
+            sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
+        except ValueError:
+            if debug_info:
+                print("Unfeasible path")
         memory_usage = old_mem
         path.pop()
             # else:
@@ -3745,6 +3769,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info)        
         check_cfg_option(cfg,cname,execution,memory_result)
+
         
         rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         

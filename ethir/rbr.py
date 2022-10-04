@@ -1248,6 +1248,8 @@ Otherwise we have to convert it into a conditional jump.
  jump rule generated. If it is a jump, rule1 = rule2 = None.
 '''
 def create_uncond_jump(block_id,variables,jumps):
+    print(jumps)
+    print(block_id)
     if (len(jumps)>1):
         rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps)
         stack_variables = get_stack_variables(variables)
@@ -1488,7 +1490,7 @@ def compile_block(block,state_vars):
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
 
-        elif l_instr[cont] == "JUMP":
+        elif l_instr[cont] == "JUMP" and block.get_block_type == "unconditional":
             rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps())
 
             if rule1:
