@@ -561,7 +561,7 @@ def mapping_non_push_instruction(current_line_content, current_ins_address, idx,
             # print current_line_content
             # print instr_name
             # print "**********"
-            if name == instr_name or name == "INVALID" and instr_name == "ASSERTFAIL" or name == "KECCAK256" and instr_name == "SHA3" or name == "SELFDESTRUCT" and instr_name == "SUICIDE":
+            if name == instr_name or name == "INVALID" and instr_name == "ASSERTFAIL" or name == "KECCAK256" and instr_name == "SHA3" or name == "KECCAK256" and instr_name == "KECCAK256" or name == "SELFDESTRUCT" and instr_name == "SUICIDE":
                 g_src_map.instr_positions[current_ins_address] = g_src_map.positions[idx]
                 idx += 1
                 break;
@@ -1069,7 +1069,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if sha_identify and not result:
             result =  access_array_sim(instr.strip(),fake_stack)
 
-        if instr.startswith("SHA3",0):
+        if instr.startswith("SHA3",0) or instr.startswith("KECCAK256",0):
             # print block
             sha_identify = True
             fake_stack.insert(0,1)
@@ -1973,6 +1973,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
                 else:
+                    byte_index = int(byte_index)
                     computed = second & (255 << (8 * byte_index))
                     computed = computed >> (8 * byte_index)
             else:
@@ -1984,7 +1985,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         else:
             raise ValueError('STACK underflow')
         
-    # 20s: SHA3
+    # 20s: SHA3 or KECCAK256 (v8)
     #
     elif opcode == "SHA3":
         if len(stack) > 1:
@@ -1995,6 +1996,26 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             s0 = get_push_value(s0)
             s1 = get_push_value(s1)
 
+
+            new_var_name = gen.gen_arbitrary_var()
+
+            if s1 <64:
+                st_arr = (True,st_arr[1])
+                mapping_address_sto[new_var_name] = (st_id,block)
+
+                # path_conditions_and_vars[new_var_name] = new_var
+            stack.insert(0, new_var_name)
+        else:
+            raise ValueError('STACK underflow')
+
+    elif opcode == "KECCAK256":
+        if len(stack) > 1:
+            global_state["pc"] = global_state["pc"] + 1
+            s0 = stack.pop(0)
+            s1 = stack.pop(0)
+            
+            s0 = get_push_value(s0)
+            s1 = get_push_value(s1)
 
             new_var_name = gen.gen_arbitrary_var()
 
@@ -2834,10 +2855,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         global_state["pc"] = global_state["pc"] + 1
         # We do not simulate these log operations
         num_of_pops = 2 + int(opcode[3:])
-        while num_of_pops > 0:
-            stack.pop(0)
-            num_of_pops -= 1
-
+        if len(stack) >= num_of_pops:
+            while num_of_pops > 0:
+                stack.pop(0)
+                num_of_pops -= 1
+        else:
+            raise ValueError('STACK underflow')
     #
     #  f0s: System Operations
     #

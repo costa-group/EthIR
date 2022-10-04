@@ -28,6 +28,7 @@ opcodes = {
     "SHR": [0x1c,2,1],
     "SAR": [0x1d,2,1],
     "SHA3": [0x20, 2, 1],
+    "KECCAK256": [0x20, 2, 1],
     "ADDRESS": [0x30, 0, 1],
     "BALANCE": [0x31, 1, 1],
     "ORIGIN": [0x32, 0, 1],
@@ -210,6 +211,8 @@ def get_ins_cost(opcode):
     elif opcode == "JUMPDEST":
         return GCOST["Gjumpdest"]
     elif opcode == "SHA3":
+        return GCOST["Gsha3"]
+    elif opcode == "KECCAK256":
         return GCOST["Gsha3"]
     elif opcode == "CREATE":
         return GCOST["Gcreate"]
