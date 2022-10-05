@@ -952,10 +952,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global has_sm40
     global creation_block
     global memory_creation
-    
-    # print"BLOCK"
-    # print block
-    
+        
     visited = params.visited
     stack = params.stack
     stack_old = list(params.stack)
@@ -3164,7 +3161,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     # print("--------")
     
     if successor in visited_blocks:
-
+        
         same_stack_successors = get_all_blocks_with_same_stack(successor, stack)
 
         # print successor
@@ -3175,12 +3172,6 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
             # instructions = vertices[successor].get_instructions()
             # instructions1 = vertices[block].get_instructions()
             # ins_new = map(lambda x: x.strip(),instructions+instructions1)
-
-            # print "HOLA"
-            # print block
-            # print successor
-            # print ins_new
-            # print memory_unknown
 
             # We filter all nodes with same beginning, and check if there's one of those
             # nodes with same stack. Notice that one block may contain several stacks
@@ -3193,6 +3184,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
                 # print successor
 
                 # memory_unknown.append(successor)
+                    
                 path.append((block,same_stack_successors[0]))
 
                 # old_target = vertices[successor].get_jump_target()
@@ -3200,7 +3192,10 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
                 # comes_from = vertices[successor].get_comes_from()
                 old_mem = dict(memory_usage)
                 try:
-                    sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
+                    if (block == same_stack_successors[0]):
+                        x = list(filter(lambda x: x[0] == block and x[1] == block,path))
+                        if len(x)<3:
+                            sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
                 except ValueError:
                     if debug_info:
                         print("Unfeasible path")
@@ -3400,7 +3395,7 @@ def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 180
+        global_params.GLOBAL_TIMEOUT = 200
         
     try:
         with Timeout(sec=global_params.GLOBAL_TIMEOUT):
@@ -3783,7 +3778,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
 
-        print((mem_abs,val_mem40))
+        # print((mem_abs,val_mem40))
 
         # print("\n\n\n")
         # print("BLOCKS MEMORY CREATION")
@@ -3801,9 +3796,10 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info)        
         check_cfg_option(cfg,cname,execution,memory_result)
 
-        
-        rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
-        
+        if cfg != "memory":
+            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
+        else:
+            print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
         
         if opt!= None:
