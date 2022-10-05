@@ -1,6 +1,9 @@
 from basicblock import BasicBlock
 from opcodes import get_opcode
 
+global slots_autoid
+slots_autoid = 0
+
 global arithemtic_operations
 arithemtic_operations = ["ADD","SUB","MUL","DIV","AND","OR","EXP","SHR","SHL"]
 
@@ -36,7 +39,7 @@ class MemoryAccesses:
         self.vertices = vertices
         
     def add_read_access (self,pc,slot): 
-        if self.readset.get(pc) is None:
+        if self.readset.get(pc) is None: 
             self.readset[pc] = set([slot])
         else:    
             self.readset[pc].add(slot)
@@ -240,7 +243,7 @@ class MemoryAbstractState:
             if top in stack: 
                 self.add_read_access(top,pc,stack)
 
-        elif op_code == "SHA3": 
+        elif op_code == "SHA3" or op_code == "KECCAK256": 
             if top in stack: 
                 self.add_read_access(top,pc,stack)
             else:  
@@ -363,8 +366,6 @@ class MemoryAbstractState:
 
 class SlotsAbstractState:
 
-    global slots_autoid
-    slots_autoid = 0
 
     def __init__(self,opened,closing_pairs,pc_slot):
         #
@@ -429,11 +430,13 @@ class SlotsAbstractState:
 
         # pc != "0:2": Hack to avoid warning the initial assignment of MEM40
         elif (is_mstore(instr,"64") or 
-              op_code == "CALL" or 
-            op_code == "STATICCALL" or 
-            op_code == "DELEGATECALL" or 
+            #op_code == "CALL" or 
+            #op_code == "STATICCALL" or 
+            #op_code == "DELEGATECALL" or 
             op_code == "RETURN" or 
-            op_code == "REVERT"):
+            op_code == "REVERT" or 
+            op_code == "STOP" or 
+            op_code == "SELFDESTRUCT"):
                     
             if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
                 print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
@@ -586,6 +589,8 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     global g_component_of_blocks
     global debug_info 
 
+    init_slot = slots_autoid
+
     debug_info = debug
     
     g_contract_source = csource
@@ -628,6 +633,10 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     accesses.process_free_mstores(smap)
 
     print('Free memory analyss finished\n\n')
+
+    nslots = slots_autoid - init_slot
+
+    print ("SLOTS Contract " + cname + ": " + str(nslots))
 
     return slots, memory, accesses
 
