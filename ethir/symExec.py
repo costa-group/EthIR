@@ -3792,8 +3792,15 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         # print(base_refs)
         # print("\n\n\n")
 
+        begin = dtimer()
 
         memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info)        
+
+        end = dtimer()
+
+        print("Memory Analysis: "+str(end-begin)+"s\n")
+
+        
         check_cfg_option(cfg,cname,execution,memory_result)
 
         if cfg != "memory":
