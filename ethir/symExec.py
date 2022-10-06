@@ -966,8 +966,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     # st_arr = (False,False)
     # st_id = -1
 
-    # print("BLOCK"+str(block))
-    
     vertices[block].add_stack(list(stack))
     vertices[block].add_path(path)
     
@@ -1362,7 +1360,7 @@ def copy_already_visited_node(successor, new_params, block, depth, func_call,cur
     old_mem = dict(memory_usage)
     try:
         sym_exec_block(new_params, new_successor_address, block, depth, func_call,current_level+1,path)
-    except ValueError:
+    except (ValueError, RuntimeError):
         if debug_info:
             print("Unfeasible path")
     memory_usage = old_mem
@@ -3199,7 +3197,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
                         x = list(filter(lambda x: x[0] == block and x[1] == block,path))
                         if len(x)<3:
                             sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
-                except ValueError:
+                except (ValueError, RuntimeError):
                     if debug_info:
                         print("Unfeasible path")
 
@@ -3224,7 +3222,7 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
         old_mem = dict(memory_usage)
         try:
             sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
-        except ValueError:
+        except (ValueError, RuntimeError):
             if debug_info:
                 print("Unfeasible path")
         memory_usage = old_mem
