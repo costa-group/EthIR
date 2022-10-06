@@ -637,7 +637,9 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
     nslots = slots_autoid - init_slot
 
     print ("SLOTS Contract " + cname + ": " + str(nslots))
-
+    print("Memory read accesses Contract"+ cname+": "+str(len(accesses.readset.keys())))
+    print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
+    
     return slots, memory, accesses
 
 ### Auxiliary functions 
