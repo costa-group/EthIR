@@ -112,7 +112,7 @@ class MemoryAccesses:
         visited.add(block_id)
         blockinfo = self.vertices[block_id]
         jump_target = blockinfo.get_jump_target()        
-        if jump_target != 0:
+        if (jump_target != 0 and jump_target != -1):
            found, pp = self.search_read(slot, jump_target, visited) 
 
         jump_target = blockinfo.get_falls_to()
@@ -546,11 +546,11 @@ class Analysis:
         basic_block = self.vertices[block_id]
 
         jump_target = basic_block.get_jump_target()        
-        if jump_target != 0 and self.blocks_info.get(jump_target) == None:
+        if (jump_target != 0 and jump_target != -1) and self.blocks_info.get(jump_target) == None:
             self.pending.append(jump_target)
             self.blocks_info[jump_target] = BlockAnalysisInfo(self.vertices[jump_target], input_state)
 
-        elif jump_target != 0 and self.blocks_info.get(jump_target).revisit_block(input_state,jump_target): 
+        elif (jump_target != 0 and jump_target != -1) and self.blocks_info.get(jump_target).revisit_block(input_state,jump_target): 
             #print("REVISITING BLOCK!!! " + str(jump_target))
             self.pending.append(jump_target)
 
