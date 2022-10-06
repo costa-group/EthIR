@@ -393,7 +393,9 @@ class InputHelper:
             else:
                 elem = pragma_version.split()[-1]
                 solc_v = elem.split(".")[1].strip()
-                
+                if solc_v > "8":
+                    solc_v = "8"
+
             return "v"+solc_v
 
         else:
