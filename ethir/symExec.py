@@ -2741,13 +2741,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
             push_address = stack.pop(0)
-            try:
-                target_address,push_block = push_address
-            except:
+            if (type(push_address) == tuple):
+                try:
+                    target_address,push_block = push_address
+                except:
+                    vertices[block].set_block_type("terminal")
+                    target_address,push_block = push_address #hack
+                jump_addresses.append(target_address)
+            else:
                 vertices[block].set_block_type("terminal")
-                target_address,push_block = push_address #hack
-            jump_addresses.append(target_address)
-            
+                raise ValueError("Invalid jump address")
             #Define push-jump relations for cloning
             rel = push_jump_relations.get(block,{})
             addresses = rel.get(target_address,[])
@@ -2758,7 +2761,6 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 rel[target_address] = [push_block]
 
             push_jump_relations[block] = rel
-
             vertices[block].set_jump_target(target_address)
 
             if target_address not in edges[block]:
@@ -2777,6 +2779,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     target_address = int(str(simplify(target_address)))
                 except:
                     raise TypeError("Target address must be an integer")
+
             vertices[block].set_jump_target(target_address)
             flag = stack.pop(0)
             # branch_expression = (BitVecVal(0, 1) == BitVecVal(1, 1))
@@ -3791,7 +3794,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         # print("BASE REF VALUES")
         # print(base_refs)
         # print("\n\n\n")
-
+        
         begin = dtimer()
 
         memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info)        
