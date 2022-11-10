@@ -315,6 +315,24 @@ def initGlobalVars():
 
     global memory_sets
     memory_sets = {}
+
+    global maintain_variable
+    maintain_variable = False
+
+    global involved_variable
+    involved_variable = ""
+
+    global potential_variable
+    potential_variable = ""
+
+    global load_useless_block
+    load_useless_block = False
+
+    global store_useless_block
+    store_useless_block = False
+
+    global useless_blocks
+    useless_blocks = []
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -952,7 +970,12 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global has_sm40
     global creation_block
     global memory_creation
-        
+    global load_useless_block
+    global store_useless_block
+    global maintain_variable
+    global involved_variable
+    global potential_variable
+    
     visited = params.visited
     stack = params.stack
     stack_old = list(params.stack)
@@ -1048,6 +1071,14 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     # consumed_elems = compute_elements(block_ins)
     # init_stack = len(stack)
 
+    
+    store_useless_block = False
+    load_useless_block = False
+    maintain_variable = True
+    involved_variable = ""
+    potential_variable = ""
+
+    
     for instr in block_ins:
         # print instr
         if not bl.get_pcs_stored():
@@ -1094,6 +1125,13 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     if has_lm40 and has_sm40 and block not in memory_creation:
         memory_creation.append(block)
 
+    if block == 373:
+        print("A VER")
+        
+    if load_useless_block and store_useless_block and maintain_variable and involved_variable != "":
+        if stack[0].find(involved_variable)!=-1 and stack_old[1::] == stack[1::]:
+            # print("UNOOO: "+str(block))
+            useless_blocks.append(block)
     # after_stack =  compute_stack_size(block_ins, len(init_stack))
     # if after_stack != len(stack):
     #     raise Exception("The final stacks have different lenght")
@@ -1399,6 +1437,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global memory_usage
     global memory_sets
     global base_refs_blocks
+    global maintain_variable
+    global involved_variable
+    global potential_variable
+    global load_useless_block
+    global store_useless_block
+    global useless_blocks
     
     stack = params.stack
     mem = params.mem
@@ -2385,8 +2429,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             memory_val = memory_usage.get(address,"mem("+str(address)+")")
 
             # print(memory_usage)
+
+            
             if address == 64 and not has_sm40:
                 has_lm40 = True
+                load_useless_block = True
                 creation_block = block
 
                 if memory_val in base_refs:
@@ -2408,6 +2455,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                     val = list(base_refs.keys())[list(base_refs.values()).index(memory_val)]
                     memory_usage[address] = val
                     base_refs_blocks[block] = val
+
+                potential_variable = val
 
             elif address == 96:
                 memory_usage[address] = "null_val"#new_base_ref
@@ -2478,7 +2527,24 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             if stored_address == 64 and val_mem40 == "":
                 val_mem40 = str(st_id)
 
-            
+
+            if store_useless_block:
+                if involved_variable == "":
+                    involved_variable = potential_variable
+                if stored_address.find(involved_variable)==-1 or stored_value !=0:
+                    maintain_variable = False
+                    # print ("PERO BUENO")
+                    # print(block)
+                    # print(stored_address)
+                    # print(stored_value)
+                    # print(involved_variable)
+                    # print(stored_address.find(involved_variable)!=-1)
+                    # print(stored_value!=0)
+                    # print("-+-+-+-+-+-+-+-+-+-+")
+                
+            if stored_address == 64 and load_useless_block:
+                store_useless_block = True
+                
             # print(base_refs)
             # print(memory_usage)
             memory_usage[stored_address] = stored_value
@@ -3795,7 +3861,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
         begin = dtimer()
 
-        memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info)        
+        memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info,useless_blocks)        
 
         end = dtimer()
 

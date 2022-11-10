@@ -62,7 +62,7 @@ class MemoryAccesses:
         else:    
             self.closeset[pc].add(slot)
 
-    def process_free_mstores (self,smap): 
+    def process_free_mstores (self,smap,useless_blocks): 
 
         #print("Evaluating potential optimizations: " + " " + str(self.writeset))
         for writepp in self.writeset:
@@ -88,6 +88,10 @@ class MemoryAccesses:
                     #print("OLEOLE -----------------------------" + str(pc))
                     print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " : " + str(pp) + " --> " + str(g_contract_source) + " " + str(g_contract_name) + "--" + str(func))
 
+                    if block_id in useless_blocks:
+                        print("USELESS BLOCK: Potential useless block -> "+str(block_id))
+
+                    
     def is_for_revert(self,writepp): 
         
         block_id = get_block_id(writepp)
@@ -579,7 +583,7 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, fblockmap, debug): 
+def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, fblockmap, debug,useless_blocks): 
     
     global g_contract_name 
     global g_contract_source 
@@ -630,7 +634,7 @@ def perform_memory_analysis(vertices, cname, csource, smap, sinfo, compblocks, f
 
     #     print("\n\n")
 
-    accesses.process_free_mstores(smap)
+    accesses.process_free_mstores(smap,useless_blocks)
 
     print('Free memory analyss finished\n\n')
 
