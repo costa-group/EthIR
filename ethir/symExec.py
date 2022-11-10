@@ -1124,9 +1124,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     if has_lm40 and has_sm40 and block not in memory_creation:
         memory_creation.append(block)
-
-    if block == 373:
-        print("A VER")
         
     if load_useless_block and store_useless_block and maintain_variable and involved_variable != "":
         if stack[0].find(involved_variable)!=-1 and stack_old[1::] == stack[1::]:
