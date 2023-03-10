@@ -180,7 +180,7 @@ class RBRRule:
     '''
     def build_input_vars(self):
         in_vars = []
-        for i in xrange(self.arg_input-1,-1,-1):
+        for i in range(self.arg_input-1,-1,-1):
             var = "s("+str(i)+")"
             in_vars.append(var)
         return in_vars

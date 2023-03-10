@@ -1040,7 +1040,7 @@ def get_variables_to_be_declared(stack_variables,variables,l=False):
     
 def get_input_variables(idx):
     in_vars = []
-    for i in xrange(idx-1,-1,-1):
+    for i in range(idx-1,-1,-1):
         var = "s"+str(i)
         in_vars.append(var)
     return in_vars
@@ -2888,7 +2888,7 @@ def vars_in_main(fields,local,blockchain,num):
 
     #It has to be initialize in local and mix
     stack_vars = []
-    for x in xrange(0,max_stack_idx+1):
+    for x in range(0,max_stack_idx+1):
         stack_vars.append("\tint i_s"+str(x)+" = "+get_nondet_svcomp_label())
 
         
@@ -3033,12 +3033,12 @@ def process_blocks_ethirui_recur(rbr,new_rule):
 
             name = rbr[0].get_rule_name()
             if(len(real_body ) == len(new_rbr_instructions)):
-                for i in xrange(len(real_body)):
+                for i in range(len(real_body)):
                     line = name+"("+str(i)+","+str(i+offset)+")"
                     mappings.append(line)
             else:
                 if new_rbr_instructions == []:
-                    for i in xrange(len(real_body)):
+                    for i in range(len(real_body)):
                         line = name+"(0,"+str(i+offset)+")"
                         mappings.append(line)
 

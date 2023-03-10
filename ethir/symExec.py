@@ -450,7 +450,7 @@ def build_cfg_and_analyze(evm_version):
 def update_block_info():
     global blocks_to_clone
     
-    vert = sorted(vertices.values(), key = getKey)
+    vert = sorted(list(vertices.values()), key = getKey)
     if debug_info:
         print("Updating block info")
         print(vertices.keys())
@@ -528,7 +528,7 @@ def build_push_jump_relations():
             push_jump_relations[jump_address] = rel[jump_address]
 
 def print_cfg():
-    vert = sorted(vertices.values(), key = getKey)
+    vert = sorted(list(vertices.values()), key = getKey)
     for block in vert:
         block.display()
         print ("COMES FROM")
@@ -1538,8 +1538,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             
             if isReal(first) and isReal(second):
-                first = long(first)
-                second = long(second)
+                # first = long(first)
+                # second = long(second)
                 
                 computed = first * second & UNSIGNED_BOUND_NUMBER
 
@@ -2015,8 +2015,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stack_sym.insert(0,"AND("+first_sym+","+second_sym+")")
             
             if isReal(first_aux) and isReal(second_aux):
-                first_aux = long(first_aux)
-                second_aux = long(second_aux)
+                # first_aux = long(first_aux)
+                # second_aux = long(second_aux)
 
                 computed = first_aux & second_aux
 
@@ -2138,8 +2138,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             if isAllReal(first, second):
 
-                first = long(first)
-                second = long(second)
+                # first = long(first)
+                # second = long(second)
                 
                 if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
@@ -2444,8 +2444,12 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             no_bytes = get_push_value(no_bytes)
             
             if isAllReal(mem_location, code_from, no_bytes):
+                # if six.PY2:
+                #     temp = long(math.ceil((mem_location + no_bytes) / float(32)))
+                # else:
+                #     temp = int(math.ceil((mem_location + no_bytes) / float(32)))
                 if six.PY2:
-                    temp = long(math.ceil((mem_location + no_bytes) / float(32)))
+                    temp = math.ceil((mem_location + no_bytes) / float(32))
                 else:
                     temp = int(math.ceil((mem_location + no_bytes) / float(32)))
 
@@ -2557,7 +2561,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             # if isAllReal(address, mem_location, current_miu_i, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
             if isAllReal(address, mem_location, code_from, no_bytes) and USE_GLOBAL_BLOCKCHAIN:
                 if six.PY2:
-                    temp = long(math.ceil((mem_location + no_bytes) / float(32)))
+                    temp = math.ceil((mem_location + no_bytes) / float(32))
                 else:
                     temp = int(math.ceil((mem_location + no_bytes) / float(32)))
                 if temp > current_miu_i:
@@ -2822,7 +2826,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             # if isAllReal(stored_address, current_miu_i):
             if isAllReal(stored_address):
                 if six.PY2:
-                    temp = long(math.ceil((stored_address + 32) / float(32)))
+                    temp = math.ceil((stored_address + 32) / float(32))
                 else:
                     temp = int(math.ceil((stored_address + 32) / float(32)))
                 # if temp > current_miu_i:
@@ -2858,7 +2862,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             # if isAllReal(stored_address, current_miu_i):
             if isAllReal(stored_address):
                 if six.PY2:
-                    temp = long(math.ceil((stored_address + 1) / float(32)))
+                    temp = math.ceil((stored_address + 1) / float(32))
                 else:
                     temp = int(math.ceil((stored_address + 1) / float(32)))
                 # if temp > current_miu_i:
@@ -3410,7 +3414,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             fourth_sym = stack_sym.pop(0)
             fifth_sym = stack_sym.pop(0)
             
-            stack_sym.insert(0,"DELEGATECALL("+first_sym+","+second_sym+","+third_sym+","+fourth_sym+","+fifht_sym+")")
+            stack_sym.insert(0,"DELEGATECALL("+first_sym+","+second_sym+","+third_sym+","+fourth_sym+","+fifth_sym+")")
             
             new_var_name = gen.gen_arbitrary_var()
             stack.insert(0, new_var_name)
@@ -3960,7 +3964,9 @@ def generate_saco_config_file(cname):
         name = global_params.costabs_path+cname+".config"
 
     with open(name,"w") as f:
-        elems = list(map(lambda x,y: "("+process_argument_function(x)+";"+str(y[0])+";"+str(y[1])+")", function_block_map.items()))
+        milist = list(function_block_map.items())
+        # elems = list(map(lambda (x,y): "("+process_argument_function(x)+";"+str(y[0])+";"+str(y[1])+")", milist))
+        elems = list(map(lambda x: "("+process_argument_function(x[0])+";"+str(x[0][0])+";"+str(x[0][1])+")", milist))
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
@@ -4065,7 +4071,7 @@ def get_scc(edges):
     if scc_multiple == {}:
         return scc_multiple
     else:
-        new_edges = list(filter_nested_scc(edges,scc_multiple))
+        new_edges = filter_nested_scc(edges,scc_multiple)
         scc = get_scc(new_edges)
         scc_multiple.update(scc)
         return scc_multiple

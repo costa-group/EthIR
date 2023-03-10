@@ -300,7 +300,13 @@ It returns the start address of the block received.
 
 '''    
 def getKey(block):
-    return block.get_start_address()
+    try:
+        val = int(block.get_start_address())
+        return (val,0)
+    except:
+        block,c = block.get_start_address().split("_")
+        return (int(block),int(c))
+    # return block.get_start_address()
 
 def toInt(a):
     elem = a.split("_")
@@ -315,7 +321,14 @@ def getLevel(block):
 It returns the id of a rbr_rule.
 '''
 def orderRBR(rbr):
-    return rbr[0].get_Id()
+    try:
+        val = int(rbr[0].get_Id())
+        return (val,0)
+    except:
+        val,s = rbr[0].get_Id().split("_")
+        return (int(val), int(s))
+
+    # return rbr[0].get_Id()
 
 
 def delete_dup(l):
@@ -506,7 +519,7 @@ def cfg_dot(it,block_input,name = False,cloned = False):
         else:
             name = global_params.costabs_path+name+"_cloned.dot"
         
-    f = open(name,"wb")
+    f = open(name,"w")
     tree = build_tree(vert[0],[("st",0)],block_input)
     tree.generatedot(f)
     f.close()
@@ -535,7 +548,7 @@ def cfg_memory_dot(it,block_input,memory_sets,name = False,cloned = False):
         else:
             name = global_params.costabs_path+name+"_cloned.dot"
         
-    f = open(name,"wb")
+    f = open(name,"w")
     tree = build_tree_memory(vert[0],[("st",0)],block_input,memory_sets)
     tree.generatedot(f)
     f.close()
@@ -631,7 +644,8 @@ def correct_map_fields1(fields_map,var_fields):
     correct = True
     i = 0
     offset=0
-    for e in fields_map:
+    fields_map_aux = dict(fields_map)
+    for e in fields_map_aux:
         val = fields_map[e]
         del fields_map[e]
         fields_map[str(e)] = val
