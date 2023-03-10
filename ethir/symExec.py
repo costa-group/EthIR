@@ -1069,10 +1069,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             sha_identify = True
             fake_stack.insert(0,1)
 
-        if debug_info:
-            print ("Stack despues de la ejecucion de la instruccion "+ instr)
-            print (stack)
-
         if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "REVERT":
             j,new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
             if j == "jump":
@@ -3795,7 +3791,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
         begin = dtimer()
 
-        memory_result = perform_memory_analysis(vertices, cname, source_file, source_map, source_info, component_of_blocks, function_block_map, debug_info)        
+        memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, debug_info)        
 
         end = dtimer()
 
