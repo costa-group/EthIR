@@ -557,9 +557,9 @@ def store_times(oyente_time,ethir_time):
 def get_public_fields(source_file,arr = True):
     with open(source_file,"r") as f:
         lines = f.readlines()
-        good_lines_aux = filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines)
-        good_lines = map(lambda x: x.split("//")[0],good_lines_aux)
-        fields = map(lambda x: x.split()[-1].strip().strip(";"),good_lines)
+        good_lines_aux = list(filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines))
+        good_lines = list(map(lambda x: x.split("//")[0],good_lines_aux))
+        fields = list(map(lambda x: x.split()[-1].strip().strip(";"),good_lines))
     f.close()
     return fields
 
@@ -667,8 +667,8 @@ def search_greatter_compacts(pos,fields_map):
     
     numbers = fields_map.keys()
     pos_int = str(pos).split("_")[0]
-    numbers_str = filter(lambda x: str(x).startswith(pos_int),numbers)
-    end = filter(lambda x: str(x)>str(pos),numbers_str)
+    numbers_str = list(filter(lambda x: str(x).startswith(pos_int),numbers))
+    end = list(filter(lambda x: str(x)>str(pos),numbers_str))
     if len(end)>0:
         if end[0] == pos_int+"_0":
             fields_map[pos_int+"_0"] = fields_map[pos_int]
@@ -678,12 +678,12 @@ def search_greatter_compacts(pos,fields_map):
 
 def exist_index(potential_index,fields_map):
     numbers = fields_map.keys()
-    numbers_str = filter(lambda x: str(x).startswith(str(potential_index)), numbers)
+    numbers_str = list(filter(lambda x: str(x).startswith(str(potential_index)), numbers))
     
     if len(numbers_str)== 0:
         return potential_index
     else:
-        numbers_str = map(lambda x: str(x), numbers_str)
+        numbers_str = list(map(lambda x: str(x), numbers_str))
         numbers_str.sort()
         return numbers_str[0]
 
@@ -693,7 +693,7 @@ def search_for_index(field,field_map):
         if field == field_map[e]:
             possible_values.append(e)
 
-    vals = map(lambda x: str(x), possible_values)
+    vals = list(map(lambda x: str(x), possible_values))
     vals.sort()
     if len(vals)!=0:
         return vals[0]
@@ -777,20 +777,20 @@ def check_if_same_stack(stack1, stack2, blocks_info):
 def show_graph(blocks_input):
     for address in blocks_input:
         print("Bloque: ")
-        print address
+        print(address)
         print("Comes from: ")
-        print blocks_input[address].get_comes_from()
+        print(blocks_input[address].get_comes_from())
         print("List jump: ")
-        print blocks_input[address].get_list_jumps()
+        print(blocks_input[address].get_list_jumps())
         print("Jump target: ")
-        print blocks_input[address].get_jump_target()
+        print(blocks_input[address].get_jump_target())
         print("Falls to: ")
-        print blocks_input[address].get_falls_to()
+        print(blocks_input[address].get_falls_to())
         print("Filtered Stack: ")
         for stack in blocks_input[address].get_stacks():
-            print filter(lambda x: isinstance(x,tuple) and (x[0] in blocks_input) and x[0]!=0, stack)
+            print(list(filter(lambda x: isinstance(x,tuple) and (x[0] in blocks_input) and x[0]!=0, stack)))
         print("Real stack:")
-        print blocks_input[address].get_stacks()
+        print(blocks_input[address].get_stacks())
         
 
 ''' Given a node and where it comes from, checks all relevant info is consistent'''
@@ -1022,3 +1022,23 @@ def compute_stack_size(evm_instructions, init_size):
         current_size+=produced_elements
         
     return current_size
+
+
+def process_cost(opcode):
+    if opcode.find("(") == -1:
+        return opcodes.get_ins_cost(opcode.strip())
+
+    else:
+        pos = opcode.find("(")
+        opcode_aux = opcode[:pos]
+        gas = opcodes.get_ins_cost(opcode_aux.strip())
+        
+        args = opcode[pos+1:-1]
+        args_aux = args.split(",")
+        sum_gas = 0
+        for a in args_aux:
+            gas_aux=process_cost(a.strip(")"))
+            sum_gas+=gas_aux
+            
+        return gas+sum_gas
+        

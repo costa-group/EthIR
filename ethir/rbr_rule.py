@@ -153,7 +153,7 @@ class RBRRule:
         return self.invalid_address
 
     def is_conditional(self):
-        new_instructions = filter(lambda x: not(x.strip().startswith("nop(")),self.instr)
+        new_instructions = list(filter(lambda x: not(x.strip().startswith("nop(")),self.instr))
         called_instructions = new_instructions[-1]
         called_is_jump = called_instructions.find("jump")
         return called_is_jump!=-1
@@ -309,7 +309,7 @@ class RBRRule:
     def include_string_getter(self,mem_abs):
         #Patter defined in symExec.py
         #Pattern identified by Oyente
-        evm = filter(lambda x: x.split("(")[0] != "nop",self.instr)
+        evm = list(filter(lambda x: x.split("(")[0] != "nop",self.instr))
         instr1 = evm[-17] #by definition of the pattern. It corresponds to s(x) = g(y)
         instr2_aux = evm[-22] #by definition of the pattern. It corresponds to l(z) = s(w)
         field = instr1.split("=")[1].strip()
@@ -350,7 +350,7 @@ class RBRRule:
             if len(self.bc) == 0:
                 string_vars = ""
             else:
-                string_vars = ", ".join(filter(lambda x: x!="",sorted(self.bc)))
+                string_vars = ", ".join(list(filter(lambda x: x!="",sorted(self.bc))))
                 
         return string_vars
 
@@ -378,7 +378,7 @@ class RBRRule:
     def rule2string(self,mem_abs = "length"):
         rule = ""
         
-        new_instr = filter(lambda x: x !="",self.instr) #clean instructions ""
+        new_instr = list(filter(lambda x: x !="",self.instr)) #clean instructions ""
         new_instr = ["skip"] if new_instr == [] else new_instr
         in_aux = self.build_input_vars()
 

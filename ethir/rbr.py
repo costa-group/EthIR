@@ -526,7 +526,7 @@ def translateOpcodes20(opcode, index_variables,block):
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
 
-        blocks_sha3 = map(lambda x: x[1],sha3_blocks_arr.values())
+        blocks_sha3 = list(map(lambda x: x[1],sha3_blocks_arr.values()))
 
         if block in blocks_sha3:
             instr = v3+" = 0"
@@ -1914,7 +1914,7 @@ def process_init_values_fields(rbr):
     for rules in rbr:
         for r in rules:
             ins = r.get_instructions()
-            fields = filter(lambda x: x.startswith("g("),ins)
+            fields = list(filter(lambda x: x.startswith("g("),ins))
 
             init_fields_of_rule = get_initialization(fields,ins)
             field_vals+=init_fields_of_rule
@@ -1930,7 +1930,7 @@ def get_initialization(fields,instructions):
         stack_var = elems[-1].strip()
         idx = instructions.index(f)
         potential_ins = instructions[:idx]
-        assignments = filter(lambda x: x.startswith(stack_var),potential_ins)
+        assignments = list(filter(lambda x: x.startswith(stack_var),potential_ins))
         init_value = assignments[-1].split("=")[-1].strip()
         fields_vals = field_vals.append(field_var+" = "+str(init_value))
 
@@ -2015,7 +2015,7 @@ def get_fun_lines_info(rbr, source_map,f):
                     if (fun_name,init_pos,end_pos) not in functions:
                         functions.append((fun_name,init_pos,end_pos))
 
-    lines = map(lambda x: "solidityfunctionline("+x[0]+","+str(x[1])+","+str(x[2])+").",functions)
+    lines = list(map(lambda x: "solidityfunctionline("+x[0]+","+str(x[1])+","+str(x[2])+").",functions))
     f.write("\n".join(lines))
 
 

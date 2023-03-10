@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import re
@@ -36,16 +36,16 @@ def compare_versions(version1, version2):
 def has_dependencies_installed():
     global evm_version_modifications
     evm_version_modifications = False
-    try:
-        import z3
-        import z3.z3util
-        z3_version =  z3.get_version_string()
-        tested_z3_version = '4.5.1'
-        if compare_versions(z3_version, tested_z3_version) > 0:
-            logging.warning("You are using an untested version of z3. %s is the officially tested version" % tested_z3_version)
-    except:
-        logging.critical("Z3 is not available. Please install z3 from https://github.com/Z3Prover/z3.")
-        return False
+    # try:
+    #     import z3
+    #     import z3.z3util
+    #     z3_version =  z3.get_version_string()
+    #     tested_z3_version = '4.5.1'
+    #     if compare_versions(z3_version, tested_z3_version) > 0:
+    #         logging.warning("You are using an untested version of z3. %s is the officially tested version" % tested_z3_version)
+    # except:
+    #     logging.critical("Z3 is not available. Please install z3 from https://github.com/Z3Prover/z3.")
+    #     return False
 
     if not cmd_exists("evm"):
         logging.critical("Please install evm from go-ethereum and make sure it is in the path.")
@@ -439,8 +439,8 @@ def generate_saco_hashes_file(dicc):
     with open(global_params.costabs_path+"solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
-            cf_names1 = map(process_name,f_names)
-            cf_names = map(lambda x: name+"."+x,cf_names1)
+            cf_names1 = list(map(process_name,f_names))
+            cf_names = list(map(lambda x: name+"."+x,cf_names1))
             new_names = "\n".join(cf_names)+"\n" if cf_names!=[] else ""
             f.write(new_names)
     f.close()

@@ -1,5 +1,10 @@
 from basicblock import BasicBlock
 from opcodes import get_opcode
+import utils
+import os
+
+
+path_mstore = "/tmp/mstores/"
 
 global slots_autoid
 slots_autoid = 0
@@ -82,11 +87,39 @@ class MemoryAccesses:
                     func = get_function_from_blockid(writepp)
 
                     #pc = int(writepp.split(":")[0]) # + int(writepp.split(":")[1])
-                    
+                 
                     #print("OLEOLE *****************************" + str(pc))
                     #print("OLEOLE " + str(pc) + " -- " + str(smap.get_source_code(pc)) + "--")
                     #print("OLEOLE -----------------------------" + str(pc))
                     print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " : " + str(pp) + " --> " + str(g_contract_source) + " " + str(g_contract_name) + "--" + str(func))
+
+                    elems = writepp.split(":")
+                    offset = elems[1]
+
+                    
+                    sym_stack = self.vertices[block_id].get_symbolic_stacks()[int(offset)]
+                    sym_stack.insert(0, "ADD(PUSH2,ADD(DUP1,PUSH2))")
+                    print(self.vertices[block_id].get_symbolic_stacks()[int(offset)])
+
+                    print(utils.process_cost(sym_stack[0])+utils.process_cost(sym_stack[1]))
+                    
+                    if "mstores" not in os.listdir("/tmp/"):
+                        os.mkdir("/tmp/mstores")
+
+                    ins = self.vertices[block_id].get_instructions()
+
+                    instructions = []
+                    for i in ins:
+                        if i.find("MLOAD")!=-1 or i.find("MSTORE")!=-1 or i.find("SLOAD")!=-1 or i.find("SSTORE")!=-1:
+                            i_aux = i.split()[0]
+                            instructions.append(i_aux)
+                        else:
+                            instructions.append(i)
+
+                    f = open("/tmp/mstores/"+str(g_contract_source).split("/")[-1] + "_" + str(g_contract_name)+"_"+str(block_id)+"_"+str(writepp),"w")
+                    f.write(" ".join(instructions))
+                    f.close()
+
 
                     if block_id in useless_blocks:
                         print("USELESS BLOCK: Potential useless block -> "+str(block_id))
@@ -324,7 +357,7 @@ class MemoryAbstractState:
                 elif op_code == "SUB": 
                     stack.pop(top-1,None)
                 elif stack[top] != ["null"] or stack[top-1] != ["null"]: 
-                    stack[top-1] = filter(lambda x: x != "null", list(set(stack[top]+stack[top-1])))
+                    stack[top-1] = list(filter(lambda x: x != "null", list(set(stack[top]+stack[top-1]))))
 
         elif op_code == "POP":
             stack.pop(top,None)

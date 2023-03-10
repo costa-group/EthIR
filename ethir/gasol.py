@@ -99,7 +99,7 @@ def get_optimize_method (block,source_map,fields,fields_written):
     source = source[:lastBracePos] + '\n     {1}\n' + source[lastBracePos:]
 
     returnPos = source.find("return ")
-    if returnPos <> -1 :
+    if returnPos != -1 :
         splitRes = source.split("return ")
 
         res = splitRes[0]
