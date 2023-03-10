@@ -300,10 +300,10 @@ It returns the start address of the block received.
 
 '''    
 def getKey(block):
-    try:
+    if(str(block.get_start_address()).find("_")==-1):
         val = int(block.get_start_address())
         return (val,0)
-    except:
+    else:
         block,c = block.get_start_address().split("_")
         return (int(block),int(c))
     # return block.get_start_address()
@@ -321,10 +321,10 @@ def getLevel(block):
 It returns the id of a rbr_rule.
 '''
 def orderRBR(rbr):
-    try:
+    if str(rbr[0].get_Id()).find("_")==-1:
         val = int(rbr[0].get_Id())
         return (val,0)
-    except:
+    else:
         val,s = rbr[0].get_Id().split("_")
         return (int(val), int(s))
 
