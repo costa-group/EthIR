@@ -4223,7 +4223,6 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
         begin = dtimer()
 
-        print(vertices["501_0"].get_start_address())
         
         memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, debug_info)        
 
