@@ -84,6 +84,7 @@ class MemoryAccesses:
                     self.process_slot_rewritten(writepp,slot)
 
     def process_slot_rewritten(self, writepp, slot): 
+        foundread = False
         for writepp2 in self.writeset: 
             for slot2 in self.writeset[writepp2]: 
                 if (slot == slot2 and writepp != writepp2): 
@@ -108,6 +109,7 @@ class MemoryAccesses:
         path.append(blkfrom)
 
         found = False
+        foundread = False
         if blkfrom == blkto:
             print ("Procesando PATH FOUND " + str(path))
             foundread = self.blockset_contains_read(visited,slot)
