@@ -97,7 +97,8 @@ class MemoryAccesses:
                     foundpath, foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
                     print("Procesando Tengo found " + str(foundpath) + " " + str(foundread))
                     if foundpath and not foundread: 
-                        print ("Procesando Found useless write " + str(slot) + " " + writepp + "--" +  writepp2)
+                        func = get_function_from_blockid(writepp)
+                        print ("Procesando Found useless write " + str(slot) + " " + writepp + "--" +  writepp2 + " ** " + func)
 
     def find_all_paths (self, slot, blkfrom, blkto, visited, path): 
 
