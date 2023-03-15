@@ -92,11 +92,10 @@ class MemoryAccesses:
                     block_to = get_block_id(writepp2)
                     visited = set({})
                     path = []
-                    print("Procesando: Encontrado slot igual" + str(slot) + " " + writepp + "--" +  writepp2)
                     print("Procesando: Buscando caminos " + str(block_from) + "--" +  str(block_to))
-                    foundpath, foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
-                    print("Procesando Tengo found " + str(foundpath) + " " + str(foundread))
-                    if foundpath and not foundread: 
+                    foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
+                    print("Procesando Tengo found " + " " + str(foundread))
+                    if not foundread: 
                         func = get_function_from_blockid(writepp)
                         print ("Procesando Found useless write " + str(slot) + " " + writepp + "--" +  writepp2 + " ** " + str(func))
 
@@ -104,46 +103,42 @@ class MemoryAccesses:
 
         print("     Procesando " + str(blkfrom) + " " + str(visited))
         if blkfrom in visited: 
-            return False, False
+            return False
 
         visited.add(blkfrom)
         path.append(blkfrom)
 
-        found = False
         foundread = False
         if blkfrom == blkto:
-            print ("Procesando PATH FOUND " + str(path))
-            foundread = self.blockset_contains_read(visited,slot)
+            foundread = self.blockset_contains_read(path,slot)
             # for block in visited:
             #     filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             #     for readblock in filtered: 
             #         foundread = self.eval_read_write_access(slot,self.readset[readblock])
-
-            return True, foundread
+            return foundread
         else: 
             blockinfo = self.vertices[blkfrom]
 
-            foundpath1 = False
-            foundpath2 = False
             jump_target = blockinfo.get_jump_target()        
             if (jump_target != 0 and jump_target != -1):
-                foundpath1, foundread = self.find_all_paths(slot,jump_target, blkto, visited, path) 
+                foundread = self.find_all_paths(slot,jump_target, blkto, visited, path) 
 
             jump_target = blockinfo.get_falls_to()
             if jump_target != None and not foundread: 
-                foundpath2, foundread  = self.find_all_paths(slot,jump_target, blkto, visited, path) 
+                foundread  = self.find_all_paths(slot,jump_target, blkto, visited, path) 
 
-        visited.remove(blkfrom)
+        visited.remove(blkfrom) 
         path.pop()
 
-        return (foundpath1 or foundpath2, found)
+        return foundread
 
     def blockset_contains_read (self, blocks, slot): 
         for block in blocks:
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             for readblock in filtered: 
+                print("  PATH READBLOCK " + str(readblock) + " " + str(self.readset[readblock]))
                 foundread = self.eval_read_write_access(slot,self.readset[readblock])
-                if foundread: 
+                if foundread:
                     return True
         return False
     
@@ -180,10 +175,12 @@ class MemoryAccesses:
                 return True
         else: 
             for readaccess in readset: 
+                print("PATH readaccess " + str(readaccess))
                 if isinstance(readaccess,str): 
                     continue
                 if (writeaccess.slot == readaccess.slot and 
                     (writeaccess.offset == readaccess.offset or readaccess.offset == TOP or writeaccess.offset == TOP)): 
+                    print ("PATH Read found " + str(readaccess))
                     return True
         return False
 
