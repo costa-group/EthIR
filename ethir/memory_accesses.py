@@ -79,7 +79,7 @@ class MemoryAccesses:
 
         for writepp in self.writeset:
             for slot in self.writeset[writepp]: 
-                print ("Procesando write " + writepp + " --  " + str(slot))
+                print ("PATH ** Procesando write " + writepp + " --  " + str(slot))
                 if slot.offset != TOP and slot.offset != TOPK:
                     self.process_slot_rewritten(writepp,slot)
 
@@ -92,7 +92,7 @@ class MemoryAccesses:
                     block_to = get_block_id(writepp2)
                     visited = set({})
                     path = []
-                    print("Procesando: Buscando caminos " + str(block_from) + "--" +  str(block_to))
+                    print("PATH: Buscando caminos " + str(block_from) + "--" +  str(block_to) + " " + str(slot))
                     foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
                     print("Procesando Tengo found " + " " + str(foundread))
                     if not foundread: 
