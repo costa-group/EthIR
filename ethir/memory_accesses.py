@@ -103,7 +103,7 @@ class MemoryAccesses:
 
         print("     Procesando " + str(blkfrom) + " " + str(visited))
         if blkfrom in visited: 
-            return False
+            return False, False
 
         visited.add(blkfrom)
         path.append(blkfrom)
