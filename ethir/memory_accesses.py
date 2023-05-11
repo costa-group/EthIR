@@ -93,9 +93,9 @@ class MemoryAccesses:
                     visited = set({})
                     path = []
                     print("PATH: Buscando caminos " + str(block_from) + "--" +  str(block_to) + " " + str(slot))
-                    foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
+                    found, foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
                     print("Procesando Tengo found " + " " + str(foundread))
-                    if not foundread: 
+                    if found and not foundread: 
                         func = get_function_from_blockid(writepp)
                         print ("Procesando Found useless write " + str(slot) + " " + writepp + "--" +  writepp2 + " ** " + str(func))
 
@@ -109,28 +109,29 @@ class MemoryAccesses:
         path.append(blkfrom)
 
         foundread = False
+        found = False
         if blkfrom == blkto:
             foundread = self.blockset_contains_read(path,slot)
             # for block in visited:
             #     filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             #     for readblock in filtered: 
             #         foundread = self.eval_read_write_access(slot,self.readset[readblock])
-            return foundread
+            return True, foundread
         else: 
             blockinfo = self.vertices[blkfrom]
 
             jump_target = blockinfo.get_jump_target()        
             if (jump_target != 0 and jump_target != -1):
-                foundread = self.find_all_paths(slot,jump_target, blkto, visited, path) 
+                found,foundread = self.find_all_paths(slot,jump_target, blkto, visited, path) 
 
             jump_target = blockinfo.get_falls_to()
             if jump_target != None and not foundread: 
-                foundread  = self.find_all_paths(slot,jump_target, blkto, visited, path) 
+                found, foundread  = self.find_all_paths(slot,jump_target, blkto, visited, path) 
 
         visited.remove(blkfrom) 
         path.pop()
 
-        return foundread
+        return found,foundread
 
     def blockset_contains_read (self, blocks, slot): 
         for block in blocks:
