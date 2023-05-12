@@ -144,10 +144,10 @@ class MemoryOffsetAbstractState:
             if slottopm1 != None and ctop == None: 
                 stack[top-1] = self.add_slots(slottopm1,set([TOP]))
             
-            if slottop != None and ctop != None:
-                print("ADD ERROR top [" + pc + "]:" + str(slottop) + " -- " + str(ctop))
-            if slottopm1 != None and ctopm1 != None:
-                print("ADD ERROR top-1 [" + pc + "]:" + str(slottopm1) + " -- " + str(ctopm1))
+            # if slottop != None and ctop != None:
+            #     print("ADD ERROR top [" + pc + "]:" + str(slottop) + " -- " + str(ctop))
+            # if slottopm1 != None and ctopm1 != None:
+            #     print("ADD ERROR top-1 [" + pc + "]:" + str(slottopm1) + " -- " + str(ctopm1))
 
 
         elif op_code == "MLOAD": 

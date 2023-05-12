@@ -134,7 +134,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, deb
     
     global debug_info 
 
-    debug_info = False
+    debug_info = True
     
     set_memory_utils_globals(compblocks, fblockmap)
     print("Slots analysis started!")
