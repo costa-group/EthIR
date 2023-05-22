@@ -109,6 +109,9 @@ class MemoryAbstractState:
             else:  
                 self.accesses.add_read_access(pc,"mem0") 
 
+        elif op_code.startswith("CREATE"):
+            self.add_read_access(top-1,pc,stack)
+
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access(top-3,pc,stack)
             self.add_write_access(top-5,pc,stack)
@@ -120,7 +123,7 @@ class MemoryAbstractState:
         elif op_code in ["CALLDATACOPY","CODECOPY","RETURNDATACOPY"]:
             self.add_write_access(top,pc,stack)
 
-        elif op_code == "EXTCODECOPY" or op_code.startswith("CREATE"):
+        elif op_code == "EXTCODECOPY":
             self.add_write_access(top-1,pc,stack)
 
         elif op_code == "MLOAD": 

@@ -176,7 +176,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, deb
     #     print("\n\n")
 
     accesses.process_free_mstores()
-    accesses.process_useless_mstores()
+    # accesses.process_useless_mstores()
 
     print('Free memory analyss finished\n\n')
 

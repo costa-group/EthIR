@@ -206,10 +206,11 @@ class MemoryOffsetAbstractState:
         elif op_code in ["CALLDATACOPY","CODECOPY","RETURNDATACOPY"]:
             self.add_write_access_top(top,pc,self.stack)
 
-        elif op_code == "EXTCODECOPY" or op_code.startswith("CREATE"):
+        elif op_code == "EXTCODECOPY":
             self.add_write_access_top(top-1,pc,self.stack)
 
-
+        elif op_code.startswith("CREATE"):
+            self.add_read_access_top(top-1,pc,self.stack)
 
         return MemoryOffsetAbstractState(stack_res, stack, memory)
 
