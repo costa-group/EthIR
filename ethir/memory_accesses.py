@@ -62,7 +62,7 @@ class MemoryAccesses:
                 visited = set({})
                 block_id = get_block_id(writepp)
                 found = self.search_read(writepp, slot, block_id, visited)
-                # print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
+                print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
 
                 if found: 
                     print("MEMRES: Found read for -> " + writepp)
@@ -93,12 +93,14 @@ class MemoryAccesses:
         return False
     
     def search_read(self, writepp, slot, block_id, visited): 
+        print ("XXXX Evaluando " + str(slot) + " -- " + str(block_id))
         if (block_id in visited): 
-            return False
+            return False, None
         
         ## Check if there exists a read of "slot" in the current block
         filtered = list(filter(lambda x: x.startswith(str(block_id)+":"), self.readset))
         for readblock in filtered: 
+            found = self.eval_read_write_access(slot,self.readset[readblock])
             if found: 
                 
                 return True
@@ -124,6 +126,8 @@ class MemoryAccesses:
         jump_target = blockinfo.get_falls_to()
         if jump_target != None and not found: 
            found = self.search_read(writepp,slot, jump_target, visited) 
+
+        print ("XXXX Return Evaluando " + str(slot) + " -- " + str(block_id) + " ** " + str(found))
 
         return found
 
