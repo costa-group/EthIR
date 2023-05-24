@@ -61,8 +61,9 @@ class MemoryAccesses:
                 # Check write block...
                 visited = set({})
                 block_id = get_block_id(writepp)
-                print("PROCESANDO: " + str(block_id))
                 found = self.search_read(writepp, slot, block_id, visited)
+                # print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
+
                 if found: 
                     print("MEMRES: Found read for -> " + writepp)
                     break
@@ -81,70 +82,11 @@ class MemoryAccesses:
         instr = block_info.get_instructions()[-1]
         return instr == "REVERT"
 
-    # def process_useless_mstores (self):
-
-    #     print("*********** Procesando MSTORES")
-
-    #     for writepp in self.writeset:
-    #         if len(self.writeset[writepp]) > 1: 
-    #             continue
-    #         for slot in self.writeset[writepp]: 
-    #             print ("PATH ** Procesando write " + writepp + " --  " + str(slot))
-    #             if slot.offset != TOP and slot.offset != TOPK:
-    #                 self.process_slot_rewritten(writepp,slot)
-
-    # def process_slot_rewritten(self, writepp, slot): 
-    #     foundread = False
-    #     for writepp2 in self.writeset: 
-    #         if len(self.writeset[writepp2]) > 1: 
-    #             continue
-    #         for slot2 in self.writeset[writepp2]: 
-    #             if (slot == slot2 and writepp != writepp2): 
-    #                 block_from = get_block_id(writepp)
-    #                 block_to = get_block_id(writepp2)
-    #                 visited = set({})
-    #                 path = []
-    #                 print("PATH: Buscando caminos " + str(block_from) + "--" +  str(block_to) + " " + str(slot))
-    #                 found, foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
-    #                 if found and not foundread: 
-    #                     func = get_function_from_blockid(writepp)
-    #                     print ("MEMRES: Found useless write (potential optimization) " + str(slot) + " " + writepp + "--" +  writepp2 + " ** " + str(func))
-
-    # def find_all_paths (self, slot, blkfrom, blkto, visited, path): 
-
-    #     print("     Procesando " + str(blkfrom) + " " + str(visited))
-    #     if blkfrom in visited: 
-    #         return False, False
-
-    #     visited.add(blkfrom)
-    #     path.append(blkfrom)
-
-    #     foundread = False
-    #     found = False
-    #     if blkfrom == blkto:
-    #         foundread = self.blockset_contains_read(path,slot)
-    #         return True, foundread
-    #     else: 
-    #         blockinfo = self.vertices[blkfrom]
-
-    #         jump_target = blockinfo.get_jump_target()        
-    #         if (jump_target != 0 and jump_target != -1):
-    #             found,foundread = self.find_all_paths(slot,jump_target, blkto, visited, path) 
-
-    #         jump_target = blockinfo.get_falls_to()
-    #         if jump_target != None and not foundread: 
-    #             found, foundread  = self.find_all_paths(slot,jump_target, blkto, visited, path) 
-
-    #     visited.remove(blkfrom) 
-    #     path.pop()
-
-    #     return found,foundread
-
     def blockset_contains_read (self, blocks, slot): 
         for block in blocks:
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             for readblock in filtered: 
-                print("  PATH READBLOCK " + str(readblock) + " " + str(self.readset[readblock]))
+                #print("  PATH READBLOCK " + str(readblock) + " " + str(self.readset[readblock]))
                 foundread = self.eval_read_write_access(slot,self.readset[readblock])
                 if foundread:
                     return True
@@ -152,16 +94,13 @@ class MemoryAccesses:
     
     def search_read(self, writepp, slot, block_id, visited): 
         if (block_id in visited): 
-            return False, None
+            return False
         
         ## Check if there exists a read of "slot" in the current block
         filtered = list(filter(lambda x: x.startswith(str(block_id)+":"), self.readset))
         for readblock in filtered: 
-            #print("Searching: " + str(slot) + " " + str(block_id) + " ** " + str(self.readset[readblock]))
-            #if slot in self.readset[readblock]: 
-            #    return True, readblock
-            found = self.eval_read_write_access(slot,self.readset[readblock])
             if found: 
+                
                 return True
 
         ## Check if there exists a write of "slot" in the current block
