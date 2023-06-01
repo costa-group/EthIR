@@ -2524,7 +2524,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             if store_useless_block:
                 if involved_variable == "":
                     involved_variable = potential_variable
-                if stored_address.find(involved_variable)==-1 or stored_value !=0:
+                
+                if str(stored_address).find(involved_variable)==-1 or stored_value !=0:
                     maintain_variable = False
                     # print ("PERO BUENO")
                     # print(block)
