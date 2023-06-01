@@ -333,7 +333,7 @@ class InputHelper:
                     ["evm", "disasm", evm_file], stdout=subprocess.PIPE)
             else:
                 disasm_p = subprocess.Popen(
-                    ["evm1.10.25", "disasm", evm_file], stdout=subprocess.PIPE)
+                    ["evm1.12.0", "disasm", evm_file], stdout=subprocess.PIPE)
 
             disasm_out = disasm_p.communicate()[0].decode()
 
