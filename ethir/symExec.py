@@ -2874,6 +2874,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     #
     #  60s & 70s: Push Operations
     #
+    elif opcode == "PUSH0":
+        global_state["pc"] = global_state["pc"] + 1
+        stack.insert(0, (0,block))
+        
     elif opcode.startswith('PUSH', 0):  # this is a push instruction
         position = int(opcode[4:], 10)
         if debug_info:
