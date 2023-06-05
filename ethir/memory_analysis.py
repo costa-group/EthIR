@@ -130,7 +130,7 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, debug): 
+def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug): 
     
     global debug_info 
 
@@ -156,10 +156,20 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, deb
 
     print("Starting offset memory analysis " + str(cname))
 
-    MemoryOffsetAbstractState.init_globals(slots,accesses, constants)
-    memory = Analysis(vertices,0, MemoryOffsetAbstractState(0,{},{}))
-    memory.analyze()
+    if type_analysis == "baseref":
+        MemoryAbstractState.initglobals(slots,accesses)
+        memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
+        memory.analyze()
 
+    
+    elif type_analysis == "offset":
+        MemoryOffsetAbstractState.init_globals(slots,accesses, constants)
+        memory = Analysis(vertices,0, MemoryOffsetAbstractState(0,{},{}))
+        memory.analyze()
+
+    else:
+        raise Exception("Type for memory analysis uncorrect")
+        
     # MemoryAbstractState.initglobals(slots,accesses)
     # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
     # memory.analyze()
