@@ -1022,3 +1022,12 @@ def compute_stack_size(evm_instructions, init_size):
         current_size+=produced_elements
         
     return current_size
+
+def compute_gas(vertices):
+    gas = 0
+    for v in vertices:
+        instructions = vertices[v].get_instructions()
+        for i in instructions:
+            gas+=opcodes.get_ins_cost(i.strip())
+
+    return gas
