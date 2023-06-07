@@ -93,7 +93,7 @@ def sload_sstore_fragment(block,i):
             elif second.startswith("PUSH"):
                 val = int(second.split()[-1],16)
             elif second.startswith("DUP"):
-                val = int(first.split()[-1],16)
+                val = int("0",16) if first.startswith("PUSH0") else int(first.split()[-1],16)
 
             i = 2
             while i <len(cmp_prev_ins) and p:
