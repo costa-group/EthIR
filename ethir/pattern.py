@@ -165,7 +165,7 @@ def sstore_fragment(block,i):
         elif second.startswith("PUSH"):
             val = int(second.split()[-1],16)
         else: #DUP case because p = True
-            val = int(first.split()[-1],16)
+            val = int("0",16) if first.startswith("PUSH0") else int(first.split()[-1],16)
     else:
         val = -1
 
@@ -204,7 +204,7 @@ def sload_fragment(block,i,stack):
                 val = int(second.split()[-1],16)
             else: #it is dup
                 if first.startswith(pre_pattern_sstore[0]): #first =  push
-                    val = int(first.split()[-1],16)
+                    val = int("0",16) if first.startswith("PUSH0") else int(first.split()[-1],16)
     
     third = cmp_prev_ins.pop(0)                
     p = p and third.startswith(pre_pattern_sload[2])
