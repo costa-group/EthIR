@@ -606,8 +606,7 @@ def collect_vertices(tokens):
 
     # for t in tokens:
     #     print(t)
-
-
+        
     # raise Exception
 
     for tok_type, tok_string, (srow, scol), _, line_number in tokens:
@@ -664,7 +663,7 @@ def collect_vertices(tokens):
                     end_ins_dict[current_block] = last_ins_address
                 current_block = current_ins_address
                 is_new_block = False
-            elif tok_string == "STOP" or tok_string == "RETURN" or tok_string == "SUICIDE" or tok_string == "REVERT" or tok_string == "ASSERTFAIL":
+            elif tok_string == "STOP" or tok_string == "RETURN" or tok_string == "SUICIDE" or tok_string == "REVERT" or tok_string == "ASSERTFAIL" or tok_string == "INVALID":
                 jump_type[current_block] = "terminal"
                 end_ins_dict[current_block] = current_ins_address
             elif tok_string == "JUMP":
@@ -738,7 +737,7 @@ def check_div_invalid_pattern(block,path):
             jumps_instr = vertices[jump].get_instructions()
             falls_instr = vertices[falls].get_instructions()
             
-            if (falls_instr[0].startswith("ASSERTFAIL")) and (check_div_invalid_bytecode(jumps_instr[1])):
+            if (falls_instr[0].startswith("ASSERTFAIL") or falls_instr[0].startswith("INVALID")) and (check_div_invalid_bytecode(jumps_instr[1])):
                 vertices[falls].activate_div_invalid_pattern()
                 if invalid_option == "div0":
                     annotate_invalid(path)
@@ -1109,7 +1108,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
             
-        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "REVERT":
+        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "INVALID" or instr.strip() == "REVERT":
             j,new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
             if j == "jump":
                 vertices[block].set_block_type("terminal")
@@ -1168,7 +1167,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         else:
             ins = []
 
-        if ("ASSERTFAIL " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
+        if ("ASSERTFAIL " in ins or "INVALID " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
@@ -1185,10 +1184,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             ins = vertices[falls].get_instructions()
             invalid_block = falls
 
-        if "ASSERTFAIL " in ins:
+        if "ASSERTFAIL " in ins or "INVALID " in ins:
             blocks_memArr[block] = (jump,falls)
                 
-    if invalid_option == "all" and "ASSERTFAIL " in block_ins:
+    if invalid_option == "all" and ("ASSERTFAIL " in block_ins or "INVALID " in block_ins):
         annotate_invalid(path)
 
     check_div_invalid_pattern(block,path)
