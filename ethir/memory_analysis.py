@@ -5,7 +5,7 @@ import memory_slots
 from memory_accesses import MemoryAccesses
 from memory_basic_analysis import MemoryAbstractState
 from memory_offset_analysis import MemoryOffsetAbstractState
-from memory_constancy import ConstantsAbstractState
+from memory_offset import OffsetAnalysisAbstractState
 from memory_slots import SlotsAbstractState
 from memory_utils import set_memory_utils_globals
 
@@ -149,7 +149,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
 
     print("Slots analysis finished!")
 
-    constants = Analysis(vertices,0, ConstantsAbstractState(0,{}))
+    constants = Analysis(vertices,0, OffsetAnalysisAbstractState(0,{}))
     constants.analyze()
 
     print("Constants analysis finished!")
