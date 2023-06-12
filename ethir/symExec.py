@@ -1720,6 +1720,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             else:
                 first = to_symbolic(first)
                 second = to_symbolic(second)
+                third = to_symbolic(third)
                 if third == 0:
                     computed = 0
                 else:
