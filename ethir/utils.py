@@ -358,12 +358,16 @@ def process_hashes(solidity_file,solidity_version):
     string = solc_p.communicate()[0].decode()
     lines = string.split("\n")
     i = 0
+
     while i < len(lines):
         line = lines[i]
         parts = line.strip().split()
         
         if parts!=[] and parts[0] == delimiter:
-            cname = parts[1].split(":")[1]
+            if parts[1].find(":")!=-1:
+                cname = parts[1].split(":")[1]
+            else:
+                cname = parts[-2].split(":")[1]
             i, names = get_function_names(i+2,lines)
             m[cname] = names
         else:
