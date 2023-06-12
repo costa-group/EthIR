@@ -1130,7 +1130,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         memory_creation.append(block)
         
     if load_useless_block and store_useless_block and maintain_variable and involved_variable != "":
-        if stack[0].find(involved_variable)!=-1 and stack_old[1::] == stack[1::]:
+        
+        if type(stack[0]) != tuple and stack[0].find(involved_variable)!=-1 and stack_old[1::] == stack[1::]:
             # print("UNOOO: "+str(block))
             useless_blocks.append(block)
     # after_stack =  compute_stack_size(block_ins, len(init_stack))
