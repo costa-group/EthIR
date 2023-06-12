@@ -1992,7 +1992,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first = get_push_value(first)
 
             if isReal(first):
-                computed = (~first) & UNSIGNED_BOUND_NUMBER
+                computed = (~int(first)) & UNSIGNED_BOUND_NUMBER
             else:
                 computed = "NOT("+str(first)+")"
                 #computed = simplify(computed) if is_expr(computed) else computed
