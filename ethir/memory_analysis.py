@@ -114,18 +114,14 @@ class Analysis:
                 
     def get_analysis_results(self,pc,posrel):
         block = pc.split(":")[0]
-        # try:
-        #     block = int(block)
-        #     pass
-        # except ValueError: 
-        #     pass
-        if block.find("_")==-1:
+        try:
             block = int(block)
             pass
         except ValueError: 
             pass
         id = pc.split(":")[1] 
         return self.blocks_info[block].get_state_at_instr(int(id)+posrel)
+
 
     def get_block_results(self,blockid): 
         return self.blocks_info[blockid]
@@ -175,12 +171,6 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     else:
         raise Exception("Type for memory analysis uncorrect")
         
-    # MemoryAbstractState.initglobals(slots,accesses)
-    # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
-    # memory.analyze()
-
->>>>>>> master
-
     # MemoryAbstractState.initglobals(slots,accesses)
     # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
     # memory.analyze()
