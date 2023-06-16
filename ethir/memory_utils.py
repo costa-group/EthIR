@@ -50,11 +50,13 @@ def order_accesses(text):
 
 def get_block_id(pc):
     block = pc.split(":")[0]
-    try:
+    if str(block).find("_")==-1:
         block = int(block)
-        pass
-    except ValueError: 
-        pass
+    # try:
+    #     block = int(block)
+    #     pass
+    # except ValueError: 
+    #     pass
     return block
 
 
