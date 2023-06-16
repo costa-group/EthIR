@@ -166,7 +166,11 @@ class InputHelper:
     
     def _compile_solidity_runtime(self):
         solc = get_solc_executable(self.solc_version)
-        cmd = solc+" --bin-runtime %s" % self.source
+
+        options = ""
+        options = self._get_optimize_options()
+        
+        cmd = solc+" --bin-runtime" +options+ " %s" % self.source
 
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
@@ -437,16 +441,20 @@ class InputHelper:
         optimization = compiler_opt["optimize"]
         run = compiler_opt["runs"]
         yul = compiler_opt["no-yul"]
-            
+        viaIr = compiler_opt["via-ir"]
+        
         if compiler_opt["optimize"] and run==-1:
             opt = "--optimize"
         elif run !=-1:
             opt = "--optimize-run "+str(run)
 
+        if viaIr:
+            opt+= " --via-ir"
+            
         if yul and (self.solc_version != "v4" and self.solc_version != "v5"):
             opt+=" --no-optimize-yul"
 
         if not yul and (self.solc_version == "v5"):
             opt+=" --optimize-yul"
-
+            
         return opt
