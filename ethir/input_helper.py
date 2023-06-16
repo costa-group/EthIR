@@ -170,8 +170,9 @@ class InputHelper:
         options = ""
         options = self._get_optimize_options()
         
-        cmd = solc+" --bin-runtime" +options+ " %s" % self.source
-
+        cmd = solc+" --bin-runtime " +options+ " %s" % self.source
+        print(cmd)
+        
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
         libs = set(libs)
