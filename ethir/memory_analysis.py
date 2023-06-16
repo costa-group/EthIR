@@ -99,10 +99,10 @@ class Analysis:
         jump_target = basic_block.get_jump_target()        
         if (jump_target != 0 and jump_target != -1) and self.blocks_info.get(jump_target) == None:
             self.pending.append(jump_target)
-            print("************")
-            print(block_id)
-            print(jump_target)
-            print(self.vertices[block_id].display())
+            # print("************")
+            # print(block_id)
+            # print(jump_target)
+            # print(self.vertices[block_id].display())
             self.blocks_info[jump_target] = BlockAnalysisInfo(self.vertices[jump_target], input_state)
 
         elif (jump_target != 0 and jump_target != -1) and self.blocks_info.get(jump_target).revisit_block(input_state,jump_target): 
@@ -125,8 +125,6 @@ class Analysis:
         # except ValueError: 
         #     pass
         id = pc.split(":")[1] 
-        print(pc)
-        print(block)
         return self.blocks_info[block].get_state_at_instr(int(id)+posrel)
 
     def get_block_results(self,blockid): 
