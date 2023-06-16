@@ -1008,7 +1008,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
     update_stack_heigh(block,len(stack),0)
     Edge = namedtuple("Edge", ["v1", "v2"]) # Factory Function for tuples is used as dictionary key
-    print(block)
 
     if not check_block_address(block):
     # if block < 0:
