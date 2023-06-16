@@ -144,10 +144,10 @@ class MemoryOffsetAbstractState:
             if slottopm1 != None and ctop == None: 
                 stack[top-1] = self.add_slots(slottopm1,set([TOP]))
             
-            if slottop != None and ctop != None:
-                print("ADD ERROR top [" + pc + "]:" + str(slottop) + " -- " + str(ctop))
-            if slottopm1 != None and ctopm1 != None:
-                print("ADD ERROR top-1 [" + pc + "]:" + str(slottopm1) + " -- " + str(ctopm1))
+            # if slottop != None and ctop != None:
+            #     print("ADD ERROR top [" + pc + "]:" + str(slottop) + " -- " + str(ctop))
+            # if slottopm1 != None and ctopm1 != None:
+            #     print("ADD ERROR top-1 [" + pc + "]:" + str(slottopm1) + " -- " + str(ctopm1))
 
 
         elif op_code == "MLOAD": 
@@ -155,8 +155,13 @@ class MemoryOffsetAbstractState:
             self.perform_mload(self.stack, stack, memory, top)
 
         #     else: 
-        #         print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
-        #         self.accesses.add_read_access(pc,"unknown")                                   
+        #     print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
+
+        
+
+        
+        #         self.accesses.add_read_access(pc,"unknown")
+        
             
 
         elif op_code == "MSTORE8":
@@ -167,8 +172,8 @@ class MemoryOffsetAbstractState:
             self.perform_mstore(self.stack,memory,top)
         #     else: 
         #         print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
-        #         self.accesses.add_write_access(pc,"unknown")                                
-
+        #         self.accesses.add_write_access(pc,"unknown")
+        
         elif is_mstore(instr,"64"):
             self.accesses.add_write_access(pc,"mem40")
 
@@ -206,10 +211,11 @@ class MemoryOffsetAbstractState:
         elif op_code in ["CALLDATACOPY","CODECOPY","RETURNDATACOPY"]:
             self.add_write_access_top(top,pc,self.stack)
 
-        elif op_code == "EXTCODECOPY" or op_code.startswith("CREATE"):
+        elif op_code == "EXTCODECOPY":
             self.add_write_access_top(top-1,pc,self.stack)
 
-
+        elif op_code.startswith("CREATE"):
+            self.add_read_access_top(top-1,pc,self.stack)
 
         return MemoryOffsetAbstractState(stack_res, stack, memory)
 

@@ -50,19 +50,30 @@ class MemoryAccesses:
         # print("Evaluating potential optimizations  READ: " + " " + str(self.readset))
         
         for writepp in self.writeset:
+            found = False
+
+            if self.is_for_revert(writepp): 
+                print("MEMRES: Found write for revert -> " + writepp)
+                continue
+
             for slot in self.writeset[writepp]: 
 
                 # Check write block...
                 visited = set({})
                 block_id = get_block_id(writepp)
-                found,pp = self.search_read(slot, block_id, visited)
+
+                found = self.search_read(writepp, slot, block_id, visited)
+                print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
+
                 if found: 
-                    print("MEMRES: Found read -> " + writepp + " : " + pp)
-                elif self.is_for_revert(writepp): 
-                    print("MEMRES: Found write for revert -> " + writepp)
-                elif not self.found_outofslot:
-                    func = get_function_from_blockid(writepp)
-                    print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " : " + str(pp) + " --> " + str(self.contract_source) + " " + str(self.contract_name) + "--" + str(func))
+                    print("MEMRES: Found read for -> " + writepp)
+                    break
+                    
+                
+            if not found and not self.found_outofslot:
+                func = get_function_from_blockid(writepp)
+                print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " --> " + str(self.contract_source) + " " + str(self.contract_name) + "--" + str(func))
+
 
     def set_found_outofslot(self):
         self.found_outofslot = True
@@ -73,103 +84,54 @@ class MemoryAccesses:
         instr = block_info.get_instructions()[-1]
         return instr == "REVERT"
 
-    def process_useless_mstores (self):
-
-        print("*********** Procesando MSTORES")
-
-        for writepp in self.writeset:
-            for slot in self.writeset[writepp]: 
-                print ("Procesando write " + writepp + " --  " + str(slot))
-                if slot.offset != TOP and slot.offset != TOPK:
-                    self.process_slot_rewritten(writepp,slot)
-
-    def process_slot_rewritten(self, writepp, slot): 
-        for writepp2 in self.writeset: 
-            for slot2 in self.writeset[writepp2]: 
-                if (slot == slot2 and writepp != writepp2): 
-                    block_from = get_block_id(writepp)
-                    block_to = get_block_id(writepp2)
-                    visited = set({})
-                    path = []
-                    print("Procesando: Encontrado slot igual" + str(slot) + " " + writepp + "--" +  writepp2)
-                    print("Procesando: Buscando caminos " + str(block_from) + "--" +  str(block_to))
-                    foundpath, foundread = self.find_all_paths(slot,block_from,block_to, visited, path)
-                    print("Procesando Tengo found " + str(foundpath) + " " + str(foundread))
-                    if foundpath and not foundread: 
-                        print ("Procesando Found useless write " + str(slot) + " " + writepp + "--" +  writepp2)
-
-    def find_all_paths (self, slot, blkfrom, blkto, visited, path): 
-
-        print("     Procesando " + str(blkfrom) + " " + str(visited))
-        if blkfrom in visited: 
-            return False, False
-
-        visited.add(blkfrom)
-        path.append(blkfrom)
-
-        found = False
-        if blkfrom == blkto:
-            print ("Procesando PATH FOUND " + str(path))
-            foundread = self.blockset_contains_read(visited,slot)
-            # for block in visited:
-            #     filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
-            #     for readblock in filtered: 
-            #         foundread = self.eval_read_write_access(slot,self.readset[readblock])
-
-            return True, foundread
-        else: 
-            blockinfo = self.vertices[blkfrom]
-
-            foundpath1 = False
-            foundpath2 = False
-            jump_target = blockinfo.get_jump_target()        
-            if (jump_target != 0 and jump_target != -1):
-                foundpath1, foundread = self.find_all_paths(slot,jump_target, blkto, visited, path) 
-
-            jump_target = blockinfo.get_falls_to()
-            if jump_target != None and not foundread: 
-                foundpath2, foundread  = self.find_all_paths(slot,jump_target, blkto, visited, path) 
-
-        visited.remove(blkfrom)
-        path.pop()
-
-        return (foundpath1 or foundpath2, found)
-
     def blockset_contains_read (self, blocks, slot): 
         for block in blocks:
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             for readblock in filtered: 
+                #print("  PATH READBLOCK " + str(readblock) + " " + str(self.readset[readblock]))
                 foundread = self.eval_read_write_access(slot,self.readset[readblock])
-                if foundread: 
+                if foundread:
                     return True
         return False
     
-    def search_read(self, slot, block_id, visited): 
+    def search_read(self, writepp, slot, block_id, visited): 
+        print ("XXXX Evaluando " + str(slot) + " -- " + str(block_id))
         if (block_id in visited): 
             return False, None
         
+        ## Check if there exists a read of "slot" in the current block
         filtered = list(filter(lambda x: x.startswith(str(block_id)+":"), self.readset))
         for readblock in filtered: 
-            #print("Searching: " + str(slot) + " " + str(block_id) + " ** " + str(self.readset[readblock]))
-            #if slot in self.readset[readblock]: 
-            #    return True, readblock
             found = self.eval_read_write_access(slot,self.readset[readblock])
             if found: 
-                return True, readblock
+                
+                return True
+
+        ## Check if there exists a write of "slot" in the current block
+        filteredW = list(filter(lambda x: x.startswith(str(block_id)+":"), self.writeset))
+        for writeblock in filteredW:
+
+            if writeblock == writepp: 
+                continue 
+
+            found = self.eval_write_write_access(slot,self.writeset[writeblock])
+            if found: 
+                return False
 
         found = False
-        pp = None
         visited.add(block_id)
         blockinfo = self.vertices[block_id]
         jump_target = blockinfo.get_jump_target()        
         if (jump_target != 0 and jump_target != -1):
-           found, pp = self.search_read(slot, jump_target, visited) 
+           found = self.search_read(writepp,slot, jump_target, visited) 
 
         jump_target = blockinfo.get_falls_to()
         if jump_target != None and not found: 
-           found, pp = self.search_read(slot, jump_target, visited) 
+           found = self.search_read(writepp,slot, jump_target, visited) 
 
-        return found, pp
+        print ("XXXX Return Evaluando " + str(slot) + " -- " + str(block_id) + " ** " + str(found))
+
+        return found
 
     def eval_read_write_access (self,writeaccess,readset): 
         if isinstance(writeaccess, str): 
@@ -181,8 +143,25 @@ class MemoryAccesses:
                     continue
                 if (writeaccess.slot == readaccess.slot and 
                     (writeaccess.offset == readaccess.offset or readaccess.offset == TOP or writeaccess.offset == TOP)): 
+                    print ("PATH Read found " + str(readaccess))
                     return True
         return False
+
+    def eval_write_write_access (self,writeaccess,writeset): 
+        if isinstance(writeaccess, str): 
+            return False
+        elif len(writeset) > 1: 
+            return False
+        elif writeaccess.offset == TOP or writeaccess.offset == TOPK: 
+            return False
+        else: 
+            for writeoption in writeset: 
+                if (writeaccess.slot == writeoption.slot and 
+                    (writeaccess.offset == writeoption.offset and writeoption.offset != TOP and writeoption.offset != TOPK)): 
+                    print ("PATH truncated found " + str(writeoption))
+                    return True
+        return False
+
 
     def get_cfg_info (self,block_in): 
         result = []

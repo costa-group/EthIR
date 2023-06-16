@@ -1014,7 +1014,10 @@ updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes60(opcode, value, index_variables):
     
-    if opcode == "PUSH":
+    if opcode.startswith("PUSH0"):
+        v1,updated_variables = get_new_variable(index_variables)
+        instr = v1+" = 0"
+    elif opcode.startswith("PUSH"):
         v1,updated_variables = get_new_variable(index_variables)
         dec_value = int(value, 16) #convert hex to dec
         instr = v1+" = " + str(dec_value)
@@ -1187,7 +1190,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
         else:
             rule.add_instr(value)
     elif opcode_name[:4] in opcodes60:
-        value, index_variables = translateOpcodes60(opcode_name[:4], opcode_rest, variables)
+        value, index_variables = translateOpcodes60(opcode_name, opcode_rest, variables)
         rule.add_instr(value)
     elif opcode_name[:3] in opcodes80:
         value, index_variables = translateOpcodes80(opcode_name[:3], opcode_name[3:], variables)

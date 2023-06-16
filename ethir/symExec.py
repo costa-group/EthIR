@@ -575,12 +575,8 @@ def mapping_non_push_instruction(current_line_content, current_ins_address, idx,
             idx += 1
         else:
             instr_name = current_line_content.split(" ")[0]
-            # print positions[idx]
-            # print name
-            # print current_line_content
-            # print instr_name
             # print "**********"
-            if name == instr_name or name == "INVALID" and instr_name == "ASSERTFAIL" or name == "KECCAK256" and instr_name == "SHA3" or name == "KECCAK256" and instr_name == "KECCAK256" or name == "SELFDESTRUCT" and instr_name == "SUICIDE":
+            if name == instr_name or (name == "INVALID" and instr_name == "ASSERTFAIL") or (name == "KECCAK256" and instr_name == "SHA3") or (name == "KECCAK256" and instr_name == "KECCAK256") or (name == "SELFDESTRUCT" and instr_name == "SUICIDE") or (name == "PUSH" and instr_name == "PUSH0"):
                 g_src_map.instr_positions[current_ins_address] = g_src_map.positions[idx]
                 idx += 1
                 break;
@@ -608,6 +604,11 @@ def collect_vertices(tokens):
     current_line_content = ""
     wait_for_push = False
     is_new_block = False
+
+    # for t in tokens:
+    #     print(t)
+        
+    # raise Exception
 
     for tok_type, tok_string, (srow, scol), _, line_number in tokens:
         if wait_for_push is True:
@@ -657,12 +658,13 @@ def collect_vertices(tokens):
             current_line_content = ""
             continue
         elif tok_type == NAME:
+            # print(tok_string)
             if tok_string == "JUMPDEST":
                 if last_ins_address not in end_ins_dict:
                     end_ins_dict[current_block] = last_ins_address
                 current_block = current_ins_address
                 is_new_block = False
-            elif tok_string == "STOP" or tok_string == "RETURN" or tok_string == "SUICIDE" or tok_string == "REVERT" or tok_string == "ASSERTFAIL":
+            elif tok_string == "STOP" or tok_string == "RETURN" or tok_string == "SUICIDE" or tok_string == "REVERT" or tok_string == "ASSERTFAIL" or tok_string == "INVALID":
                 jump_type[current_block] = "terminal"
                 end_ins_dict[current_block] = current_ins_address
             elif tok_string == "JUMP":
@@ -673,7 +675,7 @@ def collect_vertices(tokens):
                 jump_type[current_block] = "conditional"
                 end_ins_dict[current_block] = current_ins_address
                 is_new_block = True
-            elif tok_string.startswith('PUSH', 0):
+            elif tok_string.startswith('PUSH', 0) and not tok_string.startswith('PUSH0'):
                 wait_for_push = True
             is_new_line = False
         if tok_string != "=" and tok_string != ">":
@@ -736,7 +738,7 @@ def check_div_invalid_pattern(block,path):
             jumps_instr = vertices[jump].get_instructions()
             falls_instr = vertices[falls].get_instructions()
             
-            if (falls_instr[0].startswith("ASSERTFAIL")) and (check_div_invalid_bytecode(jumps_instr[1])):
+            if (falls_instr[0].startswith("ASSERTFAIL") or falls_instr[0].startswith("INVALID")) and (check_div_invalid_bytecode(jumps_instr[1])):
                 vertices[falls].activate_div_invalid_pattern()
                 if invalid_option == "div0":
                     annotate_invalid(path)
@@ -1001,6 +1003,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         print (path)
         print ("STACK")
         print (stack)
+        print("INSTRUCTIONS")
+        print (vertices[block].get_instructions())
 
     update_stack_heigh(block,len(stack),0)
     Edge = namedtuple("Edge", ["v1", "v2"]) # Factory Function for tuples is used as dictionary key
@@ -1111,8 +1115,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if debug_info:
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
-
-        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "REVERT":
+            
+        if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "INVALID" or instr.strip() == "REVERT":
             j,new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
             if j == "jump":
                 vertices[block].set_block_type("terminal")
@@ -1134,7 +1138,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         memory_creation.append(block)
         
     if load_useless_block and store_useless_block and maintain_variable and involved_variable != "":
-        if stack[0].find(involved_variable)!=-1 and stack_old[1::] == stack[1::]:
+        
+        if type(stack[0]) != tuple and stack[0].find(involved_variable)!=-1 and stack_old[1::] == stack[1::]:
             # print("UNOOO: "+str(block))
             useless_blocks.append(block)
     # after_stack =  compute_stack_size(block_ins, len(init_stack))
@@ -1171,7 +1176,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         else:
             ins = []
 
-        if ("ASSERTFAIL " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
+        if ("ASSERTFAIL " in ins or "INVALID " in ins) and (not (check_div_invalid_bytecode(block_ins[1]))):
             if is_getter_function(path):
                 vertices[invalid_block].activate_assertfail_in_getter()
             else:
@@ -1188,10 +1193,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             ins = vertices[falls].get_instructions()
             invalid_block = falls
 
-        if "ASSERTFAIL " in ins:
+        if "ASSERTFAIL " in ins or "INVALID " in ins:
             blocks_memArr[block] = (jump,falls)
                 
-    if invalid_option == "all" and "ASSERTFAIL " in block_ins:
+    if invalid_option == "all" and ("ASSERTFAIL " in block_ins or "INVALID " in block_ins):
         annotate_invalid(path)
 
     check_div_invalid_pattern(block,path)
@@ -1768,6 +1773,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             else:
                 first = to_symbolic(first)
                 second = to_symbolic(second)
+                third = to_symbolic(third)
                 if third == 0:
                     computed = 0
                 else:
@@ -2108,7 +2114,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first = get_push_value(first)
 
             if isReal(first):
-                computed = (~first) & UNSIGNED_BOUND_NUMBER
+                computed = (~int(first)) & UNSIGNED_BOUND_NUMBER
             else:
                 computed = "NOT("+str(first)+")"
                 #computed = simplify(computed) if is_expr(computed) else computed
@@ -2772,7 +2778,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             if store_useless_block:
                 if involved_variable == "":
                     involved_variable = potential_variable
-                if stored_address.find(involved_variable)==-1 or stored_value !=0:
+                
+                if str(stored_address).find(involved_variable)==-1 or stored_value !=0:
                     maintain_variable = False
                     # print ("PERO BUENO")
                     # print(block)
@@ -2887,7 +2894,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stack_sym.insert(0,"SLOAD("+first_sym+")")
             
             position = get_push_value(position)
-
+            
             #Model storage arrays in C
 
             if isinstance(st_id,int) and st_id !=-1 and st_arr[0] and st_arr[1]:
@@ -2921,6 +2928,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             ls_cont[2]+=1
             statevar_name = ""
+            
             if isReal(position) and position in global_state["Ia"]:
                 value = global_state["Ia"][position]
                 stack.insert(0, value)
@@ -2967,7 +2975,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 r_val = update_sstore_map(mapping_state_variables,statevar_name_original,statevar_name,p_s,position,v,g_src_map._get_var_names())
                 if r_val:
                     update_fields[position] = r_val
-                
+                    
         else:
             raise ValueError('STACK underflow')
 
@@ -3149,6 +3157,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     #
     #  60s & 70s: Push Operations
     #
+    elif opcode == "PUSH0":
+        global_state["pc"] = global_state["pc"] + 1
+        stack.insert(0, (0,block))
+        
     elif opcode.startswith('PUSH', 0):  # this is a push instruction
         position = int(opcode[4:], 10)
         if debug_info:
@@ -4076,7 +4088,7 @@ def get_scc(edges):
         scc_multiple.update(scc)
         return scc_multiple
         
-def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None,mem_abs = None,sto = None, opt_bytecode = False):    
+def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None,mem_abs = None,sto = None, opt_bytecode = False, mem_analysis = None):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -4220,20 +4232,26 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         # print("BASE REF VALUES")
         # print(base_refs)
         # print("\n\n\n")
+
+        memory_result = []
         
-        begin = dtimer()
-
+        if mem_analysis != None:
         
-        memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, debug_info)        
+            begin = dtimer()
 
-        end = dtimer()
+            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
 
-        print("Memory Analysis: "+str(end-begin)+"s\n")
+            end = dtimer()
 
-        
-        check_cfg_option(cfg,cname,execution,memory_result)
+            print("Memory Analysis: "+str(end-begin)+"s\n")
 
-        if cfg != "memory":
+            check_cfg_option(cfg,cname,execution, memory_result)
+
+        else:
+
+            check_cfg_option(cfg,cname,execution)
+            
+        if mem_analysis == None:
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         else:
             print("*************************************************************")

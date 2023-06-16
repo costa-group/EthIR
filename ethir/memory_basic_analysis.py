@@ -97,8 +97,8 @@ class MemoryAbstractState:
 
         elif op_code == "PUSH1" and instr.split()[1] == "0x60": 
             stack[self.stack_pos] = ["null"]
-            self.accesses.add_allocation_init(pc,"null")                                
-
+            self.accesses.add_allocation_init(pc,"null")
+            
         elif op_code.startswith("LOG") or op_code == "RETURN" or op_code == "REVERT": 
             if top in stack: 
                 self.add_read_access(top,pc,stack)
@@ -108,6 +108,9 @@ class MemoryAbstractState:
                 self.add_read_access(top,pc,stack)
             else:  
                 self.accesses.add_read_access(pc,"mem0") 
+
+        elif op_code.startswith("CREATE"):
+            self.add_read_access(top-1,pc,stack)
 
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access(top-3,pc,stack)
@@ -120,7 +123,7 @@ class MemoryAbstractState:
         elif op_code in ["CALLDATACOPY","CODECOPY","RETURNDATACOPY"]:
             self.add_write_access(top,pc,stack)
 
-        elif op_code == "EXTCODECOPY" or op_code.startswith("CREATE"):
+        elif op_code == "EXTCODECOPY":
             self.add_write_access(top-1,pc,stack)
 
         elif op_code == "MLOAD": 

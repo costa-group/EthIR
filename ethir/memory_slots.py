@@ -76,6 +76,7 @@ class SlotsAbstractState:
             #op_code == "CALL" or 
             #op_code == "STATICCALL" or 
             #op_code == "DELEGATECALL" or 
+            #op_code == "CREATE2" or 
             op_code == "RETURN" or 
             op_code == "REVERT" or 
             op_code == "STOP" or 

@@ -5,7 +5,7 @@ import memory_slots
 from memory_accesses import MemoryAccesses
 from memory_basic_analysis import MemoryAbstractState
 from memory_offset_analysis import MemoryOffsetAbstractState
-from memory_constancy import ConstantsAbstractState
+from memory_offset import OffsetAnalysisAbstractState
 from memory_slots import SlotsAbstractState
 from memory_utils import set_memory_utils_globals
 
@@ -121,8 +121,10 @@ class Analysis:
         #     pass
         if block.find("_")==-1:
             block = int(block)
-        
-        id = pc.split(":")[1]
+            pass
+        except ValueError: 
+            pass
+        id = pc.split(":")[1] 
         return self.blocks_info[block].get_state_at_instr(int(id)+posrel)
 
     def get_block_results(self,blockid): 
@@ -133,11 +135,11 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, debug): 
+def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug): 
     
     global debug_info 
 
-    debug_info = False
+    debug_info = True
     
     set_memory_utils_globals(compblocks, fblockmap)
     print("Slots analysis started!")
@@ -152,16 +154,32 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, deb
 
     print("Slots analysis finished!")
 
-    constants = Analysis(vertices,0, ConstantsAbstractState(0,{}))
+    constants = Analysis(vertices,0, OffsetAnalysisAbstractState(0,{}))
     constants.analyze()
 
     print("Constants analysis finished!")
 
     print("Starting offset memory analysis " + str(cname))
 
-    MemoryOffsetAbstractState.init_globals(slots,accesses, constants)
-    memory = Analysis(vertices,0, MemoryOffsetAbstractState(0,{},{}))
-    memory.analyze()
+    if type_analysis == "baseref":
+        MemoryAbstractState.initglobals(slots,accesses)
+        memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
+        memory.analyze()
+
+    
+    elif type_analysis == "offset":
+        MemoryOffsetAbstractState.init_globals(slots,accesses, constants)
+        memory = Analysis(vertices,0, MemoryOffsetAbstractState(0,{},{}))
+        memory.analyze()
+
+    else:
+        raise Exception("Type for memory analysis uncorrect")
+        
+    # MemoryAbstractState.initglobals(slots,accesses)
+    # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
+    # memory.analyze()
+
+>>>>>>> master
 
     # MemoryAbstractState.initglobals(slots,accesses)
     # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
@@ -179,7 +197,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, deb
     #     print("\n\n")
 
     accesses.process_free_mstores()
-    accesses.process_useless_mstores()
+    # accesses.process_useless_mstores()
 
     print('Free memory analyss finished\n\n')
 
@@ -189,8 +207,6 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, deb
     print("Memory read accesses Contract"+ cname+": "+str(len(accesses.readset.keys())))
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
-
-
     return slots, memory, accesses
 
 
