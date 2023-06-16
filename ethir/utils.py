@@ -720,6 +720,8 @@ def search_for_index(field,field_map):
 
 
 def is_integer(num):
+    if num.find("_") !=-1:
+        return -1
     try:
         val = int(num)
     except:
@@ -968,6 +970,9 @@ def all_integers(variables):
     int_vals = []
     try:
         for v in variables:
+            if v.find("_")!=-1:
+                return False,variables
+            
             x = int(v)
             int_vals.append(x)
         return True, int_vals
