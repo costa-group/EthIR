@@ -161,10 +161,8 @@ class SourceMap:
         solc = get_solc_executable(solc_v)
 
         options = ""
-        print(opt_options)
         
         cmd = solc+" --combined-json asm "+opt_options+" %s" % cls.parent_filename
-        print(cmd)
         out = run_command(cmd)
         out = json.loads(out)
 
