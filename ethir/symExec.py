@@ -1114,6 +1114,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         if debug_info:
             print ("Stack despues de la ejecucion de la instruccion "+ instr)
             print (stack)
+            print("Symbolic stack")
+            print(stack_sym)
             
         if instr.strip() == "STOP" or instr.strip() == "ASSERTFAIL" or instr.strip() == "INVALID" or instr.strip() == "REVERT":
             j,new_block_ins = remove_unnecesary_opcodes(instr_idx, block_ins)
@@ -3159,7 +3161,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     elif opcode == "PUSH0":
         global_state["pc"] = global_state["pc"] + 1
         stack.insert(0, (0,block))
-        
+        stack_sym.insert(0, "PUSH0")
     elif opcode.startswith('PUSH', 0):  # this is a push instruction
         position = int(opcode[4:], 10)
         if debug_info:
