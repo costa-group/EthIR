@@ -61,6 +61,7 @@ class MemoryAccesses:
                 # Check write block...
                 visited = set({})
                 block_id = get_block_id(writepp)
+
                 found = self.search_read(writepp, slot, block_id, visited)
                 print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
 
@@ -72,6 +73,7 @@ class MemoryAccesses:
             if not found and not self.found_outofslot:
                 func = get_function_from_blockid(writepp)
                 print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " --> " + str(self.contract_source) + " " + str(self.contract_name) + "--" + str(func))
+
 
     def set_found_outofslot(self):
         self.found_outofslot = True

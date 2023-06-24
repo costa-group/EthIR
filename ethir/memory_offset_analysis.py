@@ -155,8 +155,13 @@ class MemoryOffsetAbstractState:
             self.perform_mload(self.stack, stack, memory, top)
 
         #     else: 
-        #         print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
-        #         self.accesses.add_read_access(pc,"unknown")                                   
+        #     print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
+
+        
+
+        
+        #         self.accesses.add_read_access(pc,"unknown")
+        
             
 
         elif op_code == "MSTORE8":
@@ -167,8 +172,8 @@ class MemoryOffsetAbstractState:
             self.perform_mstore(self.stack,memory,top)
         #     else: 
         #         print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
-        #         self.accesses.add_write_access(pc,"unknown")                                
-
+        #         self.accesses.add_write_access(pc,"unknown")
+        
         elif is_mstore(instr,"64"):
             self.accesses.add_write_access(pc,"mem40")
 

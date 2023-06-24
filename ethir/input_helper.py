@@ -166,8 +166,13 @@ class InputHelper:
     
     def _compile_solidity_runtime(self):
         solc = get_solc_executable(self.solc_version)
-        cmd = solc+" --bin-runtime %s" % self.source
 
+        options = ""
+        options = self._get_optimize_options()
+        
+        cmd = solc+" --bin-runtime " +options+ " %s" % self.source
+        print(cmd)
+        
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
         libs = set(libs)
@@ -380,7 +385,7 @@ class InputHelper:
     def _get_solidity_version(self):
         f = open(self.source,"r")
         lines = f.readlines()
-        pragma = filter(lambda x: x.find("pragma solidity")!=-1, lines)
+        pragma = list(filter(lambda x: x.find("pragma solidity")!=-1, lines))
         if pragma == []:
             return "v8" #Put here the highest version
 
@@ -406,11 +411,11 @@ class InputHelper:
         return self.solc_version
 
     def _get_suitable_version(self,pragmas):
-        v4 = len(filter(lambda x: x.find("0.4")!=-1,pragmas))
-        v5 = len(filter(lambda x: x.find("0.5")!=-1,pragmas))
-        v6 = len(filter(lambda x: x.find("0.6")!=-1,pragmas))
-        v7 = len(filter(lambda x: x.find("0.7")!=-1,pragmas))
-        v8 = len(filter(lambda x: x.find("0.8")!=-1,pragmas))
+        v4 = len(list(filter(lambda x: x.find("0.4")!=-1,pragmas)))
+        v5 = len(list(filter(lambda x: x.find("0.5")!=-1,pragmas)))
+        v6 = len(list(filter(lambda x: x.find("0.6")!=-1,pragmas)))
+        v7 = len(list(filter(lambda x: x.find("0.7")!=-1,pragmas)))
+        v8 = len(list(filter(lambda x: x.find("0.8")!=-1,pragmas)))
         m = max([v4,v5,v6,v7,v8])
 
         if m == v4:
@@ -437,16 +442,20 @@ class InputHelper:
         optimization = compiler_opt["optimize"]
         run = compiler_opt["runs"]
         yul = compiler_opt["no-yul"]
-            
+        viaIr = compiler_opt["via-ir"]
+        
         if compiler_opt["optimize"] and run==-1:
             opt = "--optimize"
         elif run !=-1:
             opt = "--optimize-run "+str(run)
 
+        if viaIr:
+            opt+= " --via-ir"
+            
         if yul and (self.solc_version != "v4" and self.solc_version != "v5"):
             opt+=" --no-optimize-yul"
 
         if not yul and (self.solc_version == "v5"):
             opt+=" --optimize-yul"
-
+            
         return opt

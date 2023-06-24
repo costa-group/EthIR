@@ -28,16 +28,17 @@ class SourceMap:
     sources = {}
     ast_helper = None
     
-    def __init__(self, cname, parent_filename, input_type, root_path="",sol_version=""):
+    def __init__(self, cname, parent_filename, input_type, root_path="",sol_version="",opt_options = ""):
         self.root_path = root_path
         self.cname = cname
         self.input_type = input_type
         #self.runtime = runtime
         self.solc_version = sol_version
+        self.opt_options = opt_options
         if not SourceMap.parent_filename:
             SourceMap.parent_filename = parent_filename
             if input_type == "solidity":
-                SourceMap.position_groups = SourceMap._load_position_groups(self.solc_version)
+                SourceMap.position_groups = SourceMap._load_position_groups(self.solc_version,self.opt_options)
             elif input_type == "standard json":
                 SourceMap.position_groups = SourceMap._load_position_groups_standard_json()
             else:
@@ -154,13 +155,14 @@ class SourceMap:
         return output["contracts"]
 
     @classmethod
-    def _load_position_groups(cls,solc_v):
+    def _load_position_groups(cls,solc_v,opt_options):
         #print solc_v
 
         solc = get_solc_executable(solc_v)
-        
-        cmd = solc+" --combined-json asm %s" % cls.parent_filename
 
+        options = ""
+        
+        cmd = solc+" --combined-json asm "+opt_options+" %s" % cls.parent_filename
         out = run_command(cmd)
         out = json.loads(out)
 
