@@ -333,7 +333,8 @@ class MemAccess:
 
         if self.offset == TOP or offset == TOP: 
             return MemAccess(self.slot,TOP)
-
+        elif self.offset+offset % 32 != 0: 
+            return MemAccess(self.slot,TOP)
         elif self.offset == TOPK or offset == TOPK or self.offset+offset > K: 
             return MemAccess(self.slot,TOPK)
 

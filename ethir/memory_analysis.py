@@ -8,6 +8,7 @@ from memory_offset_analysis import MemoryOffsetAbstractState
 from memory_offset import OffsetAnalysisAbstractState
 from memory_slots import SlotsAbstractState
 from memory_utils import set_memory_utils_globals
+from memory_optimizer_connector import MemoryOptimizerConnector
 
 global debug_info
 
@@ -186,7 +187,8 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     #     print("\n\n")
 
     accesses.process_free_mstores()
-    # accesses.process_useless_mstores()
+
+
 
     print('Free memory analyss finished\n\n')
 
@@ -196,6 +198,10 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("Memory read accesses Contract"+ cname+": "+str(len(accesses.readset.keys())))
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
+    print("********************************** INIT")
+    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices)
+    memopt.process_blocks()
+    print("********************************** END")
 
 
     return slots, memory, accesses
