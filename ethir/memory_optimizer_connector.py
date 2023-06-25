@@ -65,7 +65,7 @@ class MemoryOptimizerConnector :
         for elem1 in set1: 
             for elem2 in set2: 
                 areequals = self.are_equal(elem1,elem2)
-                if areequals == EQUALS or areequals == NONEQUALS: 
+                if areequals == EQUALS or areequals == UNKOWN: 
                     return UNKOWN
         
         return NONEQUALS
@@ -78,9 +78,10 @@ class MemoryOptimizerConnector :
             return NONEQUALS
         
         ## We have a tuple
+
         if access1.slot != access2.slot: 
             return NONEQUALS
-        
+
         if access1.offset == TOP or access2.offset == TOP: 
             return UNKOWN
 
