@@ -1,4 +1,4 @@
-from memory_utils import TOP
+from memory_utils import TOP, TOPK
 
 
 global EQUALS 
@@ -23,7 +23,7 @@ class MemoryOptimizerConnector :
     def process_blocks (self): 
         for pc in self.writeset:
             block = pc.split(":")[0]
-            print("\n\nBuscando en el bloque " + pc + " " + block)
+#            print("\n\nBuscando en el bloque " + pc + " " + block)
 
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             for readpc in filtered: 
@@ -32,9 +32,9 @@ class MemoryOptimizerConnector :
                 wset = self.writeset[pc]
                 rset = self.readset[readpc]
                 res = self.eval_pcs_relation(wset,rset)
-                print("Read - Comparando " + block + " " + str(wset) + " " + str(rset) + " --> " + str(res))
+#                print("Read - Comparando " + block + " " + str(pc) + "**" + str(readpc) + " " + str(wset) + " " + str(rset) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
-                    print("**************************************")
+#                    print("**************************************")
                     self.optimizable_blocks.add_block_info(block,pc,readpc,res)
 
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.writeset))
@@ -44,9 +44,9 @@ class MemoryOptimizerConnector :
                 wset = self.writeset[pc]
                 wset2 = self.writeset[writepc]
                 res = self.eval_pcs_relation(wset,wset2)
-                print("Write - Comparando " + block + str(wset) + " " + str(wset2) + " --> " + str(res))
+#                print("Write - Comparando " + block + " " + str(pc) + "**" + str(writepc) + " " + str(wset) + " " + str(wset2) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
-                    print("**************************************")
+#                    print("**************************************")
                     self.optimizable_blocks.add_block_info(block,pc,writepc,res)
 
         self.optimizable_blocks.print_blocks()
@@ -82,8 +82,15 @@ class MemoryOptimizerConnector :
         if access1.slot != access2.slot: 
             return NONEQUALS
 
+        # Same baseref
         if access1.offset == TOP or access2.offset == TOP: 
             return UNKOWN
+
+        if access1.offset == TOPK and access2.offset == TOPK: 
+            return UNKOWN
+
+        # if access1.offset == TOPK or access2.offset == TOPK: 
+        #     return NONEQUALS
 
         if access1.offset == access2.offset: 
             return EQUALS
@@ -97,8 +104,7 @@ class OptimizableBlocks:
         self.vertices = vertices    
 
     def add_block_info(self,block,pc1,pc2,cmpres):
-        print("Adding block info " + block)
-
+#        print("Adding block info " + block)
 
         if block not in self.optimizable_blocks:
             instr = self.vertices[int(block)].get_instructions()
@@ -134,8 +140,8 @@ class OptimizableBlockInfo:
 
 class CmpPair: 
     def __init__(self,pc1,pc2):
-        self.pc1 = pc1
-        self.pc2 = pc2
+        self.pc1 = pc1.split(":")[1]
+        self.pc2 = pc2.split(":")[1]
     def __repr__(self):
         return "<" + str(self.pc1) + "," + str(self.pc2) + ">"
     

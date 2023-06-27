@@ -95,7 +95,6 @@ class MemoryAccesses:
         return False
     
     def search_read(self, writepp, slot, block_id, visited): 
-        print ("XXXX Evaluando " + str(slot) + " -- " + str(block_id))
         if (block_id in visited): 
             return False, None
         
@@ -128,8 +127,6 @@ class MemoryAccesses:
         jump_target = blockinfo.get_falls_to()
         if jump_target != None and not found: 
            found = self.search_read(writepp,slot, jump_target, visited) 
-
-        print ("XXXX Return Evaluando " + str(slot) + " -- " + str(block_id) + " ** " + str(found))
 
         return found
 
