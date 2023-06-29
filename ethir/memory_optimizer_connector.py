@@ -107,8 +107,11 @@ class OptimizableBlocks:
 #        print("Adding block info " + block)
 
         if block not in self.optimizable_blocks:
-            instr = self.vertices[int(block)].get_instructions()
-            
+            if block.find("_") != -1:
+                instr = self.vertices[block].get_instructions()
+            else:
+                instr = self.vertices[int(block)].get_instructions()
+                
             self.optimizable_blocks[block] = OptimizableBlockInfo(block, list(instr))
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres)
