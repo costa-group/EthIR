@@ -1544,9 +1544,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             
             if isReal(first) and isReal(second):
-                # first = long(first)
-                # second = long(second)
-                
+                first = int(first)
+                second = int(second)
                 computed = first * second & UNSIGNED_BOUND_NUMBER
 
             else:
@@ -2022,8 +2021,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             stack_sym.insert(0,"AND("+first_sym+","+second_sym+")")
             
             if isReal(first_aux) and isReal(second_aux):
-                # first_aux = long(first_aux)
-                # second_aux = long(second_aux)
+                first_aux = int(first_aux)
+                second_aux = int(second_aux)
 
                 computed = first_aux & second_aux
 
@@ -2145,8 +2144,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             if isAllReal(first, second):
 
-                # first = long(first)
-                # second = long(second)
+                first = int(first)
+                second = int(second)
                 
                 if first >= 32 or first < 0 or byte_index < 0:
                     computed = 0
@@ -2181,7 +2180,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             new_var_name = gen.gen_arbitrary_var()
 
-            if s1 <64:
+            
+            if type(s1) == 'int' and s1 <64:
                 st_arr = (True,st_arr[1])
                 mapping_address_sto[new_var_name] = (st_id,block)
 
@@ -3295,7 +3295,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             sixth_sym = stack_sym.pop(0)
             seventh_sym = stack_sym.pop(0)
             
-            stack_sym.insert(0,"CALL("+first_sym+","+second_sym+","+third_sym+","+fourth_sym+","+fifht_sym+","+sixth_sym+","+seventh_sym+")")
+            stack_sym.insert(0,"CALL("+first_sym+","+second_sym+","+third_sym+","+fourth_sym+","+fifth_sym+","+sixth_sym+","+seventh_sym+")")
 
             
             outgas = get_push_value(outgas)
@@ -3382,7 +3382,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             sixth_sym = stack_sym.pop(0)
             seventh_sym = stack_sym.pop(0)
             
-            stack_sym.insert(0,"CALLCODE("+first_sym+","+second_sym+","+third_sym+","+fourth_sym+","+fifht_sym+","+sixth_sym+","+seventh_sym+")")
+            stack_sym.insert(0,"CALLCODE("+first_sym+","+second_sym+","+third_sym+","+fourth_sym+","+fifth_sym+","+sixth_sym+","+seventh_sym+")")
             
             transfer_amount = get_push_value(transfer_amount)
             start_data_input = get_push_value(start_data_input)
