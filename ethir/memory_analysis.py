@@ -204,8 +204,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices)
     memopt.process_blocks()
     print("********************************** END")
-
-
-    return slots, memory, accesses
+    
+    return slots, memory, accesses, memopt
 
 
