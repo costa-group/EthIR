@@ -48,6 +48,9 @@ num_calls = 0
 global num_loops
 num_loops = 0
 
+global memory_opt_blocks
+memory_opt_blocks = {}
+
 class Parameter:
     def __init__(self, **kwargs):
         attr_defaults = {
@@ -334,6 +337,7 @@ def initGlobalVars():
 
     global useless_blocks
     useless_blocks = []
+
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -4104,7 +4108,8 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global source_n
     global optimization
     global num_loops
-    
+    global memory_opt_blocks
+
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
     
@@ -4240,8 +4245,13 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
             begin = dtimer()
 
-            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
+            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)
 
+            
+            
+            
+            memory_opt_blocks = memory_result[3]
+            
             end = dtimer()
 
             print("Memory Analysis: "+str(end-begin)+"s\n")
@@ -4274,6 +4284,12 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         ##Add when both are != None
   
     return [], 0
+
+
+def get_memory_opt_block():
+    global memory_opt_blocks
+    
+    return memory_opt_blocks
 
 
 def analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version):
