@@ -411,6 +411,56 @@ def analyze_solidity(input_type='solidity'):
         six.print_(json.dumps(results))
     return exit_code
 
+
+def analyze_solidity(input_type='solidity'):
+    global args
+
+    x = dtimer()
+    is_runtime = True
+
+    compiler_opt = {}
+    compiler_opt["optimize"] = args.optimize_run
+    compiler_opt["no-yul"] = args.no_yul_opt
+    compiler_opt["runs"] = args.run
+    compiler_opt["via-ir"] = args.via_ir
+
+    if input_type == 'solidity':
+        print(args)
+        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
+    elif input_type == 'standard_json':
+        helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
+    elif input_type == 'standard_json_output':
+        helper = InputHelper(InputHelper.STANDARD_JSON_OUTPUT, source=args.source,evm=args.evm)
+    inputs = helper.get_inputs()
+
+    
+    solc_version = helper.get_solidity_version()
+
+    hashes = process_hashes(args.source,solc_version)
+    
+    y = dtimer()
+    print("*************************************************************")
+    print("Compilation time: "+str(y-x)+"s")
+    print("*************************************************************")
+
+    if check_optimize_dependencies():
+        i = 0
+        found = False
+        while(i<len(inputs) and (not found)):
+            if inputs[i]["c_name"]==args.contract_name:
+                inp = inputs[i]
+                found = True
+            i+=1
+        results, exit_code = run_solidity_analysis_optimized(inp,hashes)
+    else:
+        results, exit_code = run_solidity_analysis(inputs,hashes)
+        helper.rm_tmp_files()
+
+    if global_params.WEB:
+        six.print_(json.dumps(results))
+    return exit_code
+
+
 def hashes_cond(args):
     return args.hashes and (not args.disassembly and not args.evm)
 
@@ -581,6 +631,8 @@ def main():
 
     exit(exit_code)
     
-
+def get_memory_opt_blocks():
+    return symExec.get_memory_opt_block()
+    
 if __name__ == '__main__':
     main()
