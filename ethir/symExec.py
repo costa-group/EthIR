@@ -18,7 +18,7 @@ from memory_analysis import perform_memory_analysis
 
 from vargenerator import *
 from basicblock import BasicBlock
-import global_params
+import global_params_ethir
 
 import rbr
 from clone import compute_cloning
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 UNSIGNED_BOUND_NUMBER = 2**256 - 1
 
-ebso_path = global_params.costabs_path+"blocks"
+ebso_path = global_params_ethir.costabs_path+"blocks"
 
 # sys.setrecursionlimit(10**6)
 
@@ -47,9 +47,8 @@ global num_calls
 num_calls = 0
 global num_loops
 num_loops = 0
-
 global memory_opt_blocks
-memory_opt_blocks = {}
+memory_opt_blocks = None
 
 class Parameter:
     def __init__(self, **kwargs):
@@ -76,7 +75,7 @@ def initGlobalVars():
     global g_src_map
     global g_src_map_init
 
-    if global_params.PARALLEL:
+    if global_params_ethir.PARALLEL:
         t2 = Then('simplify', 'solve-eqs', 'smt')
         _t = Then('tseitin-cnf-core', 'split-clause')
         t1 = ParThen(_t, t2)
@@ -172,11 +171,11 @@ def initGlobalVars():
     gen = Generator()
 
     global data_source
-    if global_params.USE_GLOBAL_BLOCKCHAIN:
+    if global_params_ethir.USE_GLOBAL_BLOCKCHAIN:
         data_source = EthereumData()
 
     global rfile
-    if global_params.REPORT_MODE:
+    if global_params_ethir.REPORT_MODE:
         rfile = open(g_disasm_file + '.report', 'w')
 
      # Added by Pablo for Cost Analysis
@@ -337,7 +336,6 @@ def initGlobalVars():
 
     global useless_blocks
     useless_blocks = []
-
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -809,7 +807,7 @@ def get_init_global_state(path_conditions_and_vars):
     global_state = {"balance" : {}, "pc": 0}
     init_is = init_ia = deposited_value = sender_address = receiver_address = gas_price = origin = currentCoinbase = currentNumber = currentDifficulty = currentGasLimit = callData = None
 
-    if global_params.INPUT_STATE:
+    if global_params_ethir.INPUT_STATE:
         with open('state.json') as f:
             state = json.loads(f.read())
             if state["Is"]["balance"]:
@@ -1251,10 +1249,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         function_info = (False,"")
     
     # Go to next Basic Block(s)
-    if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
+    if jump_type[block] == "terminal" or depth > global_params_ethir.DEPTH_LIMIT:
         #vertices[block].add_new_path(path)
         #if debug_info and depth > global_params.DEPTH_LIMIT:
-        if depth > global_params.DEPTH_LIMIT:
+        if depth > global_params_ethir.DEPTH_LIMIT:
             print ("DEPTH LIMIT REACHED")
         global total_no_of_paths
         global no_of_test_cases
@@ -2237,7 +2235,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             first_sym = stack_sym.pop(0)
             stack_sym.insert(0,"BALANCE("+first_sym+")")
             
-            if isReal(address) and global_params.USE_GLOBAL_BLOCKCHAIN:
+            if isReal(address) and global_params_ethir.USE_GLOBAL_BLOCKCHAIN:
                 new_var = data_source.getBalance(address)
             else:
                 new_var_name = gen.gen_balance_var()
@@ -2533,7 +2531,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             
             address = get_push_value(address)
             
-            if isReal(address) and global_params.USE_GLOBAL_BLOCKCHAIN:
+            if isReal(address) and global_params_ethir.USE_GLOBAL_BLOCKCHAIN:
                 code = data_source.getCode(address)
                 stack.insert(0, len(code)/2)
             else:
@@ -2938,7 +2936,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 value = global_state["Ia"][position]
                 stack.insert(0, value)
                 
-            elif global_params.USE_GLOBAL_STORAGE and isReal(position) and position not in global_state["Ia"]:
+            elif global_params_ethir.USE_GLOBAL_STORAGE and isReal(position) and position not in global_state["Ia"]:
                 value = data_source.getStorageAt(position)
                 global_state["Ia"][position] = value
                 stack.insert(0, value)
@@ -3363,7 +3361,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             outgas = get_push_value(outgas)
             recipient = get_push_value(recipient)
             
-            if global_params.USE_GLOBAL_STORAGE:
+            if global_params_ethir.USE_GLOBAL_STORAGE:
                 if isReal(recipient):
                     recipient = hex(recipient)
                     if recipient[-1] == "L":
@@ -3411,7 +3409,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             recipient = get_push_value(recipient)
             
-            if global_params.USE_GLOBAL_STORAGE:
+            if global_params_ethir.USE_GLOBAL_STORAGE:
                 if isReal(recipient):
                     recipient = hex(recipient)
                     if recipient[-1] == "L":
@@ -3839,10 +3837,10 @@ def run_build_cfg_and_analyze(evm_v = False,timeout_cb=do_nothing):
     global g_timeout
 
     if not debug_info:
-        global_params.GLOBAL_TIMEOUT = 200
+        global_params_ethir.GLOBAL_TIMEOUT = 200
         
     try:
-        with Timeout(sec=global_params.GLOBAL_TIMEOUT):
+        with Timeout(sec=global_params_ethir.GLOBAL_TIMEOUT):
             build_cfg_and_analyze(evm_v)
         log.debug('Done Symbolic execution')
     except TimeoutError:
@@ -3886,7 +3884,7 @@ def update_scc_unary(scc_unary,blocks):
 
 def analyze(evm_version):
     def timeout_cb():
-        if global_params.DEBUG_MODE:
+        if global_params_ethir.DEBUG_MODE:
             traceback.print_exc()
             print ("Timeout reached")
         raise Exception("Oyente Timeout",2)
@@ -3972,13 +3970,13 @@ def component_of_aux(block,visited):
     return visited
             
 def generate_saco_config_file(cname):
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
         
     if cname == None:
-        name = global_params.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"config_block.config"
     else:
-        name = global_params.costabs_path+cname+".config"
+        name = global_params_ethir.costabs_path+cname+".config"
 
     with open(name,"w") as f:
         milist = list(function_block_map.items())
@@ -4011,13 +4009,13 @@ def process_argument_function(arg):
 def generate_verify_config_file(cname,scc):
     to_write = []
     remove_getters_has_invalid()
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
         
     if cname == None:
-        name = global_params.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"config_block.config"
     else:
-        name = global_params.costabs_path+cname+".config"
+        name = global_params_ethir.costabs_path+cname+".config"
 
     entry_loops = get_functions_with_loop(scc)
     
@@ -4109,7 +4107,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global optimization
     global num_loops
     global memory_opt_blocks
-
+    
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
     
@@ -4245,11 +4243,8 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
             begin = dtimer()
 
-            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)
+            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
 
-            
-            
-            
             memory_opt_blocks = memory_result[3]
             
             end = dtimer()
@@ -4375,9 +4370,9 @@ def get_evm_block():
             str_b = str_b+op_val+num
         blocks[b] = str_b
 
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
-    if "blocks" not in os.listdir(global_params.costabs_path):
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
+    if "blocks" not in os.listdir(global_params_ethir.costabs_path):
         os.mkdir(ebso_path)
     for b in blocks:
         bl_path = ebso_path+"/block"+str(b)
