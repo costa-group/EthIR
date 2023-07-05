@@ -9,7 +9,7 @@ import logging
 #import requests
 import argparse
 import subprocess
-import global_params
+import global_params_ethir
 from timeit import default_timer as dtimer
 from utils import run_command, process_hashes
 from input_helper import InputHelper
@@ -74,11 +74,11 @@ def has_dependencies_installed():
 
 def clean_dir():
     ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl","ethirui"]
-    if "costabs" in os.listdir(global_params.tmp_path):
-        for elem in os.listdir(global_params.costabs_path):
+    if "costabs" in os.listdir(global_params_ethir.tmp_path):
+        for elem in os.listdir(global_params_ethir.costabs_path):
             last = elem.split(".")[-1]
             if last in ext:
-                os.remove(global_params.costabs_path+elem)
+                os.remove(global_params_ethir.costabs_path+elem)
 
 
 '''
@@ -411,56 +411,6 @@ def analyze_solidity(input_type='solidity'):
         six.print_(json.dumps(results))
     return exit_code
 
-
-def analyze_solidity(input_type='solidity'):
-    global args
-
-    x = dtimer()
-    is_runtime = True
-
-    compiler_opt = {}
-    compiler_opt["optimize"] = args.optimize_run
-    compiler_opt["no-yul"] = args.no_yul_opt
-    compiler_opt["runs"] = args.run
-    compiler_opt["via-ir"] = args.via_ir
-
-    if input_type == 'solidity':
-        print(args)
-        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
-    elif input_type == 'standard_json':
-        helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
-    elif input_type == 'standard_json_output':
-        helper = InputHelper(InputHelper.STANDARD_JSON_OUTPUT, source=args.source,evm=args.evm)
-    inputs = helper.get_inputs()
-
-    
-    solc_version = helper.get_solidity_version()
-
-    hashes = process_hashes(args.source,solc_version)
-    
-    y = dtimer()
-    print("*************************************************************")
-    print("Compilation time: "+str(y-x)+"s")
-    print("*************************************************************")
-
-    if check_optimize_dependencies():
-        i = 0
-        found = False
-        while(i<len(inputs) and (not found)):
-            if inputs[i]["c_name"]==args.contract_name:
-                inp = inputs[i]
-                found = True
-            i+=1
-        results, exit_code = run_solidity_analysis_optimized(inp,hashes)
-    else:
-        results, exit_code = run_solidity_analysis(inputs,hashes)
-        helper.rm_tmp_files()
-
-    if global_params.WEB:
-        six.print_(json.dumps(results))
-    return exit_code
-
-
 def hashes_cond(args):
     return args.hashes and (not args.disassembly and not args.evm)
 
@@ -486,7 +436,7 @@ def process_fields(src_map):
     return fields
 
 def generate_saco_hashes_file(dicc):
-    with open(global_params.costabs_path+"solidity_functions.txt", "w") as f:
+    with open(global_params_ethir.costabs_path+"solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
             cf_names1 = list(map(process_name,f_names))
@@ -554,16 +504,16 @@ def main():
     # else:
     #     logging.basicConfig(level=logging.INFO)
     
-    global_params.PRINT_PATHS = 0 #1 if args.paths else 0
-    global_params.REPORT_MODE = 0 #1  if args.report else 0
-    global_params.USE_GLOBAL_BLOCKCHAIN = 0#1 if args.globalblockchain else 0
-    global_params.INPUT_STATE = 0#1 if args.state else 0
-    global_params.WEB = 0#1 if args.web else 0
-    global_params.STORE_RESULT = 0#1 if args.json else 0
-    global_params.CHECK_ASSERTIONS = 0#1 if args.assertion else 0
-    global_params.DEBUG_MODE = 0#1 if args.debug else 0
-    global_params.GENERATE_TEST_CASES = 0#1 if args.generate_test_cases else 0
-    global_params.PARALLEL = 0#1 if args.parallel else 0
+    global_params_ethir.PRINT_PATHS = 0 #1 if args.paths else 0
+    global_params_ethir.REPORT_MODE = 0 #1  if args.report else 0
+    global_params_ethir.USE_GLOBAL_BLOCKCHAIN = 0#1 if args.globalblockchain else 0
+    global_params_ethir.INPUT_STATE = 0#1 if args.state else 0
+    global_params_ethir.WEB = 0#1 if args.web else 0
+    global_params_ethir.STORE_RESULT = 0#1 if args.json else 0
+    global_params_ethir.CHECK_ASSERTIONS = 0#1 if args.assertion else 0
+    global_params_ethir.DEBUG_MODE = 0#1 if args.debug else 0
+    global_params_ethir.GENERATE_TEST_CASES = 0#1 if args.generate_test_cases else 0
+    global_params_ethir.PARALLEL = 0#1 if args.parallel else 0
 
     # if args.depth_limit:
     #     global_params.DEPTH_LIMIT = args.depth_limit
@@ -580,8 +530,8 @@ def main():
 
 
     if args.path_out:
-        global_params.tmp_path = args.path_out
-        global_params.costabs_path = global_params.tmp_path+"costabs/"
+        global_params_ethir.tmp_path = args.path_out
+        global_params_ethir.costabs_path = global_params_ethir.tmp_path+"costabs/"
 
         
     if not has_dependencies_installed():
@@ -627,12 +577,14 @@ def main():
         
     else:
         exit_code = analyze_solidity()
-    six.print_("The files generated by EthIR are stored in the following directory: "+global_params.costabs_path)
+    six.print_("The files generated by EthIR are stored in the following directory: "+global_params_ethir.costabs_path)
 
     exit(exit_code)
-    
+
+
 def get_memory_opt_blocks():
     return symExec.get_memory_opt_block()
     
+
 if __name__ == '__main__':
     main()
