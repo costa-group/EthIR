@@ -201,7 +201,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
     print("********************************** INIT")
-    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices)
+    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname)
     memopt.process_blocks()
     print("********************************** END")
     

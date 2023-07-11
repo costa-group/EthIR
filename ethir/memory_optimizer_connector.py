@@ -1,5 +1,8 @@
 from memory_utils import TOP, TOPK
 
+global SPLIT_INSTRUCTIONS 
+SPLIT_INSTRUCTIONS = {"LOG0","LOG1","LOG2","LOG3","LOG4","CALLDATACOPY","CODECOPY","EXTCODECOPY","RETURNDATACOPY",
+               "CALL","STATICCALL","DELEGATECALL","CREATE","CREATE2","ASSIGNIMMUTABLE", "GAS"}
 
 global EQUALS 
 EQUALS = "=="
@@ -14,11 +17,12 @@ class MemoryOptimizerConnector :
 
     optimizable_blocks = None
 
-    def __init__(self,readset, writeset, vertices):
+    def __init__(self,readset, writeset, vertices, cname):
         self.readset = readset
         self.writeset = writeset
         self.vertices = vertices
-        self.optimizable_blocks = OptimizableBlocks(vertices)
+        self.contract = cname
+        self.optimizable_blocks = OptimizableBlocks(vertices, cname)
 
     def process_blocks (self): 
         for pc in self.writeset:
@@ -50,8 +54,6 @@ class MemoryOptimizerConnector :
                     self.optimizable_blocks.add_block_info(block,pc,writepc,res)
 
         self.optimizable_blocks.print_blocks()
-
-
 
     def eval_pcs_relation(self,set1, set2): 
         ## Check simple case 
@@ -100,11 +102,19 @@ class MemoryOptimizerConnector :
 class OptimizableBlocks: 
     optimizable_blocks = {}
 
-    def __init__(self,vertices):
+    def __init__(self,vertices, cname):
+        self.contract = cname
         self.vertices = vertices    
 
     def add_block_info(self,block,pc1,pc2,cmpres):
 #        print("Adding block info " + block)
+
+        instr = list(self.vertices[int(block)].get_instructions())
+
+        (ressplit,instsplit) = self.contains_split_instruction(instr)
+        if ressplit: 
+            print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "]")
+            return
 
         if block not in self.optimizable_blocks:
             if block.find("_") != -1:
@@ -116,6 +126,17 @@ class OptimizableBlocks:
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres)
         
+    ## Split the blocks according to the instructions in 
+    def contains_split_instruction (self, instructions):
+        for inst in SPLIT_INSTRUCTIONS: 
+            if inst in instructions: 
+                return (True,inst)
+        return (False,None)
+
+    # def split_blocks (self): 
+    #     for block in self.optimizable_blocks: 
+    #         if self.optimizable_blocks[block].is_divisible(): 
+    #             print ("LLLLL Bloque divisible " + str(self.optimizable_blocks[block].get_instructions()))
 
     def print_blocks(self):
         for elem in self.optimizable_blocks:
@@ -138,8 +159,14 @@ class OptimizableBlockInfo:
         elif cmpres == NONEQUALS and CmpPair(pc1,pc2) not in self.nonequal_pairs and CmpPair(pc2,pc1) not in self.nonequal_pairs: 
             self.nonequal_pairs.append(CmpPair(pc1,pc2))
 
+    def get_instructions(self): 
+        return self.instr
+
     def __repr__(self):
         return "Block: " + self.block_id + "\n" + "Instr:<< " + str(self.instr) + ">> " + "\nEquals:<< " + str(self.equal_pairs) + ">> " + "\nNonEquals: << " + str(self.nonequal_pairs) + ">> "
+
+
+
 
 class CmpPair: 
     def __init__(self,pc1,pc2):
