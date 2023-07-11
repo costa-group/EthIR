@@ -1,7 +1,7 @@
 import rbr_rule
 import os
 from timeit import default_timer as dtimer
-import global_params
+import global_params_ethir
 import traceback
 
 '''
@@ -527,11 +527,11 @@ def write(rules,execution,cname):
     #     os.mkdir("/tmp/costabs/")
 
     if execution == None:
-        name = global_params.costabs_path+"rbr_saco.rbr"
+        name = global_params_ethir.costabs_path+"rbr_saco.rbr"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+"_saco.rbr"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+"_saco.rbr"
     else:
-        name = global_params.costabs_path+cname+"_saco.rbr"
+        name = global_params_ethir.costabs_path+cname+"_saco.rbr"
     with open(name,"w") as f:
         for rule in rules:
             f.write(rule+"\n")

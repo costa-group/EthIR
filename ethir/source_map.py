@@ -2,7 +2,7 @@ import re
 import ast
 import json
 
-import global_params
+import global_params_ethir
 
 from utils import run_command,get_solc_executable
 from ast_helper import AstHelper
