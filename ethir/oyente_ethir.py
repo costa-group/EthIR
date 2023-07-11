@@ -172,7 +172,7 @@ def analyze_disasm_bytecode():
     else:
         exit_code = -1
         print("Option Error: --verify, --goto or --invalid options are only applied to c translation.\n")
-    if global_params.WEB:
+    if global_params_ethir.WEB:
         six.print_(json.dumps(result))
 
     return exit_code
@@ -210,7 +210,7 @@ def analyze_bytecode():
     else:
         exit_code = -1
         print("Option Error: --verify option is only applied to c translation.\n")
-    if global_params.WEB:
+    if global_params_ethir.WEB:
         six.print_(json.dumps(result))
 
     return exit_code
@@ -407,7 +407,7 @@ def analyze_solidity(input_type='solidity'):
         results, exit_code = run_solidity_analysis(inputs,hashes)
         helper.rm_tmp_files()
 
-    if global_params.WEB:
+    if global_params_ethir.WEB:
         six.print_(json.dumps(results))
     return exit_code
 
