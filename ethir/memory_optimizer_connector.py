@@ -142,6 +142,7 @@ class OptimizableBlocks:
     #             print ("LLLLL Bloque divisible " + str(self.optimizable_blocks[block].get_instructions()))
 
     def print_blocks(self):
+        print("CONTRACT: "+self.contract)
         for elem in self.optimizable_blocks:
             print("-----")
             print(self.optimizable_blocks[elem])
