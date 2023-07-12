@@ -130,11 +130,26 @@ class OptimizableBlocks:
                 instr = self.vertices[block].get_instructions()
             else:
                 instr = self.vertices[int(block)].get_instructions()
+
+            instr = self._process_memory_instructions(instr)
                 
             self.optimizable_blocks[block] = OptimizableBlockInfo(block, list(instr))
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres)
+
+
+    def _process_memory_instructions(self,instr):
+        new_instr = []
         
+        for i in instr:
+            elems = i.split()
+            if len(elems)>1 and elems[0].find("PUSH")==-1:
+                new_instr.append(elems[0])
+            else:
+                new_instr.append(i)
+
+        return new_instr
+                
     ## Split the blocks according to the instructions in 
     def contains_split_instruction (self, instructions):
         for inst in SPLIT_INSTRUCTIONS: 
