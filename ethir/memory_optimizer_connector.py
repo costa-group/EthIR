@@ -99,6 +99,9 @@ class MemoryOptimizerConnector :
         else:
             return NONEQUALS
 
+    def get_optimizable_blocks(self):
+        return self.optimizable_blocks
+        
 class OptimizableBlocks: 
     optimizable_blocks = {}
 
