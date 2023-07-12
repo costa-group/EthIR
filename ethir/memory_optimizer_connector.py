@@ -109,11 +109,17 @@ class OptimizableBlocks:
         self.contract = cname
         self.vertices = vertices    
 
+    def get_contract_name(self):
+        return self.contract
+        
     def add_block_info(self,block,pc1,pc2,cmpres):
 #        print("Adding block info " + block)
-
-        instr = list(self.vertices[int(block)].get_instructions())
-
+        
+        if block.find("_") != -1:
+            instr = list(self.vertices[block].get_instructions())
+        else:
+            instr = list(self.vertices[int(block)].get_instructions())
+            
         (ressplit,instsplit) = self.contains_split_instruction(instr)
         if ressplit: 
             print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "]")
