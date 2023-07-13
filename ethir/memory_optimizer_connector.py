@@ -190,6 +190,12 @@ class OptimizableBlockInfo:
     def get_instructions(self): 
         return self.instr
 
+    def get_equal_pairs(self):
+        return self.equal_pairs
+
+    def get_nonequal_pairs(self):
+        return self.nonequal_pairs
+    
     def __repr__(self):
         return "Block: " + self.block_id + "\n" + "Instr:<< " + str(self.instr) + ">> " + "\nEquals:<< " + str(self.equal_pairs) + ">> " + "\nNonEquals: << " + str(self.nonequal_pairs) + ">> "
 
@@ -200,6 +206,7 @@ class CmpPair:
     def __init__(self,pc1,pc2):
         self.pc1 = pc1.split(":")[1]
         self.pc2 = pc2.split(":")[1]
+        
     def __repr__(self):
         return "<" + str(self.pc1) + "," + str(self.pc2) + ">"
     
@@ -211,7 +218,17 @@ class CmpPair:
     def __hash__(self):
         return hash(self.pc1) + hash(self.pc2)
 
+    def get_first(self):
+        return self.pc1
 
+    def get_second(self):
+        return self.pc2
+
+    def order(self):
+        if int(self.pc1) > int(self.pc2):
+            tmp = self.pc1
+            self.pc1 = self.pc2
+            self.pc2 = tmp
 
 
 
