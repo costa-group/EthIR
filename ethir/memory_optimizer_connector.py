@@ -204,8 +204,8 @@ class OptimizableBlockInfo:
 
 class CmpPair: 
     def __init__(self,pc1,pc2):
-        self.pc1 = pc1.split(":")[1]
-        self.pc2 = pc2.split(":")[1]
+        self.pc1 = int(pc1.split(":")[1])
+        self.pc2 = int(pc2.split(":")[1])
         
     def __repr__(self):
         return "<" + str(self.pc1) + "," + str(self.pc2) + ">"
@@ -224,12 +224,24 @@ class CmpPair:
     def get_second(self):
         return self.pc2
 
+    def set_values(self,v1,v2):
+        self.pc1 = v1
+        self.pc2 = v2
+
+    def set_first(self,v1):
+        self.pc1 = v1
+
+    def set_second(self,v2):
+        self.pc2 = v2
+    
     def order(self):
-        if int(self.pc1) > int(self.pc2):
+        if self.pc1 > self.pc2:
             tmp = self.pc1
             self.pc1 = self.pc2
             self.pc2 = tmp
 
+    def same_pair(self, val1, val2):
+        return (val1 == self.pc1 and val2 == self.pc2) or (val2 == self.pc1 and val1 == self.pc2) 
 
 
 
