@@ -122,7 +122,7 @@ class OptimizableBlocks:
             
         (ressplit,instsplit) = self.contains_split_instruction(instr)
         if ressplit: 
-            print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "]")
+            print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "] -- ** " + str(instr) + "**")
             return
 
         if block not in self.optimizable_blocks:
