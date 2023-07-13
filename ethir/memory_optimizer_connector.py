@@ -137,6 +137,9 @@ class OptimizableBlocks:
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres)
 
+    def get_optimizable_blocks(self):
+        return self.optimizable_blocks
+        
 
     def _process_memory_instructions(self,instr):
         new_instr = []
