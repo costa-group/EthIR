@@ -24,7 +24,7 @@ class MemoryOptimizerConnector :
         self.contract = cname
         self.optimizable_blocks = OptimizableBlocks(vertices, cname)
 
-    def process_blocks (self): 
+    def process_blocks (self,debug): 
         for pc in self.writeset:
             block = pc.split(":")[0]
 #            print("\n\nBuscando en el bloque " + pc + " " + block)
@@ -53,7 +53,8 @@ class MemoryOptimizerConnector :
 #                    print("**************************************")
                     self.optimizable_blocks.add_block_info(block,pc,writepc,res)
 
-        self.optimizable_blocks.print_blocks()
+        if debug:
+            self.optimizable_blocks.print_blocks()
 
     def eval_pcs_relation(self,set1, set2): 
         ## Check simple case 
