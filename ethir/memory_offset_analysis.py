@@ -335,8 +335,8 @@ class MemAccess:
         return False
 
     def add(self,offset): 
-
-        print ("SUMANDO: " + str(self.offset) + " + " + str(offset))
+        
+        # print ("SUMANDO: " + str(self.offset) + " + " + str(offset))
 
         
         if self.offset == TOP or offset == TOP: 
