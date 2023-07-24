@@ -136,11 +136,10 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug): 
-    
+def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug):     
     global debug_info 
 
-    debug_info = True
+    debug_info = debug
     
     set_memory_utils_globals(compblocks, fblockmap)
     print("Slots analysis started!")
@@ -155,7 +154,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
 
     print("Slots analysis finished!")
 
-    constants = Analysis(vertices,0, OffsetAnalysisAbstractState(0,{}))
+    constants = Analysis(vertices,0, OffsetAnalysisAbstractState(0,{},debug_info))
     constants.analyze()
 
     print("Constants analysis finished!")
@@ -202,7 +201,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     
     print("********************************** INIT")
     memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname)
-    memopt.process_blocks()
+    memopt.process_blocks(debug_info)
     print("********************************** END")
     
     return slots, memory, accesses, memopt
