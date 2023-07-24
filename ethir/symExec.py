@@ -4258,7 +4258,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             check_cfg_option(cfg,cname,execution)
             
         if mem_analysis == None:
-            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks, oyente_time = oyente_t,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
+            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
