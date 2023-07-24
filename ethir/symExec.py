@@ -4171,14 +4171,14 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     
     # check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
     
-    begin1 = dtimer()
-    compute_component_of_cfg()
+    # begin1 = dtimer()
+    # compute_component_of_cfg()
     
-    #compute_transitive_mstore_value()
+    # #compute_transitive_mstore_value()
     
-    end = dtimer()
-    oyente_t = end-begin
-    print("OYENTE tool: "+str(oyente_t)+"s")
+    # end = dtimer()
+    # oyente_t = end-begin
+    # print("OYENTE tool: "+str(oyente_t)+"s")
 
     #update_edges(vertices, edges)
 
