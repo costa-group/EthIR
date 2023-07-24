@@ -7,10 +7,11 @@ K = 256
 class ConstantsAbstractState:          
     stack_pos = None
     
-    def __init__(self,stack_pos,stack):
+    def __init__(self,stack_pos,stack,debug):
         self.stack_pos = stack_pos
         self.stack = stack
-
+        self.debug = debug
+        
     def leq (self,state): 
         if self.stack_pos != state.stack_pos: 
             print("CONSTANT ANALYSIS WARNING: Different stacks in leq !!! ")
@@ -25,7 +26,8 @@ class ConstantsAbstractState:
         return True
 
     def lub (self,state): 
-        print ("DOING LUB: " + str(self.stack) + " " + str(state.stack))
+        if self.debug:
+            print ("DOING LUB: " + str(self.stack) + " " + str(state.stack))
         if self.stack_pos != state.stack_pos: 
             print("CONSTANT ANALYSIS WARNING: Different stacks in lub !!! ")
             print("CONSTANT ANALYSIS WARNING: " + str(self))
@@ -39,7 +41,7 @@ class ConstantsAbstractState:
             else:
                 res_stack[skey] = state.stack[skey]
 
-        return ConstantsAbstractState(self.stack_pos, res_stack)
+        return ConstantsAbstractState(self.stack_pos, res_stack, self.debug)
 
 
     def process_instruction (self,instr,pc):
@@ -97,7 +99,7 @@ class ConstantsAbstractState:
             for i in range(stack_res,self.stack_pos): 
                 stack.pop(i,None)
 
-        return ConstantsAbstractState(stack_res, stack)
+        return ConstantsAbstractState(stack_res, stack, self.debug)
 
 
     def get_constants (self,stackpos):  
