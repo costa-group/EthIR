@@ -450,8 +450,11 @@ class InputHelper:
             opt = "--optimize-run "+str(run)
 
         if viaIr:
-            opt+= " --via-ir"
-            
+            if opt.find("optimize")!=-1:
+                opt+= " --via-ir"
+            else:
+                opt+= " --optimize --via-ir"
+                
         if yul and (self.solc_version != "v4" and self.solc_version != "v5"):
             opt+=" --no-optimize-yul"
 
