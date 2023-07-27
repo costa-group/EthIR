@@ -2,7 +2,7 @@ from rbr_rule import RBRRule
 import os
 from timeit import default_timer as dtimer
 from utils import delete_dup, is_executed_by
-import global_params
+import global_params_ethir
 import  traceback
 
 '''
@@ -138,7 +138,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         storage_abs_mapping = generate_storage_address(storage_arrays)
 
     #print mem_blocks
-    mem_init_blocks = map(lambda x: x[0], mem_blocks)
+    mem_init_blocks = list(map(lambda x: x[0], mem_blocks))
     
     begin = dtimer()
 
@@ -148,7 +148,7 @@ def rbr2c(rbr,execution,cname,component_of,scc,svc_labels,gotos,fbm,init_fields,
         
     try:
         
-        ap = map(lambda x: x[1],mem_blocks)
+        ap = list(map(lambda x: x[1],mem_blocks))
         num = sum(ap)
         
         if gotos["gotos"] == "iterative":
@@ -263,7 +263,7 @@ def build_headers(l,rbr):
         i = rbr_aux.index(r)
         rule = rbr_aux[i]
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int "+x,stack_variables)
+        stack = list(map(lambda x: "int "+x,stack_variables))
         s_head = ", ".join(stack) 
         head_c ="void " + rule.get_rule_name()+"();\n"
         heads = heads+head_c
@@ -388,14 +388,14 @@ def translate_block_scc(rule,id_loop,multiple=False):
     
     if goto == "local":
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int i_"+x,stack_variables)
+        stack = list(map(lambda x: "int i_"+x,stack_variables))
 
         fields_variables = get_field_variables(rule)
-        fields = map(lambda x: "int i_"+x,fields_variables)[::-1]
+        fields = list(map(lambda x: "int i_"+x,fields_variables))[::-1]
         #build memory
         if not mem_abs:
             local_variables = get_local_variables(rule)
-            local = map(lambda x: "int i_"+x, local_variables)
+            local = list(map(lambda x: "int i_"+x, local_variables))
 
         else:
             local_variables = []
@@ -403,7 +403,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
             
         #build blockchain
         bc_variables = get_blockchain_variables(rule)
-        bc = map(lambda x: "int i_"+x, bc_variables)
+        bc = list(map(lambda x: "int i_"+x, bc_variables))
 
         r_vars = stack+fields+local+bc
         s_head = ",".join(r_vars)
@@ -412,7 +412,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
 
     elif goto == "global":
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int "+x,stack_variables)
+        stack = list(map(lambda x: "int "+x,stack_variables))
         s_head = ", ".join(stack)
 
         head_c = "void " + rule.get_rule_name()+"();\n"
@@ -420,7 +420,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
         
     elif goto == "mix":
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int i_"+x,stack_variables)
+        stack = list(map(lambda x: "int i_"+x,stack_variables))
         s_head = ", ".join(stack)
 
         head_c = "void " + rule.get_rule_name()+"("+s_head+");\n"
@@ -431,7 +431,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
         head = "void " + rule.get_rule_name()+"("+s_head+"){\n"
 
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int "+x,stack_variables)
+        stack = list(map(lambda x: "int "+x,stack_variables))
         
         
     cont = rule.get_fresh_index()+1
@@ -446,17 +446,17 @@ def translate_block_scc(rule,id_loop,multiple=False):
         var_declarations = "\n"+variables_d+"\n"
     
     #To delete skip instructions
-    new_instructions = filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions)
+    new_instructions = list(filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions))
 
     new_instructions = new_instructions[:-1] #To delete the call instructions. It is always the last one.
-    new_instructions = map(lambda x: "\t"+x,new_instructions)
+    new_instructions = list(map(lambda x: "\t"+x,new_instructions))
     body = "\n".join(new_instructions)
 
     init_loop_label = "  init_loop_"+str(id_loop)+":\n"
     if rule.has_invalid() and not svcomp["exec"]:
 
         public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
-        public_blocks = map(lambda x: "block"+str(x),public_blocks_aux)
+        public_blocks = list(map(lambda x: "block"+str(x),public_blocks_aux))
         source = rule.get_invalid_source()
         label = get_error_svcomp_label()+"; //"+source+" "+rule.get_rule_name().replace("block","INV")+" ["+" ".join(public_blocks)+"]\n"
     else:
@@ -474,7 +474,7 @@ def translate_block_scc(rule,id_loop,multiple=False):
     list_variables["blockchain"] = bc_variables
     
     if goto == "mix" or goto == "local":
-        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",stack_variables))
         init_vars = "\n".join(init_vars_aux)+"\n\n"
 
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
@@ -518,11 +518,11 @@ def compone_blocks_common_scc(code_blocks,next_idx,rbr_scc):
     cond = translate_conditions(guard)
 
     code_if_aux = code_if.split("\n")
-    code_if_aux = map(lambda x: "\t"+x,code_if_aux)
+    code_if_aux = list(map(lambda x: "\t"+x,code_if_aux))
     code_if = "\n".join(code_if_aux)
 
     code_else_aux = code_else.split("\n")
-    code_else_aux = map(lambda x: "\t"+x,code_else_aux)
+    code_else_aux = list(map(lambda x: "\t"+x,code_else_aux))
     code_else = "\n".join(code_else_aux)
     
     body = "\tif("+cond+"){\n"
@@ -600,7 +600,7 @@ def compute_sccs_multiple(rbr,scc,scc_unit_keys,out_in):
         vars_entry = list_vars["variables_dec"] 
 
         # print("*********")
-        vars_declaration = map(lambda x: x.strip(";\n").strip("int").strip(),vars_declaration)
+        vars_declaration = list(map(lambda x: x.strip(";\n").strip("int").strip(),vars_declaration))
         
         vars_declaration = delete_dup(vars_entry+vars_declaration)
 
@@ -637,34 +637,34 @@ def get_declaration_and_init(list_vars):
     bc_variables = list_vars["blockchain"]   
     
     if goto == "mix":
-        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",stack_variables))
         init_vars = "\n".join(init_vars_aux)+"\n\n"
 
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
         initializations = "\n".join(initializations_aux)+"\n\n"
         
     elif goto == "local":
-        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",stack_variables))
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
 
-        initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
+        initializations_fields = list(map(lambda x: "\tint "+x+";",fields_variables))
 
-        init_fvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
+        init_fvars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",fields_variables))
         
         #build memory
         if not mem_abs:
-            initializations_local = map(lambda x: "\tint "+x+";", local_variables)
+            initializations_local = list(map(lambda x: "\tint "+x+";", local_variables))
 
-            init_lvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
+            init_lvars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",local_variables))
 
         else:
             initializations_local = []
             init_lvars_aux = []
             
         #build blockchain
-        initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
+        initializations_bc = list(map(lambda x: "\tint "+x+";", bc_variables))
 
-        init_bvars_aux = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
+        init_bvars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",bc_variables))
 
         initializations = "\n".join(initializations_aux+initializations_fields+initializations_local+initializations_bc)+"\n\n"
         init_vars = "\n".join(init_vars_aux+init_fvars_aux+init_lvars_aux+init_bvars_aux)+"\n\n"
@@ -689,7 +689,7 @@ def get_next_scc(scc,to_translate):
 
 def check_candidate(s,scc,to_translate):
     candidate = True
-    scc_aux = filter(lambda x: x in to_translate,scc.keys())
+    scc_aux = list(filter(lambda x: x in to_translate,scc.keys()))
     for e in scc_aux:
         if s != e:
             l = scc[e]
@@ -763,7 +763,7 @@ def process_goto(next_rule,entry,rbr_scc, scc, all_scc_ids,inner_scc,rbr,out_in,
 #scc). If not it means that the inner and outer scc share some nodes.
 def check_next_id(ids, outer_scc,inner_scc, rbr_scc):
     next_id,candidate_id = ids
-    scc = filter(lambda x: x not in inner_scc,outer_scc)
+    scc = list(filter(lambda x: x not in inner_scc,outer_scc))
     if next_id in scc:
         return next_id
     else:
@@ -782,7 +782,7 @@ def check_next_id(ids, outer_scc,inner_scc, rbr_scc):
             
 def tab_block(chain):
     lines = chain.split("\n")
-    new_lines = map(lambda x: "\t"+x,lines)
+    new_lines = list(map(lambda x: "\t"+x,lines))
     result = "\n".join(new_lines)
     return result
     
@@ -869,7 +869,7 @@ def translate_scc_multiple(rule,rbr_scc,scc,outer_scc):
     #var_declarations = "\n"+variables_d+"\n"
     
     #To delete skip instructions
-    new_instructions = filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions)
+    new_instructions = list(filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions))
 
     called_instructions = new_instructions[-1]
     called_is_jump = called_instructions.startswith("j")
@@ -884,7 +884,7 @@ def translate_scc_multiple(rule,rbr_scc,scc,outer_scc):
         next_block = get_called_block(called_instructions)
 
     new_instructions = new_instructions[:-1] #To delete the call instructions. It is always the last one.
-    new_instructions = map(lambda x: "\t"+x,new_instructions)
+    new_instructions = list(map(lambda x: "\t"+x,new_instructions))
     body = "\n".join(new_instructions)
     body = body+"\n"+part
     
@@ -1003,10 +1003,10 @@ def check_declare_variable(var,variables):
         variables.append(var)
 
 def get_stack_variables(variables,l=False):
-    stack_variables = filter(lambda x: x.startswith("s"),variables)
-    idx_list = map(lambda x: int(x.strip()[1:]),stack_variables)
+    stack_variables = list(filter(lambda x: x.startswith("s"),variables))
+    idx_list = list(map(lambda x: int(x.strip()[1:]),stack_variables))
     sorted_idx = sorted(idx_list)
-    rebuild_stack_variables = map(lambda x: "int s"+str(x)+";\n",sorted_idx)
+    rebuild_stack_variables = list(map(lambda x: "int s"+str(x)+";\n",sorted_idx))
     s_vars = "\t".join(rebuild_stack_variables)
 
     if l:
@@ -1015,9 +1015,9 @@ def get_stack_variables(variables,l=False):
         return s_vars
 
 def get_rest_variables(variables,l=False):
-    r_variables = filter(lambda x: not(x.startswith("s")),variables)
+    r_variables = list(filter(lambda x: not(x.startswith("s")),variables))
     sorted_variables = sorted(r_variables)
-    rebuild_rvariables = map(lambda x: "int "+x+";\n",sorted_variables)
+    rebuild_rvariables = list(map(lambda x: "int "+x+";\n",sorted_variables))
     r_vars = "\t".join(rebuild_rvariables)
 
     if l:
@@ -1040,7 +1040,7 @@ def get_variables_to_be_declared(stack_variables,variables,l=False):
     
 def get_input_variables(idx):
     in_vars = []
-    for i in xrange(idx-1,-1,-1):
+    for i in range(idx-1,-1,-1):
         var = "s"+str(i)
         in_vars.append(var)
     return in_vars
@@ -1050,14 +1050,14 @@ def get_field_variables(rule):
     name_fields, numeric_fields = rule.get_global_arg()
     fields_id = name_fields[::-1]+numeric_fields[::-1]
 
-    new = map(lambda x: "g"+x, fields_id)
+    new = list(map(lambda x: "g"+x, fields_id))
     
     return new
 
 #No memory intervals abstraction
 def get_local_variables(rule):
     locals_vars = sorted(rule.get_args_local())[::-1]
-    l_vars = map(lambda x: "l"+str(x),locals_vars)
+    l_vars = list(map(lambda x: "l"+str(x),locals_vars))
 
     return l_vars
     
@@ -1127,8 +1127,8 @@ def filter_call(call_instruction):
     pos_open = block.find("(")
     arguments = block[pos_open+1:-1]
     variables = arguments.split(",")
-    stack_variables = filter(lambda x: x.strip().startswith("s("),variables)
-    s_vars = map(lambda x: unbox_variable(x.strip()),stack_variables)
+    stack_variables = list(filter(lambda x: x.strip().startswith("s("),variables))
+    s_vars = list(map(lambda x: unbox_variable(x.strip()),stack_variables))
     
     s_string = ", ".join(s_vars)
     if goto == "global":
@@ -1136,20 +1136,20 @@ def filter_call(call_instruction):
     elif goto == "mix":
         call = block[:pos_open]+"("+s_string+")"
     elif goto == "local":
-        field_variables = filter(lambda x: x.strip().startswith("g("),variables)
-        f_vars = map(lambda x: unbox_variable(x.strip()),field_variables)
+        field_variables = list(filter(lambda x: x.strip().startswith("g("),variables))
+        f_vars = list(map(lambda x: unbox_variable(x.strip()),field_variables))
 
-        local_variables_mem = filter(lambda x: x.strip().startswith("l("),variables)
+        local_variables_mem = list(filter(lambda x: x.strip().startswith("l("),variables))
         
         if not mem_abs:
-            local_variables = filter(lambda x: x.strip().startswith("l("),variables)
-            l_vars = map(lambda x: x.strip()[2:-1],local_variables)
+            local_variables = list(filter(lambda x: x.strip().startswith("l("),variables))
+            l_vars = list(map(lambda x: x.strip()[2:-1],local_variables))
         else:
             local_variables = []
             l_vars = []
 
         other = stack_variables+field_variables+local_variables+local_variables_mem
-        bc_vars = filter(lambda x: x not in other,variables)
+        bc_vars = list(filter(lambda x: x not in other,variables))
 
         v_vars = s_vars+f_vars+l_vars+bc_vars
         s_string = ", ".join(v_vars)
@@ -1176,7 +1176,7 @@ def process_jumps(rules):
     jump2 = rules[1]
 
     stack_variables = get_input_variables(jump1.get_index_invars())
-    stack = map(lambda x: "int "+x,stack_variables)
+    stack = list(map(lambda x: "int "+x,stack_variables))
     s_head = ", ".join(stack)
 
     if goto == "global":
@@ -1187,18 +1187,18 @@ def process_jumps(rules):
         head = "void " + jump1.get_rule_name()+"("+s_head+"){\n"
     elif goto == "local":
         fields_variables = get_field_variables(jump1)[::-1]
-        fields = map(lambda x: "int "+x,fields_variables)
+        fields = list(map(lambda x: "int "+x,fields_variables))
         #build memory
         if not mem_abs:
             local_variables = get_local_variables(jump1)
-            local = map(lambda x: "int "+x, local_variables)
+            local = list(map(lambda x: "int "+x, local_variables))
         else:
             local_variables = []
             local = []
             
         #build blockchain
         bc_variables = get_blockchain_variables(jump1)
-        bc = map(lambda x: "int "+x, bc_variables)
+        bc = list(map(lambda x: "int "+x, bc_variables))
 
         r_vars = stack+fields+local+bc
         r_head = ",".join(r_vars)
@@ -1232,11 +1232,11 @@ def process_jumps(rules):
 def process_rule_c(rule):
     if goto == "global":
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int "+x,stack_variables)
+        stack = list(map(lambda x: "int "+x,stack_variables))
         s_head = ", ".join(stack)
     else:
         stack_variables = get_input_variables(rule.get_index_invars())
-        stack = map(lambda x: "int i_"+x,stack_variables)
+        stack = list(map(lambda x: "int i_"+x,stack_variables))
         s_head = ", ".join(stack)
         
     if goto == "global":
@@ -1249,18 +1249,18 @@ def process_rule_c(rule):
 
         #build fields
         fields_variables = get_field_variables(rule)
-        fields = map(lambda x: "int i_"+x,fields_variables)[::-1]
+        fields = list(map(lambda x: "int i_"+x,fields_variables))[::-1]
         #build memory
         if not mem_abs:
             local_variables = get_local_variables(rule)
-            local = map(lambda x: "int i_"+x, local_variables)
+            local = list(map(lambda x: "int i_"+x, local_variables))
         else:
             local_variables = []
             local = []
             
         #build blockchain
         bc_variables = get_blockchain_variables(rule)
-        bc = map(lambda x: "int i_"+x, bc_variables)
+        bc = list(map(lambda x: "int i_"+x, bc_variables))
 
         r_vars = stack+fields+local+bc
         r_head = ",".join(r_vars)
@@ -1282,15 +1282,15 @@ def process_rule_c(rule):
     var_declarations = "\n"+variables_d+"\n"
     
     #To delete skip instructions
-    new_instructions = filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions)
+    new_instructions = list(filter(lambda x: not(x.strip().startswith("nop(")) and x!=";",new_instructions))
     
-    new_instructions = map(lambda x: "\t"+x,new_instructions)
+    new_instructions = list(map(lambda x: "\t"+x,new_instructions))
     body = "\n".join(new_instructions)
 
     if rule.has_invalid() and not svcomp["exec"]:
         source = rule.get_invalid_source()
         public_blocks_aux = is_executed_by(rule.get_Id(),blocks2init,components)
-        public_blocks = map(lambda x: "block"+str(x),public_blocks_aux)
+        public_blocks = list(map(lambda x: "block"+str(x),public_blocks_aux))
         label = get_error_svcomp_label()+"; //"+source+" "+rule.get_rule_name().replace("block","INV")+" ["+" ".join(public_blocks)+"]\n"
     else:
         label = ""
@@ -1306,7 +1306,7 @@ def process_rule_c(rule):
         initializations_aux = generate_initializations(stack_variables[::-1]+variables)
         initializations = "\n".join(initializations_aux)+"\n\n"
 
-        init_vars_aux = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_vars_aux = list(map(lambda x: "\t"+x+" = i_"+x+";",stack_variables))
         init_vars = "\n".join(init_vars_aux)+"\n" if init_vars_aux != [] else ""
 
 
@@ -1315,22 +1315,22 @@ def process_rule_c(rule):
     elif goto == "local":
         #stack variables
         initializations_stack = generate_initializations(stack_variables[::-1]+variables)
-        init_svars = map(lambda x: "\t"+x+" = i_"+x+";",stack_variables)
+        init_svars = list(map(lambda x: "\t"+x+" = i_"+x+";",stack_variables))
         
-        initializations_fields = map(lambda x: "\tint "+x+";",fields_variables)
-        init_fvars = map(lambda x: "\t"+x+" = i_"+x+";",fields_variables)
+        initializations_fields = list(map(lambda x: "\tint "+x+";",fields_variables))
+        init_fvars = list(map(lambda x: "\t"+x+" = i_"+x+";",fields_variables))
         
         #build memory
         if not mem_abs:
-            initializations_local = map(lambda x: "\tint "+x+";", local_variables)
-            init_lvars = map(lambda x: "\t"+x+" = i_"+x+";",local_variables)
+            initializations_local = list(map(lambda x: "\tint "+x+";", local_variables))
+            init_lvars = list(map(lambda x: "\t"+x+" = i_"+x+";",local_variables))
         else:
             initializations_local = []
             init_lvars = []
             
         #build blockchain
-        initializations_bc = map(lambda x: "\tint "+x+";", bc_variables)
-        init_bvars = map(lambda x: "\t"+x+" = i_"+x+";",bc_variables)
+        initializations_bc = list(map(lambda x: "\tint "+x+";", bc_variables))
+        init_bvars = list(map(lambda x: "\t"+x+" = i_"+x+";",bc_variables))
 
         initializations = "\n".join(initializations_stack+initializations_fields+initializations_local+initializations_bc)+"\n\n"
         init_vars = "\n".join(init_svars+init_fvars+init_lvars+init_bvars)+"\n\n"
@@ -1403,7 +1403,7 @@ def abstract_integer(var):
     return new_var
         
 def compute_string_pattern(new_instructions):
-    nop_inst = map(lambda x: "nop("+x+")",pattern)
+    nop_inst = list(map(lambda x: "nop("+x+")",pattern))
     new_instructions = new_instructions+nop_inst
     return new_instructions
 
@@ -1432,7 +1432,7 @@ def process_body_c(rule_id,instructions,cont,has_string_pattern):
             cont = process_instruction(rule_id,instr,new_instructions,variables,cont,mem_already_defined)
             idx_loop = idx_loop+1
 
-    new_instructions = filter(lambda x: x!= "", new_instructions)
+    new_instructions = list(filter(lambda x: x!= "", new_instructions))
     return new_instructions,variables
 
 
@@ -1469,7 +1469,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             if rule_id in mem_init_blocks:
                 already_def = get_already_def_memvars(rule_id)
                 vars_declared = mem_vars_per_block[rule_id]
-                memvars_otherblock = filter(lambda x: x not in vars_declared,already_def)
+                memvars_otherblock = list(filter(lambda x: x not in vars_declared,already_def))
                 already_def_mem = memvars_otherblock+ mem_defined
             else:
                 already_def_mem = get_already_def_memvars(rule_id)
@@ -1498,7 +1498,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
             if rule_id in mem_init_blocks:
                 already_def = get_already_def_memvars(rule_id)
                 vars_declared = mem_vars_per_block[rule_id]
-                memvars_otherblock = filter(lambda x: x not in vars_declared,already_def)
+                memvars_otherblock = list(filter(lambda x: x not in vars_declared,already_def))
                 already_def_mem = memvars_otherblock+ mem_defined
             else:
                 already_def_mem = get_already_def_memvars(rule_id)
@@ -1523,31 +1523,31 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
         
         args = call_block[pos_open+1:-1]
         vars_aux = args.split(",")
-        stack_variables = filter(lambda x: x.startswith("s("),vars_aux)
-        variables = map(lambda x : unbox_variable(x.strip()),stack_variables)
+        stack_variables = list(filter(lambda x: x.startswith("s("),vars_aux))
+        variables = list(map(lambda x : unbox_variable(x.strip()),stack_variables))
         new_variables = ", ".join(variables)
         if goto == "global":
             new = block+"()"
         elif goto == "mix":
             new = block+"("+new_variables+")"
         elif goto == "local":
-            s_variables = map(lambda x : unbox_variable(x.strip()),stack_variables)
+            s_variables = list(map(lambda x : unbox_variable(x.strip()),stack_variables))
             
-            field_variables = filter(lambda x: x.strip().startswith("g("),vars_aux)
-            f_variables = map(lambda x: unbox_variable(x.strip()),field_variables)
+            field_variables = list(filter(lambda x: x.strip().startswith("g("),vars_aux))
+            f_variables = list(map(lambda x: unbox_variable(x.strip()),field_variables))
 
 
-            local_variables_mem = filter(lambda x: x.strip().startswith("l("),vars_aux)
+            local_variables_mem = list(filter(lambda x: x.strip().startswith("l("),vars_aux))
             if not mem_abs:
-                local_variables = filter(lambda x: x.strip().startswith("l("),vars_aux)
-                l_variables = map(lambda x: x.strip()[2:-1],local_variables)
+                local_variables = list(filter(lambda x: x.strip().startswith("l("),vars_aux))
+                l_variables = list(map(lambda x: x.strip()[2:-1],local_variables))
 
             else:
                 local_variables = []
                 l_variables = []
                 
             other = stack_variables+field_variables+local_variables+local_variables_mem
-            bc_variables = filter(lambda x: x not in other,vars_aux)
+            bc_variables = list(filter(lambda x: x not in other,vars_aux))
 
             variables = s_variables+f_variables+l_variables+bc_variables
             
@@ -1760,7 +1760,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                     if rule_id in mem_init_blocks:
                         already_def = get_already_def_memvars(rule_id)
                         vars_declared = mem_vars_per_block[rule_id]
-                        memvars_otherblock = filter(lambda x: x not in vars_declared,already_def)
+                        memvars_otherblock = list(filter(lambda x: x not in vars_declared,already_def))
                         already_def_mem = memvars_otherblock+ mem_defined
                     else:
                         al = []
@@ -1844,7 +1844,7 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
                         if rule_id in mem_init_blocks:
                             already_def = get_already_def_memvars(rule_id)
                             vars_declared = mem_vars_per_block[rule_id]
-                            memvars_otherblock = filter(lambda x: x not in vars_declared,already_def)
+                            memvars_otherblock = list(filter(lambda x: x not in vars_declared,already_def))
                             already_def_mem = memvars_otherblock+ mem_defined
                         else:
                             # print "*-*-*--*-*--*-"
@@ -2318,8 +2318,8 @@ def initialize_global_variables(rules,init_fields, field_names):
     bc_data = r.get_bc()
     locals_vars = sorted(r.get_args_local())[::-1]
 
-    nondet_fields = filter(lambda x: x not in initialized_vars,fields_id) 
-    fields = map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",nondet_fields)
+    nondet_fields = list(filter(lambda x: x not in initialized_vars,fields_id) )
+    fields = list(map(lambda x: "\tg"+str(x)+" = __VERIFIER_nondet_int()",nondet_fields))
 
     for v in initialized_vars:
         val = init_fields[v]
@@ -2328,12 +2328,12 @@ def initialize_global_variables(rules,init_fields, field_names):
     if mem_abs and verifier == "cpa":
         l_vars = ["\tmem64 = "+init_mem40]
     elif mem_abs:
-        l_vars = map(lambda x: "\tmem"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
+        l_vars = list(map(lambda x: "\tmem"+str(x)+" = __VERIFIER_nondet_int()",locals_vars))
     else:
-        l_vars = map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_int()",locals_vars)
+        l_vars = list(map(lambda x: "\tl"+str(x)+" = __VERIFIER_nondet_int()",locals_vars))
 
         
-    bc = map(lambda x: "\t"+x+" = __VERIFIER_nondet_int()",bc_data)
+    bc =list( map(lambda x: "\t"+x+" = __VERIFIER_nondet_int()",bc_data))
 
     if fields != []:
         s = s+";\n".join(fields)+";\n"
@@ -2381,11 +2381,11 @@ def write_init(rules,execution,cname,num_mem_vars,field_names):
         s = s+"\n"
         
     if execution == None:
-        name = global_params.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"rbr.c"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
     else:
-        name = global_params.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+cname+".c"
     with open(name,"w") as f:
         if(len(rules)>1):
             r = rules[1][0]
@@ -2397,15 +2397,15 @@ def write_init(rules,execution,cname,num_mem_vars,field_names):
         bc_data = r.get_bc()
         locals_vars = sorted(r.get_args_local())[::-1]
         
-        fields = map(lambda x: "int g"+str(x),fields_id)
+        fields = list(map(lambda x: "int g"+str(x),fields_id))
 
         if mem_abs and verifier == "cpa":
             l_vars = ["int mem64"]
         elif mem_abs:
-            l_vars = map(lambda x: "int mem"+str(x),locals_vars)
+            l_vars = list(map(lambda x: "int mem"+str(x),locals_vars))
         else:
-            l_vars = map(lambda x: "int l"+str(x),locals_vars)
-        bc = map(lambda x: "int "+x,bc_data)
+            l_vars = list(map(lambda x: "int l"+str(x),locals_vars))
+        bc = list(map(lambda x: "int "+x,bc_data))
         
 
         s_vars = build_vars_to_initialize(fields,l_vars,bc)
@@ -2515,8 +2515,8 @@ def mload_functions():
         head = head+"int mload"+str(a)+"(int pos);\n"
 
         values = memory_id_spec[a]
-        non_interval = filter(lambda x: str(x).startswith("mem"),values)
-        interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
+        non_interval = list(filter(lambda x: str(x).startswith("mem"),values))
+        interval_vars = list(filter(lambda x: not str(x).startswith("mem"),values))
 
         f = f+"int mload"+str(a)+"(int pos){\n"
 
@@ -2610,8 +2610,8 @@ def mstore_functions():
         head = head+"void mstore"+str(a)+"(int pos, int val);\n"
 
         values = memory_id_spec[a]
-        non_interval = filter(lambda x: str(x).startswith("mem"),values)
-        interval_vars = filter(lambda x: not str(x).startswith("mem"),values)
+        non_interval = list(filter(lambda x: str(x).startswith("mem"),values))
+        interval_vars = list(filter(lambda x: not str(x).startswith("mem"),values))
 
         f = f +"void mstore"+str(a)+"(int pos, int val){\n"
 
@@ -2725,11 +2725,11 @@ def update_stack_vars_global(vs):
 
 def write_main(execution,cname, init_vars):
     if execution == None:
-        name = global_params.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"rbr.c"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
     else:
-        name = global_params.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+cname+".c"
 
     if not svcomp["exec"]:
         with open(name,"a") as f:
@@ -2761,11 +2761,11 @@ def write(head,rules,execution,cname):
     #     os.mkdir("/tmp/costabs/")
 
     if execution == None:
-        name = global_params.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"rbr.c"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
     else:
-        name = global_params.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+cname+".c"
     with open(name,"a") as f:
         f.write(head+"\n")
         
@@ -2791,11 +2791,11 @@ def get_already_def_memvars(block_id):
     c_component = components[block_id]
     blocks_dec = mem_vars_per_block.keys()
 
-    blocks_with_mem = filter(lambda x: x in blocks_dec,c_component)
+    blocks_with_mem = list(filter(lambda x: x in blocks_dec,c_component))
     already_def = []
     for b in blocks_with_mem:
         m_block = mem_vars_per_block[b]
-        new_mem_vars = filter(lambda x: x not in already_def,m_block)
+        new_mem_vars = list(filter(lambda x: x not in already_def,m_block))
         already_def+=new_mem_vars
 
     # own = mem_vars_per_block.get(block_id,[])
@@ -2834,7 +2834,7 @@ def generate_initializations(stack_vars):
         if s.strip() not in vars_def:
             vars_def.append(s)
 
-    l_vars = map(lambda x: "\tint "+x+";",vars_def)
+    l_vars = list(map(lambda x: "\tint "+x+";",vars_def))
     return l_vars
 
 
@@ -2867,17 +2867,17 @@ def build_init_main(rules,num):
     bc_data = r.get_bc()
     locals_vars = sorted(r.get_args_local())[::-1]
                                 
-    fields = map(lambda x: "int g"+str(x),fields_id)
+    fields = list(map(lambda x: "int g"+str(x),fields_id))
 
     # if mem_abs and verifier == "cpa":
     #     l_vars = ["int mem64"]
     # elif mem_abs:
     #     l_vars = map(lambda x: "int mem"+str(x),locals_vars)
     if not mem_abs:
-        l_vars = map(lambda x: "int l"+str(x),locals_vars)
+        l_vars = list(map(lambda x: "int l"+str(x),locals_vars))
     else:
         l_vars = []
-    bc = map(lambda x: "int "+x,bc_data)
+    bc = list(map(lambda x: "int "+x,bc_data))
         
 
     s_vars = vars_in_main(fields,l_vars,bc,num)
@@ -2888,18 +2888,18 @@ def vars_in_main(fields,local,blockchain,num):
 
     #It has to be initialize in local and mix
     stack_vars = []
-    for x in xrange(0,max_stack_idx+1):
+    for x in range(0,max_stack_idx+1):
         stack_vars.append("\tint i_s"+str(x)+" = "+get_nondet_svcomp_label())
 
         
     if goto == "local":
         
-        all_vars = map(lambda x: "\t"+x.split()[0]+" i_"+x.split()[1]+" = "+get_nondet_svcomp_label(),fields+local+blockchain)
+        all_vars = list(map(lambda x: "\t"+x.split()[0]+" i_"+x.split()[1]+" = "+get_nondet_svcomp_label(),fields+local+blockchain))
         
         s = s+";\n".join(stack_vars+all_vars)+";\n"
 
         if mem_abs:
-            local_aux = map(lambda x: "\t"+x,local)
+            local_aux = list(map(lambda x: "\t"+x,local))
             if local_aux != []:
                 s = s+";\n".join(local_aux)+";\n"
 
@@ -2920,9 +2920,9 @@ def vars_in_main(fields,local,blockchain,num):
 def get_invalids_entry_functions(components_of, rbr,cname):
 
     if cname == None:
-        name = global_params.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"config_block.config"
     else:
-        name = global_params.costabs_path+cname+".config"
+        name = global_params_ethir.costabs_path+cname+".config"
 
 
     f = open(name,"r")
@@ -2966,7 +2966,7 @@ def get_invalids_entry_functions(components_of, rbr,cname):
 
 def process_blocks_ethirui_recur(rbr,new_rule):
     new_rule = new_rule.split("\n")
-    new_rule_aux = map(lambda x: x.strip("\t"), new_rule)
+    new_rule_aux = list(map(lambda x: x.strip("\t"), new_rule))
 
     head = new_rule_aux[0]
     body = new_rule_aux[1::]
@@ -2994,7 +2994,7 @@ def process_blocks_ethirui_recur(rbr,new_rule):
         # print(body)
         # print(rbr_instructions)
 
-        new_rbr_instructions = filter(lambda x: x !="" and not x.startswith("nop("),rbr_instructions)
+        new_rbr_instructions = list(filter(lambda x: x !="" and not x.startswith("nop("),rbr_instructions))
         # print(new_rbr_instructions)
         if goto == "local" or goto == "mix":
             i = 0
@@ -3033,12 +3033,12 @@ def process_blocks_ethirui_recur(rbr,new_rule):
 
             name = rbr[0].get_rule_name()
             if(len(real_body ) == len(new_rbr_instructions)):
-                for i in xrange(len(real_body)):
+                for i in range(len(real_body)):
                     line = name+"("+str(i)+","+str(i+offset)+")"
                     mappings.append(line)
             else:
                 if new_rbr_instructions == []:
-                    for i in xrange(len(real_body)):
+                    for i in range(len(real_body)):
                         line = name+"(0,"+str(i+offset)+")"
                         mappings.append(line)
 
@@ -3094,11 +3094,11 @@ def process_blocks_ethirui_recur(rbr,new_rule):
 
 def write_ethirui_config(cname,execution):
     if execution == None:
-        name = global_params.costabs_path+"rbr.ethirui"
+        name = global_params_ethir.costabs_path+"rbr.ethirui"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".ethirui"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".ethirui"
     else:
-        name = global_params.costabs_path+cname+".ethirui"
+        name = global_params_ethir.costabs_path+cname+".ethirui"
     with open(name,"w") as f:
         lines = "\n".join(mapping_ethirui)
         f.write(lines)

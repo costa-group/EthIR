@@ -2,7 +2,7 @@ from rbr_rule import RBRRule
 import os
 from timeit import default_timer as dtimer
 from utils import delete_dup
-import global_params
+import global_params_ethir
 import  traceback
 
 '''
@@ -1876,11 +1876,11 @@ def write_init(rules,execution,cname):
         s = s+"\n"
         
     if execution == None:
-        name = global_params.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"rbr.c"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
     else:
-        name = global_params.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+cname+".c"
     with open(name,"w") as f:
         if(len(rules)>1):
             r = rules[1][0]
@@ -1953,11 +1953,11 @@ def update_stack_vars_global(vs):
 #Metodo que escribe la parte del main en el fichero .c
 def write_main(execution,cname):
     if execution == None:
-        name = global_params.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"rbr.c"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
     else:
-        name = global_params.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+cname+".c"
 
     if svcomp != {}:
         with open(name,"a") as f:
@@ -1979,11 +1979,11 @@ def write(head,rules,execution,cname):
     #     os.mkdir("/tmp/costabs/")
 
     if execution == None:
-        name = global_params.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"rbr.c"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
     else:
-        name = global_params.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+cname+".c"
     with open(name,"a") as f:
         f.write(head+"\n")
         

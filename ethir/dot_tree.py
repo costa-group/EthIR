@@ -220,7 +220,7 @@ def build_tree_memory(block,visited,block_input,memory_result,condTrue = "t"):
     # if start in base_refs:
     #     cond+=base_refs[start]+"\n"
 
-    slots, memory, accesses = memory_result
+    slots, memory, accesses, _ = memory_result
 
     mem_info = accesses.get_cfg_info(str(start))
     # print(mem_info)

@@ -1,7 +1,7 @@
 import rbr_rule
 import os
 from timeit import default_timer as dtimer
-import global_params
+import global_params_ethir
 import traceback
 
 '''
@@ -98,7 +98,7 @@ def process_rule_saco(rule):
         new_rule = new_rule+"\t"+rule.get_guard()+"\n"
 
     instr_aux = process_instructions(rule)
-    instr = filter(lambda x: x !="",instr_aux)
+    instr = list(filter(lambda x: x !="",instr_aux))
     for ins in instr:
         new_rule = new_rule+"\t"+ins+"\n"
 
@@ -107,19 +107,19 @@ def process_rule_saco(rule):
 
 def get_contract_vars(rule):
     bc = rule.get_bc()
-    new = map(lambda x: "l("+x+")",bc)
+    new = list(map(lambda x: "l("+x+")",bc))
     return new
 
 def get_field_vars(rule):
     names, numeric = rule.get_global_arg()
 
     if numeric != []:
-        new_numeric = map(lambda x: "field(g"+x+")",numeric)
+        new_numeric = list(map(lambda x: "field(g"+x+")",numeric))
     else:
         new_numeric = []
         
     if names != []:
-        new_names = map(lambda x: "field("+x+")",names)
+        new_names = list(map(lambda x: "field("+x+")",names))
     else:
         new_names = []
         
@@ -150,7 +150,7 @@ def call_instruction(instr):
     pos_head = instr.find("(",5) #It is a call. It starts with call(__(
     end = len(instr)-2
     variables = instr[pos_head+1:end].split(",")
-    new_vars = map(lambda x: transform_vars(x.strip()),variables)
+    new_vars = list(map(lambda x: transform_vars(x.strip()),variables))
     new_vars_string = ", ".join(new_vars)
 
     new_instr = instr[:pos_head+1]+new_vars_string+"))"
@@ -494,7 +494,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
     return cont
 
 def compute_string_pattern(new_instructions):
-    nop_inst = map(lambda x: "nop("+x+")",pattern)
+    nop_inst = list(map(lambda x: "nop("+x+")",pattern))
     new_instructions = new_instructions+nop_inst
     return new_instructions
 
@@ -527,11 +527,11 @@ def write(rules,execution,cname):
     #     os.mkdir("/tmp/costabs/")
 
     if execution == None:
-        name = global_params.costabs_path+"rbr_saco.rbr"
+        name = global_params_ethir.costabs_path+"rbr_saco.rbr"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(execution)+"_saco.rbr"
+        name = global_params_ethir.costabs_path+"rbr"+str(execution)+"_saco.rbr"
     else:
-        name = global_params.costabs_path+cname+"_saco.rbr"
+        name = global_params_ethir.costabs_path+cname+"_saco.rbr"
     with open(name,"w") as f:
         for rule in rules:
             f.write(rule+"\n")

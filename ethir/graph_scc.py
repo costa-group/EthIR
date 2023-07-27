@@ -94,7 +94,7 @@ class Graph_SCC:
 
     def printSCCs(self):
         sccs = self.getSCCs()
-        print sccs
+        print(sccs)
     
 def get_entry_scc(scc,blocks):
     entry = ""
@@ -105,7 +105,7 @@ def get_entry_scc(scc,blocks):
         entry = scc[i]
         b = blocks[entry]
         comes_from = b.get_comes_from()
-        l = filter(lambda x: x not in scc,comes_from)
+        l = list(filter(lambda x: x not in scc,comes_from))
         if len(l) == 1:
             found = True
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
 import re
@@ -9,7 +9,7 @@ import logging
 #import requests
 import argparse
 import subprocess
-import global_params
+import global_params_ethir
 from timeit import default_timer as dtimer
 from utils import run_command, process_hashes
 from input_helper import InputHelper
@@ -74,11 +74,11 @@ def has_dependencies_installed():
 
 def clean_dir():
     ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl","ethirui"]
-    if "costabs" in os.listdir(global_params.tmp_path):
-        for elem in os.listdir(global_params.costabs_path):
+    if "costabs" in os.listdir(global_params_ethir.tmp_path):
+        for elem in os.listdir(global_params_ethir.costabs_path):
             last = elem.split(".")[-1]
             if last in ext:
-                os.remove(global_params.costabs_path+elem)
+                os.remove(global_params_ethir.costabs_path+elem)
 
 
 '''
@@ -172,7 +172,7 @@ def analyze_disasm_bytecode():
     else:
         exit_code = -1
         print("Option Error: --verify, --goto or --invalid options are only applied to c translation.\n")
-    if global_params.WEB:
+    if global_params_ethir.WEB:
         six.print_(json.dumps(result))
 
     return exit_code
@@ -210,7 +210,7 @@ def analyze_bytecode():
     else:
         exit_code = -1
         print("Option Error: --verify option is only applied to c translation.\n")
-    if global_params.WEB:
+    if global_params_ethir.WEB:
         six.print_(json.dumps(result))
 
     return exit_code
@@ -239,7 +239,7 @@ def run_solidity_analysis(inputs,hashes):
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run, mem_analysis = args.mem_analysis)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = (args.optimize_run or args.via_ir), mem_analysis = args.mem_analysis)
             
         except Exception as e:
             traceback.print_exc()
@@ -259,7 +259,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = args.optimize_run, mem_analysis = args.mem_analysis)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = (args.optimize_run or args.via_ir), mem_analysis = args.mem_analysis)
                 
             except Exception as e:
                 traceback.print_exc()
@@ -373,7 +373,7 @@ def analyze_solidity(input_type='solidity'):
     compiler_opt["optimize"] = args.optimize_run
     compiler_opt["no-yul"] = args.no_yul_opt
     compiler_opt["runs"] = args.run
-
+    compiler_opt["via-ir"] = args.via_ir
 
     if input_type == 'solidity':
         print(args)
@@ -407,7 +407,7 @@ def analyze_solidity(input_type='solidity'):
         results, exit_code = run_solidity_analysis(inputs,hashes)
         helper.rm_tmp_files()
 
-    if global_params.WEB:
+    if global_params_ethir.WEB:
         six.print_(json.dumps(results))
     return exit_code
 
@@ -436,11 +436,11 @@ def process_fields(src_map):
     return fields
 
 def generate_saco_hashes_file(dicc):
-    with open(global_params.costabs_path+"solidity_functions.txt", "w") as f:
+    with open(global_params_ethir.costabs_path+"solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
-            cf_names1 = map(process_name,f_names)
-            cf_names = map(lambda x: name+"."+x,cf_names1)
+            cf_names1 = list(map(process_name,f_names))
+            cf_names = list(map(lambda x: name+"."+x,cf_names1))
             new_names = "\n".join(cf_names)+"\n" if cf_names!=[] else ""
             f.write(new_names)
     f.close()
@@ -480,6 +480,7 @@ def main():
     parser.add_argument("-optimize-run", "--optimize-run",             help="Enable optimization flag in solc compiler", action="store_true")
     parser.add_argument("-run", "--run",             help="Set for how many contract runs to optimize (200 by default if --optimize-run)", default=-1,action="store",type=int)
     parser.add_argument("-no-yul-opt", "--no-yul-opt",             help="Disable yul optimization in solc compiler (when possible)", action="store_true")
+    parser.add_argument("-via-ir", "--via-ir",             help="via-ir optimization in solc compiler (when possible)", action="store_true")
     parser.add_argument("-f", "--fields", type=str, help="Fields to be optimized by Gasol")
     parser.add_argument("-cname", "--contract_name", type=str, help="Name of the contract that is going to be optimized")
     parser.add_argument("-bl", "--block", type=str, help="block to be optimized")
@@ -503,16 +504,16 @@ def main():
     # else:
     #     logging.basicConfig(level=logging.INFO)
     
-    global_params.PRINT_PATHS = 0 #1 if args.paths else 0
-    global_params.REPORT_MODE = 0 #1  if args.report else 0
-    global_params.USE_GLOBAL_BLOCKCHAIN = 0#1 if args.globalblockchain else 0
-    global_params.INPUT_STATE = 0#1 if args.state else 0
-    global_params.WEB = 0#1 if args.web else 0
-    global_params.STORE_RESULT = 0#1 if args.json else 0
-    global_params.CHECK_ASSERTIONS = 0#1 if args.assertion else 0
-    global_params.DEBUG_MODE = 0#1 if args.debug else 0
-    global_params.GENERATE_TEST_CASES = 0#1 if args.generate_test_cases else 0
-    global_params.PARALLEL = 0#1 if args.parallel else 0
+    global_params_ethir.PRINT_PATHS = 0 #1 if args.paths else 0
+    global_params_ethir.REPORT_MODE = 0 #1  if args.report else 0
+    global_params_ethir.USE_GLOBAL_BLOCKCHAIN = 0#1 if args.globalblockchain else 0
+    global_params_ethir.INPUT_STATE = 0#1 if args.state else 0
+    global_params_ethir.WEB = 0#1 if args.web else 0
+    global_params_ethir.STORE_RESULT = 0#1 if args.json else 0
+    global_params_ethir.CHECK_ASSERTIONS = 0#1 if args.assertion else 0
+    global_params_ethir.DEBUG_MODE = 0#1 if args.debug else 0
+    global_params_ethir.GENERATE_TEST_CASES = 0#1 if args.generate_test_cases else 0
+    global_params_ethir.PARALLEL = 0#1 if args.parallel else 0
 
     # if args.depth_limit:
     #     global_params.DEPTH_LIMIT = args.depth_limit
@@ -529,8 +530,8 @@ def main():
 
 
     if args.path_out:
-        global_params.tmp_path = args.path_out
-        global_params.costabs_path = global_params.tmp_path+"costabs/"
+        global_params_ethir.tmp_path = args.path_out
+        global_params_ethir.costabs_path = global_params_ethir.tmp_path+"costabs/"
 
         
     if not has_dependencies_installed():
@@ -565,6 +566,7 @@ def main():
         compiler_opt["optimize"] = args.optimize_run
         compiler_opt["no-yul"] = args.no_yul_opt
         compiler_opt["runs"] = args.run
+        compiler_opt["via-ir"] = args.via_ir
         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
 
         solc_version = helper.get_solidity_version()
@@ -575,9 +577,13 @@ def main():
         
     else:
         exit_code = analyze_solidity()
-    six.print_("The files generated by EthIR are stored in the following directory: "+global_params.costabs_path)
+    six.print_("The files generated by EthIR are stored in the following directory: "+global_params_ethir.costabs_path)
 
     exit(exit_code)
+
+
+def get_memory_opt_blocks():
+    return symExec.get_memory_opt_block()
     
 
 if __name__ == '__main__':

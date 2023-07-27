@@ -5,10 +5,10 @@ from memory_utils import arithemtic_operations, TOP,TOPK, K
 class OffsetAnalysisAbstractState:          
     stack_pos = None
     
-    def __init__(self,stack_pos,stack):
+    def __init__(self,stack_pos,stack, debug):
         self.stack_pos = stack_pos
         self.stack = stack
-
+        self.debug = debug
     # def is_leq (self,s1, s2):
     #     print ("PROCESANDO IS LEQ " + str(s1) + " " + str(s2)
     #     if s1.slot != s2.slot: 
@@ -19,7 +19,8 @@ class OffsetAnalysisAbstractState:
     #         return False
 
     def is_leq (self,s1, s2):
-        # If s2 == ['*'] return True
+        if TOP in s2: 
+             return True
         allLeq = True
         for sleft in s1: 
             found = False
@@ -31,8 +32,6 @@ class OffsetAnalysisAbstractState:
             if not found: 
                 allLeq = False
                 break
-        print ("PROCESANDO IS LEQ " + str(s1) + " " + str(s2) + " -- " + str(allLeq))
-
         return allLeq
     
     def leq (self,state): 
@@ -48,8 +47,6 @@ class OffsetAnalysisAbstractState:
             allLeq = self.is_leq(self.stack[skey],state.stack[skey])
             if not allLeq:
                 break
-        print ("LLAMANDO A LEQ " + str(self) + " " + str(state) + " -- " + str(allLeq))
-
         return allLeq
 
     def do_lub(self,s1,s2): 
@@ -59,7 +56,8 @@ class OffsetAnalysisAbstractState:
             return s1.union(s2)
 
     def lub (self,state): 
-        print ("DOING LUB: " + str(self.stack) + " " + str(state.stack))
+        if self.debug:
+            print ("DOING LUB: " + str(self.stack) + " " + str(state.stack))
         if self.stack_pos != state.stack_pos: 
             print("OFFSET ANALYSIS WARNING: Different stacks in lub !!! ")
             print("OFFSET ANALYSIS WARNING: " + str(self))
@@ -73,9 +71,10 @@ class OffsetAnalysisAbstractState:
             else:
                 res_stack[skey] = state.stack[skey]
 
-        print ("LUB RES " + str(res_stack))
+        if self.debug:
+            print ("LUB RES " + str(res_stack))
 
-        return OffsetAnalysisAbstractState(self.stack_pos, res_stack)
+        return OffsetAnalysisAbstractState(self.stack_pos, res_stack, self.debug)
 
 
     def process_instruction (self,instr,pc):
@@ -154,7 +153,7 @@ class OffsetAnalysisAbstractState:
         for i in range(stack_res,self.stack_pos): 
             stack.pop(i,None)
 
-        return OffsetAnalysisAbstractState(stack_res, stack)
+        return OffsetAnalysisAbstractState(stack_res, stack, self.debug)
 
 
     def get_constants (self,stackpos):  
@@ -162,12 +161,15 @@ class OffsetAnalysisAbstractState:
 
 
     def add_set(self,set1,set2):
+
+        if TOP in set1 or TOP in set2: 
+            return set({TOP})
+        
         result = set({})
+        
         for i in set1:
             for j in set2:
-                if j == TOP or i == TOP:
-                    return set({TOP})
-                elif j == TOPK or i == TOPK:
+                if j == TOPK or i == TOPK:
                     result.add(TOPK)
                 else:
                     suma = i+j

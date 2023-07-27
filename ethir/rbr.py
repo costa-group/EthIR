@@ -11,7 +11,7 @@ import c_utranslation
 import e_translation
 from timeit import default_timer as dtimer
 from graph_scc import get_entry_scc
-import global_params
+import global_params_ethir
 import traceback
 
 init_fields = []
@@ -526,7 +526,7 @@ def translateOpcodes20(opcode, index_variables,block):
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
 
-        blocks_sha3 = map(lambda x: x[1],sha3_blocks_arr.values())
+        blocks_sha3 = list(map(lambda x: x[1],sha3_blocks_arr.values()))
 
         if block in blocks_sha3:
             instr = v3+" = 0"
@@ -1560,15 +1560,15 @@ for each smart contract.
 -executions refers to the number of smart contract that has been translated. int.
 '''
 def write_rbr(rbr,executions,cname = None):
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
 
     if executions == None:
-        name = global_params.costabs_path+"rbr.rbr"
+        name = global_params_ethir.costabs_path+"rbr.rbr"
     elif cname == None:
-        name = global_params.costabs_path+"rbr"+str(executions)+".rbr"
+        name = global_params_ethir.costabs_path+"rbr"+str(executions)+".rbr"
     else:
-        name = global_params.costabs_path+cname+".rbr"
+        name = global_params_ethir.costabs_path+cname+".rbr"
     with open(name,"w") as f:
         for rules in rbr:
             for r in rules:
@@ -1917,7 +1917,7 @@ def process_init_values_fields(rbr):
     for rules in rbr:
         for r in rules:
             ins = r.get_instructions()
-            fields = filter(lambda x: x.startswith("g("),ins)
+            fields = list(filter(lambda x: x.startswith("g("),ins))
 
             init_fields_of_rule = get_initialization(fields,ins)
             field_vals+=init_fields_of_rule
@@ -1933,7 +1933,7 @@ def get_initialization(fields,instructions):
         stack_var = elems[-1].strip()
         idx = instructions.index(f)
         potential_ins = instructions[:idx]
-        assignments = filter(lambda x: x.startswith(stack_var),potential_ins)
+        assignments = list(filter(lambda x: x.startswith(stack_var),potential_ins))
         init_value = assignments[-1].split("=")[-1].strip()
         fields_vals = field_vals.append(field_var+" = "+str(init_value))
 
@@ -2018,12 +2018,12 @@ def get_fun_lines_info(rbr, source_map,f):
                     if (fun_name,init_pos,end_pos) not in functions:
                         functions.append((fun_name,init_pos,end_pos))
 
-    lines = map(lambda x: "solidityfunctionline("+x[0]+","+str(x[1])+","+str(x[2])+").",functions)
+    lines = list(map(lambda x: "solidityfunctionline("+x[0]+","+str(x[1])+","+str(x[2])+").",functions))
     f.write("\n".join(lines))
 
 
 def write_info_lines(rbr,source_map,contract_name):
-    final_path = global_params.costabs_path + "/" + contract_name + "_lines.pl"
+    final_path = global_params_ethir.costabs_path + "/" + contract_name + "_lines.pl"
     f = open (final_path, "w")
     get_info_lines(rbr,source_map,f)
     get_fun_lines_info(rbr,source_map,f)

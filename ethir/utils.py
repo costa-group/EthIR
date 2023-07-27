@@ -12,7 +12,7 @@ import csv
 import re
 import difflib
 import six
-import global_params
+import global_params_ethir
 from dot_tree import Tree, build_tree, build_tree_memory
 import opcodes
 
@@ -300,7 +300,13 @@ It returns the start address of the block received.
 
 '''    
 def getKey(block):
-    return block.get_start_address()
+    if(str(block.get_start_address()).find("_")==-1):
+        val = int(block.get_start_address())
+        return (val,0)
+    else:
+        block,c = block.get_start_address().split("_")
+        return (int(block),int(c))
+    # return block.get_start_address()
 
 def toInt(a):
     elem = a.split("_")
@@ -315,7 +321,14 @@ def getLevel(block):
 It returns the id of a rbr_rule.
 '''
 def orderRBR(rbr):
-    return rbr[0].get_Id()
+    if str(rbr[0].get_Id()).find("_")==-1:
+        val = int(rbr[0].get_Id())
+        return (val,0)
+    else:
+        val,s = rbr[0].get_Id().split("_")
+        return (int(val), int(s))
+
+    # return rbr[0].get_Id()
 
 
 def delete_dup(l):
@@ -378,24 +391,24 @@ def process_hashes(solidity_file,solidity_version):
 
 def write_cfg(it,vertices,name = False,cloned = False):
     vert = sorted(vertices.values(), key = getKey)
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
 
     if not cloned:
         if it == None:
-            name = global_params.costabs_path+"cfg_evm.cfg"
+            name = global_params_ethir.costabs_path+"cfg_evm.cfg"
         elif name == False:
-            name = global_params.costabs_path+"cfg_evm"+str(it)+".cfg"
+            name = global_params_ethir.costabs_path+"cfg_evm"+str(it)+".cfg"
         else:
-            name = global_params.costabs_path+"cfg_"+name+".cfg"
+            name = global_params_ethir.costabs_path+"cfg_"+name+".cfg"
 
     else:
         if it == None:
-            name = global_params.costabs_path+"cfg_cloned_evm.cfg"
+            name = global_params_ethir.costabs_path+"cfg_cloned_evm.cfg"
         elif name == False:
-            name = global_params.costabs_path+"cfg__cloned_evm"+str(it)+".cfg"
+            name = global_params_ethir.costabs_path+"cfg__cloned_evm"+str(it)+".cfg"
         else:
-            name = global_params.costabs_path+"cfg_"+name+"_cloned.cfg"
+            name = global_params_ethir.costabs_path+"cfg_"+name+"_cloned.cfg"
         
     with open(name,"w") as f:
         for block in vert:
@@ -490,27 +503,27 @@ def compute_hex_vals_cfg(block):
 def cfg_dot(it,block_input,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
     
     if not cloned:
 
         if it == None:
-            name = global_params.costabs_path+"cfg.dot"
+            name = global_params_ethir.costabs_path+"cfg.dot"
         elif name == False:
-            name = global_params.costabs_path+"cfg"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"cfg"+str(it)+".dot"
         else:
-            name = global_params.costabs_path+name+".dot"
+            name = global_params_ethir.costabs_path+name+".dot"
     else:
 
         if it == None:
-            name = global_params.costabs_path+"cfg_cloned.dot"
+            name = global_params_ethir.costabs_path+"cfg_cloned.dot"
         elif name == False:
-            name = global_params.costabs_path+"cfg_cloned_"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"cfg_cloned_"+str(it)+".dot"
         else:
-            name = global_params.costabs_path+name+"_cloned.dot"
+            name = global_params_ethir.costabs_path+name+"_cloned.dot"
         
-    f = open(name,"wb")
+    f = open(name,"w")
     tree = build_tree(vert[0],[("st",0)],block_input)
     tree.generatedot(f)
     f.close()
@@ -519,27 +532,27 @@ def cfg_dot(it,block_input,name = False,cloned = False):
 def cfg_memory_dot(it,block_input,memory_sets,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
-    if "costabs" not in os.listdir(global_params.tmp_path):
-        os.mkdir(global_params.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
     
     if not cloned:
 
         if it == None:
-            name = global_params.costabs_path+"cfg.dot"
+            name = global_params_ethir.costabs_path+"cfg.dot"
         elif name == False:
-            name = global_params.costabs_path+"cfg"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"cfg"+str(it)+".dot"
         else:
-            name = global_params.costabs_path+name+".dot"
+            name = global_params_ethir.costabs_path+name+".dot"
     else:
 
         if it == None:
-            name = global_params.costabs_path+"cfg_cloned.dot"
+            name = global_params_ethir.costabs_path+"cfg_cloned.dot"
         elif name == False:
-            name = global_params.costabs_path+"cfg_cloned_"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"cfg_cloned_"+str(it)+".dot"
         else:
-            name = global_params.costabs_path+name+"_cloned.dot"
+            name = global_params_ethir.costabs_path+name+"_cloned.dot"
         
-    f = open(name,"wb")
+    f = open(name,"w")
     tree = build_tree_memory(vert[0],[("st",0)],block_input,memory_sets)
     tree.generatedot(f)
     f.close()
@@ -552,7 +565,7 @@ def update_map(m,key,val):
     return m
 
 def store_times(oyente_time,ethir_time):
-    f = open(global_params.costabs_path+"times.csv","a")
+    f = open(global_params_ethir.costabs_path+"times.csv","a")
     fp = csv.writer(f, delimiter=',')
     fp.writerow(["Oyente",oyente_time,"EthIR",ethir_time])
     f.close()
@@ -561,9 +574,9 @@ def store_times(oyente_time,ethir_time):
 def get_public_fields(source_file,arr = True):
     with open(source_file,"r") as f:
         lines = f.readlines()
-        good_lines_aux = filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines)
-        good_lines = map(lambda x: x.split("//")[0],good_lines_aux)
-        fields = map(lambda x: x.split()[-1].strip().strip(";"),good_lines)
+        good_lines_aux = list(filter(lambda x: x.find("[]")!=-1 and x.find("public")!=-1,lines))
+        good_lines = list(map(lambda x: x.split("//")[0],good_lines_aux))
+        fields = list(map(lambda x: x.split()[-1].strip().strip(";"),good_lines))
     f.close()
     return fields
 
@@ -635,7 +648,8 @@ def correct_map_fields1(fields_map,var_fields):
     correct = True
     i = 0
     offset=0
-    for e in fields_map:
+    fields_map_aux = dict(fields_map)
+    for e in fields_map_aux:
         val = fields_map[e]
         del fields_map[e]
         fields_map[str(e)] = val
@@ -671,8 +685,8 @@ def search_greatter_compacts(pos,fields_map):
     
     numbers = fields_map.keys()
     pos_int = str(pos).split("_")[0]
-    numbers_str = filter(lambda x: str(x).startswith(pos_int),numbers)
-    end = filter(lambda x: str(x)>str(pos),numbers_str)
+    numbers_str = list(filter(lambda x: str(x).startswith(pos_int),numbers))
+    end = list(filter(lambda x: str(x)>str(pos),numbers_str))
     if len(end)>0:
         if end[0] == pos_int+"_0":
             fields_map[pos_int+"_0"] = fields_map[pos_int]
@@ -682,12 +696,12 @@ def search_greatter_compacts(pos,fields_map):
 
 def exist_index(potential_index,fields_map):
     numbers = fields_map.keys()
-    numbers_str = filter(lambda x: str(x).startswith(str(potential_index)), numbers)
+    numbers_str = list(filter(lambda x: str(x).startswith(str(potential_index)), numbers))
     
     if len(numbers_str)== 0:
         return potential_index
     else:
-        numbers_str = map(lambda x: str(x), numbers_str)
+        numbers_str = list(map(lambda x: str(x), numbers_str))
         numbers_str.sort()
         return numbers_str[0]
 
@@ -697,7 +711,7 @@ def search_for_index(field,field_map):
         if field == field_map[e]:
             possible_values.append(e)
 
-    vals = map(lambda x: str(x), possible_values)
+    vals = list(map(lambda x: str(x), possible_values))
     vals.sort()
     if len(vals)!=0:
         return vals[0]
@@ -706,6 +720,8 @@ def search_for_index(field,field_map):
 
 
 def is_integer(num):
+    if num.find("_") !=-1:
+        return -1
     try:
         val = int(num)
     except:
@@ -781,20 +797,20 @@ def check_if_same_stack(stack1, stack2, blocks_info):
 def show_graph(blocks_input):
     for address in blocks_input:
         print("Bloque: ")
-        print address
+        print(address)
         print("Comes from: ")
-        print blocks_input[address].get_comes_from()
+        print(blocks_input[address].get_comes_from())
         print("List jump: ")
-        print blocks_input[address].get_list_jumps()
+        print(blocks_input[address].get_list_jumps())
         print("Jump target: ")
-        print blocks_input[address].get_jump_target()
+        print(blocks_input[address].get_jump_target())
         print("Falls to: ")
-        print blocks_input[address].get_falls_to()
+        print(blocks_input[address].get_falls_to())
         print("Filtered Stack: ")
         for stack in blocks_input[address].get_stacks():
-            print filter(lambda x: isinstance(x,tuple) and (x[0] in blocks_input) and x[0]!=0, stack)
+            print(list(filter(lambda x: isinstance(x,tuple) and (x[0] in blocks_input) and x[0]!=0, stack)))
         print("Real stack:")
-        print blocks_input[address].get_stacks()
+        print(blocks_input[address].get_stacks())
         
 
 ''' Given a node and where it comes from, checks all relevant info is consistent'''
@@ -954,6 +970,9 @@ def all_integers(variables):
     int_vals = []
     try:
         for v in variables:
+            if v.find("_")!=-1:
+                return False,variables
+            
             x = int(v)
             int_vals.append(x)
         return True, int_vals
@@ -1027,6 +1046,24 @@ def compute_stack_size(evm_instructions, init_size):
         
     return current_size
 
+def process_cost(opcode):
+    if opcode.find("(") == -1:
+        return opcodes.get_ins_cost(opcode.strip())
+
+    else:
+        pos = opcode.find("(")
+        opcode_aux = opcode[:pos]
+        gas = opcodes.get_ins_cost(opcode_aux.strip())
+        
+        args = opcode[pos+1:-1]
+        args_aux = args.split(",")
+        sum_gas = 0
+        for a in args_aux:
+            gas_aux=process_cost(a.strip(")"))
+            sum_gas+=gas_aux
+            
+        return gas+sum_gas
+        
 def compute_gas(vertices):
     gas = 0
     for v in vertices:

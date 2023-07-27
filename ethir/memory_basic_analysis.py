@@ -97,8 +97,8 @@ class MemoryAbstractState:
 
         elif op_code == "PUSH1" and instr.split()[1] == "0x60": 
             stack[self.stack_pos] = ["null"]
-            self.accesses.add_allocation_init(pc,"null")                             
-
+            self.accesses.add_allocation_init(pc,"null")
+            
         elif op_code.startswith("LOG") or op_code == "RETURN" or op_code == "REVERT": 
             if top in stack: 
                 self.add_read_access(top,pc,stack)

@@ -25,7 +25,7 @@ post_pattern_sload = ["SWAP","PUSH","EXP","SWAP","DIV","PUSH"]
 def look_for_string_pattern(block):
     ins_aux = block.get_instructions()[:-2]
     if len(ins_aux)>=len(pattern):
-        ins = map(lambda x: x.strip(),ins_aux)
+        ins = list(map(lambda x: x.strip(),ins_aux))
         p = check_string_pattern(ins)
         if p :
             block.activate_string_getter()

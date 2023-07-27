@@ -38,7 +38,8 @@ class BasicBlock:
 
         self.pcs = []
         self.pcs_stored = False
-
+        self.symbolic_stacks = []
+        
         
     def get_start_address(self):
         return self.start
@@ -394,7 +395,7 @@ class BasicBlock:
             self.stacks_old.append(s)
             
     def known_stack(self,s):
-        s_aux = filter(lambda x: isinstance(x,tuple),s)
+        s_aux = list(filter(lambda x: isinstance(x,tuple),s))
         is_in = self._is_in_old_stacks(s_aux)
         return is_in
 
@@ -416,7 +417,7 @@ class BasicBlock:
 
     def add_path(self,p):
         if p not in self.path:
-            end = map(lambda x: x[1],p)
+            end = list(map(lambda x: x[1],p))
             self.path.append(end)
 
     
@@ -453,6 +454,7 @@ class BasicBlock:
         
         #AHC: When we copy, we just forget about old stacks
         new_obj.set_stacks([])
+        new_obj.symbolic_stacks = []
         
         return new_obj
 
@@ -464,6 +466,14 @@ class BasicBlock:
         else:
             return False
 
+
+    def add_symbolic_stack(self, stack):
+        self.symbolic_stacks.append(stack)
+        
+    def get_symbolic_stacks(self):
+        return self.symbolic_stacks
+
+        
     def _isPUSH_JUMP_Instruction(self):
         if self.instructions[-1].strip() in ["JUMP","JUMPI"]:
             push = self.instructions[-2].split(" ")[0]
