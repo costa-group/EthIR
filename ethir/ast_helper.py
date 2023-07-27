@@ -4,6 +4,7 @@ import json
 
 class AstHelper:
     def __init__(self, filename, input_type,solidity_version=""):
+        self.filename = filename
         self.input_type = input_type
         self.solc_version = solidity_version
         if input_type == "solidity":
@@ -14,6 +15,14 @@ class AstHelper:
             raise Exception("There is no such type of input")
         self.contracts = self.extract_contract_definitions(self.source_list)
 
+
+    def __str__(self):
+        return "AstHelper: "+self.filename
+
+    def __repr__(self):
+        return str(self)
+
+        
     def get_source_list_standard_json(self, filename):
         with open('standard_json_output', 'r') as f:
             out = f.read()
