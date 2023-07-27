@@ -22,6 +22,12 @@ class Source:
     def _load_line_break_positions(self):
         return [i for i, letter in enumerate(self.content) if letter == '\n']
 
+    def __str__(self):
+        return "Source "+self.filename
+
+    def __repr__(self):
+        return str(self)
+    
 class SourceMap:
     parent_filename = ""
     position_groups = {}
@@ -53,8 +59,11 @@ class SourceMap:
         self.func_call_names = self._get_func_call_names() if sol_version != "v8" else []
         self.callee_src_pairs = self._get_callee_src_pairs() if sol_version != "v8" else []
  
-       
+    def __str__(self):
+        return "SourceMap: "+self.root_path+" "+self.cname
 
+    def __repr__(self):
+        return str(self)
         
     def get_init_pos(self,pc):
         return self.instr_positions[pc]['begin']
