@@ -189,7 +189,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print(accesses)
 
     #     print("\n\n")
-    # accesses.process_free_mstores()
+    accesses.process_free_mstores()
 
     print('Free memory analyss finished\n\n')
 
