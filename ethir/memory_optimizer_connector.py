@@ -24,7 +24,7 @@ class MemoryOptimizerConnector :
         self.contract = cname
         self.optimizable_blocks = OptimizableBlocks(vertices, cname)
 
-    def process_blocks (self,debug): 
+    def process_blocks_memory (self,debug): 
         for pc in self.writeset:
             block = pc.split(":")[0]
 #            print("\n\nBuscando en el bloque " + pc + " " + block)
@@ -55,6 +55,50 @@ class MemoryOptimizerConnector :
 
         if debug:
             self.optimizable_blocks.print_blocks()
+
+    def process_blocks_storage (self,debug): 
+        
+        print(str(self.vertices))
+        print(type(self.vertices))
+        for block in self.vertices: 
+            instructions=self.vertices[block].instructions
+            # if not self.contains_two_or_more_storageins(instructions): 
+            #     continue
+
+            print(str(instructions))
+
+            pc1 = -1
+            for inst1 in instructions: 
+                pc1 = pc1 + 1
+                if not inst1.startswith("SLOAD") and not inst1.startswith("SSTORE"): 
+                    
+                    continue
+
+                access1 = inst1.split(" ")
+                if access1 == "*": 
+                    continue
+
+                pc2 = -1
+                for inst2 in instructions: 
+                    pc2 = pc2 + 1
+                    if pc1 == pc2 or not inst2.startswith("SLOAD") and not inst2.startswith("SSTORE"): 
+                        continue
+
+                    access2 = inst2.split(" ")
+                    if access2 == "*": 
+                        continue
+
+                    if access1 == access2: 
+                        cmp = EQUALS
+                    else: 
+                        cmp = NONEQUALS
+
+                    bpc1 = str(str(block) + ":" + str(pc1))
+                    bpc2 = str(str(block) + ":" + str(pc2))
+                    print ("Procesando instrucciones " + str(bpc1) + " " + str(bpc2) + " -> " + str(cmp))
+                    self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp)
+
+        self.optimizable_blocks.print_blocks()
 
     def eval_pcs_relation(self,set1, set2): 
         ## Check simple case 
@@ -114,7 +158,7 @@ class OptimizableBlocks:
         return self.contract
         
     def add_block_info(self,block,pc1,pc2,cmpres):
-#        print("Adding block info " + block)
+        print("Adding block info " + block)
         
         if block.find("_") != -1:
             instr = list(self.vertices[block].get_instructions())
