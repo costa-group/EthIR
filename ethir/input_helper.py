@@ -248,7 +248,7 @@ class InputHelper:
         if not contracts:
             logging.critical("Solidity compilation failed")
             #print self.source
-            if global_params.WEB:
+            if global_params_ethir.WEB:
                 six.print_({"error": "Solidity compilation failed"})
             exit(1)
         return contracts
@@ -259,7 +259,7 @@ class InputHelper:
         contracts = [contract for contract in contracts if contract[1]]
         if not contracts:
             logging.critical("Solidity compilation failed")
-            if global_params.WEB:
+            if global_params_ethir.WEB:
                 six.print_({"error": "Solidity compilation failed"})
             exit(1)
         return contracts
