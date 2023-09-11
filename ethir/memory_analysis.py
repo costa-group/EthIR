@@ -202,7 +202,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("********************************** INIT")
     memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname)
     memopt.process_blocks_memory(debug_info)
-    memopt.process_blocks_storage(debug_info)
+    # memopt.process_blocks_storage(debug_info)
     print("********************************** END")
     
     return slots, memory, accesses, memopt
