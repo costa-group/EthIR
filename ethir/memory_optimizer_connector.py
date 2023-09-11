@@ -15,14 +15,16 @@ UNKOWN = "UNK"
 
 class MemoryOptimizerConnector :
 
-    optimizable_blocks = None
-
+    optimizable_memory_blocks = None
+    optimizable_storage_blocks = None
+    
     def __init__(self,readset, writeset, vertices, cname):
         self.readset = readset
         self.writeset = writeset
         self.vertices = vertices
         self.contract = cname
-        self.optimizable_blocks = OptimizableBlocks(vertices, cname)
+        self.optimizable_memory_blocks = OptimizableBlocks(vertices, cname)
+        self.optimizable_storage_blocks = OptimizableBlocks(vertices, cname)
 
     def process_blocks_memory (self,debug): 
         for pc in self.writeset:
@@ -39,7 +41,7 @@ class MemoryOptimizerConnector :
 #                print("Read - Comparando " + block + " " + str(pc) + "**" + str(readpc) + " " + str(wset) + " " + str(rset) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
 #                    print("**************************************")
-                    self.optimizable_blocks.add_block_info(block,pc,readpc,res)
+                    self.optimizable_memory_blocks.add_block_info(block,pc,readpc,res)
 
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.writeset))
             for writepc in filtered: 
@@ -51,10 +53,12 @@ class MemoryOptimizerConnector :
 #                print("Write - Comparando " + block + " " + str(pc) + "**" + str(writepc) + " " + str(wset) + " " + str(wset2) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
 #                    print("**************************************")
-                    self.optimizable_blocks.add_block_info(block,pc,writepc,res)
+                    self.optimizable_memory_blocks.add_block_info(block,pc,writepc,res)
 
         if debug:
-            self.optimizable_blocks.print_blocks()
+            print("\nMemory block dependences")
+            print("------------\n")
+            self.optimizable_memory_blocks.print_blocks()
 
     def process_blocks_storage (self,debug): 
         
@@ -96,9 +100,12 @@ class MemoryOptimizerConnector :
                     bpc1 = str(str(block) + ":" + str(pc1))
                     bpc2 = str(str(block) + ":" + str(pc2))
                     print ("Procesando instrucciones " + str(bpc1) + " " + str(bpc2) + " -> " + str(cmp))
-                    self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp)
+                    self.optimizable_storage_blocks.add_block_info(str(block),bpc1,bpc2,cmp)
 
-        self.optimizable_blocks.print_blocks()
+        if debug:
+            print("\nStorage block dependences")
+            print("------------\n")
+            self.optimizable_storage_blocks.print_blocks()
 
     def eval_pcs_relation(self,set1, set2): 
         ## Check simple case 
@@ -145,15 +152,23 @@ class MemoryOptimizerConnector :
             return NONEQUALS
 
     def get_optimizable_blocks(self):
-        return self.optimizable_blocks
+        return self.optimizable_memory_blocks, self.optimizable_storage_blocks
+
+    def get_optimizable_memory_blocks(self):
+        return self.optimizable_memory_blocks
+
+    def get_optimizable_storage_blocks(self):
+        return self.optimizable_storage_blocks
+    
         
 class OptimizableBlocks: 
-    optimizable_blocks = {}
+    # optimizable_blocks = {}
 
     def __init__(self,vertices, cname):
         self.contract = cname
         self.vertices = vertices    
-
+        self.optimizable_blocks = {}
+        
     def get_contract_name(self):
         return self.contract
         
