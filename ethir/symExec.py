@@ -47,8 +47,8 @@ global num_calls
 num_calls = 0
 global num_loops
 num_loops = 0
-global memory_opt_blocks
-memory_opt_blocks = None
+global opt_blocks
+opt_blocks = None
 
 class Parameter:
     def __init__(self, **kwargs):
@@ -4106,7 +4106,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global source_n
     global optimization
     global num_loops
-    global memory_opt_blocks
+    global opt_blocks
     
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
@@ -4245,7 +4245,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
 
-            memory_opt_blocks = memory_result[3].get_optimizable_memory_blocks()
+            opt_blocks = memory_result[3].get_optimizable_blocks()
             
             end = dtimer()
 
@@ -4281,10 +4281,10 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     return [], 0
 
 
-def get_memory_opt_block():
-    global memory_opt_blocks
+def get_opt_block():
+    global opt_blocks
     
-    return memory_opt_blocks
+    return opt_blocks
 
 
 def analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version):

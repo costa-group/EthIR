@@ -15,16 +15,14 @@ UNKOWN = "UNK"
 
 class MemoryOptimizerConnector :
 
-    optimizable_memory_blocks = None
-    optimizable_storage_blocks = None
+    optimizable_blocks = None
     
     def __init__(self,readset, writeset, vertices, cname):
         self.readset = readset
         self.writeset = writeset
         self.vertices = vertices
         self.contract = cname
-        self.optimizable_memory_blocks = OptimizableBlocks(vertices, cname)
-        self.optimizable_storage_blocks = OptimizableBlocks(vertices, cname)
+        self.optimizable_blocks = OptimizableBlocks(vertices, cname)
 
     def process_blocks_memory (self,debug): 
         for pc in self.writeset:
@@ -41,7 +39,7 @@ class MemoryOptimizerConnector :
 #                print("Read - Comparando " + block + " " + str(pc) + "**" + str(readpc) + " " + str(wset) + " " + str(rset) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
 #                    print("**************************************")
-                    self.optimizable_memory_blocks.add_block_info(block,pc,readpc,res)
+                    self.optimizable_blocks.add_block_info(block,pc,readpc,res,"memory")
 
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.writeset))
             for writepc in filtered: 
@@ -53,12 +51,12 @@ class MemoryOptimizerConnector :
 #                print("Write - Comparando " + block + " " + str(pc) + "**" + str(writepc) + " " + str(wset) + " " + str(wset2) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
 #                    print("**************************************")
-                    self.optimizable_memory_blocks.add_block_info(block,pc,writepc,res)
+                    self.optimizable_blocks.add_block_info(block,pc,writepc,res,"memory")
 
         if debug:
             print("\nMemory block dependences")
             print("------------\n")
-            self.optimizable_memory_blocks.print_blocks()
+            self.optimizable_blocks.print_blocks()
 
     def process_blocks_storage (self,debug): 
         
@@ -100,12 +98,12 @@ class MemoryOptimizerConnector :
                     bpc1 = str(str(block) + ":" + str(pc1))
                     bpc2 = str(str(block) + ":" + str(pc2))
                     print ("Procesando instrucciones " + str(bpc1) + " " + str(bpc2) + " -> " + str(cmp))
-                    self.optimizable_storage_blocks.add_block_info(str(block),bpc1,bpc2,cmp)
+                    self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp,"storage")
 
         if debug:
             print("\nStorage block dependences")
             print("------------\n")
-            self.optimizable_storage_blocks.print_blocks()
+            self.optimizable_blocks.print_blocks()
 
     def eval_pcs_relation(self,set1, set2): 
         ## Check simple case 
@@ -150,15 +148,9 @@ class MemoryOptimizerConnector :
             return EQUALS
         else:
             return NONEQUALS
-
+        
     def get_optimizable_blocks(self):
-        return self.optimizable_memory_blocks, self.optimizable_storage_blocks
-
-    def get_optimizable_memory_blocks(self):
-        return self.optimizable_memory_blocks
-
-    def get_optimizable_storage_blocks(self):
-        return self.optimizable_storage_blocks
+        return self.optimizable_blocks
     
         
 class OptimizableBlocks: 
@@ -172,8 +164,8 @@ class OptimizableBlocks:
     def get_contract_name(self):
         return self.contract
         
-    def add_block_info(self,block,pc1,pc2,cmpres):
-        print("Adding block info " + block)
+    def add_block_info(self,block,pc1,pc2,cmpres, location):
+        print("Adding block info " + block+ " for "+location)
         
         if block.find("_") != -1:
             instr = list(self.vertices[block].get_instructions())
@@ -191,17 +183,16 @@ class OptimizableBlocks:
             else:
                 instr = self.vertices[int(block)].get_instructions()
 
-            instr = self._process_memory_instructions(instr)
+            instr = self._process_instructions(instr)
                 
             self.optimizable_blocks[block] = OptimizableBlockInfo(block, list(instr))
         
-        info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres)
+        info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres, location)
 
     def get_optimizable_blocks(self):
         return self.optimizable_blocks
         
-
-    def _process_memory_instructions(self,instr):
+    def _process_instructions(self,instr):
         new_instr = []
         
         for i in instr:
@@ -237,29 +228,43 @@ class OptimizableBlockInfo:
     def __init__(self,block_id, instr):
         self.block_id = block_id
         self.instr = instr
-        self.equal_pairs = []
-        self.nonequal_pairs = []
+        self.equal_pairs_memory = []
+        self.nonequal_pairs_memory = []
+        self.equal_pairs_storage = []
+        self.nonequal_pairs_storage = []
 
 
-    def add_pair(self,pc1,pc2,cmpres): 
-        if cmpres == EQUALS and CmpPair(pc1,pc2) not in self.equal_pairs and CmpPair(pc2,pc1) not in self.equal_pairs: 
-            self.equal_pairs.append(CmpPair(pc1,pc2))
-        elif cmpres == NONEQUALS and CmpPair(pc1,pc2) not in self.nonequal_pairs and CmpPair(pc2,pc1) not in self.nonequal_pairs: 
-            self.nonequal_pairs.append(CmpPair(pc1,pc2))
-
+    def add_pair(self,pc1,pc2,cmpres, location):
+        if location == "memory":
+            if cmpres == EQUALS and CmpPair(pc1,pc2) not in self.equal_pairs_memory and CmpPair(pc2,pc1) not in self.equal_pairs_memory: 
+                self.equal_pairs_memory.append(CmpPair(pc1,pc2))
+            elif cmpres == NONEQUALS and CmpPair(pc1,pc2) not in self.nonequal_pairs_memory and CmpPair(pc2,pc1) not in self.nonequal_pairs_memory: 
+                self.nonequal_pairs_memory.append(CmpPair(pc1,pc2))
+        elif location == "storage":
+            if cmpres == EQUALS and CmpPair(pc1,pc2) not in self.equal_pairs_storage and CmpPair(pc2,pc1) not in self.equal_pairs_storage: 
+                self.equal_pairs_storage.append(CmpPair(pc1,pc2))
+            elif cmpres == NONEQUALS and CmpPair(pc1,pc2) not in self.nonequal_pairs_storage and CmpPair(pc2,pc1) not in self.nonequal_pairs_storage: 
+                self.nonequal_pairs_storage.append(CmpPair(pc1,pc2))
+        else:
+            raise Exception("Unknown location")
+                
     def get_instructions(self): 
         return self.instr
 
-    def get_equal_pairs(self):
-        return self.equal_pairs
+    def get_equal_pairs_memory(self):
+        return self.equal_pairs_memory
 
-    def get_nonequal_pairs(self):
-        return self.nonequal_pairs
+    def get_nonequal_pairs_memory(self):
+        return self.nonequal_pairs_memory
+
+    def get_equal_pairs_storage(self):
+        return self.equal_pairs_storage
+
+    def get_nonequal_pairs_storage(self):
+        return self.nonequal_pairs_storage
     
     def __repr__(self):
-        return "Block: " + self.block_id + "\n" + "Instr:<< " + str(self.instr) + ">> " + "\nEquals:<< " + str(self.equal_pairs) + ">> " + "\nNonEquals: << " + str(self.nonequal_pairs) + ">> "
-
-
+        return "Block: " + self.block_id + "\n" + "Instr:<< " + str(self.instr) + ">> " + "\nEquals Mem:<< " + str(self.equal_pairs_memory) + ">> " + "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> "
 
 
 class CmpPair: 
@@ -302,6 +307,3 @@ class CmpPair:
 
     def same_pair(self, val1, val2):
         return (val1 == self.pc1 and val2 == self.pc2) or (val2 == self.pc1 and val1 == self.pc2) 
-
-
-
