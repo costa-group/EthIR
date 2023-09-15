@@ -41,12 +41,12 @@ class Tree:
         
     def generategraph(self,fo,level):
         if self.type_block == "terminal" :
-            fo.write("n_%s [style=diagonals,color=green,label=\"%s\"];\n"%(self.id,self.root))
+            fo.write(f'n_{self.id} [style=diagonals,color=green,label="{self.root}"];\n')
         else :
             if self.type_block == "conditional":
-                fo.write("n_%s [style=solid,color=blue,label=\"%s\"];\n"%(self.id,self.root))
+                fo.write(f'n_{self.id} [style=solid,color=blue,label="{self.root}"];\n')
             elif self.type_block == "unconditional":
-                fo.write("n_%s [style=solid,color=orange,label=\"%s\"];\n"%(self.id,self.root))
+                fo.write(f'n_{self.id} [style=solid,color=orange,label="{self.root}"];\n')
             else:
                 fo.write("n_%s [style=solid,color=red,label=\"%s\"];\n"%(self.id,self.root))
                 

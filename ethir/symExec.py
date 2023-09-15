@@ -13,6 +13,7 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
+from cfg_collapser import Cfg_collapser
 import gasol
 from memory_analysis import perform_memory_analysis
 
@@ -4091,7 +4092,7 @@ def get_scc(edges):
         scc_multiple.update(scc)
         return scc_multiple
         
-def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None,mem_abs = None,sto = None, opt_bytecode = False, mem_analysis = None):    
+def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None,mem_abs = None,sto = None, opt_bytecode = False, mem_analysis = None, collapse_cfg=None):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -4237,6 +4238,29 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         # print(base_refs)
         # print("\n\n\n")
 
+        #TODO: Evaluate Collapse_cfg
+
+        if collapse_cfg != "no" and collapse_cfg is not None:
+
+            print("entra en collase-cfg")
+
+            begin = dtimer()
+
+            collapser = Cfg_collapser(vertices)
+
+            collapser.collapse()
+
+            collapsed_vertices = collapser.get_collapsed_vertices()
+
+            tree = collapser.get_tree()
+
+            tree.generate_dot()
+            
+            end = dtimer()
+
+            print(f"Graph collapse: {end - begin} s\n")
+
+
         memory_result = []
         
         if mem_analysis != None:
@@ -4252,6 +4276,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             print("Memory Analysis: "+str(end-begin)+"s\n")
 
             check_cfg_option(cfg,cname,execution, memory_result)
+        
 
         else:
 
