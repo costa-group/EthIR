@@ -6,9 +6,10 @@ import global_params_ethir
 
 class MyTree:
     
-    def __init__(self, more_info) -> None:
+    def __init__(self, more_info, file_name = "Tree") -> None:
         self.tree_structure = ""
         self.more_info = more_info
+        self.file_name = file_name
 
     def add_node_to_graph(self, node: BasicBlock):
         if self.more_info:
@@ -44,7 +45,7 @@ class MyTree:
         if "costabs" not in os.listdir(global_params_ethir.tmp_path):
             os.mkdir(global_params_ethir.costabs_path)
         
-        with open(f"/tmp/costabs/MyTree.dot", 'w') as f:
+        with open(f"/tmp/costabs/My{self.file_name}.dot", 'w') as f:
             f.write("digraph id3{ \n")
             f.write(self.tree_structure)
             f.write("}")

@@ -259,7 +259,7 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = (args.optimize_run or args.via_ir), mem_analysis = args.mem_analysis)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = (args.optimize_run or args.via_ir), mem_analysis = args.mem_analysis, collapse_cfg=args.collapse_cfg)
                 
             except Exception as e:
                 traceback.print_exc()

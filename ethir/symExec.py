@@ -4242,11 +4242,9 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
         if collapse_cfg != "no" and collapse_cfg is not None:
 
-            print("entra en collase-cfg")
-
             begin = dtimer()
 
-            collapser = Cfg_collapser(vertices)
+            collapser = Cfg_collapser(vertices, cname)
 
             collapser.collapse()
 

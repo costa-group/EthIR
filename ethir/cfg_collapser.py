@@ -8,23 +8,27 @@ from my_tree import MyTree
 
 class Cfg_collapser:
 
-    old_vertices: Dict[int, BasicBlock] = {}
+    old_vertices: Dict[int, BasicBlock]
 
-    collapsed_vertices: Dict[int, BasicBlock] = {}
+    collapsed_vertices: Dict[int, BasicBlock]
 
-    visited: List[int] = []
+    visited: List[int]
 
     working_collapsed_node: BasicBlock
 
     tree: MyTree
 
 
-    def __init__(self, vertices):
+    def __init__(self, vertices, cname):
         self.old_vertices = vertices        
 
         self.working_collapsed_node = None
 
-        self.tree = MyTree(False)
+        self.tree = MyTree(False, cname)
+
+        self.visited = []
+
+        self.collapsed_vertices = {}
 
 
 
@@ -37,6 +41,9 @@ class Cfg_collapser:
     
     def collapse(self, starting_address = 0) -> Dict[int, BasicBlock]:
 
+        if starting_address == 5595:
+            print()
+
         actual_node = self.old_vertices[starting_address]
         self.visited.append(actual_node.get_start_address())
 
@@ -44,7 +51,6 @@ class Cfg_collapser:
 
             if self.working_collapsed_node is not None:
                 self.join_blocks(actual_node)
-                self.working_collapsed_node.set_block_type("terminal")
 
                 self.tree.add_node_to_graph(self.working_collapsed_node)
                 self.collapsed_vertices[self.working_collapsed_node.get_start_address()] = self.working_collapsed_node
@@ -104,8 +110,9 @@ class Cfg_collapser:
 
 
     def join_blocks(self, new_block: BasicBlock):
+        self.working_collapsed_node.set_block_type(new_block.get_block_type())
         for instruction in new_block.get_instructions():
             self.working_collapsed_node.add_instruction(instruction)
 
-        self.working_collapsed_node.set_jump_target(new_block.get_jump_target())
-        self.working_collapsed_node.set_falls_to(new_block.get_falls_to())
+        self.working_collapsed_node.jump_target = new_block.get_jump_target()
+        self.working_collapsed_node.falls_to = new_block.get_falls_to()
