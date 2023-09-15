@@ -96,14 +96,13 @@ class MemoryAccesses:
     
     def search_read(self, writepp, slot, block_id, visited): 
         if (block_id in visited): 
-            return False, None
+            return False
         
         ## Check if there exists a read of "slot" in the current block
         filtered = list(filter(lambda x: x.startswith(str(block_id)+":"), self.readset))
         for readblock in filtered: 
             found = self.eval_read_write_access(slot,self.readset[readblock])
             if found: 
-                
                 return True
 
         ## Check if there exists a write of "slot" in the current block
