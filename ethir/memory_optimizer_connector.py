@@ -76,8 +76,8 @@ class MemoryOptimizerConnector :
                     
                     continue
 
-                access1 = inst1.split(" ")
-                if access1 == "*": 
+                access1 = access1 = inst1.split(" ")[1].split("_")
+                if access1 == "?": 
                     continue
 
                 pc2 = -1
@@ -86,8 +86,8 @@ class MemoryOptimizerConnector :
                     if pc1 == pc2 or not inst2.startswith("SLOAD") and not inst2.startswith("SSTORE"): 
                         continue
 
-                    access2 = inst2.split(" ")
-                    if access2 == "*": 
+                    access2 = inst2.split(" ")[1].split("_")
+                    if access2 == "?": 
                         continue
 
                     if access1 == access2: 

@@ -144,15 +144,21 @@ class MemoryAccesses:
                     return True
         return False
 
-    def eval_write_write_access (self,writeaccess,writeset): 
-        if isinstance(writeaccess, str): 
+    def eval_write_write_access (self,writeaccess,writeset):
+        print("Comparando " + str(writeaccess) + " " + str(writeset)) 
+
+        if len(writeset) > 1: 
             return False
-        elif len(writeset) > 1: 
-            return False
+        elif isinstance(writeaccess, str): 
+            for writeoption in writeset: 
+                if (writeoption == writeaccess):
+                    return True
         elif writeaccess.offset == TOP or writeaccess.offset == TOPK: 
             return False
         else: 
             for writeoption in writeset: 
+                if isinstance(writeoption,str): 
+                    continue
                 if (writeaccess.slot == writeoption.slot and 
                     (writeaccess.offset == writeoption.offset and writeoption.offset != TOP and writeoption.offset != TOPK)): 
                     print ("PATH truncated found " + str(writeoption))
