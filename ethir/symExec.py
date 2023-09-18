@@ -2208,8 +2208,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             s1 = get_push_value(s1)
 
             new_var_name = gen.gen_arbitrary_var()
-
-            if s1 <64:
+            
+                
+            if type(s1) == int and s1 <64:
                 st_arr = (True,st_arr[1])
                 mapping_address_sto[new_var_name] = (st_id,block)
 
