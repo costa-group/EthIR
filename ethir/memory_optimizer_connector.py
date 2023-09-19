@@ -149,6 +149,7 @@ class MemoryOptimizerConnector :
             return NONEQUALS
         
     def get_optimizable_blocks(self):
+        self.optimizable_blocks.cleanup_empty_blocks()
         return self.optimizable_blocks
     
         
