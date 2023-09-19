@@ -4246,6 +4246,8 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
 
+            memory_result[3].cleanup_empty_blocks()
+            
             opt_blocks = memory_result[3].get_optimizable_blocks()
             
             end = dtimer()

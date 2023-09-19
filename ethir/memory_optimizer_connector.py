@@ -97,7 +97,6 @@ class MemoryOptimizerConnector :
 
                     bpc1 = str(str(block) + ":" + str(pc1))
                     bpc2 = str(str(block) + ":" + str(pc2))
-                    print ("Procesando instrucciones " + str(bpc1) + " " + str(bpc2) + " -> " + str(cmp))
                     self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp,"storage")
 
         if debug:
@@ -189,6 +188,14 @@ class OptimizableBlocks:
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres, location)
 
+    def cleanup_empty_blocks(self):
+        for block in self.optimizable_blocks: 
+            blockinfo = self.optimizable_blocks[block]
+            if blockinfo.is_info_memory_empty() and blockinfo.is_info_storage_empty():
+                print ("GASOL: Ignoring block without improvement") 
+                self.optimizable_blocks.pop(block)
+        
+
     def get_optimizable_blocks(self):
         return self.optimizable_blocks
         
@@ -263,6 +270,12 @@ class OptimizableBlockInfo:
     def get_nonequal_pairs_storage(self):
         return self.nonequal_pairs_storage
     
+    def is_info_memory_empty(self): 
+        return len(self.nonequal_pairs_memory) == 0 and len(self.equal_pairs_memory) == 0
+
+    def is_info_storage_empty(self): 
+        return len(self.nonequal_pairs_storage) == 0 and len(self.equal_pairs_storage) == 0
+
     def __repr__(self):
         return "Block: " + self.block_id + "\n" + "Instr:<< " + str(self.instr) + ">> " + "\nEquals Mem:<< " + str(self.equal_pairs_memory) + ">> " + "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> "
 
