@@ -170,6 +170,12 @@ class BasicBlock:
             result = "Error"
         return result
 
+    def get_num_memory_ins(self):
+        return len(list(filter(lambda x: x.find("MLOAD")!=-1 or x.find("MSTORE")!=-1, self.instructions)))
+
+    def get_num_storage_ins(self):
+        return len(list(filter(lambda x: x.find("SLOAD")!=-1 or x.find("SSTORE")!=-1, self.instructions)))
+    
     def _set_mload_values(self,val):
         self.mload_values = val
 
@@ -184,7 +190,7 @@ class BasicBlock:
 
     def _set_caldata_values(self,val):
         self.calldatavalues = val
-    
+
     def add_ls_value(self,type_value,key,val):
         if type_value == "mload":
             l = self.mload_values.get(key,-1)
@@ -398,7 +404,7 @@ class BasicBlock:
         s_aux = list(filter(lambda x: isinstance(x,tuple),s))
         is_in = self._is_in_old_stacks(s_aux)
         return is_in
-
+    
     def _is_in_old_stacks(self,stack):
         # jump_addresses = map(lambda x: x[0],stack)
         # old_stacks_addresses = map(lambda x: map(lambda y:y[0],x),self.stacks_old)

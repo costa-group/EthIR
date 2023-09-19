@@ -49,6 +49,8 @@ global num_loops
 num_loops = 0
 global opt_blocks
 opt_blocks = None
+global file_info
+file_info = {}
 
 class Parameter:
     def __init__(self, **kwargs):
@@ -414,7 +416,7 @@ def print_daos():
     print("NUM SSTORE: "+str(num_sstores))
     print("NUM CALLS: "+str(num_calls))
     print("NUM LOOPS: "+str(num_loops))
-
+    
     
 def build_cfg_and_analyze(evm_version):
     change_format(evm_version)
@@ -4108,6 +4110,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     global optimization
     global num_loops
     global opt_blocks
+    global file_info
     
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
@@ -4137,7 +4140,9 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
     if cname != None:
         print("File: "+str(cname))
+        
 
+        
     if debug :
         debug_info = debug
 
@@ -4237,7 +4242,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         # print("BASE REF VALUES")
         # print(base_refs)
         # print("\n\n\n")
-
+        
         memory_result = []
         
         if mem_analysis != None:
@@ -4247,13 +4252,23 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
             
             opt_blocks = memory_result[3].get_optimizable_blocks()
+
+            file_info[str(cname)] = {}
+            file_info[cname]["num_blocks"] = len(set(list(map(lambda x: int(str(x).split("_")[0]),vertices.keys()))))
+            file_info[cname]["num_blocks_cloning"] = len(list(vertices.keys()))
+            file_info[cname]["optimizable_blocks"] = len(opt_blocks.get_optimizable_blocks())
+            file_info[cname]["memory_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()==0, vertices.values())))
+            file_info[cname]["storage_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()==0 and x.get_num_storage_ins()>1, vertices.values())))
+            file_info[cname]["memsto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
+            
+
             
             end = dtimer()
 
             print("Memory Analysis: "+str(end-begin)+"s\n")
-
+            print("FILERES:")
             check_cfg_option(cfg,cname,execution, memory_result)
-
+            
         else:
 
             check_cfg_option(cfg,cname,execution)
