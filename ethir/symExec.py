@@ -4266,7 +4266,6 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             end = dtimer()
 
             print("Memory Analysis: "+str(end-begin)+"s\n")
-            print("FILERES:")
             check_cfg_option(cfg,cname,execution, memory_result)
             
         else:
