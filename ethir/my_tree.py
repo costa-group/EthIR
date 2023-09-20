@@ -12,6 +12,7 @@ class MyTree:
         self.file_name = file_name
 
     def add_node_to_graph(self, node: BasicBlock):
+
         if self.more_info:
             label = f"{node.get_start_address()} \n {node.get_instructions()}"
         else:
