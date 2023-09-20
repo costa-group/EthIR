@@ -280,6 +280,9 @@ class OptimizableBlockInfo:
     def add_useless_info(self, useless_list): 
         self.useless = useless_list.copy()
 
+    def get_useless_info(self):
+        return self.useless
+
     def __repr__(self):
         return ("Block: " + self.block_id + "\n" + 
                 "Instr:<< " + str(self.instr) + ">> " + 
