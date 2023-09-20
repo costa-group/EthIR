@@ -200,9 +200,9 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
     print("********************************** INIT")
-    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname)
-    memopt.process_blocks_memory(debug_info)
-    memopt.process_blocks_storage(debug_info)
+    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname,debug_info)
+    memopt.process_blocks_memory()
+    memopt.process_blocks_storage()
     print("********************************** END")
     
     return slots, memory, accesses, memopt
