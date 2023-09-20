@@ -283,6 +283,12 @@ class OptimizableBlockInfo:
     def get_useless_info(self):
         return self.useless
 
+
+    def delete_info_with(self, idx):
+        list(filter(lambda x: idx in x, self.equal_pairs_memory))
+        list(filter(lambda x: idx in x, self.nonequal_pairs_memory))
+
+    
     def __repr__(self):
         return ("Block: " + self.block_id + "\n" + 
                 "Instr:<< " + str(self.instr) + ">> " + 
@@ -330,6 +336,10 @@ class CmpPair:
             tmp = self.pc1
             self.pc1 = self.pc2
             self.pc2 = tmp
+
+    def __contains__(self, elem):
+        return self.pc1 == elem or self.pc2 == elem
+            
 
     def same_pair(self, val1, val2):
         return (val1 == self.pc1 and val2 == self.pc2) or (val2 == self.pc1 and val1 == self.pc2) 
