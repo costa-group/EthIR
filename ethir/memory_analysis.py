@@ -190,6 +190,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
 
     #     print("\n\n")
     accesses.process_free_mstores()
+    print("GASOL: Useless accesses found: " + str(accesses.get_useless()))
 
     print('Free memory analyss finished\n\n')
 
@@ -200,9 +201,11 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
     print("********************************** INIT")
-    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname)
-    memopt.process_blocks_memory(debug_info)
-    memopt.process_blocks_storage(debug_info)
+    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname, debug_info)
+    memopt.process_blocks_memory()
+    memopt.process_blocks_storage()
+    memopt.add_useless_accesses_info(accesses.get_useless())
+    memopt.print_optimization_info()
     print("********************************** END")
     
     return slots, memory, accesses, memopt
