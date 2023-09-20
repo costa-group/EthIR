@@ -16,18 +16,19 @@ UNKOWN = "UNK"
 class MemoryOptimizerConnector :
 
     optimizable_blocks = None
+    debug = False
     
-    def __init__(self,readset, writeset, vertices, cname):
+    def __init__(self,readset, writeset, vertices, cname, debug):
         self.readset = readset
         self.writeset = writeset
         self.vertices = vertices
         self.contract = cname
         self.optimizable_blocks = OptimizableBlocks(vertices, cname)
+        self.debug = debug
 
-    def process_blocks_memory (self,debug): 
+    def process_blocks_memory (self): 
         for pc in self.writeset:
             block = pc.split(":")[0]
-#            print("\n\nBuscando en el bloque " + pc + " " + block)
 
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
             for readpc in filtered: 
@@ -36,9 +37,7 @@ class MemoryOptimizerConnector :
                 wset = self.writeset[pc]
                 rset = self.readset[readpc]
                 res = self.eval_pcs_relation(wset,rset)
-#                print("Read - Comparando " + block + " " + str(pc) + "**" + str(readpc) + " " + str(wset) + " " + str(rset) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
-#                    print("**************************************")
                     self.optimizable_blocks.add_block_info(block,pc,readpc,res,"memory")
 
             filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.writeset))
@@ -48,26 +47,15 @@ class MemoryOptimizerConnector :
                 wset = self.writeset[pc]
                 wset2 = self.writeset[writepc]
                 res = self.eval_pcs_relation(wset,wset2)
-#                print("Write - Comparando " + block + " " + str(pc) + "**" + str(writepc) + " " + str(wset) + " " + str(wset2) + " --> " + str(res))
                 if res == EQUALS or res == NONEQUALS: 
-#                    print("**************************************")
                     self.optimizable_blocks.add_block_info(block,pc,writepc,res,"memory")
 
-        if debug:
-            print("\nMemory block dependences")
-            print("------------\n")
-            self.optimizable_blocks.print_blocks()
-
-    def process_blocks_storage (self,debug): 
+    def process_blocks_storage (self): 
         
-        print(str(self.vertices))
-        print(type(self.vertices))
         for block in self.vertices: 
             instructions=self.vertices[block].instructions
             # if not self.contains_two_or_more_storageins(instructions): 
             #     continue
-
-            print(str(instructions))
 
             pc1 = -1
             for inst1 in instructions: 
@@ -99,10 +87,8 @@ class MemoryOptimizerConnector :
                     bpc2 = str(str(block) + ":" + str(pc2))
                     self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp,"storage")
 
-        if debug:
-            print("\nStorage block dependences")
-            print("------------\n")
-            self.optimizable_blocks.print_blocks()
+    def add_useless_accesses_info(self, useless): 
+        self.optimizable_blocks.add_useless_info(useless)
 
     def eval_pcs_relation(self,set1, set2): 
         ## Check simple case 
@@ -120,6 +106,8 @@ class MemoryOptimizerConnector :
                     return UNKOWN
         
         return NONEQUALS
+
+
 
     def are_equal(self,access1, access2):
         # Check mem40 accesses
@@ -152,6 +140,12 @@ class MemoryOptimizerConnector :
         self.optimizable_blocks.cleanup_empty_blocks()
         return self.optimizable_blocks
     
+    def print_optimization_info(self): 
+        if self.debug:
+            print("\nMemory block dependences")
+            print("------------\n")
+            self.optimizable_blocks.print_blocks()
+    
         
 class OptimizableBlocks: 
     # optimizable_blocks = {}
@@ -165,7 +159,6 @@ class OptimizableBlocks:
         return self.contract
         
     def add_block_info(self,block,pc1,pc2,cmpres, location):
-        print("Adding block info " + block+ " for "+location)
         
         if block.find("_") != -1:
             instr = list(self.vertices[block].get_instructions())
@@ -192,14 +185,26 @@ class OptimizableBlocks:
     def cleanup_empty_blocks(self):
         for block in self.optimizable_blocks: 
             blockinfo = self.optimizable_blocks[block]
-            if blockinfo.is_info_memory_empty() and blockinfo.is_info_storage_empty():
-                print ("GASOL: Ignoring block without improvement") 
+            if blockinfo.is_info_empty():
                 self.optimizable_blocks.pop(block)
         
 
     def get_optimizable_blocks(self):
         return self.optimizable_blocks
         
+    def add_useless_info(self, useless_info): 
+        for blockid in useless_info: 
+            print("GASOL: Adding block useless " + blockid  )
+            if blockid in self.optimizable_blocks: 
+                self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
+            else: 
+                if blockid.find("_") != -1:
+                    instr = list(self.vertices[blockid].get_instructions())
+                else:
+                    instr = list(self.vertices[int(blockid)].get_instructions())
+                self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr))
+                self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
+
     def _process_instructions(self,instr):
         new_instr = []
         
@@ -219,11 +224,6 @@ class OptimizableBlocks:
                 return (True,inst)
         return (False,None)
 
-    # def split_blocks (self): 
-    #     for block in self.optimizable_blocks: 
-    #         if self.optimizable_blocks[block].is_divisible(): 
-    #             print ("LLLLL Bloque divisible " + str(self.optimizable_blocks[block].get_instructions()))
-
     def print_blocks(self):
         print("CONTRACT: "+self.contract)
         for elem in self.optimizable_blocks:
@@ -240,6 +240,7 @@ class OptimizableBlockInfo:
         self.nonequal_pairs_memory = []
         self.equal_pairs_storage = []
         self.nonequal_pairs_storage = []
+        self.useless = []
 
 
     def add_pair(self,pc1,pc2,cmpres, location):
@@ -271,14 +272,22 @@ class OptimizableBlockInfo:
     def get_nonequal_pairs_storage(self):
         return self.nonequal_pairs_storage
     
-    def is_info_memory_empty(self): 
-        return len(self.nonequal_pairs_memory) == 0 and len(self.equal_pairs_memory) == 0
+    def is_info_empty(self): 
+        return (len(self.nonequal_pairs_memory) == 0 and len(self.equal_pairs_memory) == 0 and
+                len(self.nonequal_pairs_storage) == 0 and len(self.equal_pairs_storage) == 0 and
+                len(self.useless) == 0)
 
-    def is_info_storage_empty(self): 
-        return len(self.nonequal_pairs_storage) == 0 and len(self.equal_pairs_storage) == 0
+    def add_useless_info(self, useless_list): 
+        self.useless = useless_list.copy()
 
     def __repr__(self):
-        return "Block: " + self.block_id + "\n" + "Instr:<< " + str(self.instr) + ">> " + "\nEquals Mem:<< " + str(self.equal_pairs_memory) + ">> " + "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> "
+        return ("Block: " + self.block_id + "\n" + 
+                "Instr:<< " + str(self.instr) + ">> " + 
+                "\nEquals Mem:<< " + str(self.equal_pairs_memory) + ">> " + 
+                "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + 
+                "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + 
+                "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> " + 
+                "\nUseless: " + str(self.useless) + "\n")
 
 
 class CmpPair: 

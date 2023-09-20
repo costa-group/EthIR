@@ -13,7 +13,7 @@ class MemoryAccesses:
         self.closeset = closeset
         self.vertices = vertices
         self.found_outofslot = False
-
+        self.useless = {}
 
     @staticmethod
     def init_globals (contract_source,contract_name): 
@@ -53,7 +53,7 @@ class MemoryAccesses:
             found = False
 
             if self.is_for_revert(writepp): 
-                print("MEMRES: Found write for revert -> " + writepp)
+                # Found write for revert for writepp
                 continue
 
             for slot in self.writeset[writepp]: 
@@ -63,17 +63,29 @@ class MemoryAccesses:
                 block_id = get_block_id(writepp)
 
                 found = self.search_read(writepp, slot, block_id, visited)
-                print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
+                #print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
 
                 if found: 
-                    print("MEMRES: Found read for -> " + writepp)
+                    #print("MEMRES: Found read for -> " + writepp)
                     break
-                    
+
                 
             if not found and not self.found_outofslot:
                 func = get_function_from_blockid(writepp)
+                self.save_useless(writepp)
                 print("MEMRES: NOT Found read (potential optimization) -> " + str(slot) + " " + str(writepp) + " --> " + str(self.contract_source) + " " + str(self.contract_name) + "--" + str(func))
 
+    def get_useless(self): 
+        return self.useless
+
+    def save_useless(self, pp): 
+        block_id = pp.split(":")[0]
+        offset = int(pp.split(":")[1])
+
+        if not block_id in self.useless: 
+            self.useless[block_id] = [offset]
+        else: 
+            self.useless[block_id].append(offset)
 
     def set_found_outofslot(self):
         self.found_outofslot = True
@@ -139,12 +151,10 @@ class MemoryAccesses:
                     continue
                 if (writeaccess.slot == readaccess.slot and 
                     (writeaccess.offset == readaccess.offset or readaccess.offset == TOP or writeaccess.offset == TOP)): 
-                    print ("PATH Read found " + str(readaccess))
                     return True
         return False
 
     def eval_write_write_access (self,writeaccess,writeset):
-        print("Comparando " + str(writeaccess) + " " + str(writeset)) 
 
         if len(writeset) > 1: 
             return False
@@ -160,7 +170,6 @@ class MemoryAccesses:
                     continue
                 if (writeaccess.slot == writeoption.slot and 
                     (writeaccess.offset == writeoption.offset and writeoption.offset != TOP and writeoption.offset != TOPK)): 
-                    print ("PATH truncated found " + str(writeoption))
                     return True
         return False
 
