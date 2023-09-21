@@ -170,7 +170,7 @@ class MemoryOffsetAbstractState:
             self.accesses.add_write_access(pc,"mem4")
 
         elif is_mstore(instr,"32"):
-            self.accesses.add_write_access(pc,"mem0")
+            self.accesses.add_write_access(pc,"mem32")
 
         elif is_mstore(instr,"0"):
             self.accesses.add_write_access(pc,"mem0")
@@ -194,7 +194,7 @@ class MemoryOffsetAbstractState:
         elif op_code == "SHA3" or op_code == "KECCAK256": 
             if top in self.stack: 
                 self.add_read_access_top(top,pc,self.stack)
-            else:  
+            else:
                 self.accesses.add_read_access(pc,"mem0") 
 
         elif op_code == "CALL" or op_code == "CALLCODE": 
