@@ -41,6 +41,16 @@ class Cfg_collapser:
     
     def collapse(self, starting_address = 0) -> Dict[int, BasicBlock]:
 
+        duplicaded_node = False
+
+        if isinstance(starting_address, str) or self.old_vertices.get(f'{starting_address}_0') is not None:
+            duplicaded_node = True
+        
+        if duplicaded_node and self.working_collapsed_node is not None:
+            self.tree.add_node_to_graph(self.working_collapsed_node)
+            self.collapsed_vertices[self.working_collapsed_node.get_start_address()] = self.working_collapsed_node
+            self.working_collapsed_node = None
+
 
         actual_node = self.old_vertices[starting_address]
         self.visited.append(actual_node.get_start_address())

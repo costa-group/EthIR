@@ -4256,7 +4256,10 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             
             end = dtimer()
 
-            print(f"Graph collapse: {end - begin} s\n")
+            print(f"Graph collapse: {end - begin} s")
+
+            print(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
+
 
 
         memory_result = []
