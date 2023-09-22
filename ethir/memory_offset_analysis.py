@@ -195,8 +195,11 @@ class MemoryOffsetAbstractState:
             if top in self.stack: 
                 self.add_read_access_top(top,pc,self.stack)
             else:
-                self.accesses.add_read_access(pc,"mem0") 
-
+                self.accesses.add_read_access(pc,"mem0")
+                ctopm1 = self.constancy.get_analysis_results(pc,-1).get_constants(top-1)
+                if 64 in ctopm1:
+                    self.accesses.add_read_access(pc,"mem32")
+                
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access_top(top-3,pc,self.stack)
             self.add_write_access_top(top-5,pc,self.stack)
