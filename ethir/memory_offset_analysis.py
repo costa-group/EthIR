@@ -170,7 +170,7 @@ class MemoryOffsetAbstractState:
             self.accesses.add_write_access(pc,"mem4")
 
         elif is_mstore(instr,"32"):
-            self.accesses.add_write_access(pc,"mem32")
+            self.accesses.add_write_access(pc,"mem20")
 
         elif is_mstore(instr,"0"):
             self.accesses.add_write_access(pc,"mem0")
@@ -195,13 +195,14 @@ class MemoryOffsetAbstractState:
             if top in self.stack: 
                 self.add_read_access_top(top,pc,self.stack)
                 
-            elif 0 in self.constancy.get_analysis_results(pc,-1).get_constants(top) :
+            else: # if 0 in self.constancy.get_analysis_results(pc,-1).get_constants(top) :
                 self.accesses.add_read_access(pc,"mem0")
-                ctopm1 = self.constancy.get_analysis_results(pc,-1).get_constants(top-1)
-                if 64 in ctopm1:
-                    self.accesses.add_read_access(pc,"mem32")
-                elif (32 not in ctopm1) and (64 not in ctopm1):
-                    self.accesses.add_read_access(pc,TOP)
+                self.accesses.add_read_access(pc,"mem20")
+                # ctopm1 = self.constancy.get_analysis_results(pc,-1).get_constants(top-1)
+                # if 64 in ctopm1:
+                #     self.accesses.add_read_access(pc,"mem32")
+                # elif (32 not in ctopm1) and (64 not in ctopm1):
+                #     self.accesses.add_read_access(pc,TOP)
 
                 
         elif op_code == "CALL" or op_code == "CALLCODE": 
