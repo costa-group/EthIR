@@ -194,11 +194,15 @@ class MemoryOffsetAbstractState:
         elif op_code == "SHA3" or op_code == "KECCAK256": 
             if top in self.stack: 
                 self.add_read_access_top(top,pc,self.stack)
-            else:
+                
+            elif 0 in self.constancy.get_analysis_results(pc,-1).get_constants(top) :
                 self.accesses.add_read_access(pc,"mem0")
                 ctopm1 = self.constancy.get_analysis_results(pc,-1).get_constants(top-1)
                 if 64 in ctopm1:
                     self.accesses.add_read_access(pc,"mem32")
+                elif (32 not in ctopm1) and (64 not in ctopm1):
+                    self.accesses.add_read_access(pc,TOP)
+
                 
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access_top(top-3,pc,self.stack)
