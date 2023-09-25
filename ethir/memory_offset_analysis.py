@@ -320,6 +320,9 @@ class MemoryOffsetAbstractState:
             for memaddress in stack[pos]: 
                 self.accesses.add_write_access(pc,memaddress)
 
+    def get_stack (self): 
+        return self.stack
+
     def __repr__(self):
         return (#"pos = " + str(self.stack_pos) + 
                 " stack^" + str(self.stack_pos) + " = " + str(self.stack) + 

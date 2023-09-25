@@ -107,8 +107,6 @@ class MemoryOptimizerConnector :
         
         return NONEQUALS
 
-
-
     def are_equal(self,access1, access2):
         # Check mem40 accesses
         if isinstance(access1, str) and isinstance(access2, str) and access1 == access2: 
@@ -139,7 +137,10 @@ class MemoryOptimizerConnector :
     def get_optimizable_blocks(self):
         self.optimizable_blocks.cleanup_empty_blocks()
         return self.optimizable_blocks
-    
+
+    def process_context_constancy(self, constants): 
+        self.optimizable_blocks.add_context_constancy(constants)
+
     def print_optimization_info(self): 
         if self.debug:
             print("\nMemory block dependences")
@@ -148,7 +149,6 @@ class MemoryOptimizerConnector :
     
         
 class OptimizableBlocks: 
-    # optimizable_blocks = {}
 
     def __init__(self,vertices, cname):
         self.contract = cname
@@ -188,7 +188,6 @@ class OptimizableBlocks:
             if blockinfo.is_info_empty():
                 self.optimizable_blocks.pop(block)
         
-
     def get_optimizable_blocks(self):
         return self.optimizable_blocks
         
@@ -224,6 +223,12 @@ class OptimizableBlocks:
                 return (True,inst)
         return (False,None)
 
+    def add_context_constancy(self, constants): 
+        for block in self.optimizable_blocks: 
+            self.optimizable_blocks[block].add_constancy_context(constants.get_block_results(block).get_input_state())
+            
+            
+
     def print_blocks(self):
         print("CONTRACT: "+self.contract)
         for elem in self.optimizable_blocks:
@@ -241,7 +246,7 @@ class OptimizableBlockInfo:
         self.equal_pairs_storage = []
         self.nonequal_pairs_storage = []
         self.useless = []
-
+        self.constancy_context = []
 
     def add_pair(self,pc1,pc2,cmpres, location):
         if location == "memory":
@@ -283,6 +288,15 @@ class OptimizableBlockInfo:
     def get_useless_info(self):
         return self.useless
 
+    def add_constancy_context(self, input): 
+        print(str(input) + "  " + str(type(input)))
+        stack = input.get_stack()
+        for spos in stack: 
+            if len(stack[spos]) == 1: 
+                for value in stack[spos]: 
+                    if value != TOP and value != TOPK: 
+                        self.constancy_context.append((spos,value))
+
 
     def delete_info_with(self, idx):
         list(filter(lambda x: idx in x, self.equal_pairs_memory))
@@ -296,7 +310,8 @@ class OptimizableBlockInfo:
                 "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + 
                 "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + 
                 "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> " + 
-                "\nUseless: " + str(self.useless) + "\n")
+                "\nUseless: " + str(self.useless) + 
+                "\nConstancy: " + str(self.constancy_context) + "\n")
 
 
 class CmpPair: 

@@ -90,7 +90,7 @@ class Analysis:
             block_info.process_block()
 
             output_state = block_info.get_output_state()
-            self.process_jumps(block_id,block_info.get_output_state())
+            self.process_jumps(block_id,output_state)
 
     def process_jumps (self,block_id, input_state): 
         basic_block = self.vertices[block_id]
@@ -129,6 +129,8 @@ class Analysis:
         return self.blocks_info[block].get_state_at_instr(int(id)+posrel)
 
     def get_block_results(self,blockid): 
+        if str(blockid).find("_")==-1:
+            blockid = int(blockid)
         return self.blocks_info[blockid]
 
     def __repr__(self): 
@@ -201,10 +203,12 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
     print("********************************** INIT")
-    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices,cname, debug_info)
+    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices, cname, debug_info)
     memopt.process_blocks_memory()
     memopt.process_blocks_storage()
     memopt.add_useless_accesses_info(accesses.get_useless())
+    memopt.process_context_constancy(constants)
+
     memopt.print_optimization_info()
     print("********************************** END")
     
