@@ -144,7 +144,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     set_memory_utils_globals(compblocks, fblockmap)
     print("Slots analysis started!")
 
-    MemoryAccesses.init_globals(csource, cname)
+    MemoryAccesses.init_globals(csource, cname, type_analysis)
     accesses = MemoryAccesses({},{},{},{},vertices)
     
     init_slot = memory_slots.slots_autoid
@@ -173,7 +173,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
         memory.analyze()
 
     else:
-        raise Exception("Type for memory analysis uncorrect")
+        raise Exception("Type for memory analysis incorrect")
         
     # MemoryAbstractState.initglobals(slots,accesses)
     # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
