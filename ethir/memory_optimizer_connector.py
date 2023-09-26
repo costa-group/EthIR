@@ -141,6 +141,9 @@ class MemoryOptimizerConnector :
     def process_context_constancy(self, constants): 
         self.optimizable_blocks.add_context_constancy(constants)
 
+    def process_context_aliasing(self, aliasing): 
+        self.optimizable_blocks.add_context_aliasing(aliasing)       
+
     def print_optimization_info(self): 
         if self.debug:
             print("\nMemory block dependences")
@@ -226,8 +229,11 @@ class OptimizableBlocks:
     def add_context_constancy(self, constants): 
         for block in self.optimizable_blocks: 
             self.optimizable_blocks[block].add_constancy_context(constants.get_block_results(block).get_input_state())
-            
-            
+
+    def add_context_aliasing(self, aliasing): 
+        for block in self.optimizable_blocks: 
+            self.optimizable_blocks[block].add_aliasing_context(aliasing.get_block_results(block).get_input_state())
+         
 
     def print_blocks(self):
         print("CONTRACT: "+self.contract)
@@ -247,6 +253,7 @@ class OptimizableBlockInfo:
         self.nonequal_pairs_storage = []
         self.useless = []
         self.constancy_context = []
+        self.aliasing_context = []
 
     def add_pair(self,pc1,pc2,cmpres, location):
         if location == "memory":
@@ -289,13 +296,17 @@ class OptimizableBlockInfo:
         return self.useless
 
     def add_constancy_context(self, input): 
-        print(str(input) + "  " + str(type(input)))
         stack = input.get_stack()
         for spos in stack: 
             if len(stack[spos]) == 1: 
                 for value in stack[spos]: 
                     if value != TOP and value != TOPK: 
                         self.constancy_context.append((spos,value))
+
+    def add_aliasing_context(self, input): 
+        print("******* " + str(input))
+        stack = input.get_stack()
+        print(str(stack))
 
 
     def delete_info_with(self, idx):
@@ -311,7 +322,8 @@ class OptimizableBlockInfo:
                 "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + 
                 "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> " + 
                 "\nUseless: " + str(self.useless) + 
-                "\nConstancy: " + str(self.constancy_context) + "\n")
+                "\nConstancy: " + str(self.constancy_context) + 
+                "\nAliasing: " + str(self.aliasing_context) + "\n")
 
 
 class CmpPair: 
