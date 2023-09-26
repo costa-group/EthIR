@@ -61,13 +61,12 @@ class MemoryAccesses:
                 continue
 
             for slot in self.writeset[writepp]: 
-                print("Evaluating " + str(writepp))
                 # Check write block...
                 visited = set({})
                 block_id = get_block_id(writepp)
 
                 found = self.search_read(writepp, slot, block_id, visited)
-                print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
+                # print("search_read: " + str(block_id) + " -- " + str(slot) + " " + str(found) + " ++ " + str(self.found_outofslot))
 
                 if found: 
                     #print("MEMRES: Found read for -> " + writepp)
@@ -110,7 +109,6 @@ class MemoryAccesses:
         return False
     
     def search_read(self, writepp, slot, block_id, visited): 
-        print("   SEARCH_READ " + str(block_id))
         if (block_id in visited): 
             return False
         

@@ -209,6 +209,9 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     memopt.add_useless_accesses_info(accesses.get_useless())
     memopt.process_context_constancy(constants)
 
+    if type_analysis == "offset": 
+        memopt.process_context_aliasing(memory)
+
     memopt.print_optimization_info()
     print("********************************** END")
     
