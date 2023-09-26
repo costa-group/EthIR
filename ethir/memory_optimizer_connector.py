@@ -96,43 +96,17 @@ class MemoryOptimizerConnector :
             # Only one iteration per loop
             elem1 = list(set1)[0] 
             elem2 = list(set2)[0] 
-            return self.are_equal(elem1,elem2)
+            return are_equal(elem1,elem2)
 
         ## All different
         for elem1 in set1: 
             for elem2 in set2: 
-                areequals = self.are_equal(elem1,elem2)
+                areequals = are_equal(elem1,elem2)
                 if areequals == EQUALS or areequals == UNKOWN: 
                     return UNKOWN
         
         return NONEQUALS
 
-    def are_equal(self,access1, access2):
-        # Check mem40 accesses
-        if isinstance(access1, str) and isinstance(access2, str) and access1 == access2: 
-            return EQUALS
-        elif isinstance(access1, str) or isinstance(access2, str): 
-            return NONEQUALS
-        
-        ## We have a tuple
-
-        if access1.slot != access2.slot: 
-            return NONEQUALS
-
-        # Same baseref
-        if access1.offset == TOP or access2.offset == TOP: 
-            return UNKOWN
-
-        if access1.offset == TOPK and access2.offset == TOPK: 
-            return UNKOWN
-
-        # if access1.offset == TOPK or access2.offset == TOPK: 
-        #     return NONEQUALS
-
-        if access1.offset == access2.offset: 
-            return EQUALS
-        else:
-            return NONEQUALS
         
     def get_optimizable_blocks(self):
         self.optimizable_blocks.cleanup_empty_blocks()
@@ -162,11 +136,12 @@ class OptimizableBlocks:
         return self.contract
         
     def add_block_info(self,block,pc1,pc2,cmpres, location):
+        
         if block.find("_") != -1:
             instr = list(self.vertices[block].get_instructions())
         else:
             instr = list(self.vertices[int(block)].get_instructions())
-
+            
         (ressplit,instsplit) = self.contains_split_instruction(instr)
         if ressplit: 
             print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "] -- ** " + str(instr) + "**")
@@ -194,7 +169,7 @@ class OptimizableBlocks:
         return self.optimizable_blocks
         
     def add_useless_info(self, useless_info): 
-        for blockid in useless_info:
+        for blockid in useless_info: 
             print("GASOL: Adding block useless " + blockid  )
             if blockid in self.optimizable_blocks: 
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
@@ -203,12 +178,7 @@ class OptimizableBlocks:
                     instr = list(self.vertices[blockid].get_instructions())
                 else:
                     instr = list(self.vertices[int(blockid)].get_instructions())
-                
-                (ressplit,instsplit) = self.contains_split_instruction(instr)
-                if ressplit: 
-                    print ("INFO: Block with split instruction " + self.contract + "--" + str(blockid) + "[" + instsplit + "] -- ** " + str(instr) + "**")
-                    return
-                
+                    
                 self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr))
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
 
@@ -226,11 +196,8 @@ class OptimizableBlocks:
                 
     ## Split the blocks according to the instructions in 
     def contains_split_instruction (self, instructions):
-        
-        new_ins = list(map(lambda x: x.strip(), instructions))
-
         for inst in SPLIT_INSTRUCTIONS: 
-            if inst in new_ins:
+            if inst in instructions: 
                 return (True,inst)
         return (False,None)
 
@@ -312,10 +279,22 @@ class OptimizableBlockInfo:
                         self.constancy_context.append((spos,value))
 
     def add_aliasing_context(self, input): 
-        print("******* " + str(input))
         stack = input.get_stack()
         print(str(stack))
-
+        for s0 in stack: 
+            for s1 in stack: 
+                if s0 == s1: 
+                    continue
+                if len(stack[s0]) == 1 and len(stack[s1]) == 1: 
+                    access1 = list(stack[s0])[0]
+                    access2 = list(stack[s1])[0]
+                    pair1 = (s0, s1)
+                    pair2 = (s1, s0)
+                    if are_equal(access1, access2) == EQUALS and pair1 not in self.aliasing_context and pair2 not in self.aliasing_context: 
+                        self.aliasing_context.append(pair1)
+                        print ("CONTEXT: Detected context equality " + 
+                               str(s0) + " " + str(access1) + " " + 
+                               str(s1) + " " + str(access2))
 
     def delete_info_with(self, idx):
         list(filter(lambda x: idx in x, self.equal_pairs_memory))
@@ -378,3 +357,32 @@ class CmpPair:
 
     def same_pair(self, val1, val2):
         return (val1 == self.pc1 and val2 == self.pc2) or (val2 == self.pc1 and val1 == self.pc2) 
+
+
+## Function that compares two memory accesses 
+def are_equal(access1, access2):
+    # Check mem40 accesses
+    if isinstance(access1, str) and isinstance(access2, str) and access1 == access2: 
+        return EQUALS
+    elif isinstance(access1, str) or isinstance(access2, str): 
+        return NONEQUALS
+    
+    ## We have a tuple
+
+    if access1.slot != access2.slot: 
+        return NONEQUALS
+
+    # Same baseref
+    if access1.offset == TOP or access2.offset == TOP: 
+        return UNKOWN
+
+    if access1.offset == TOPK and access2.offset == TOPK: 
+        return UNKOWN
+
+    # if access1.offset == TOPK or access2.offset == TOPK: 
+    #     return NONEQUALS
+
+    if access1.offset == access2.offset: 
+        return EQUALS
+    else:
+        return NONEQUALS
