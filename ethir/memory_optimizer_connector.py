@@ -178,6 +178,8 @@ class OptimizableBlocks:
                     instr = list(self.vertices[blockid].get_instructions())
                 else:
                     instr = list(self.vertices[int(blockid)].get_instructions())
+
+                instr = self._process_instructions(instr)
                     
                 self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr))
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
