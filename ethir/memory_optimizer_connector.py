@@ -258,6 +258,10 @@ class OptimizableBlockInfo:
 
     def get_nonequal_pairs_storage(self):
         return self.nonequal_pairs_storage
+
+
+    def has_dependences_info(self):
+        return (self.equal_pairs_memory !=[] or self.equal_pairs_storage != [] or self.nonequal_pairs_memory != [] or self.nonequal_pairs_storage != [])
     
     def is_info_empty(self): 
         return (len(self.nonequal_pairs_memory) == 0 and len(self.equal_pairs_memory) == 0 and
