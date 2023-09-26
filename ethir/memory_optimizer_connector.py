@@ -159,12 +159,12 @@ class OptimizableBlocks:
         return self.contract
         
     def add_block_info(self,block,pc1,pc2,cmpres, location):
-        
         if block.find("_") != -1:
             instr = list(self.vertices[block].get_instructions())
         else:
             instr = list(self.vertices[int(block)].get_instructions())
-            
+
+        print("CUCU")
         (ressplit,instsplit) = self.contains_split_instruction(instr)
         if ressplit: 
             print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "] -- ** " + str(instr) + "**")
@@ -192,7 +192,7 @@ class OptimizableBlocks:
         return self.optimizable_blocks
         
     def add_useless_info(self, useless_info): 
-        for blockid in useless_info: 
+        for blockid in useless_info:
             print("GASOL: Adding block useless " + blockid  )
             if blockid in self.optimizable_blocks: 
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
@@ -201,6 +201,12 @@ class OptimizableBlocks:
                     instr = list(self.vertices[blockid].get_instructions())
                 else:
                     instr = list(self.vertices[int(blockid)].get_instructions())
+                
+                (ressplit,instsplit) = self.contains_split_instruction(instr)
+                if ressplit: 
+                    print ("INFO: Block with split instruction " + self.contract + "--" + str(blockid) + "[" + instsplit + "] -- ** " + str(instr) + "**")
+                    return
+                
                 self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr))
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
 
@@ -218,8 +224,11 @@ class OptimizableBlocks:
                 
     ## Split the blocks according to the instructions in 
     def contains_split_instruction (self, instructions):
+        
+        new_ins = list(map(lambda x: x.strip(), instructions))
+
         for inst in SPLIT_INSTRUCTIONS: 
-            if inst in instructions: 
+            if inst in new_ins:
                 return (True,inst)
         return (False,None)
 
