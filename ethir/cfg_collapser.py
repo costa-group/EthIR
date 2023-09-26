@@ -24,7 +24,7 @@ class Cfg_collapser:
 
         self.working_collapsed_node = None
 
-        self.tree = MyTree(False, cname)
+        self.tree = MyTree(True, cname)
 
         self.visited = []
 
@@ -57,6 +57,9 @@ class Cfg_collapser:
 
         if actual_node.get_block_type() == "terminal":
             # The block is joined with the previous ones (if any) and it is closed)
+            
+            if len(actual_node.get_comes_from()) > 1 and self.working_collapsed_node is not None:
+                self.close_previous_node()
 
             if self.working_collapsed_node is not None:
                 self.join_blocks(actual_node)
@@ -73,6 +76,9 @@ class Cfg_collapser:
         
 
         elif actual_node.get_block_type() == "conditional" or actual_node.get_block_type() == "falls_to":
+
+            if len(actual_node.get_comes_from()) > 1 and self.working_collapsed_node is not None:
+                self.close_previous_node()
             # The block is joined with the previous ones (if there are any) and it is closed (it will not be joined with the following blocks) before jumping to the next blocks
 
             if self.working_collapsed_node is not None:
@@ -93,9 +99,7 @@ class Cfg_collapser:
             # If several blocks arrive to this blocks, it closes the previous block
             
             if len(actual_node.get_comes_from()) > 1 and self.working_collapsed_node is not None:
-                self.tree.add_node_to_graph(self.working_collapsed_node)
-                self.collapsed_vertices[self.working_collapsed_node.get_start_address()] = self.working_collapsed_node
-                self.working_collapsed_node = None
+                self.close_previous_node()
 
             # If there is an open block it joins to it and it jumps to the following block
 
@@ -114,6 +118,11 @@ class Cfg_collapser:
             self.jump_to_next_node(actual_node)
 
         
+    def close_previous_node(self):
+        self.tree.add_node_to_graph(self.working_collapsed_node)
+        self.collapsed_vertices[self.working_collapsed_node.get_start_address()] = self.working_collapsed_node
+        self.working_collapsed_node = None
+
 
     def jump_to_next_node(self, actual_node):
         jump_target = actual_node.get_jump_target()
