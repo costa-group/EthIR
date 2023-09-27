@@ -187,6 +187,8 @@ class OptimizableBlocks:
                     instr = list(self.vertices[blockid].get_instructions())
                 else:
                     instr = list(self.vertices[int(blockid)].get_instructions())
+
+                instr = self._process_instructions(instr)
                     
                 self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr))
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
@@ -268,6 +270,10 @@ class OptimizableBlockInfo:
 
     def get_nonequal_pairs_storage(self):
         return self.nonequal_pairs_storage
+
+
+    def has_dependences_info(self):
+        return (self.equal_pairs_memory !=[] or self.equal_pairs_storage != [] or self.nonequal_pairs_memory != [] or self.nonequal_pairs_storage != [])
     
     def is_info_empty(self): 
         return (len(self.nonequal_pairs_memory) == 0 and len(self.equal_pairs_memory) == 0 and

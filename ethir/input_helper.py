@@ -6,8 +6,10 @@ import logging
 import json
 import global_params_ethir
 import six
+import uuid
 from source_map import SourceMap
 from utils import run_command, get_solc_executable
+
 
 class InputHelper:
     BYTECODE = 0
@@ -24,7 +26,8 @@ class InputHelper:
                 'evm': False,
                 'runtime': True,
                 'solc_version':"v8",
-                'opt_options':{}
+                'opt_options':{},
+                'tmp_path':global_params_ethir.tmp_path
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
@@ -34,7 +37,8 @@ class InputHelper:
                 'root_path': "",
                 'compiled_contracts': [],
                 'solc_version':"v8",
-                'opt_options':{}
+                'opt_options':{},
+                'tmp_path':global_params_ethir.tmp_path
             }
         elif input_type == InputHelper.STANDARD_JSON:
             attr_defaults = {
@@ -45,7 +49,8 @@ class InputHelper:
                 'allow_paths': None,
                 'compiled_contracts': [],
                 'solc_version':"v8",
-                'opt_options':{}
+                'opt_options':{},
+                'tmp_path':global_params_ethir.tmp_path
             }
         elif input_type == InputHelper.STANDARD_JSON_OUTPUT:
             attr_defaults = {
@@ -55,7 +60,8 @@ class InputHelper:
                 'root_path': "",
                 'compiled_contracts': [],
                 'solc_version':"v8",
-                'opt_options':{}
+                'opt_options':{},
+                'tmp_path':global_params_ethir.tmp_path
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
@@ -67,7 +73,9 @@ class InputHelper:
 
         self.solc_version = self._get_solidity_version()
         self.init_compiled_contracts = []
-
+        self.aux_path = self.tmp_path+"/ethir_" + uuid.uuid4().hex
+        os.mkdir(self.aux_path)
+        
     def get_inputs(self):
         
         inputs = []
@@ -138,6 +146,9 @@ class InputHelper:
         else:
             self._rm_tmp_files_of_multiple_contracts(self.compiled_contracts)
 
+    def get_aux_path(self):
+        return self.aux_path
+            
 
     def _get_compiled_contracts_init(self,runtime_contracts):
         contracts = self._compile_solidity_init()
@@ -303,18 +314,20 @@ class InputHelper:
     
     def _get_temporary_files(self, target):
         return {
-            "evm": target + ".evm",
-            "disasm": target + ".evm.disasm",
-            "evm_init": target + "_init.evm",
-            "disasm_init": target + "_init.evm.disasm",
-            "log": target + ".evm.disasm.log"
+            "evm": self.aux_path+"/"+target.split(":")[-1] + ".evm",
+            "disasm": self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm",
+            "evm_init": self.aux_path+"/"+target.split(":")[-1] + "_init.evm",
+            "disasm_init": self.aux_path+"/"+target.split(":")[-1] + "_init.evm.disasm",
+            "log": self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm.log"
         }
     
     def _write_evm_file(self, target, bytecode,init_contracts):
+
         if init_contracts:
             evm_file = self._get_temporary_files(target)["evm_init"]
         else:
             evm_file = self._get_temporary_files(target)["evm"]
+            
         with open(evm_file, 'w') as of:
             of.write(self._removeSwarmHash(bytecode))
 
