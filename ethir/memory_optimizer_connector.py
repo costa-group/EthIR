@@ -148,16 +148,25 @@ class OptimizableBlocks:
             return
 
         if block not in self.optimizable_blocks:
-            if block.find("_") != -1:
-                instr = self.vertices[block].get_instructions()
-            else:
-                instr = self.vertices[int(block)].get_instructions()
-
+            (instr,stacksize) = self.get_block_info(block)
             instr = self._process_instructions(instr)
                 
-            self.optimizable_blocks[block] = OptimizableBlockInfo(block, list(instr))
+            self.optimizable_blocks[block] = OptimizableBlockInfo(block, list(instr), stacksize)
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres, location)
+
+    def get_block_info (self,blockid): 
+        
+        if blockid.find("_") != -1:
+            block = self.vertices[blockid]
+        else:
+            block = self.vertices[int(blockid)]
+        
+        inst = block.get_instructions()
+        stackinfo = block.get_stack_info()
+        print(str(stackinfo))
+        return inst,stackinfo[0]
+
 
     def cleanup_empty_blocks(self):
         for block in self.optimizable_blocks: 
@@ -219,9 +228,10 @@ class OptimizableBlocks:
             
 class OptimizableBlockInfo: 
 
-    def __init__(self,block_id, instr):
+    def __init__(self,block_id, instr, stacksize):
         self.block_id = block_id
         self.instr = instr
+        self.stacksize = stacksize
         self.equal_pairs_memory = []
         self.nonequal_pairs_memory = []
         self.equal_pairs_storage = []
@@ -272,11 +282,12 @@ class OptimizableBlockInfo:
 
     def add_constancy_context(self, input): 
         stack = input.get_stack()
+        print(str(stack))
         for spos in stack: 
             if len(stack[spos]) == 1: 
                 for value in stack[spos]: 
                     if value != TOP and value != TOPK: 
-                        self.constancy_context.append((spos,value))
+                        self.constancy_context.append((self.stacksize-spos,value))
 
     def add_aliasing_context(self, input): 
         stack = input.get_stack()
@@ -288,8 +299,8 @@ class OptimizableBlockInfo:
                 if len(stack[s0]) == 1 and len(stack[s1]) == 1: 
                     access1 = list(stack[s0])[0]
                     access2 = list(stack[s1])[0]
-                    pair1 = (s0, s1)
-                    pair2 = (s1, s0)
+                    pair1 = (self.stacksize-s0, s1)
+                    pair2 = (self.stacksize-s1, s0)
                     if are_equal(access1, access2) == EQUALS and pair1 not in self.aliasing_context and pair2 not in self.aliasing_context: 
                         self.aliasing_context.append(pair1)
                         print ("CONTEXT: Detected context equality " + 
@@ -303,14 +314,15 @@ class OptimizableBlockInfo:
     
     def __repr__(self):
         return ("Block: " + self.block_id + "\n" + 
-                "Instr:<< " + str(self.instr) + ">> " + 
+                "Instr:<<" + str(self.instr) + ">> \n" + 
+                "Stack size: " + str(self.stacksize) + " " + 
                 "\nEquals Mem:<< " + str(self.equal_pairs_memory) + ">> " + 
                 "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + 
                 "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + 
                 "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> " + 
                 "\nUseless: " + str(self.useless) + 
                 "\nConstancy: " + str(self.constancy_context) + 
-                "\nAliasing: " + str(self.aliasing_context) + "\n")
+                "\nContextAliasing: " + str(self.aliasing_context) + "\n")
 
 
 class CmpPair: 
