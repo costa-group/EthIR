@@ -167,7 +167,7 @@ class OptimizableBlocks:
         
         inst = block.get_instructions()
         stackinfo = block.get_stack_info()
-        print(str(stackinfo))
+        #print(str(stackinfo))
         return inst,stackinfo[0]
 
     def cleanup_empty_blocks(self):
@@ -185,11 +185,10 @@ class OptimizableBlocks:
             if blockid in self.optimizable_blocks: 
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
             else: 
-                (instr,_) = self.get_block_info(blockid)
-
+                (instr,stacksize) = self.get_block_info(blockid)
                 instr = self._process_instructions(instr)
-                    
-                self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr))
+
+                self.optimizable_blocks[blockid] = OptimizableBlockInfo(blockid, list(instr),stacksize)
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
 
     def _process_instructions(self,instr):
@@ -291,6 +290,15 @@ class OptimizableBlockInfo:
 
     def get_nonequal_pairs_storage(self):
         return self.nonequal_pairs_storage
+
+    def get_constancy_context(self):
+        return self.constancy_context
+
+    def get_aliasing_context(self):
+        return self.aliasing_context
+
+    def has_context_info(self):
+        return self.aliasing_context != [] or self.constancy_context != []
 
     def has_dependences_info(self):
         return (self.equal_pairs_memory !=[] or self.equal_pairs_storage != [] or self.nonequal_pairs_memory != [] or self.nonequal_pairs_storage != [])
