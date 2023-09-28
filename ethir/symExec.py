@@ -4256,9 +4256,17 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             
             end = dtimer()
 
+            block_sizes = list(collapser.block_sizes.values())
+
+            block_sizes_collapsed = list(collapser.block_sizes_collapsed.values())
+
+
+
             print(f"Graph collapse: {end - begin} s")
 
-            print(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
+            print(f"Blocks: {len(block_sizes)} - Collapsed blocks: {len(block_sizes_collapsed)}")
+
+            print(f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}")
 
 
 
