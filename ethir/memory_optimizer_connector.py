@@ -106,10 +106,9 @@ class MemoryOptimizerConnector :
                     return UNKOWN
         
         return NONEQUALS
-
         
     def get_optimizable_blocks(self):
-        self.optimizable_blocks.cleanup_empty_blocks()
+        #self.optimizable_blocks.cleanup_empty_blocks()
         return self.optimizable_blocks
 
     def process_context_constancy(self, constants): 
@@ -117,6 +116,10 @@ class MemoryOptimizerConnector :
 
     def process_context_aliasing(self, aliasing): 
         self.optimizable_blocks.add_context_aliasing(aliasing)       
+
+    def compact_clones(self):
+
+        self.optimizable_blocks.compact_clones()
 
     def print_optimization_info(self): 
         if self.debug:
@@ -167,7 +170,6 @@ class OptimizableBlocks:
         print(str(stackinfo))
         return inst,stackinfo[0]
 
-
     def cleanup_empty_blocks(self):
         for block in self.optimizable_blocks: 
             blockinfo = self.optimizable_blocks[block]
@@ -183,10 +185,7 @@ class OptimizableBlocks:
             if blockid in self.optimizable_blocks: 
                 self.optimizable_blocks[blockid].add_useless_info(useless_info[blockid])
             else: 
-                if blockid.find("_") != -1:
-                    instr = list(self.vertices[blockid].get_instructions())
-                else:
-                    instr = list(self.vertices[int(blockid)].get_instructions())
+                (instr,_) = self.get_block_info(blockid)
 
                 instr = self._process_instructions(instr)
                     
@@ -205,7 +204,6 @@ class OptimizableBlocks:
 
         return new_instr
                 
-    ## Split the blocks according to the instructions in 
     def contains_split_instruction (self, instructions):
         for inst in SPLIT_INSTRUCTIONS: 
             if inst in instructions: 
@@ -219,7 +217,30 @@ class OptimizableBlocks:
     def add_context_aliasing(self, aliasing): 
         for block in self.optimizable_blocks: 
             self.optimizable_blocks[block].add_aliasing_context(aliasing.get_block_results(block).get_input_state())
-         
+
+    def compact_clones (self): 
+
+        self.print_blocks()
+        toremove = []
+        for block in self.optimizable_blocks: 
+            print(str(type(block)))
+            pos = block.find("_")
+            if pos == -1:
+                continue  ## it is not a clon
+
+            origblock = block[0:pos]
+            
+            if origblock in self.optimizable_blocks: 
+                blockinfo = self.optimizable_blocks[block]
+                blockoriginfo = self.optimizable_blocks[origblock]
+
+                infores =  intersect_OptimizableBlockInfo(blockoriginfo,blockinfo)
+                self.optimizable_blocks[str(origblock)] = infores
+
+            toremove.append(block)
+
+        for block in toremove: 
+            del self.optimizable_blocks[block]
 
     def print_blocks(self):
         print("CONTRACT: "+self.contract)
@@ -227,7 +248,7 @@ class OptimizableBlocks:
             print("-----")
             print(self.optimizable_blocks[elem])
             print(".....")
-            
+                
 class OptimizableBlockInfo: 
 
     def __init__(self,block_id, instr, stacksize):
@@ -270,7 +291,6 @@ class OptimizableBlockInfo:
 
     def get_nonequal_pairs_storage(self):
         return self.nonequal_pairs_storage
-
 
     def has_dependences_info(self):
         return (self.equal_pairs_memory !=[] or self.equal_pairs_storage != [] or self.nonequal_pairs_memory != [] or self.nonequal_pairs_storage != [])
@@ -317,19 +337,17 @@ class OptimizableBlockInfo:
         list(filter(lambda x: idx in x, self.equal_pairs_memory))
         list(filter(lambda x: idx in x, self.nonequal_pairs_memory))
 
-    
     def __repr__(self):
         return ("Block: " + self.block_id + "\n" + 
                 "Instr:<<" + str(self.instr) + ">> \n" + 
-                "Stack size: " + str(self.stacksize) + " " + 
-                "\nEquals Mem:<< " + str(self.equal_pairs_memory) + ">> " + 
-                "\nNonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> " + 
-                "\nEquals Sto:<< " + str(self.equal_pairs_storage) + ">> " + 
-                "\nNonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> " + 
-                "\nUseless: " + str(self.useless) + 
-                "\nConstancy: " + str(self.constancy_context) + 
-                "\nContextAliasing: " + str(self.aliasing_context) + "\n")
-
+                self.block_id + "-Stack size: " + str(self.stacksize) + " \n" + 
+                self.block_id + "-Equals Mem:<< " + str(self.equal_pairs_memory) + ">> \n" + 
+                self.block_id + "-NonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> \n" + 
+                self.block_id + "-Equals Sto:<< " + str(self.equal_pairs_storage) + ">> \n" + 
+                self.block_id + "-NonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> \n" + 
+                self.block_id + "-Useless: " + str(self.useless) + "\n" + 
+                self.block_id + "-Constancy: " + str(self.constancy_context) + "\n" + 
+                self.block_id + "-ContextAliasing: " + str(self.aliasing_context) + "\n")
 
 class CmpPair: 
     def __init__(self,pc1,pc2):
@@ -376,7 +394,6 @@ class CmpPair:
     def same_pair(self, val1, val2):
         return (val1 == self.pc1 and val2 == self.pc2) or (val2 == self.pc1 and val1 == self.pc2) 
 
-
 ## Function that compares two memory accesses 
 def are_equal(access1, access2):
     # Check mem40 accesses
@@ -404,3 +421,18 @@ def are_equal(access1, access2):
         return EQUALS
     else:
         return NONEQUALS
+
+def intersect_OptimizableBlockInfo (blinfo1,blinfo2): 
+    print("BLOCK INTERSECTION: "+ blinfo1.block_id + " -- " + blinfo2.block_id)
+
+    result = OptimizableBlockInfo(blinfo1.block_id, blinfo1.instr, min(blinfo1.stacksize,blinfo2.stacksize))
+
+    result.equal_pairs_memory = list(set(blinfo1.equal_pairs_memory).intersection(set(blinfo2.equal_pairs_memory)))
+    result.nonequal_pairs_memory = list(set(blinfo1.nonequal_pairs_memory).intersection(set(blinfo2.nonequal_pairs_memory)))
+    result.equal_pairs_storage = list(set(blinfo1.equal_pairs_storage).intersection(set(blinfo2.equal_pairs_storage)))
+    result.nonequal_pairs_storage = list(set(blinfo1.nonequal_pairs_storage).intersection(set(blinfo2.nonequal_pairs_storage)))
+    result.useless = list(set(blinfo1.useless).intersection(set(blinfo2.useless)))
+    result.constancy_context = list(set(blinfo1.constancy_context).intersection(set(blinfo2.constancy_context)))
+    result.aliasing_context = list(set(blinfo1.aliasing_context).intersection(set(blinfo2.aliasing_context)))
+
+    return result

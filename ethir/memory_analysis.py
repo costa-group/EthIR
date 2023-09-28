@@ -138,7 +138,7 @@ class Analysis:
             print(str(self.blocks_info[id]))    
         return ""
 
-def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug):     
+def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug, compact_clones):     
     global debug_info 
 
     debug_info = debug
@@ -208,9 +208,15 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     memopt.process_blocks_storage()
     memopt.add_useless_accesses_info(accesses.get_useless())
     memopt.process_context_constancy(constants)
+    
 
     if type_analysis == "offset": 
         memopt.process_context_aliasing(memory)
+
+    print("COMPACT CLONES: " + str(compact_clones))
+
+    if compact_clones: 
+        memopt.compact_clones()
 
     memopt.print_optimization_info()
     print("********************************** END")

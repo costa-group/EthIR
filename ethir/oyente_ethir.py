@@ -168,7 +168,18 @@ def analyze_disasm_bytecode():
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
             
-        result, exit_code = symExec.run(disasm_file=args.source,cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays, mem_analysis = args.mem_analysis)
+        result, exit_code = symExec.run(disasm_file=args.source,
+                                        cfg = args.control_flow_graph,
+                                        saco = args.saco,
+                                        debug = args.debug,
+                                        evm_version = evm_version_modifications,
+                                        cfile = args.cfile,
+                                        svc=svc_options,
+                                        go = c_translation_opt,
+                                        mem_abs = args.mem_interval,
+                                        sto=args.storage_arrays, 
+                                        mem_analysis = args.mem_analysis, 
+                                        compact_clones = args.compact_clones)
     else:
         exit_code = -1
         print("Option Error: --verify, --goto or --invalid options are only applied to c translation.\n")
@@ -205,7 +216,19 @@ def analyze_bytecode():
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
             
-        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],cfg = args.control_flow_graph,saco = args.saco,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt, mem_abs = args.mem_interval,sto=args.storage_arrays,mem_analysis = args.mem_analysis)
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],
+                                        cfg = args.control_flow_graph,
+                                        saco = args.saco,
+                                        debug = args.debug,
+                                        evm_version = evm_version_modifications,
+                                        cfile = args.cfile,
+                                        svc=svc_options,
+                                        go = c_translation_opt,
+                                        mem_abs = args.mem_interval,
+                                        sto=args.storage_arrays,
+                                        mem_analysis = args.mem_analysis, 
+                                        compact_clones = args.compact_clones)
+        
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -239,7 +262,23 @@ def run_solidity_analysis(inputs,hashes):
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = (args.optimize_run or args.via_ir), mem_analysis = args.mem_analysis)
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                              disasm_file_init = inp['disasm_file_init'], 
+                                              source_map=inp['source_map'], 
+                                              source_file=inp['source'],
+                                              cfg = args.control_flow_graph,
+                                              saco = args.saco,execution = 0, 
+                                              cname = inp["c_name"],
+                                              hashes = function_names,
+                                              debug = args.debug,
+                                              evm_version = evm_version_modifications,
+                                              cfile = args.cfile,svc=svc_options,
+                                              go = c_translation_opt,
+                                              mem_abs = args.mem_interval,
+                                              sto=args.storage_arrays,
+                                              opt_bytecode = (args.optimize_run or args.via_ir), 
+                                              mem_analysis = args.mem_analysis, 
+                                              compact_clones = args.compact_clones)
             
         except Exception as e:
             traceback.print_exc()
@@ -259,7 +298,25 @@ def run_solidity_analysis(inputs,hashes):
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
             try:            
-                result, return_code = symExec.run(disasm_file=inp['disasm_file'], disasm_file_init = inp['disasm_file_init'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = c_translation_opt,mem_abs = args.mem_interval,sto=args.storage_arrays,opt_bytecode = (args.optimize_run or args.via_ir), mem_analysis = args.mem_analysis)
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                                  disasm_file_init = inp['disasm_file_init'], 
+                                                  source_map=inp['source_map'], 
+                                                  source_file=inp['source'],
+                                                  cfg = args.control_flow_graph,
+                                                  saco = args.saco,
+                                                  execution = i,
+                                                  cname = inp["c_name"],
+                                                  hashes = function_names,
+                                                  debug = args.debug,
+                                                  evm_version = evm_version_modifications,
+                                                  cfile = args.cfile,
+                                                  svc=svc_options,
+                                                  go = c_translation_opt,
+                                                  mem_abs = args.mem_interval,
+                                                  sto=args.storage_arrays,
+                                                  opt_bytecode = (args.optimize_run or args.via_ir), 
+                                                  mem_analysis = args.mem_analysis, 
+                                                  compact_clones = args.compact_clones)
                 
             except Exception as e:
                 traceback.print_exc()
@@ -339,7 +396,21 @@ def run_solidity_analysis_optimized(inp,hashes):
     function_names = hashes[inp["c_name"]]
     
     try:
-        result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_opt,go = args.goto,opt= opt_info, mem_analysis = args.mem_analysis)
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                          source_map=inp['source_map'], 
+                                          source_file=inp['source'],
+                                          cfg = args.control_flow_graph,
+                                          saco = args.saco,execution = 0, 
+                                          cname = inp["c_name"],
+                                          hashes = function_names,
+                                          debug = args.debug,
+                                          evm_version = evm_version_modifications,
+                                          cfile = args.cfile,
+                                          svc=svc_opt,
+                                          go = args.goto,
+                                          opt= opt_info, 
+                                          mem_analysis = args.mem_analysis, 
+                                          compact_clones = args.compact_clones)
 
         try:
             c_source = inp['c_source']
@@ -487,6 +558,7 @@ def main():
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
     parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset"])
+    parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
 
 
     args = parser.parse_args()

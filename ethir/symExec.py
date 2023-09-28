@@ -4094,7 +4094,7 @@ def get_scc(edges):
         scc_multiple.update(scc)
         return scc_multiple
         
-def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None,mem_abs = None,sto = None, opt_bytecode = False, mem_analysis = None):    
+def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_init = None, source_file=None, cfg=None, saco = None, execution = None,cname = None, hashes = None, debug = None,ms_unknown=False,evm_version = False,cfile = None,svc = None,go = None,opt = None,source_name = None,mem_abs = None,sto = None, opt_bytecode = False, mem_analysis = None, compact_clones = False):    
     global g_disasm_file
     global g_source_file
     global g_src_map
@@ -4249,7 +4249,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
         
             begin = dtimer()
 
-            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
+            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info, compact_clones)        
             
             opt_blocks = memory_result[3].get_optimizable_blocks()
 
@@ -4260,8 +4260,6 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             file_info[cname]["memory_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()==0, vertices.values())))
             file_info[cname]["storage_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()==0 and x.get_num_storage_ins()>1, vertices.values())))
             file_info[cname]["memsto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
-            
-
             
             end = dtimer()
 
