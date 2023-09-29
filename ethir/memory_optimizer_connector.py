@@ -50,6 +50,20 @@ class MemoryOptimizerConnector :
                 if res == EQUALS or res == NONEQUALS: 
                     self.optimizable_blocks.add_block_info(block,pc,writepc,res,"memory")
 
+        for pc in self.readset:
+            block = pc.split(":")[0]
+
+            filtered = list(filter(lambda x: x.startswith(str(block)+":"), self.readset))
+            for readpc in filtered: 
+                if pc == readpc: 
+                    continue
+                wset = self.readset[pc]
+                rset = self.readset[readpc]
+                res = self.eval_pcs_relation(wset,rset)
+                if res == EQUALS or res == NONEQUALS: 
+                    self.optimizable_blocks.add_block_info(block,pc,readpc,res,"memory")
+
+
     def process_blocks_storage (self): 
         
         for block in self.vertices: 
@@ -250,6 +264,8 @@ class OptimizableBlocks:
                 
 class OptimizableBlockInfo: 
 
+    INSTRUCTIONS_IGNORE = ["RETURN","REVERT"]
+
     def __init__(self,block_id, instr, stacksize):
         self.block_id = block_id
         self.instr = instr
@@ -263,6 +279,12 @@ class OptimizableBlockInfo:
         self.aliasing_context = []
 
     def add_pair(self,pc1,pc2,cmpres, location):
+
+        pcoffset1 = int(pc1.split(":")[1])
+        pcoffset2 = int(pc2.split(":")[1])
+        if self.instr[pcoffset1] in self.INSTRUCTIONS_IGNORE or self.instr[pcoffset2] in self.INSTRUCTIONS_IGNORE:
+            return
+
         if location == "memory":
             if cmpres == EQUALS and CmpPair(pc1,pc2) not in self.equal_pairs_memory and CmpPair(pc2,pc1) not in self.equal_pairs_memory: 
                 self.equal_pairs_memory.append(CmpPair(pc1,pc2))
@@ -353,7 +375,7 @@ class OptimizableBlockInfo:
 
     def __repr__(self):
         return ("Block: " + self.block_id + "\n" + 
-                "Instr:<<" + str(self.instr) + ">> \n" + 
+                self.block_id + "Instr:<<" + str(self.instr) + ">> \n" + 
                 self.block_id + "-Stack size: " + str(self.stacksize) + " \n" + 
                 self.block_id + "-Equals Mem:<< " + str(self.equal_pairs_memory) + ">> \n" + 
                 self.block_id + "-NonEquals Mem: << " + str(self.nonequal_pairs_memory) + ">> \n" + 

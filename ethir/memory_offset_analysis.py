@@ -96,6 +96,8 @@ class MemoryOffsetAbstractState:
 
         # We save in the stack special memory addresses        
         if is_mload(instr,"64"):
+            print("FOUND MLOAD " + str(self.stack) + " " + str(top) + " " + str(pc) + " ")
+
             self.accesses.add_read_access(pc,"mem40")
             res = set([])
             slots = self.slots.get_analysis_results(pc,0).get_slot(pc)
@@ -149,8 +151,16 @@ class MemoryOffsetAbstractState:
             # if slottopm1 != None and ctopm1 != None:
             #     print("ADD ERROR top-1 [" + pc + "]:" + str(slottopm1) + " -- " + str(ctopm1))
 
+        # elif is_mload(instr,"64"):
+        #     self.accesses.add_red_access(pc,"mem40")
 
-        elif op_code == "MLOAD": 
+        # elif is_mload(instr,"4"):
+        #     self.accesses.add_read_access(pc,"mem4")
+
+        # elif is_mload(instr,"32"):
+        #     self.accesses.add_read_access(pc,"mem20")
+
+        elif op_code == "MLOAD":             
             self.add_read_access(top,pc,self.stack)
             self.perform_mload(self.stack, stack, memory, top)
 
