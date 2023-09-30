@@ -326,10 +326,10 @@ class OptimizableBlockInfo:
         return (self.equal_pairs_memory !=[] or self.equal_pairs_storage != [] or self.nonequal_pairs_memory != [] or self.nonequal_pairs_storage != [])
 
     def _add_context_pair(self,pair):
-        self.constancy_context.append(pair)
+        self.aliasing_context.append(pair)
 
     def _add_constancy_pair(self,pair):
-        self.aliasing_context.append(pair)
+        self.constancy_context.append(pair)
     
     def is_info_empty(self): 
         return (len(self.nonequal_pairs_memory) == 0 and len(self.equal_pairs_memory) == 0 and
