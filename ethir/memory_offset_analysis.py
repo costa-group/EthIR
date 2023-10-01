@@ -96,8 +96,6 @@ class MemoryOffsetAbstractState:
 
         # We save in the stack special memory addresses        
         if is_mload(instr,"64"):
-            print("FOUND MLOAD " + str(self.stack) + " " + str(top) + " " + str(pc) + " ")
-
             self.accesses.add_read_access(pc,"mem40")
             res = set([])
             slots = self.slots.get_analysis_results(pc,0).get_slot(pc)

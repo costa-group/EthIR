@@ -349,7 +349,7 @@ class OptimizableBlockInfo:
             if len(stack[spos]) == 1: 
                 for value in stack[spos]: 
                     if value != TOP and value != TOPK: 
-                        self.constancy_context.append((self.stacksize-spos,value))
+                        self.constancy_context.append((self.stacksize-(spos+1),value))
 
     def add_aliasing_context(self, input): 
         stack = input.get_stack()
@@ -361,8 +361,8 @@ class OptimizableBlockInfo:
                 if len(stack[s0]) == 1 and len(stack[s1]) == 1: 
                     access1 = list(stack[s0])[0]
                     access2 = list(stack[s1])[0]
-                    pair1 = (self.stacksize-s0, s1)
-                    pair2 = (self.stacksize-s1, s0)
+                    pair1 = (self.stacksize-(s0+1), s1)
+                    pair2 = (self.stacksize-(s1+1), s0)
                     if are_equal(access1, access2) == EQUALS and pair1 not in self.aliasing_context and pair2 not in self.aliasing_context: 
                         self.aliasing_context.append(pair1)
                         print ("CONTEXT: Detected context equality " + 
