@@ -41,7 +41,6 @@ class BlockAnalysisInfo:
         return True
         
     def process_block (self):
-        instructions = self.block_info.get_instructions()
 
         # We start with the initial state of the block
         current_state = self.input_state
@@ -53,14 +52,14 @@ class BlockAnalysisInfo:
             " -- " + str(self.block_info.get_stack_info()))
         
         i = 0
-        for instr in self.block_info.get_instructions(): 
+        instructions = self.block_info.get_instructions()
+
+        for i, instr in enumerate(instructions): 
             # From the current state we generate a new state by processing the instruction
             current_state = current_state.process_instruction(instr, str(idblock) + ":" + str(i))
             if debug_info:
-                print("      -- " + str(self.block_info.get_start_address()) + "[" + str(i) + "]" + 
-                        instr + " -- " + str(current_state))
+                print(f"      -- {self.block_info.get_start_address()}[{i}] {instr} -- {current_state}")
             self.state_per_instr.append(current_state)
-            i = i + 1
 
         self.output_state = current_state
     
@@ -89,7 +88,6 @@ class Analysis:
 
             block_info.process_block()
 
-            output_state = block_info.get_output_state()
             self.process_jumps(block_id,block_info.get_output_state())
 
     def process_jumps (self,block_id, input_state): 

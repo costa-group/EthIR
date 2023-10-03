@@ -48,6 +48,7 @@ class Cfg_collapser:
     def collapse(self):
         self.collapse_aux(0)
         self.collapse_duplicated()
+
         self.visited = []
         self.draw_tree(0)
 
@@ -60,6 +61,7 @@ class Cfg_collapser:
         if isinstance(starting_address, int):
             self.block_sizes[starting_address] = len(actual_node.get_instructions())
 
+        # Duplicated node cases
         if self.working_collapsed_node is not None and self.is_duplicated_node(starting_address):
             working_starting_address =  self.simplify_address(self.working_collapsed_node.get_start_address())
             duplicated_nodes = self.get_duplicated_nodes(starting_address)
@@ -68,8 +70,9 @@ class Cfg_collapser:
             if self.duplicated_series.get(working_starting_address) is None:
                 self.duplicated_series[working_starting_address] = [working_starting_address]
 
-            # The previous and actual nodes have different amount of duplicated nodes so the series will be different
+            # The previous node must have at least the same amount of nodes as the actual node
             if len(self.get_duplicated_nodes(self.working_collapsed_node.get_start_address())) >= len(duplicated_nodes):
+
                 sequence_correct = True
                 for node in duplicated_nodes:
                     comes_from = self.old_vertices[node].get_comes_from()
@@ -81,8 +84,7 @@ class Cfg_collapser:
                     series = self.duplicated_series.pop(working_starting_address)
                     series.append(self.simplify_address(starting_address))
                     self.duplicated_series[self.simplify_address(starting_address)] = series
-                        
-                
+               
 
             self.collapsed_vertices[self.working_collapsed_node.get_start_address()] = self.working_collapsed_node
             self.working_collapsed_node = None
@@ -154,40 +156,14 @@ class Cfg_collapser:
             if len(node_list) == 1:
                 continue
 
-            self.collapse_series2(node_list)
-            '''
-            for i in range(len(self.get_duplicated_nodes(node_list[0])) - 1):
-                self.collapse_series(node_list, i)
-                '''
+            for node in self.get_duplicated_nodes(node_list[0]):
+                self.working_collapsed_node = self.collapsed_vertices.get(node)
 
-    def collapse_series2(self, node_list):
-        for node in self.get_duplicated_nodes(node_list[0]):
-            self.working_collapsed_node = self.collapsed_vertices.get(node)
-
-            for i in range(1, len(node_list)):
-                if self.simplify_address(self.working_collapsed_node.get_jump_target()) == node_list[i]:
-                    self.join_blocks(self.collapsed_vertices.get(self.working_collapsed_node.get_jump_target()))
-                else:
-                    break
-
-    
-
-    def collapse_series(self, node_list, index = -1):
-        if index == -1:
-            self.working_collapsed_node = self.collapsed_vertices.get(node_list[0])
-        else:
-            self.working_collapsed_node = self.collapsed_vertices.get(f"{node_list[0]}_{index}")
-
-        for i, node in enumerate(node_list):
-
-            if i == 0:
-                continue
-        
-            if index == -1:
-                self.join_blocks(self.collapsed_vertices.get(node))
-            else:
-                self.join_blocks(self.collapsed_vertices.get(f"{node}_{index}"))
-    
+                for i in range(1, len(node_list)):
+                    if self.simplify_address(self.working_collapsed_node.get_jump_target()) == node_list[i]:
+                        self.join_blocks(self.collapsed_vertices.get(self.working_collapsed_node.get_jump_target()))
+                    else:
+                        break
     
     def draw_tree(self, start_address):
         node = self.collapsed_vertices.get(start_address)

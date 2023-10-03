@@ -6,12 +6,16 @@ import global_params_ethir
 
 class MyTree:
     
-    def __init__(self, more_info, file_name = "Tree") -> None:
+    
+    def __init__(self, more_info:bool, file_name = "Tree") -> None:
         self.tree_structure = ""
         self.more_info = more_info
         self.file_name = file_name
 
     def add_node_to_graph(self, node: BasicBlock):
+        '''
+        Recieves a block and stores the necessary information
+        '''
 
         if self.more_info:
             label = f"{node.get_start_address()} \n {node.get_instructions()}"
@@ -43,6 +47,10 @@ class MyTree:
                 self.tree_structure += f"n_{node.get_start_address()} -> n_{falls_to} [label=\"\"];\n"
     
     def generate_dot(self):
+        '''
+        Outputs the stored information to a .dot file
+        '''
+
         if "costabs" not in os.listdir(global_params_ethir.tmp_path):
             os.mkdir(global_params_ethir.costabs_path)
         
