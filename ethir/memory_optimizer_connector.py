@@ -238,7 +238,6 @@ class OptimizableBlocks:
         self.print_blocks()
         toremove = []
         for block in self.optimizable_blocks: 
-            print(str(type(block)))
             pos = block.find("_")
             if pos == -1:
                 continue  ## it is not a clon
@@ -249,7 +248,7 @@ class OptimizableBlocks:
                 blockinfo = self.optimizable_blocks[block]
                 blockoriginfo = self.optimizable_blocks[origblock]
 
-                infores =  intersect_OptimizableBlockInfo(blockoriginfo,blockinfo)
+                infores =  intersect_OptimizableBlockInfo(blockoriginfo,blockinfo,self.debug)
                 self.optimizable_blocks[str(origblock)] = infores
 
             toremove.append(block)
@@ -460,8 +459,9 @@ def are_equal(access1, access2):
     else:
         return NONEQUALS
 
-def intersect_OptimizableBlockInfo (blinfo1,blinfo2): 
-    print("BLOCK INTERSECTION: "+ blinfo1.block_id + " -- " + blinfo2.block_id)
+def intersect_OptimizableBlockInfo (blinfo1,blinfo2,debug): 
+    if debug:
+        print("BLOCK INTERSECTION: "+ blinfo1.block_id + " -- " + blinfo2.block_id)
 
     result = OptimizableBlockInfo(blinfo1.block_id, blinfo1.instr, min(blinfo1.stacksize,blinfo2.stacksize))
 
