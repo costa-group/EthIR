@@ -4264,7 +4264,7 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             print(f"Graph collapse: {end - begin} s")
 
-            print(f"Blocks: {len(block_sizes)} - Collapsed blocks: {len(block_sizes_collapsed)}")
+            print(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
 
             print(f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}")
 
