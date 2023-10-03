@@ -171,7 +171,7 @@ class BasicBlock:
         return result
 
     def get_num_memory_ins(self):
-        return len(list(filter(lambda x: x.find("MLOAD")!=-1 or x.find("MSTORE")!=-1, self.instructions)))
+        return len(list(filter(lambda x: x.find("MLOAD")!=-1 or (x.find("MSTORE")!=-1 and x.find("MSTORE8") ==-1), self.instructions)))
 
     def get_num_storage_ins(self):
         return len(list(filter(lambda x: x.find("SLOAD")!=-1 or x.find("SSTORE")!=-1, self.instructions)))
