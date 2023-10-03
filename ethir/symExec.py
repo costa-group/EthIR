@@ -4150,7 +4150,8 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
     verify = svc.get("verify",False)
         
     begin = dtimer()
-
+    begin_all = dtimer()
+    
     if source_file != None and verify:
         public_fields = get_public_fields(source_file)
 
@@ -4257,12 +4258,15 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
             file_info[cname]["num_blocks"] = len(set(list(map(lambda x: int(str(x).split("_")[0]),vertices.keys()))))
             file_info[cname]["num_blocks_cloning"] = len(list(vertices.keys()))
             file_info[cname]["optimizable_blocks"] = len(opt_blocks.get_optimizable_blocks())
-            file_info[cname]["memory_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()==0, vertices.values())))
-            file_info[cname]["storage_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()==0 and x.get_num_storage_ins()>1, vertices.values())))
-            file_info[cname]["memsto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
-            
-            end = dtimer()
+            file_info[cname]["memory_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()>0, vertices.values())))
+            file_info[cname]["memory_blocks2"] = len(list(filter(lambda x: x.get_num_memory_ins()>1, vertices.values())))
+            file_info[cname]["storage_blocks"] = len(list(filter(lambda x: x.get_num_storage_ins()>1, vertices.values())))
+            # file_info[cname]["mem2sto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
 
+            end = dtimer()
+            
+            file_info[cname]["time"] = str(end-begin_all);
+            
             print("Memory Analysis: "+str(end-begin)+"s\n")
             check_cfg_option(cfg,cname,execution, memory_result)
             
