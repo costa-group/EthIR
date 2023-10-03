@@ -8,11 +8,12 @@ class MemoryOffsetAbstractState:
     constancy = None
     g_found_outofslot = False
     
-    def __init__(self,stack_pos,stack,memory):
+    def __init__(self,stack_pos,stack,memory,debug):
         self.stack_pos = stack_pos
         self.stack = stack
         self.memory = memory 
-
+        self.debug = debug
+        
     @staticmethod
     def init_globals (slots,accesses,constancy): 
         MemoryOffsetAbstractState.accesses = accesses
@@ -36,7 +37,7 @@ class MemoryOffsetAbstractState:
         return True
 
     def lub (self,state): 
-        if self.stack_pos != state.get_stack_pos(): 
+        if self.debug and self.stack_pos != state.get_stack_pos(): 
             print("MEM ANALYSIS WARNING: Different stacks in lub !!! ")
             print("MEM ANALYSIS WARNING: " + str(self))
             print("MEM ANALYSIS WARNING: " + str(state))
@@ -74,7 +75,7 @@ class MemoryOffsetAbstractState:
         for elem in toremove: 
             res_memory.pop(elem)
 
-        return MemoryOffsetAbstractState(self.stack_pos, res_stack, res_memory)
+        return MemoryOffsetAbstractState(self.stack_pos, res_stack, res_memory,self.debug)
 
     def process_instruction (self,instr,pc):
        
@@ -230,7 +231,7 @@ class MemoryOffsetAbstractState:
         elif op_code.startswith("CREATE"):
             self.add_read_access_top(top-1,pc,self.stack)
 
-        return MemoryOffsetAbstractState(stack_res, stack, memory)
+        return MemoryOffsetAbstractState(stack_res, stack, memory, self.debug)
 
 
     def perform_mstore(self,stackin, memory, top):

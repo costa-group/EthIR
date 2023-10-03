@@ -8,11 +8,12 @@ class MemoryAbstractState:
     slots = None
     g_found_outofslot = False
     
-    def __init__(self,stack_pos,stack,memory):
+    def __init__(self,stack_pos,stack,memory,debug):
         self.stack_pos = stack_pos
         self.stack = stack
         self.memory = memory
-
+        self.debug = debug
+        
     @staticmethod
     def initglobals (slots,accesses): 
         MemoryAbstractState.accesses = accesses
@@ -41,7 +42,7 @@ class MemoryAbstractState:
         return True
 
     def lub (self,state): 
-        if self.stack_pos != state.get_stack_pos(): 
+        if self.debug and self.stack_pos != state.get_stack_pos(): 
             print("MEM ANALYSIS WARNING: Different stacks in lub !!! ")
             print("MEM ANALYSIS WARNING: " + str(self))
             print("MEM ANALYSIS WARNING: " + str(state))
@@ -62,7 +63,7 @@ class MemoryAbstractState:
             else:
                 res_memory[mkey] = state.get_memory()[mkey]
 
-        return MemoryAbstractState(self.stack_pos, res_stack, res_memory)
+        return MemoryAbstractState(self.stack_pos, res_stack, res_memory, self.debug)
 
 
     def process_instruction (self,instr,pc):
@@ -209,7 +210,7 @@ class MemoryAbstractState:
         for i in range(stack_res,self.stack_pos): 
             stack.pop(i,None)
 
-        return MemoryAbstractState(stack_res, stack, memory)
+        return MemoryAbstractState(stack_res, stack, memory, self.debug)
 
     def add_read_access (self,pos, pc, stack):
         if pos in stack: 

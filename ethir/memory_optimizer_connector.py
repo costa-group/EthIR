@@ -23,7 +23,7 @@ class MemoryOptimizerConnector :
         self.writeset = writeset
         self.vertices = vertices
         self.contract = cname
-        self.optimizable_blocks = OptimizableBlocks(vertices, cname)
+        self.optimizable_blocks = OptimizableBlocks(vertices, cname, debug)
         self.debug = debug
 
     def process_blocks_memory (self): 
@@ -144,10 +144,11 @@ class MemoryOptimizerConnector :
         
 class OptimizableBlocks: 
 
-    def __init__(self,vertices, cname):
+    def __init__(self,vertices, cname, debug):
         self.contract = cname
         self.vertices = vertices    
         self.optimizable_blocks = {}
+        self.debug = debug
         
     def get_contract_name(self):
         return self.contract
@@ -160,8 +161,9 @@ class OptimizableBlocks:
             instr = list(self.vertices[int(block)].get_instructions())
             
         (ressplit,instsplit) = self.contains_split_instruction(instr)
-        if ressplit: 
-            print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "] -- ** " + str(instr) + "**")
+        if ressplit:
+            if self.debug:
+                print ("INFO: Block with split instruction " + self.contract + "--" + str(block) + "[" + instsplit + "] -- ** " + str(instr) + "**")
             return
 
         if block not in self.optimizable_blocks:
@@ -344,7 +346,7 @@ class OptimizableBlockInfo:
 
     def add_constancy_context(self, input): 
         stack = input.get_stack()
-        print(str(stack))
+        #print(str(stack))
         for spos in stack: 
             if len(stack[spos]) == 1: 
                 for value in stack[spos]: 
@@ -353,7 +355,7 @@ class OptimizableBlockInfo:
 
     def add_aliasing_context(self, input): 
         stack = input.get_stack()
-        print(str(stack))
+        #print(str(stack))
         for s0 in stack: 
             for s1 in stack: 
                 if s0 == s1: 

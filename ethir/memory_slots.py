@@ -8,11 +8,12 @@ class SlotsAbstractState:
 
     accesses = None
 
-    def __init__(self,opened,closing_pairs,pc_slot):
+    def __init__(self,opened,closing_pairs,pc_slot,debug):
         self.opened = opened
         self.closing_pairs = closing_pairs
         self.pc_slot = pc_slot
-
+        self.debug = debug
+        
     @staticmethod
     def initglobals (accesses): 
         SlotsAbstractState.accesses = accesses
@@ -40,7 +41,7 @@ class SlotsAbstractState:
             else:
                 pc_slot[skey] = state.pc_slot[skey]
 
-        return SlotsAbstractState(lubopen,stateclose,pc_slot)
+        return SlotsAbstractState(lubopen,stateclose,pc_slot,self.debug)
 
     def process_instruction (self,instr, pc):
 
@@ -82,7 +83,7 @@ class SlotsAbstractState:
             op_code == "STOP" or 
             op_code == "SELFDESTRUCT"):
                     
-            if len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
+            if self.debug and len(self.opened) > 1 and op_code != "RETURN" and pc != "0:2": 
                 print ("WARNING!!: More than one slot closed at: " + pc + " :: " + str(opened))
 
             for item in opened:
@@ -93,7 +94,7 @@ class SlotsAbstractState:
 
             opened.clear()
 
-        return SlotsAbstractState(opened, closed, pc_slot)
+        return SlotsAbstractState(opened, closed, pc_slot,self.debug)
 
     def get_slot(self,pc):
         return self.pc_slot[pc]        

@@ -151,7 +151,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     
     init_slot = memory_slots.slots_autoid
     SlotsAbstractState.initglobals(accesses)
-    slots = Analysis(vertices,0,SlotsAbstractState(set({}),{},{}))
+    slots = Analysis(vertices,0,SlotsAbstractState(set({}),{},{},debug_info))
     slots.analyze()
 
     print("Slots analysis finished!")
@@ -165,13 +165,13 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
 
     if type_analysis == "baseref":
         MemoryAbstractState.initglobals(slots,accesses)
-        memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
+        memory = Analysis(vertices,0, MemoryAbstractState(0,{},{},debug_info))
         memory.analyze()
 
     
     elif type_analysis == "offset":
         MemoryOffsetAbstractState.init_globals(slots,accesses, constants)
-        memory = Analysis(vertices,0, MemoryOffsetAbstractState(0,{},{}))
+        memory = Analysis(vertices,0, MemoryOffsetAbstractState(0,{},{},debug_info))
         memory.analyze()
 
     else:
@@ -188,7 +188,8 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     #     print("End Memory results:")
 
     print("Memory accesess analysis finished!\n\n")
-    print(accesses)
+    if debug_info:
+        print(accesses)
 
     #     print("\n\n")
     accesses.process_free_mstores()
