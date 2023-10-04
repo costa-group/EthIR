@@ -4278,7 +4278,14 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info)        
 
-            memory_opt_blocks = memory_result[3].get_optimizable_memory_blocks()
+
+            if mem_analysis == "jump_origin":
+                print(f"Jumps: {memory_result}")
+                if set({"*"}) in memory_result:
+                    print("WARNING: storage jump directon found")
+
+            else:
+                memory_opt_blocks = memory_result[3].get_optimizable_memory_blocks()
             
             end = dtimer()
 

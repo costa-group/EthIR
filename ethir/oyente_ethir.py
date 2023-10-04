@@ -486,7 +486,7 @@ def main():
     parser.add_argument("-bl", "--block", type=str, help="block to be optimized")
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
-    parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset"])
+    parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset", "jump_origin"])
     parser.add_argument("-collapse-cfg", "--collapse-cfg", help="Joins blocks producing a compact cfg", choices=["no", "yes"])
 
 

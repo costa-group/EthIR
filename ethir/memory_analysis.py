@@ -9,6 +9,7 @@ from memory_offset import OffsetAnalysisAbstractState
 from memory_slots import SlotsAbstractState
 from memory_utils import set_memory_utils_globals
 from memory_optimizer_connector import MemoryOptimizerConnector
+from jump_origin_analysis import JumpOriginAbstractState
 
 global debug_info
 
@@ -140,6 +141,15 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     debug_info = debug
     
     set_memory_utils_globals(compblocks, fblockmap)
+
+
+    if type_analysis == "jump_origin":
+        jump_directions = []
+        memory = Analysis(vertices,0, JumpOriginAbstractState(0,{}, debug, jump_directions))
+        memory.analyze()
+        return jump_directions
+
+
     print("Slots analysis started!")
 
     MemoryAccesses.init_globals(csource, cname)
