@@ -250,28 +250,28 @@ class BasicBlock:
     def _get_concrete_value(self,type_value,cont):
         
         if type_value == "mload":
-            l = self.mload_values.get(cont,-1)
+            l = self.mload_values.get(cont,[-1])
             if len(l) == 1:
                 val = self._is_numerical(l[0])
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
         elif type_value == "mstore":
-            l = self.mstore_values.get(cont,-1)
+            l = self.mstore_values.get(cont,[-1])
             if len(l) == 1:
                 val = self._is_numerical(l[0])
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
         elif type_value == "sload":
-            l = self.sload_values.get(cont,-1)
+            l = self.sload_values.get(cont,[-1])
             if len(l) == 1:
                 val = self._is_numerical(l[0])
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
         else:    #sstore 
-            l = self.sstore_values.get(cont,-1)
+            l = self.sstore_values.get(cont,[-1])
             if len(l) == 1:
                 val = self._is_numerical(l[0])
             else:
