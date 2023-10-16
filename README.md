@@ -4,8 +4,7 @@ EthIR
 
 
 A framework for high-level Analysis of Ethereum Bytecode.
-
-The tool extends [OYENTE framework](https://github.com/melonproject/oyente). [OYENTE](https://github.com/melonproject/oyente) builds CFGs of Ethereum bytecode and looks for different kind of vulnerabilities on the bytecode. Based on the CFG of a Ethereum bytecode, EthIR generates a *rule-based representation* (RBR) of the program. This high-level representation enables the application of existing high-level analyses to infer properties of EVM code.
+EthIR builds a complete and sound CFG of a Ethereum bytecode and generates a *rule-based representation* (RBR) of the program. This high-level representation enables the application of existing high-level analyses to infer properties of EVM code.
 
 ## Installation (Ubuntu)
 
