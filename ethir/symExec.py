@@ -4234,64 +4234,17 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             elif verify and not(saco):
                 generate_verify_config_file(cname,scc)
-
-        # print((mem_abs,val_mem40))
-
-        # print("\n\n\n")
-        # print("BLOCKS MEMORY CREATION")
-        # print(memory_creation)
-        # print("--------------")
-        # print("MEMORY SETS")
-        # print(memory_sets)
-        # identify_memory_pos_no_baseref(memory_sets, source_map)
-        # print("---------------")
-        # print("BASE REF VALUES")
-        # print(base_refs)
-        # print("\n\n\n")
         
         memory_result = []
-        
-        if mem_analysis != None:
-        
-            begin = dtimer()
+        begin = dtimer()
 
-            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info, compact_clones)        
+        memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info, compact_clones)        
             
-            opt_blocks = memory_result[3].get_optimizable_blocks()
-
-            file_info[str(cname)] = {}
-            file_info[cname]["num_blocks"] = len(set(list(map(lambda x: int(str(x).split("_")[0]),vertices.keys()))))
-            file_info[cname]["num_blocks_cloning"] = len(list(vertices.keys()))
-            file_info[cname]["optimizable_blocks"] = len(opt_blocks.get_optimizable_blocks())
-            file_info[cname]["memory_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()>0, vertices.values())))
-            file_info[cname]["memory_blocks2"] = len(list(filter(lambda x: x.get_num_memory_ins()>1, vertices.values())))
-            file_info[cname]["storage_blocks"] = len(list(filter(lambda x: x.get_num_storage_ins()>1, vertices.values())))
-            # file_info[cname]["mem2sto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
-
-            end = dtimer()
+        opt_blocks = memory_result[3].get_optimizable_blocks()
+        end = dtimer()    
+        print("Memory Analysis: "+str(end-begin)+"s\n")
+        check_cfg_option(cfg,cname,execution, memory_result)
             
-            file_info[cname]["time"] = str(end-begin_all);
-            
-            print("Memory Analysis: "+str(end-begin)+"s\n")
-            check_cfg_option(cfg,cname,execution, memory_result)
-            
-        else:
-
-            check_cfg_option(cfg,cname,execution)
-            
-        if mem_analysis == None:
-            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
-        else:
-            print("*************************************************************")
-        #gasol.print_methods(rbr_rules,source_map,cname)
-        
-        if opt!= None:
-        # fields = ["field1","field2"]
-        # block = 70
-            # print function_block_map
-            f = opt['block']
-            #block = function_block_map[f]
-            gasol.optimize_solidity(int(opt["block"]),source_map,opt["fields"],opt["c_source"],rbr_rules,component_of_blocks)
 
     except Exception as e:
         traceback.print_exc()
