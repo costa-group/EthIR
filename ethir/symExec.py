@@ -1108,7 +1108,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         mem_access = access_array_mem(instr.strip(),fake_stack_mem)
 
         if sha_identify and not result:
-            print("HOLA")
             result =  access_array_sim(instr.strip(),fake_stack)
 
         if instr.startswith("SHA3",0) or instr.startswith("KECCAK256",0):
@@ -3684,9 +3683,6 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
 
 def access_array_sim(opcode_ins,fake_stack):
     end = False
-    print("BEGIN")
-    print(opcode_ins)
-    print(fake_stack)
     opcode = opcode_ins.strip()
     
     if opcode == "ADD":
