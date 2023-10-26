@@ -1,18 +1,19 @@
 pragma solidity ^0.8.0;
 
 contract Point{
-  function deleg() private {
-    /* foo */
+  function () internal fwd;
+  function () internal fwd2;
+  function () internal fwd3;
+  function () internal fwd4;
+  function () internal fwd5;
+
+  function funct1() private {
   }
 
-  struct Pointer { function () internal fwd; }
-
-  Pointer p;
 
   function enter() public {
-    Pointer storage _p = p;
-    _p.fwd = deleg;
-    _p.fwd();
+    fwd = funct1;
+    fwd5();
   }
 
 }
