@@ -7,11 +7,12 @@ K = 10000
 class JumpOriginAbstractState:          
     stack_pos = None
     
-    def __init__(self,stack_pos,stack,debug, jump_directions:list):
+    def __init__(self,stack_pos,stack,storage,debug,jump_directions:list):
         self.stack_pos = stack_pos
         self.stack = stack
         self.jump_directions = jump_directions
         self.debug = debug
+        self.storage = storage
 
     def leq(self, state):
         if self.stack_pos != state.stack_pos: 
@@ -24,6 +25,14 @@ class JumpOriginAbstractState:
             else:
                 if not self.stack[skey].issubset(state.stack[skey]):
                     return False
+                    
+        for skey in self.storage:
+            if skey not in state.storage:
+                return False
+            else:
+                if not self.storage[skey].issubset(state.stack[skey]):
+                    return False
+
         return True
 
     def lub(self, state):
@@ -42,7 +51,7 @@ class JumpOriginAbstractState:
             else:
                 res_stack[skey] = state.stack[skey]
 
-        return JumpOriginAbstractState(self.stack_pos, res_stack, self.debug, self.jump_directions)
+        return JumpOriginAbstractState(self.stack_pos, res_stack, self.storage, self.debug, self.jump_directions)
 
     def process_instruction(self, instr: str, pc):
         
@@ -83,20 +92,20 @@ class JumpOriginAbstractState:
             if position in stack and not(top in stack):
                 stack[top] = stack[position] 
                 stack.pop(position,None)
-            elif top in stack and not(position in stack): 
-                stack[position] = stack[top] 
-                stack.pop(top,None)
+            elif top in stack and not(position in stack):
+                stack[position] = stack[top]
+                stack.pop(top,None) 
             elif top in stack and position in stack:
                 valpos = stack[position] 
-                stack[position] = stack[top]
+                stack[position] = stack[top] 
                 stack[top] = valpos
-            treated = True
-
+                treated = True
 
         elif op_code == "JUMP":
             direction = stack.pop(top)
             print(f"Jump direction is {direction}")
             self.jump_directions.append(direction)
+            treated = True
 
         elif op_code == "JUMPI":
             direction = stack.pop(top)
@@ -104,6 +113,29 @@ class JumpOriginAbstractState:
             stack.pop(top)
             print(f"Jumpi direction is {direction}")
             self.jump_directions.append(direction)
+            treated = True
+
+        elif op_code.startswith("SSTORE") and not instr.endswith('?'):
+            value = stack.pop(top)
+            top -= 1
+            direction = int(instr.split()[1])
+            if self.storage.get(direction) is not None:
+                self.storage[direction].add(value)
+            else:
+                self.storage[direction] = set(value)
+            treated = True
+
+        elif op_code.startswith("SLOAD") and not instr.endswith('?'):
+            direction = int(instr.split()[1])
+            value = self.storage.get(direction)
+            if value is None:
+                stack[top] = {value}
+            else:
+                stack[top] = set(value)
+            top += 1
+
+            treated = True
+
 
         if not treated:
             for i in range(stack_in):
@@ -117,7 +149,7 @@ class JumpOriginAbstractState:
                 stack.pop(i,None)
             self.stack_pos = min(stack_res, self.stack_pos)
         
-        return JumpOriginAbstractState(stack_res, stack, self.debug, self.jump_directions)
+        return JumpOriginAbstractState(stack_res, stack, self.storage, self.debug, self.jump_directions)
     
     def __repr__(self):
         return (" stack^" + str(self.stack_pos) + " = " + str(self.stack))
