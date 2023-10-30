@@ -1,11 +1,14 @@
 from opcodes import get_opcode
 from memory_utils import arithemtic_operations
+from sequence import Sequence
 
 global K 
 K = 10000
 
 class JumpOriginAbstractState:          
     stack_pos = None
+    ssequence = Sequence(sequence = ("PUSH2","EXP","DUP2","SLOAD","DUP2","PUSH8","MUL","NOT","AND","SWAP1","DUP4","PUSH8","AND","MUL","OR","SWAP1","SSTORE","POP"), stack_position = 4)
+    lsequence = Sequence(sequence = ("PUSH2","EXP","SWAP1","DIV","DUP1","ISZERO","PUSH","MUL","OR","PUSH8","AND","PUSH4","AND","JUMP"), stack_position=3)
     
     def __init__(self,stack_pos,stack,storage,debug,jump_directions:list):
         self.stack_pos = stack_pos
@@ -13,6 +16,8 @@ class JumpOriginAbstractState:
         self.jump_directions = jump_directions
         self.debug = debug
         self.storage = storage
+
+
 
     def leq(self, state):
         if self.stack_pos != state.stack_pos: 
@@ -65,6 +70,9 @@ class JumpOriginAbstractState:
         stack_res = self.stack_pos - stack_in + stack_out
         top = self.stack_pos-1
 
+        self.ssequence.is_in_sequence(op_code, stack)
+        self.lsequence.is_in_sequence(op_code, stack)
+
         treated = False
 
         if op_code.startswith("PUSH"):
@@ -102,7 +110,11 @@ class JumpOriginAbstractState:
                 treated = True
 
         elif op_code == "JUMP":
-            direction = stack.pop(top)
+            if self.lsequence.get_storage_value() is None:
+                direction = stack.pop(top)
+            else:
+                direction = set(self.lsequence.get_storage_value())
+                stack.pop(top)
             print(f"Jump direction is {direction}")
             self.jump_directions.append(direction)
             treated = True
@@ -116,22 +128,38 @@ class JumpOriginAbstractState:
             treated = True
 
         elif op_code.startswith("SSTORE") and not instr.endswith('?'):
-            value = stack.pop(top)
-            top -= 1
-            direction = int(instr.split()[1])
-            if self.storage.get(direction) is not None:
-                self.storage[direction].add(value)
+            if self.ssequence.get_storage_value() is None:
+                direction = stack.pop(top)
+                top -= 1
+                values = stack.pop(top)
             else:
-                self.storage[direction] = set(value)
+                values = self.ssequence.get_storage_value()
+                stack.pop(top)
+                top -= 1
+                stack.pop(top)
+            top -= 1
+            direction = instr.split()[1].split('_')
+
+            if self.storage.get(direction[0]) is not None:
+                if len(direction) == 1:
+                    self.storage[direction[0]].union(values)
+                else:
+                    self.storage[direction[0]][direction[1]] = set(values)
+
+            else:
+                if len(direction) == 1:
+                    self.storage[direction[0]] = set(values)
+                else:
+                    self.storage[direction[0]] = {direction[1]: set(values)}
             treated = True
 
         elif op_code.startswith("SLOAD") and not instr.endswith('?'):
-            direction = int(instr.split()[1])
+            direction = instr.split()[1]
             value = self.storage.get(direction)
             if value is None:
                 stack[top] = {value}
             else:
-                stack[top] = set(value)
+                stack[top] = value
             top += 1
 
             treated = True
@@ -145,8 +173,6 @@ class JumpOriginAbstractState:
                 stack[self.stack_pos] = set({"*"})
                 self.stack_pos += 1
         else:
-            for i in range(stack_res,self.stack_pos): 
-                stack.pop(i,None)
             self.stack_pos = min(stack_res, self.stack_pos)
         
         return JumpOriginAbstractState(stack_res, stack, self.storage, self.debug, self.jump_directions)
