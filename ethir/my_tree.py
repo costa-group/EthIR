@@ -4,7 +4,7 @@ from basicblock import BasicBlock
 import global_params_ethir
 
 
-class MyTree:
+class CollapsedTree:
     
     
     def __init__(self, more_info:bool, file_name = "Tree") -> None:
@@ -54,7 +54,7 @@ class MyTree:
         if "costabs" not in os.listdir(global_params_ethir.tmp_path):
             os.mkdir(global_params_ethir.costabs_path)
         
-        with open(f"/tmp/costabs/My{self.file_name}.dot", 'w') as f:
+        with open(f"/tmp/costabs/Collapsed{self.file_name}.dot", 'w') as f:
             f.write("digraph id3{ \n")
             f.write(self.tree_structure)
             f.write("}")

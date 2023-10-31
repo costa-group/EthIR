@@ -3,7 +3,7 @@
 from typing import Dict, List
 
 from basicblock import BasicBlock
-from my_tree import MyTree
+from my_tree import CollapsedTree
 
 
 class Cfg_collapser:
@@ -16,7 +16,7 @@ class Cfg_collapser:
 
     working_collapsed_node: BasicBlock
 
-    tree: MyTree
+    tree: CollapsedTree
 
     duplicated_series: Dict[int, List]
 
@@ -26,7 +26,7 @@ class Cfg_collapser:
 
         self.working_collapsed_node = None
 
-        self.tree = MyTree(False, cname)
+        self.tree = CollapsedTree(False, cname)
 
         self.visited = []
 
