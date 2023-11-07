@@ -706,8 +706,7 @@ def construct_bb():
     
     sorted_addresses = sorted(instructions.keys())
     size = len(sorted_addresses)
-    for key in end_ins_dict:
-        end_address = end_ins_dict[key]
+    for key, end_address in end_ins_dict.items():
         block = BasicBlock(key, end_address)
 
         if key not in instructions:

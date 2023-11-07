@@ -145,7 +145,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
 
     if type_analysis == "jump_origin":
         jump_directions = []
-        memory = Analysis(vertices,0, JumpOriginAbstractState(0,{}, {}, debug, jump_directions))
+        memory = Analysis(vertices,0, JumpOriginAbstractState(0,{}, {-1: set()}, debug, jump_directions))
         memory.analyze()
         return jump_directions
 

@@ -14,6 +14,7 @@ class Sequence:
         self.displacement = 0
     
     def register_instruction(self, instruction: str, stack: dict):
+
         if instruction.startswith(self.sequence[self.instruction_index]):
 
             # displacement in case of sload
@@ -35,10 +36,9 @@ class Sequence:
                     self.storage_value = stack_value
 
             self.instruction_index = (self.instruction_index + 1)%len(self.sequence)
-
-        
-        self.instruction_index = 0
-        self.storage_value = None
+        else:
+            self.instruction_index = 0
+            self.storage_value = None
 
     def get_storage_value(self) -> set:
         return self.storage_value

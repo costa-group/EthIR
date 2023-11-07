@@ -26,9 +26,9 @@ class JumpOriginAbstractState:
 
     def leq(self, state: 'JumpOriginAbstractState') -> bool:
         if self.stack_next_position != state.stack_next_position: 
-            print("CONSTANT ANALYSIS WARNING: Different stacks in leq !!! ")
-            print("CONSTANT ANALYSIS WARNING: " + str(self))
-            print("CONSTANT ANALYSIS WARNING: " + str(state))
+            print("JUMP ORIGIN ANALYSIS WARNING: Different stacks in leq !!! ")
+            print("JUMP ORIGIN ANALYSIS WARNING: " + str(self))
+            print("JUMP ORIGIN ANALYSIS WARNING: " + str(state))
         for skey in self.stack: 
             if skey not in state.stack: 
                 return False
@@ -40,7 +40,7 @@ class JumpOriginAbstractState:
             if skey not in state.storage:
                 return False
             else:
-                if not self.storage[skey].issubset(state.stack[skey]):
+                if not self.storage[skey].issubset(state.storage[skey]):
                     return False
 
         return True
@@ -49,9 +49,9 @@ class JumpOriginAbstractState:
         if self.debug:
             print ("DOING LUB: " + str(self.stack) + " " + str(state.stack))
         if self.stack_next_position != state.stack_next_position: 
-            print("CONSTANT ANALYSIS WARNING: Different stacks in lub !!! ")
-            print("CONSTANT ANALYSIS WARNING: " + str(self))
-            print("CONSTANT ANALYSIS WARNING: " + str(state))
+            print("JUMP ORIGIN ANALYSIS WARNING: Different stacks in lub !!! ")
+            print("JUMP ORIGIN ANALYSIS WARNING: " + str(self))
+            print("JUMP ORIGIN ANALYSIS WARNING: " + str(state))
 
         res_stack = self.stack.copy()
 
@@ -60,6 +60,14 @@ class JumpOriginAbstractState:
                 res_stack[skey] = res_stack[skey].union(state.stack[skey])
             else:
                 res_stack[skey] = state.stack[skey]
+        
+        res_storage = self.storage.copy()
+
+        for skey in state.storage: 
+            if skey in res_storage: 
+                res_storage[skey] = res_storage[skey].union(state.storage[skey])
+            else:
+                res_storage[skey] = state.storage[skey]
 
         return JumpOriginAbstractState(self.stack_next_position, res_stack, self.storage, self.debug, self.jump_directions)
 
@@ -120,9 +128,9 @@ class JumpOriginAbstractState:
             else:
                 direction = sloaded_values
                 stack.pop(top)
+                print(f"Jump direction is {direction}")
+                self.jump_directions.append((self.parse_pc(pc), direction))
 
-            print(f"Jump direction is {direction}")
-            self.jump_directions.append(direction)
             treated = True
 
         elif op_code == "JUMPI":
@@ -133,14 +141,20 @@ class JumpOriginAbstractState:
             else:
                 direction = sloaded_values
                 stack.pop(top)
+                print(f"Jumpi direction is {direction}")
+                self.jump_directions.append((self.parse_pc(pc), direction))
             top -= 1
             stack.pop(top)
 
-            print(f"Jumpi direction is {direction}")
-            self.jump_directions.append(direction)
             treated = True
 
-        elif op_code.startswith("SSTORE") and not instr.endswith('?'):
+        elif op_code.startswith("SSTORE"):
+            if instr.endswith('?'):
+                direction = [-1]
+
+            else:
+                direction = instr.split()[1].split('_') # instruction can be in the form of either SSTORE 0 or SSTORE 0_0
+            
             sstore_values = self.ssequence.get_storage_value()
             if sstore_values is None:
                 stack.pop(top) #direction
@@ -153,8 +167,6 @@ class JumpOriginAbstractState:
                 top -= 1
                 stack.pop(top)#value
                 top -= 1
-            
-            direction = instr.split()[1].split('_') # instruction can be in the form of either SSTORE 0 or SSTORE 0_0
 
             if self.storage.get(direction[0]) is None:
                 if len(direction) == 1:
@@ -169,13 +181,24 @@ class JumpOriginAbstractState:
                     self.storage[direction[0]][direction[1]] = values
             treated = True
 
-        elif op_code.startswith("SLOAD") and not instr.endswith('?'):
+        elif op_code.startswith("SLOAD"):
             direction = instr.split()[1]
-            value = self.storage.get(direction)
+            # get the value at the direction or if no explicit value has been stored, load the values that could go anywhere
+            value = self.storage.get(direction, self.storage[-1])
             if value is None:
                 stack[top] = {None}
             else:
-                stack[top] = value
+                # If anything could be anywhere or the value loaded is allready anythin introduce '*'
+                if '*' in value or '*' in self.storage[-1]:
+                    stack[top] = {'*'}
+                # join the value at the requested direction and all values that could go anywhere
+                else:
+                    if isinstance(value, dict):
+                        for slot in value.values():
+                            slot = slot.union(self.storage[-1])
+                        stack[top] = value
+                    else:
+                        stack[top] = value.union(self.storage[-1])
             top += 1
 
             treated = True
@@ -192,6 +215,9 @@ class JumpOriginAbstractState:
                 self.stack_next_position += 1
         
         return JumpOriginAbstractState(stack_result_length, stack, self.storage, self.debug, self.jump_directions)
+
+    def parse_pc(self, pc):
+        return int(pc.split(':')[0])
     
     def __repr__(self):
         return (" stack^" + str(self.stack_next_position) + " = " + str(self.stack))
