@@ -10,6 +10,7 @@ from memory_slots import SlotsAbstractState
 from memory_utils import set_memory_utils_globals
 from memory_optimizer_connector import MemoryOptimizerConnector
 from jump_origin_analysis import JumpOriginAbstractState
+import global_params_ethir
 
 global debug_info
 
@@ -141,6 +142,16 @@ def perform_storage_analysis(vertices, debug, jump_directions):
     
     memory = Analysis(vertices,0, JumpOriginAbstractState(0,{}, {-1: set()}, debug, jump_directions))
     memory.analyze()
+
+
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
+
+    name = global_params_ethir.costabs_path
+
+    with open(f"{name}/saltos_storage.txt", "w") as f:
+        f.write(jump_directions + "\n")
+
     return jump_directions
     
 
