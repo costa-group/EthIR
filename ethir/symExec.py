@@ -15,7 +15,7 @@ import six
 from collections import namedtuple
 from cfg_collapser import Cfg_collapser
 import gasol
-from memory_analysis import perform_memory_analysis
+from memory_analysis import perform_memory_analysis, perform_storage_analysis
 
 from vargenerator import *
 from basicblock import BasicBlock
@@ -337,6 +337,9 @@ def initGlobalVars():
 
     global useless_blocks
     useless_blocks = []
+
+    global storage_jumps
+    storage_jumps = []
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -440,6 +443,7 @@ def build_cfg_and_analyze(evm_version):
     compute_access2arrays_mem()
     delete_uncalled()
     update_block_info()
+    analyze_storage_jumps()
     build_push_jump_relations()
 
     # if debug_info:
@@ -722,6 +726,10 @@ def construct_bb():
         vertices[key] = block
         edges[key] = []
         look_for_string_pattern(block)
+
+def analyze_storage_jumps():
+    global storage_jumps
+    storage_jumps = perform_storage_analysis(vertices, debug_info, storage_jumps)        
 
 def check_div_invalid_pattern(block,path):
     div_pattern = ["DUP2","ISZERO","ISZERO","PUSH","JUMPI"]
