@@ -443,7 +443,6 @@ def build_cfg_and_analyze(evm_version):
     compute_access2arrays_mem()
     delete_uncalled()
     update_block_info()
-    analyze_storage_jumps()
     build_push_jump_relations()
 
     # if debug_info:
@@ -4267,13 +4266,16 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             block_sizes_collapsed = list(collapser.block_sizes_collapsed.values())
 
-
-
             print(f"Graph collapse: {end - begin} s")
 
-            print(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
+            if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+                os.mkdir(global_params_ethir.costabs_path)
 
-            print(f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}")
+            name = global_params_ethir.costabs_path
+            
+            with open(f"/{name}/collapse_analytics.txt", 'w') as f:
+                f.write(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
+                f.write(f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n")
 
 
 
