@@ -11,6 +11,7 @@ from memory_utils import set_memory_utils_globals
 from memory_optimizer_connector import MemoryOptimizerConnector
 from jump_origin_analysis import JumpOriginAbstractState
 import global_params_ethir
+import os
 
 global debug_info
 

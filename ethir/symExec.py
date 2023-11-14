@@ -4268,15 +4268,17 @@ def run(disasm_file=None, disasm_file_init=None, source_map=None, source_map_ini
 
             print(f"Graph collapse: {end - begin} s")
 
+
+            print(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
+            print(f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n")
+
             if "costabs" not in os.listdir(global_params_ethir.tmp_path):
                 os.mkdir(global_params_ethir.costabs_path)
 
             name = global_params_ethir.costabs_path
             
             with open(f"/{name}/collapse_analytics.txt", 'w') as f:
-                f.write(f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}")
-                f.write(f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n")
-
+                f.write(f"{len(vertices)},{len(collapsed_vertices)},{sum(block_sizes) /len(block_sizes)},{sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n")
 
 
         memory_result = []
