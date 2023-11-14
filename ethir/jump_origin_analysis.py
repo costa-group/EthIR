@@ -65,14 +65,14 @@ class JumpOriginAbstractState:
         debug: bool,
         jump_directions: list,
     ):
-        self.stack_next_position = stack_pos
+        self.stack_next_position = len(stack) 
         self.stack = stack
         self.jump_directions = jump_directions
         self.debug = debug
         self.storage = storage
 
     def leq(self, state: "JumpOriginAbstractState") -> bool:
-        if self.stack_next_position != state.stack_next_position:
+        if len(self.stack) != len(state.stack):
             print("JUMP ORIGIN ANALYSIS WARNING: Different stacks in leq !!! ")
             print("JUMP ORIGIN ANALYSIS WARNING: " + str(self))
             print("JUMP ORIGIN ANALYSIS WARNING: " + str(state))
@@ -102,7 +102,7 @@ class JumpOriginAbstractState:
     def lub(self, state: "JumpOriginAbstractState") -> "JumpOriginAbstractState":
         if self.debug:
             print("DOING LUB: " + str(self.stack) + " " + str(state.stack))
-        if self.stack_next_position != state.stack_next_position:
+        if len(self.stack) != len(state.stack):
             print("JUMP ORIGIN ANALYSIS WARNING: Different stacks in lub !!! ")
             print("JUMP ORIGIN ANALYSIS WARNING: " + str(self))
             print("JUMP ORIGIN ANALYSIS WARNING: " + str(state))
@@ -142,7 +142,7 @@ class JumpOriginAbstractState:
                 res_storage[skey] = state.storage[skey]
 
         return JumpOriginAbstractState(
-            self.stack_next_position,
+            len(self.stack),
             res_stack,
             res_storage,
             self.debug,
@@ -157,13 +157,17 @@ class JumpOriginAbstractState:
         opinfo = get_opcode(op_code)
         stack_in = opinfo[1]
         stack_out = opinfo[2]
-        stack_result_length = self.stack_next_position - stack_in + stack_out
-        top = self.stack_next_position - 1
+        stack_result_length = len(self.stack) - stack_in + stack_out
+        top = len(self.stack) - 1
 
         self.ssequence.register_instruction(op_code, stack)
         self.lsequence.register_instruction(op_code, stack)
 
         treated = False
+        
+        for key in stack.keys():
+            if key >= len(stack):
+                print()
 
         if op_code.startswith("PUSH"):
             if len(instr.split()) == 2:
@@ -173,41 +177,45 @@ class JumpOriginAbstractState:
                 value = -1
 
             if 0 <= value < K:
-                stack[self.stack_next_position] = set({value})
+                stack[len(stack)] = set({value})
             else:
-                stack[self.stack_next_position] = set({"*"})
+                stack[len(stack)] = set({"*"})
+            top += 1
             treated = True
 
         elif op_code.startswith("DUP"):
-            position = top - int(op_code[3:], 10) + 1
+            position = len(stack) - 1 - int(op_code[3:], 10) + 1
 
             if position in stack:
-                stack[self.stack_next_position] = stack[position]
+                stack[len(stack)] = stack[position]
+            top += 1
             treated = True
 
         elif op_code.startswith("SWAP", 0):
-            position = top - int(op_code[4:], 10)
+            position = len(stack) - 1 - int(op_code[4:], 10)
 
             if position in stack and top not in stack:
-                stack[top] = stack[position]
+                stack[len(stack) - 1] = stack[position]
                 stack.pop(position, None)
             elif top in stack and position not in stack:
-                stack[position] = stack[top]
-                stack.pop(top, None)
+                stack[position] = stack[len(stack) - 1]
+                stack.pop(len(stack) - 1, None)
             elif top in stack and position in stack:
                 valpos = stack[position]
-                stack[position] = stack[top]
-                stack[top] = valpos
+                stack[position] = stack[len(stack) - 1]
+                stack[len(stack) - 1] = valpos
                 treated = True
 
         elif op_code == "JUMP":
             sloaded_values = self.lsequence.get_storage_value()
 
             if sloaded_values is None:
-                direction = stack.pop(top)
+                direction = stack.pop(len(stack) - 1)
+                top -= 1
             else:
                 direction = sloaded_values
-                stack.pop(top)
+                stack.pop(len(stack) - 1)
+                top -= 1
                 print(f"Jump direction is {direction}")
                 self.jump_directions.append((self.parse_pc(pc), direction))
 
@@ -217,14 +225,15 @@ class JumpOriginAbstractState:
             sloaded_values = self.lsequence.get_storage_value()
 
             if sloaded_values is None:
-                direction = stack.pop(top)
+                direction = stack.pop(len(stack) -1)
             else:
                 direction = sloaded_values
-                stack.pop(top)
+                stack.pop(len(stack) -1)
                 print(f"Jumpi direction is {direction}")
                 self.jump_directions.append((self.parse_pc(pc), direction))
             top -= 1
-            stack.pop(top)
+            stack.pop(len(stack) -1)
+            top -= 1
 
             treated = True
 
@@ -239,15 +248,15 @@ class JumpOriginAbstractState:
 
             sstore_values = self.ssequence.get_storage_value()
             if sstore_values is None:
-                stack.pop(top)  # direction
+                stack.pop(len(stack) - 1)  # direction
                 top -= 1
-                values = stack.pop(top)  # value
+                values = stack.pop(len(stack) - 1)  # value
                 top -= 1
             else:
                 values = sstore_values
-                stack.pop(top)  # direction
+                stack.pop(len(stack) - 1)  # direction
                 top -= 1
-                stack.pop(top)  # value
+                stack.pop(len(stack) - 1)  # value
                 top -= 1
 
             if self.storage.get(direction[0]) is None:
@@ -270,39 +279,51 @@ class JumpOriginAbstractState:
             # get the value at the direction or if no explicit value has been stored, load the values that could go anywhere
             value = self.storage.get(direction, self.storage[-1])
             if value is None:
-                stack[top] = {None}
+                stack[len(stack) - 1] = {None}
             else:
                 # If anything could be anywhere or the value loaded is allready anythin introduce '*'
                 if "*" in value or "*" in self.storage[-1]:
-                    stack[top] = {"*"}
+                    stack[len(stack) - 1] = {"*"}
                 # join the value at the requested direction and all values that could go anywhere
                 else:
                     if isinstance(value, dict):
                         for slot in value.values():
                             slot = slot.union(self.storage[-1])
-                        stack[top] = value
+                        stack[len(stack) - 1] = value
                     else:
-                        stack[top] = value.union(self.storage[-1])
-            top += 1
+                        stack[len(stack) - 1] = value.union(self.storage[-1])
 
             treated = True
+
+        for key in stack.keys():
+            if key >= len(stack):
+                print()
 
         if not treated:
             # eliminates the positions used by the instruction if stack_in > stack_out
             for i in range(stack_in):
-                stack.pop(self.stack_next_position - 1 - i, None)
+                stack.pop(len(stack) - 1, None)
+                top -= 1
             self.stack_next_position -= stack_in
             # fills the new positions with unknown if stack_out > stack_in
             for i in range(stack_out):
-                stack[self.stack_next_position] = set({"*"})
+                stack[len(stack)] = set({"*"})
                 self.stack_next_position += 1
+                top += 1
+        
+        if len(stack) - 1 != top:
+            print()
+        
+        for key in stack.keys():
+            if key >= len(stack):
+                print()
 
         return JumpOriginAbstractState(
-            stack_result_length, stack, self.storage, self.debug, self.jump_directions
+            len(self.stack), stack, self.storage, self.debug, self.jump_directions
         )
 
     def parse_pc(self, pc):
         return int(pc.split(":")[0])
 
     def __repr__(self):
-        return " stack^" + str(self.stack_next_position) + " = " + str(self.stack)
+        return " stack^" + str(len(self.stack)) + " = " + str(self.stack)
