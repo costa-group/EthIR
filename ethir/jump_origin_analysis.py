@@ -165,10 +165,6 @@ class JumpOriginAbstractState:
 
         treated = False
         
-        for key in stack.keys():
-            if key >= len(stack):
-                print()
-
         if op_code.startswith("PUSH"):
             if len(instr.split()) == 2:
                 strvalue = instr.split()[1]
@@ -267,9 +263,14 @@ class JumpOriginAbstractState:
 
             else:
                 if len(direction) == 1:
-                    self.storage[direction[0]] = self.storage[direction[0]].union(
-                        values
-                    )
+                    if isinstance(self.storage[direction[0]], dict):
+                        self.storage[direction[0]] = self.storage[direction[0]][direction[0]].union(
+                            values
+                        )
+                    else:
+                        self.storage[direction[0]] = self.storage[direction[0]].union(
+                            values
+                        )
                 else:
                     self.storage[direction[0]][direction[1]] = values
             treated = True
@@ -295,9 +296,6 @@ class JumpOriginAbstractState:
 
             treated = True
 
-        for key in stack.keys():
-            if key >= len(stack):
-                print()
 
         if not treated:
             # eliminates the positions used by the instruction if stack_in > stack_out
@@ -311,12 +309,7 @@ class JumpOriginAbstractState:
                 self.stack_next_position += 1
                 top += 1
         
-        if len(stack) - 1 != top:
-            print()
         
-        for key in stack.keys():
-            if key >= len(stack):
-                print()
 
         return JumpOriginAbstractState(
             len(self.stack), stack, self.storage, self.debug, self.jump_directions
