@@ -324,6 +324,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   sto=args.storage_arrays,
                                                   opt_bytecode = (args.optimize_run or args.via_ir), 
                                                   mem_analysis = args.mem_analysis, 
+                                                  storage_analysis = args.storage_analysis, 
                                                   compact_clones = args.compact_clones)
                 
             except Exception as e:
