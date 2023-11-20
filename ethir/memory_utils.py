@@ -14,7 +14,7 @@ global TOPK
 TOPK = "+"
 
 global K 
-K = 128
+K = 64
 
 def set_memory_utils_globals(g_function_block_map_p,g_component_of_blocks_p):
     global g_function_block_map

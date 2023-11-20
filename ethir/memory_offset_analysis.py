@@ -130,8 +130,8 @@ class MemoryOffsetAbstractState:
                 stack[top] = valpos
 
         elif op_code in "ADD":
-            ctop = self.constancy.get_analysis_results(pc,-1).get_constants(top)   
-            ctopm1 = self.constancy.get_analysis_results(pc,-1).get_constants(top-1)
+            ctop = self.constancy.get_analysis_results(pc,-1).get_offsets(top)   
+            ctopm1 = self.constancy.get_analysis_results(pc,-1).get_offsets(top-1)
             slottop = self.stack.get(top)
             slottopm1 = self.stack.get(top-1)
 

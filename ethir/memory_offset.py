@@ -1,14 +1,24 @@
 from opcodes import get_opcode
-from memory_utils import arithemtic_operations, TOP,TOPK, K
+from memory_utils import TOP,TOPK, K
+
+
+## Types of offset analysis 
+global OFFSET_MEMORY
+OFFSET_MEMORY=1
+
+global OFFSET_STORAGE
+OFFSET_STORAGE=2
 
 
 class OffsetAnalysisAbstractState:          
     stack_pos = None
     
-    def __init__(self,stack_pos,stack, debug):
+    def __init__(self,stack_pos,stack, analysis, debug):
         self.stack_pos = stack_pos
         self.stack = stack
+        self.analysis = analysis # memory or storage
         self.debug = debug
+
     # def is_leq (self,s1, s2):
     #     print ("PROCESANDO IS LEQ " + str(s1) + " " + str(s2)
     #     if s1.slot != s2.slot: 
@@ -74,7 +84,7 @@ class OffsetAnalysisAbstractState:
         if self.debug:
             print ("LUB RES " + str(res_stack))
 
-        return OffsetAnalysisAbstractState(self.stack_pos, res_stack, self.debug)
+        return OffsetAnalysisAbstractState(self.stack_pos, res_stack, self.analysis,self.debug)
 
 
     def process_instruction (self,instr,pc):
@@ -89,27 +99,24 @@ class OffsetAnalysisAbstractState:
         stack_res = self.stack_pos - stack_in + stack_out
         top = self.stack_pos-1
 
-        treated = False
-        # We save in the stack special memory addresses        
         if op_code == "PUSH0" :
             stack[self.stack_pos] = set({0})
-            treated = True
         
         elif op_code.startswith("PUSH") :
             strvalue = instr.split()[1]
             value = int(strvalue,16)
-            if value >= 0 and value % 32 == 0 and value < K: 
+
+            if self.analysis == OFFSET_MEMORY and value >= 0 and value % 32 == 0 and value < K: 
+                stack[self.stack_pos] = set({value})
+            elif self.analysis == OFFSET_STORAGE and value >= 0 and value < K: 
                 stack[self.stack_pos] = set({value})
             else:
                 stack[self.stack_pos] = set({TOP})
-            treated = True
 
         elif op_code == "POP":
-            treated = True
             stack.pop(top,None)
 
         elif op_code.startswith("DUP",0):
-            treated = True
             position = top-int(op_code[3:], 10)+1
             if position in stack:
                 stack[self.stack_pos] = stack[position]
@@ -117,14 +124,7 @@ class OffsetAnalysisAbstractState:
                 print("ERROR: DUP copying a non-existent value in offset analysis")
 
         elif op_code.startswith("SWAP",0):
-            treated = True
             position = top-int(op_code[4:], 10)
-#            if position in stack and not(top in stack):
-#                stack[top] = stack[position] 
-#                stack.pop(position,None)
-#            elif top in stack and not(position in stack): 
-#                stack[position] = stack[top] 
-#                stack.pop(top,None)
             if top in stack and position in stack:
                 valpos = stack[position] 
                 stack[position] = stack[top]
@@ -133,30 +133,21 @@ class OffsetAnalysisAbstractState:
                 print("ERROR: SWAP moving a non-existent value in offset analysis")
 
         elif op_code == "ADD":
-            treated = True
             set1 = stack[top]
             set2 = stack[top-1]
             stack[top-1] = self.add_set(set1, set2)
             
         elif stack_out > 0:
-            treated = True
             for i in range(1,stack_out+1):
                 stack[top-stack_in+i] = set({TOP})
 
-        #        if not treated: 
-        #            if (not op_code.startswith("DUP",0) and
-        #                not op_code.startswith("SWAP",0)): 
-        #
-        #                for i in range(self.stack_pos - stack_in, self.stack_pos):                
-        #                    stack.pop(i,None)
-        #        else:
         for i in range(stack_res,self.stack_pos): 
             stack.pop(i,None)
 
-        return OffsetAnalysisAbstractState(stack_res, stack, self.debug)
+        return OffsetAnalysisAbstractState(stack_res, stack, self.analysis, self.debug)
 
 
-    def get_constants (self,stackpos):  
+    def get_offsets (self,stackpos):  
         return self.stack.get(stackpos)
 
 

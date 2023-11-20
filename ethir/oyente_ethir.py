@@ -167,7 +167,8 @@ def analyze_disasm_bytecode():
         c_translation_opt = {}
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
-            
+
+
         result, exit_code = symExec.run(disasm_file=args.source,
                                         cfg = args.control_flow_graph,
                                         saco = args.saco,
@@ -179,6 +180,7 @@ def analyze_disasm_bytecode():
                                         mem_abs = args.mem_interval,
                                         sto=args.storage_arrays, 
                                         mem_analysis = args.mem_analysis, 
+                                        storage_analysis = args.storage_analysis, 
                                         compact_clones = args.compact_clones)
     else:
         exit_code = -1
@@ -215,7 +217,8 @@ def analyze_bytecode():
         c_translation_opt = {}
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
-            
+          
+
         result, exit_code = symExec.run(disasm_file=inp['disasm_file'],
                                         cfg = args.control_flow_graph,
                                         saco = args.saco,
@@ -227,6 +230,7 @@ def analyze_bytecode():
                                         mem_abs = args.mem_interval,
                                         sto=args.storage_arrays,
                                         mem_analysis = args.mem_analysis, 
+                                        storage_analysis = args.storage_analysis, 
                                         compact_clones = args.compact_clones)
         
         helper.rm_tmp_files()
@@ -256,6 +260,9 @@ def run_solidity_analysis(inputs,hashes):
     c_translation_opt = {}
     c_translation_opt["gotos"] = args.goto
     c_translation_opt["args"] = args.args
+
+    print ("VAMOS " + str(args.storage_analysis))
+
         
     if len(inputs) == 1 and r:
         inp = inputs[0]
@@ -278,6 +285,7 @@ def run_solidity_analysis(inputs,hashes):
                                               sto=args.storage_arrays,
                                               opt_bytecode = (args.optimize_run or args.via_ir), 
                                               mem_analysis = args.mem_analysis, 
+                                              storage_analysis = args.storage_analysis, 
                                               compact_clones = args.compact_clones)
             
         except Exception as e:
@@ -558,6 +566,7 @@ def main():
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
     parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset"])
+    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", action="store_true")
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
 
 
