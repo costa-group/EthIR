@@ -161,9 +161,10 @@ class Analysis:
         return ""
 
 
-def perform_storage_analysis(vertices, debug, jump_directions):
+def perform_storage_analysis(vertices, debug):
     global debug_info
     debug_info = debug
+    jump_directions = []
 
     memory = Analysis(
         vertices, 0, JumpOriginAbstractState(0, {}, {-1: set()}, debug, jump_directions)
@@ -191,7 +192,7 @@ def perform_memory_analysis(
     set_memory_utils_globals(compblocks, fblockmap)
 
     if type_analysis == "jump_origin":
-        return perform_storage_analysis(vertices, debug, [])
+        return perform_storage_analysis(vertices, debug)
 
     print("Slots analysis started!")
 

@@ -1,6 +1,4 @@
-from typing import Set
 from opcodes import get_opcode
-from memory_utils import arithemtic_operations
 from sequence import Sequence
 
 global K
@@ -59,13 +57,13 @@ class JumpOriginAbstractState:
 
     def __init__(
         self,
-        stack_pos: int,
+        _: int,
         stack: dict,
         storage: dict,
         debug: bool,
         jump_directions: list,
     ):
-        self.stack_next_position = len(stack) 
+        self.stack_next_position = len(stack)
         self.stack = stack
         self.jump_directions = jump_directions
         self.debug = debug
@@ -164,7 +162,7 @@ class JumpOriginAbstractState:
         self.lsequence.register_instruction(op_code, stack)
 
         treated = False
-        
+
         if op_code.startswith("PUSH"):
             if len(instr.split()) == 2:
                 strvalue = instr.split()[1]
@@ -221,14 +219,14 @@ class JumpOriginAbstractState:
             sloaded_values = self.lsequence.get_storage_value()
 
             if sloaded_values is None:
-                direction = stack.pop(len(stack) -1)
+                direction = stack.pop(len(stack) - 1)
             else:
                 direction = sloaded_values
-                stack.pop(len(stack) -1)
+                stack.pop(len(stack) - 1)
                 print(f"Jumpi direction is {direction}")
                 self.jump_directions.append((self.parse_pc(pc), direction))
             top -= 1
-            stack.pop(len(stack) -1)
+            stack.pop(len(stack) - 1)
             top -= 1
 
             treated = True
@@ -264,9 +262,9 @@ class JumpOriginAbstractState:
             else:
                 if len(direction) == 1:
                     if isinstance(self.storage[direction[0]], dict):
-                        self.storage[direction[0]] = self.storage[direction[0]][direction[0]].union(
-                            values
-                        )
+                        self.storage[direction[0]] = self.storage[direction[0]][
+                            direction[0]
+                        ].union(values)
                     else:
                         self.storage[direction[0]] = self.storage[direction[0]].union(
                             values
@@ -296,7 +294,6 @@ class JumpOriginAbstractState:
 
             treated = True
 
-
         if not treated:
             # eliminates the positions used by the instruction if stack_in > stack_out
             for i in range(stack_in):
@@ -308,8 +305,6 @@ class JumpOriginAbstractState:
                 stack[len(stack)] = set({"*"})
                 self.stack_next_position += 1
                 top += 1
-        
-        
 
         return JumpOriginAbstractState(
             len(self.stack), stack, self.storage, self.debug, self.jump_directions
