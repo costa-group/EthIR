@@ -162,7 +162,6 @@ class JumpOriginAbstractState:
         self.lsequence.register_instruction(op_code, stack)
 
         treated = False
-
         if op_code.startswith("PUSH"):
             if len(instr.split()) == 2:
                 strvalue = instr.split()[1]
