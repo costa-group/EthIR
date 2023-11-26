@@ -269,9 +269,6 @@ class JumpOriginAbstractState:
                         self.storage[direction[0]] = self.storage[direction[0]].union(
                             values
                         )
-                    self.storage[direction[0]] = self.storage[direction[0]].union(
-                        values
-                    )
                 else:
                     self.storage[direction[0]][direction[1]] = values
             treated = True
@@ -296,10 +293,6 @@ class JumpOriginAbstractState:
                         stack[len(stack) - 1] = value.union(self.storage[-1])
 
             treated = True
-
-        for key in stack.keys():
-            if key >= len(stack):
-                print()
 
         if not treated:
             # eliminates the positions used by the instruction if stack_in > stack_out
