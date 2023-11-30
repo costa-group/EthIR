@@ -1,6 +1,6 @@
 from memory.memory_utils import TOP
 from storage.storage_offset_abstate import StorageAccess
-
+from memory.memory_utils import order_accesses
 
 class StorageAccesses: 
 
@@ -43,6 +43,24 @@ class StorageAccesses:
 
         return res
 
+
+    def get_cfg_info (self,block_in): 
+        result = []
+        self.process_set(block_in,self.read_accesses, "R", result)
+        self.process_set(block_in,self.write_accesses, "W", result)
+        
+        return sorted(result,key=order_accesses)
+
+    def process_set (self,block_in, set_in, text, result): 
+        for pc in set_in: 
+            block = pc.split(":")[0]
+            offset = pc.split(":")[1]
+            #instr = self.vertices[block_in].get_instructions()[offset]
+            if block == block_in: 
+                #result.append(offset + " " + instr + "[" + text + "] -> " + str(list(set_in[pc]))) 
+                result.append(offset + " [" + text + "] -> " + str(list(set_in[pc]))) 
+
+    
 
     def __repr__(self):
         return ("Storage: \n" + 

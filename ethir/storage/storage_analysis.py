@@ -30,7 +30,7 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, ty
     input_blocks = list(map(lambda x: fblockmap[x][0], fblockmap.keys()))
     print("Input blocks: "+str(input_blocks))
     
-
+    return storage, accesses
 
 
 
