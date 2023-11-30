@@ -15,8 +15,8 @@ import six
 from collections import namedtuple
 import gasol
 
-from memory_analysis import perform_memory_analysis
-from storage_analysis import perform_storage_analysis
+from memory.memory_analysis import perform_memory_analysis
+from storage.storage_analysis import perform_storage_analysis
 
 from vargenerator import *
 from basicblock import BasicBlock
@@ -4074,14 +4074,15 @@ def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False
                 write_cfg(execution,vertices,name = cname,cloned = True)
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
-    elif cfg == "memory":
+    elif cfg == "memory" or cfg == "storage":
         if cname == None:
             write_cfg(execution,vertices,name = cname)
-            cfg_memory_dot(execution,vertices,memory_analysis)
+            cfg_memory_dot(cfg,execution,vertices,memory_analysis)
         else:
             write_cfg(execution,vertices,name = cname)
-            cfg_memory_dot(execution,vertices,memory_analysis, name = cname)
-
+            cfg_memory_dot(cfg,execution,vertices,memory_analysis, name = cname)
+            
+            
                 
 def get_scc(edges):
     g = Graph_SCC(edges)
@@ -4296,17 +4297,15 @@ def run(disasm_file=None,
             
             print("Memory Analysis: "+str(end-begin)+"s\n")
             check_cfg_option(cfg,cname,execution, memory_result)
-            
-        else:
 
+        elif storage_analysis:
+            storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones)
+            check_cfg_option(cfg,cname,execution, storage_result)
+
+        else:
             check_cfg_option(cfg,cname,execution)
 
-
-        print("STORAGE " + str(storage_analysis))
-
-        if storage_analysis:
-            perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones)
-
+            
         if mem_analysis == None:
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
         else:
