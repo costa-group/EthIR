@@ -3987,7 +3987,7 @@ def generate_saco_config_file(cname):
     with open(name,"w") as f:
         milist = list(function_block_map.items())
         # elems = list(map(lambda (x,y): "("+process_argument_function(x)+";"+str(y[0])+";"+str(y[1])+")", milist))
-        elems = list(map(lambda x: "("+process_argument_function(x[0])+";"+str(x[0][0])+";"+str(x[0][1])+")", milist))
+        elems = list(map(lambda x: "("+process_argument_function(x[0])+";"+str(x[1][0])+";"+str(x[1][1])+")", milist))
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
