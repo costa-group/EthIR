@@ -21,6 +21,7 @@ class BasicBlock:
         self.sload_values = {}
         self.sstore_values = {}
         self.calldatavalues = []
+        self.and_values = []
         self.stack_info = []
         self.ret_val = -1
         self.currentId = 0
@@ -217,7 +218,7 @@ class BasicBlock:
             else:
                 l.append(val)
         else:
-            raise Exception("Error when adding "+type_value+" value to block: "+ str(self.start_address))
+            raise Exception("Error when adding "+type_value+" value to block: "+ str(self.start))
 
     def get_ret_val(self):
         return self.ret_val
@@ -299,13 +300,15 @@ class BasicBlock:
     def set_comes_from(self,l):
         self.comes_from = list(l)
         
-    def update_instr(self):
+    def update_instr(self,mem_analysis = False):
         new_instructions = []
         mload = 0
         mstore = 0
         sstore = 0
         sload = 0
+
         
+        and_idx = 0
         for instr in self.instructions:
             instr = instr.strip(" ")
             if(instr == "CALLDATALOAD"):
@@ -325,6 +328,13 @@ class BasicBlock:
             elif instr == "SSTORE":
                 new_instr = instr + " " + self._get_concrete_value("sstore",sstore)
                 sstore+=1
+            elif instr == "AND" and mem_analysis:
+                print("AQUI")
+                print(self.start)
+                print(self.instructions)
+                print(self.and_values)
+                new_instr = instr+ " "+self.and_values[and_idx] if self.and_values[and_idx]!="unknownVal" else instr
+                and_idx+=1
             #For the moment we don't annotate return evm 
             # elif instr == "RETURN":
             #     new_instr = instr + " " + str(self.ret_val)
@@ -425,11 +435,19 @@ class BasicBlock:
         if p not in self.path:
             end = list(map(lambda x: x[1],p))
             self.path.append(end)
-
     
     def set_paths(self,p):
         self.path = p
-            
+
+    def add_and_value(self, val):
+        self.and_values.append(val)
+
+    def set_and_values(self, values):
+        self.and_values = values
+
+    def get_and_values(self):
+        return self.and_values
+        
     def copy(self):
         
         new_obj =  BasicBlock(self.start, self.end)
@@ -445,6 +463,7 @@ class BasicBlock:
         new_obj._set_sload_values({})
         new_obj._set_sstore_values({})
         new_obj.set_calldataload_values(list(self.calldatavalues))
+        new_obj.set_and_values([])
         new_obj.set_comes_from([])
         new_obj.set_block_type(self.type)
         new_obj.set_depth_level(self.depth)

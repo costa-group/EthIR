@@ -340,6 +340,9 @@ def initGlobalVars():
 
     global useless_blocks
     useless_blocks = []
+
+    global is_mem_analysis
+    is_mem_analysis = False
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -469,7 +472,7 @@ def update_block_info():
             blocks_to_clone.append(block)
         block.set_calldataload_values(calldataload_values[block.get_start_address()])
         block.set_stack_info(stack_h[block.get_start_address()])
-        block.update_instr()
+        block.update_instr(is_mem_analysis)
 
 def compute_transitive_mstore_value():
     for block in vertices.values():
@@ -2031,13 +2034,29 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                 second_aux = int(second_aux)
 
                 computed = first_aux & second_aux
-
+                
+                vertices[block].add_and_value("unknownVal")
+                
                 if computed == first_aux:
                     computed = first
                 elif computed == second_aux:
                     computed = second
+                
             else:
-                computed = "AND("+str(first)+","+str(second)+")"
+                if not is_mem_analysis:
+                    computed = "AND("+str(first)+","+str(second)+")"
+                else:
+                
+                    if (first_aux == 2**160-1 and not isReal(second_aux)):
+                        vertices[block].add_and_value(second_aux)
+                        computed = second_aux
+                    elif (second_aux == 2**160-1 and not isReal(first_aux)):
+                        vertices[block].add_and_value(first_aux)
+                        computed = first_aux
+                    else:
+                        vertices[block].add_and_value("unknownVal")
+                        computed = "AND("+str(first)+","+str(second)+")"
+                        
             #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
@@ -4139,6 +4158,7 @@ def run(disasm_file=None,
     global num_loops
     global opt_blocks
     global file_info
+    global is_mem_analysis
     
     if disasm_file_init != None:
         analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_version)
@@ -4149,7 +4169,7 @@ def run(disasm_file=None,
     
     
     initGlobalVars()
-
+    
     source_info = {}
     
     name = cname
@@ -4169,11 +4189,11 @@ def run(disasm_file=None,
     if cname != None:
         print("File: "+str(cname))
         
-
-        
     if debug :
         debug_info = debug
 
+    is_mem_analysis = mem_analysis or storage_analysis
+        
     invalid_option = svc.get("invalid",False)
     verify = svc.get("verify",False)
         
