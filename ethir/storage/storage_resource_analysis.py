@@ -104,10 +104,10 @@ class StorageResourceAnalysis:
     def __repr__(self):
         res = ""
         for entry in self.sra_cold_sets: 
-            res = res + "  " + str(entry) + " -> " + str(self.sra_cold_sets[entry]) + "\n"
+            res = res + "  SRA:" + str(entry) + " -> " + str(self.sra_cold_sets[entry]) + "\n"
         res = res + "\n"
         for entry in self.sra_final_sets: 
-            res = res + "  " + str(entry) + " -> " + str(self.sra_final_sets[entry]) + "\n"
+            res = res + "  SRA:" + str(entry) + " -> " + str(self.sra_final_sets[entry]) + "\n"
         res = res + "\n"
         for initblock in self.sra_cold_results: 
             res = res + "  SRA: Method " + str(initblock) + " executes " + str(self.sra_cold_results[initblock]) + " cold accesses\n"
