@@ -1,11 +1,17 @@
+import os
+import global_params_ethir
+
+from storage.storage_resource_analysis import StorageResourceAnalysis
+from storage.cfg2dag import CFG2DAG
 from storage.storage_offset_abstate import StorageOffsetAbstractState
 from storage.storage_accesses import StorageAccesses
 from memory.memory_offset import OffsetAnalysisAbstractState,OFFSET_STORAGE
 from analysis.fixpoint_analysis import Analysis, BlockAnalysisInfo
 
-def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug, compact_clones):     
 
-    print("Storage analysis started! " + str(debug))
+def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug, compact_clones, sccs):     
+
+    print("Storage analysis started! ")
 
     accesses = StorageAccesses()
 
@@ -25,16 +31,24 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, ty
 
     print(str(accesses))
 
-    print("Storage analysis finished!")
-
     input_blocks = list(map(lambda x: fblockmap[x][0], fblockmap.keys()))
     print("Input blocks: "+str(input_blocks))
-    
-    return storage, accesses
 
+    ## Computed all simple paths compacting SCC's 
+    cfgdag = CFG2DAG(vertices, sccs)
 
+    for fblock in input_blocks: 
+        cfgdag.process_all_paths_from(fblock)
 
-    
-    
+    sra = StorageResourceAnalysis (vertices,accesses,cfgdag.paths2terminal, cfgdag)
+    sra.compute_paths_accesses()
+
+     # print("SRA sets: " + str(sra))
+
+    sra.compute_accesses_in_paths()
+
+    print("SRA results: " + str(sra))
+   
+    return storage, accesses, sra.get_cold_results(),sra.get_final_results()
 
 

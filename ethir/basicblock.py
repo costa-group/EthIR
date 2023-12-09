@@ -329,10 +329,10 @@ class BasicBlock:
                 new_instr = instr + " " + self._get_concrete_value("sstore",sstore)
                 sstore+=1
             elif instr == "AND" and mem_analysis:
-                print("AQUI")
-                print(self.start)
-                print(self.instructions)
-                print(self.and_values)
+                # print("AQUI")
+                # print(self.start)
+                # print(self.instructions)
+                # print(self.and_values)
                 new_instr = instr+ " "+self.and_values[and_idx] if self.and_values[and_idx]!="unknownVal" else instr
                 and_idx+=1
             #For the moment we don't annotate return evm 

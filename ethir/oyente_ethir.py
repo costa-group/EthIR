@@ -264,9 +264,6 @@ def run_solidity_analysis(inputs,hashes):
     c_translation_opt["gotos"] = args.goto
     c_translation_opt["args"] = args.args
 
-    print ("VAMOS " + str(args.storage_analysis))
-
-        
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]

@@ -1183,7 +1183,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,result_st
         value, index_variables = translateOpcodes40(opcode_name,variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id(),state_vars,results_sto_analysis)
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id(),state_vars,result_sto_analysis)
         if type(value) is list:
             for ins in value:
                 rule.add_instr(ins)

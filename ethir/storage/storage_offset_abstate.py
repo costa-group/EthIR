@@ -30,8 +30,8 @@ class StorageOffsetAbstractState:
         return self.stack_pos
 
     def leq (self,state): 
-        print ("******************************** HACIENDO LEQ")
-        print ("LEQ: " + str(self) + " " + str(state))
+        #print ("******************************** HACIENDO LEQ")
+        #print ("LEQ: " + str(self) + " " + str(state))
         for skey in self.stack: 
             if (skey not in state.stack or 
                 not self.leq_slots(self.stack[skey],state.stack[skey])):
@@ -45,8 +45,8 @@ class StorageOffsetAbstractState:
         return True
 
     def lub (self,state): 
-        print ("******************************** HACIENDO LUB")
-        print ("LUB: " + str(self) + " " + str(state))
+        #print ("******************************** HACIENDO LUB")
+        #print ("LUB: " + str(self) + " " + str(state))
         if self.debug and self.stack_pos != state.get_stack_pos(): 
             print("STORAGE ANALYSIS WARNING: Different stacks in lub !!! ")
             print("STORAGE ANALYSIS WARNING: " + str(self))
@@ -68,7 +68,7 @@ class StorageOffsetAbstractState:
             else:
                 res_memory[skey] = set(state.memory[skey])
 
-        print("LUB Resultado: " + str(StorageOffsetAbstractState(self.stack_pos, res_stack, res_memory,self.debug)))
+        #print("LUB Resultado: " + str(StorageOffsetAbstractState(self.stack_pos, res_stack, res_memory,self.debug)))
         return StorageOffsetAbstractState(self.stack_pos, res_stack, res_memory,self.debug)
 
     def process_instruction (self,instr,pc):
@@ -110,9 +110,6 @@ class StorageOffsetAbstractState:
             stack[self.stack_pos] = {StorageAccess(BOTTOM,str(0),0)} 
 
         # TODO Decidir que push guardar... 
-        # elif (op_code == "PUSH1" and 
-        #       int(op_operand,16) >= 0 and 
-        #       int(op_operand,16) <= K): 
         elif (op_code == "PUSH1"): 
             stack[self.stack_pos] = {StorageAccess(BOTTOM,str(int(op_operand,16)),0)}
 
@@ -310,7 +307,6 @@ class StorageAccess:
             return StorageAccess(TOP,TOP)
         
         noper = self.noper + operand.noper + 1
-        print ("ADDING " + str(self.offset) + " + " + str(operand.offset) + " " + str(noper)) 
         if self.offset == TOP or operand.offset == TOP: 
             value = TOP
         elif noper >= TOP_OPER: 

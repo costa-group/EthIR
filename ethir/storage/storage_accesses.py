@@ -16,9 +16,6 @@ class StorageAccesses:
         else:    
             self.read_accesses[pc] = self.clean_under_top(set(accesses.union(slot)))
 
-        print ("ACCESSES Adding READ at " + str(pc) + ": " + str(accesses) + " U " + str(slot) + " = " + str(self.read_accesses[pc]))
-
-
     def add_write_access (self,pc, slot):
         accesses = self.write_accesses.get(pc)
 
@@ -26,10 +23,6 @@ class StorageAccesses:
             self.write_accesses[pc] = set(slot)
         else:
             self.write_accesses[pc] = self.clean_under_top(set(accesses.union(slot)))
-
-        print ("ACCESSES Adding WRITE at " + str(pc) + ": " + str(accesses) + " U " + str(slot) + " = " + str(self.write_accesses[pc]))
-
-
 
     def clean_under_top (self,accesses): 
         res = set([])
@@ -60,7 +53,11 @@ class StorageAccesses:
                 #result.append(offset + " " + instr + "[" + text + "] -> " + str(list(set_in[pc]))) 
                 result.append(offset + " [" + text + "] -> " + str(list(set_in[pc]))) 
 
-    
+    def get_read_accesses (self): 
+        return self.read_accesses
+
+    def get_write_accesses (self): 
+        return self.write_accesses
 
     def __repr__(self):
         return ("Storage: \n" + 

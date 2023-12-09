@@ -4319,15 +4319,36 @@ def run(disasm_file=None,
             check_cfg_option(cfg,cname,execution, memory_result)
 
         elif storage_analysis:
-            storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones)
+            begin = dtimer()
+
+            storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones, scc)
+            _,storage_accesses,sracold, srafinal = storage_result
             check_cfg_option(cfg,cname,execution, storage_result)
+            generate_storage_saco_config_file(cname,sracold, srafinal)
+
+            end = dtimer()
+            print("Storage Analysis finished in "+str(end-begin)+"s\n")
 
         else:
             check_cfg_option(cfg,cname,execution)
 
             
         if mem_analysis == None:
-            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,stack_info = stack_h, block_unbuild = blocks_to_create,saco_rbr = saco,c_rbr = cfile, exe = execution, contract_name = cname, component = component_of_blocks,scc = scc,svc_labels = svc,gotos = go,fbm = f2blocks, source_info = source_info,mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),sto = sto)
+            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
+                                             stack_info = stack_h, 
+                                             block_unbuild = blocks_to_create,
+                                             saco_rbr = saco,
+                                             c_rbr = cfile, 
+                                             exe = execution, 
+                                             contract_name = cname, 
+                                             component = component_of_blocks,
+                                             scc = scc,svc_labels = svc,
+                                             gotos = go,
+                                             fbm = f2blocks, 
+                                             source_info = source_info,
+                                             mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
+                                             sto = sto) 
+                                             ##storage_analysis = storage_accesses)
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
@@ -4532,3 +4553,20 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
                     print("[NO MEMBASE]: "+str(elem) + " -- " + source_map.parent_filename + " " + nLineBeg + "-" + nLineEnd)
 
                     
+def generate_storage_saco_config_file(cname, sracold, srafinal):
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
+        
+    if cname == None:
+        name = global_params_ethir.costabs_path+"config_block.config"
+    else:
+        name = global_params_ethir.costabs_path+cname+"_storage.config"
+
+
+    with open(name,"w") as f:
+        milist = list(function_block_map.items())
+        elems = list(map(lambda x: "("+process_argument_function(x[0])+";"+ str(sracold[x[1][0]])+";"+str(srafinal[x[1][0]])+")", milist))        
+        elems2write = "\n".join(elems)
+        f.write(elems2write)
+    f.close()
+
