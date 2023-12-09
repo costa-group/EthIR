@@ -4324,7 +4324,7 @@ def run(disasm_file=None,
             storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones, scc)
             _,storage_accesses,sracold, srafinal = storage_result
             check_cfg_option(cfg,cname,execution, storage_result)
-            generate_storage_saco_config_file(cname,sracold, srafinal)
+            #generate_storage_saco_config_file(cname,sracold, srafinal)
 
             end = dtimer()
             print("Storage Analysis finished in "+str(end-begin)+"s\n")
