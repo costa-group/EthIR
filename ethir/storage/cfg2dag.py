@@ -86,7 +86,7 @@ class CFG2DAG:
 
         self.terminals[fromnode] = terminal
 
-        print("   Tenemos " + str(len(terminal)) + " terminales")
+        print("   Tenemos " + str(len(terminal)) + " terminales " + str(terminal))
 
         for tnode in terminal: 
             paths = list()

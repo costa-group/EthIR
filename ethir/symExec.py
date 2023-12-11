@@ -4324,7 +4324,7 @@ def run(disasm_file=None,
             storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones, scc)
             _,storage_accesses,sracold, srafinal = storage_result
             check_cfg_option(cfg,cname,execution, storage_result)
-            #generate_storage_saco_config_file(cname,sracold, srafinal)
+            generate_storage_saco_config_file(cname,sracold, srafinal)
 
             end = dtimer()
             print("Storage Analysis finished in "+str(end-begin)+"s\n")
@@ -4558,15 +4558,29 @@ def generate_storage_saco_config_file(cname, sracold, srafinal):
         os.mkdir(global_params_ethir.costabs_path)
         
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"config_block.storage"
     else:
-        name = global_params_ethir.costabs_path+cname+"_storage.config"
-
+        name = global_params_ethir.costabs_path+cname+"_storage.storage"
 
     with open(name,"w") as f:
         milist = list(function_block_map.items())
-        elems = list(map(lambda x: "("+process_argument_function(x[0])+";"+ str(sracold[x[1][0]])+";"+str(srafinal[x[1][0]])+")", milist))        
+        elems = list()
+        for elem in milist: 
+            method = process_argument_function(elem[0])
+            id = elem[1][0]
+            if str(id).find("_")==-1:
+                id = int(elem[1][0])
+            else:
+                id = str(id)
+            if id not in srafinal: 
+                nfinal = 0
+            else:
+                nfinal = srafinal[id]
+            if id not in sracold: 
+                ncold = 0
+            else:
+                ncold = sracold[id]
+            elems.append("("+method+";"+ str(ncold)+";"+str(nfinal)+")")
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
-
