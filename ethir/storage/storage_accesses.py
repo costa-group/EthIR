@@ -59,6 +59,26 @@ class StorageAccesses:
     def get_write_accesses (self): 
         return self.write_accesses
 
+    def is_mload_concrete (self, pp): 
+        if pp not in self.read_accesses: 
+            print ("STORAGE: MLOAD not found in the analysis")
+            raise "STORAGE: MLOAD not found in the analysis"
+            
+        return self.__contains_TOP(self,self.read_accesses[pp])
+
+    def is_mstore_concrete (self, pp): 
+        if pp not in self.write_accesses: 
+            print ("STORAGE: MSTORE not found in the analysis")
+            raise "STORAGE: MSTORE not found in the analysis"
+            
+        return self.__contains_TOP(self,self.write_accesses[pp])
+
+    def __contains_TOP (self,accesses): 
+        for access in accesses: 
+            if "*" in str(access): 
+                return True
+        return False
+
     def __repr__(self):
         return ("Storage: \n" + 
                 "   READ:  " + str(self.read_accesses) + " \n" +

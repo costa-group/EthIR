@@ -4558,9 +4558,9 @@ def generate_storage_saco_config_file(cname, sracold, srafinal):
         os.mkdir(global_params_ethir.costabs_path)
         
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_block.storage"
+        name = global_params_ethir.costabs_path+"config_methods.storage"
     else:
-        name = global_params_ethir.costabs_path+cname+"_storage.storage"
+        name = global_params_ethir.costabs_path+cname+".storage"
 
     with open(name,"w") as f:
         milist = list(function_block_map.items())
