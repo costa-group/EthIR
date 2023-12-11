@@ -37,10 +37,14 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, ty
     ## Computed all simple paths compacting SCC's 
     cfgdag = CFG2DAG(vertices, sccs)
 
+    print("Processing paths")
+
     for fblock in input_blocks: 
+        print("Processing paths: " + str(fblock))
         cfgdag.process_all_paths_from(fblock)
 
     sra = StorageResourceAnalysis (vertices,accesses,cfgdag.paths2terminal, cfgdag)
+    print("Computing storage path accesses")
     sra.compute_paths_accesses()
 
      # print("SRA sets: " + str(sra))

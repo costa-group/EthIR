@@ -86,10 +86,13 @@ class CFG2DAG:
 
         self.terminals[fromnode] = terminal
 
+        print("   Tenemos " + str(len(terminal)) + " terminales")
+
         for tnode in terminal: 
             paths = list()
             path = list()
-            self.__find_all_paths(fromnode,tnode,path,paths)
+            visited = set()
+            self.__find_all_paths(fromnode,tnode,path,visited,paths)
             self.paths2terminal[(fromnode,tnode)] = paths
 
     def __get_all_terminals(self,fromnode,node,visited, terminal): 
@@ -107,17 +110,21 @@ class CFG2DAG:
                 self.__get_all_terminals(fromnode,dest,visited, terminal)
         
 
-    def __find_all_paths(self, start, end, path, paths):
+    def __find_all_paths(self, start, end, path, visited, paths):
         path.append(start)
+        visited.add(start)
+
         if start == end:
             paths.append(list(path))
             path.pop()
+            visited.remove(start)
             return
 
         if start in self.cfgdag: 
             for node in self.cfgdag[start]:
-                if node not in path:
-                    self.__find_all_paths(node, end, path, paths)
+                if node not in visited:
+                    self.__find_all_paths(node, end, path, visited,paths)
         
         path.pop()
+        visited.remove(start)
 

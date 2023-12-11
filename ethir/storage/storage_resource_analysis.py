@@ -89,9 +89,6 @@ class StorageResourceAnalysis:
             else:
                 sraresults[initblock] = max(num_accesses,sraresults[initblock])
 
-
-
-
         print()
 
     def get_cold_results(self): 
