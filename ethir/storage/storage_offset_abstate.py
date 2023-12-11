@@ -181,11 +181,11 @@ class StorageOffsetAbstractState:
 
                 stack[top-1] = res                    
 
-        # elif op_code.startswith("CALLDATALOAD"):
-        #     stack[top] = {StorageAccess(BOTTOM,op_operand,0)}
+        elif op_code.startswith("CALLDATALOAD"):
+            stack[top] = {StorageAccess(BOTTOM,op_operand,0)}
 
-        # elif op_code == "AND" and len(instr.split()) > 1: #For considering arguments of CALLDATALOAD
-        #     stack[top-1] = {StorageAccess(BOTTOM,op_operand,0)}
+        elif op_code == "AND" and len(instr.split()) > 1: #For considering arguments of CALLDATALOAD
+            stack[top-1] = {StorageAccess(BOTTOM,op_operand,0)}
             
         else: 
             for i in range( self.stack_pos-stack_in,self.stack_pos): 
@@ -307,10 +307,18 @@ class StorageAccess:
             return StorageAccess(TOP,TOP)
         
         noper = self.noper + operand.noper + 1
+
         if self.offset == TOP or operand.offset == TOP: 
             value = TOP
         elif noper >= TOP_OPER: 
             value = TOP
+        elif not self.offset.isnumeric() or not operand.offset.isnumeric(): 
+            if self.offset == "0": 
+                value = str(operand.offset)
+            elif operand.offset == "0": 
+                value = str(self.offset)
+            else: 
+                value = str(self.offset) + "+" + str(operand.offset)
         else: 
             value = int(self.offset) + int(operand.offset)
 
