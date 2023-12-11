@@ -497,8 +497,8 @@ def build_cfg_and_analyze(evm_version):
                 block_origin.add_jump(destination)
                 block_origin.set_block_type("unconditional")
 
-                block_destionation: BasicBlock = vertices.get(destination)
-                block_destionation.add_origin(origin)
+                block_destination: BasicBlock = vertices.get(destination)
+                block_destination.add_origin(origin)
                 visited_blocks.append(destination)
                 if origin not in edges:
                     edges[origin] = [destination]

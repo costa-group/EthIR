@@ -155,7 +155,6 @@ class JumpOriginAbstractState:
         opinfo = get_opcode(op_code)
         stack_in = opinfo[1]
         stack_out = opinfo[2]
-        stack_result_length = len(self.stack) - stack_in + stack_out
         top = len(self.stack) - 1
 
         self.ssequence.register_instruction(op_code, stack)
@@ -200,15 +199,12 @@ class JumpOriginAbstractState:
                 treated = True
 
         elif op_code == "JUMP":
-            sloaded_values = self.lsequence.get_storage_value()
-
-            if sloaded_values is None:
-                direction = stack.pop(len(stack) - 1)
-                top -= 1
-            else:
-                direction = sloaded_values
-                stack.pop(len(stack) - 1)
-                top -= 1
+            direction = stack.pop(len(stack) - 1)
+            top -= 1
+            if direction != {"*"}:
+                sloaded_values = self.lsequence.get_storage_value()
+                if sloaded_values is not None:
+                    direction = sloaded_values
                 print(f"Jump direction is {direction}")
                 self.jump_directions.append((self.parse_pc(pc), direction))
 
@@ -252,13 +248,19 @@ class JumpOriginAbstractState:
                 stack.pop(len(stack) - 1)  # value
                 top -= 1
 
-            if self.storage.get(direction[0]) is None:
+            # Storage has not yet stored anything in that direction
+            if direction[0] in self.storage:
+                # Has no displacement
                 if len(direction) == 1:
                     self.storage[direction[0]] = values
+
+                # Has displacement
                 else:
                     self.storage[direction[0]] = {direction[1]: values}
 
+            # Storage has stored something in that direction
             else:
+                # has no displacement
                 if len(direction) == 1:
                     if isinstance(self.storage[direction[0]], dict):
                         self.storage[direction[0]] = self.storage[direction[0]][
