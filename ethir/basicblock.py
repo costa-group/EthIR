@@ -189,9 +189,6 @@ class BasicBlock:
     def _set_sstore_values(self,val):
         self.sstore_values = val
 
-    def _set_caldata_values(self,val):
-        self.calldatavalues = val
-
     def add_ls_value(self,type_value,key,val):
         if type_value == "mload":
             l = self.mload_values.get(key,-1)

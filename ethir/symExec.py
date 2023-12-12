@@ -921,7 +921,7 @@ def updateCallDataValues(block,var_name):
     global calldataload_values
 
     laux = calldataload_values[block]
-    l = laux+[var_name]
+    l = [var_name]+laux
     calldataload_values[block] = l
 
 
@@ -2310,13 +2310,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             position = get_push_value(position)
             new_var_name = ""
             if g_src_map:
-                # print("AQUI")
-                # print(g_src_map.instr_positions)
-                
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
-                # print("--------------")
-                # print(source_code)
-                # print("--------------")
+          
                 if source_code.startswith("function") and isReal(position):
                     # Delete commment blocks
                     # print("Source code: ")
@@ -2408,6 +2403,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         new_var_name = param_abs[1]
                     else:
                         new_var_name = gen.gen_data_var(position)
+                    
             else:
                 new_var_name = "CALLDATALOAD("+str(position)+")"#gen.gen_data_var(position)
 
