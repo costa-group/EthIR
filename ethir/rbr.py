@@ -711,7 +711,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes50(opcode, value, index_variables,block,state_names,results_sto_analysis):
+def translateOpcodes50(opcode, value, index_variables,block,state_names):
     global new_fid
     global forget_memory
     global memory_intervals
@@ -1166,7 +1166,7 @@ They are remove when displaying.
 -nop is True when generating nop annotations with the opcode. False otherwise.
 -index_variables refers to the top stack index. int.
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,result_sto_analysis):
+def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_sto_analysis):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -1191,7 +1191,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,result_st
         value, index_variables = translateOpcodes40(opcode_name,variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes50:
-        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id(),state_vars,result_sto_analysis)
+        value, index_variables = translateOpcodes50(opcode_name, opcode_rest, variables,rule.get_Id(),state_vars)
         if type(value) is list:
             for ins in value:
                 rule.add_instr(ins)
@@ -1223,8 +1223,17 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,result_st
         value = "Error. No opcode matchs"
         index_variables = variables
         rule.add_instr(value)
-
-    rule.add_instr("nop("+opcode_name+")")
+        
+    if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):
+        r = results_sto_analysis.pop(0)
+        if "*" in r:
+            new_opcode_name = opcode_name+"COLD"
+        else:
+            new_opcode_name = opcode_name+"WARM"
+        rule.add_instr("nop("+new_opcode_name+")")
+        
+    else:
+        rule.add_instr("nop("+opcode_name+")")
 
     return index_variables
 
@@ -1259,8 +1268,6 @@ Otherwise we have to convert it into a conditional jump.
  jump rule generated. If it is a jump, rule1 = rule2 = None.
 '''
 def create_uncond_jump(block_id,variables,jumps):
-    print(jumps)
-    print(block_id)
     if (len(jumps)>1):
         rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps)
         stack_variables = get_stack_variables(variables)
@@ -1501,7 +1508,7 @@ def compile_block(block,state_vars, results_sto_analysis = []):
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
 
-        elif l_instr[cont] == "JUMP" and block.get_block_type == "unconditional":
+        elif l_instr[cont] == "JUMP" and block.get_block_type() == "unconditional":
             rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps())
 
             if rule1:
@@ -1730,10 +1737,10 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             for block in blocks:
 
                 if storage_analysis != None:
-                    results_sto_analysis = storage_analysis[block]
+                    results_sto_analysis = storage_analysis.get_cfg_info(str(block.get_start_address()))
                 else:
                     results_sto_analysis = []
-                    
+
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
                 rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis)

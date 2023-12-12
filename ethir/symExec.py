@@ -1078,17 +1078,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     mem_access = False
     
     bl = vertices[block]
-
-    # print("--------")
-    # print("BLOCK"+str(block))
-    # # print(stack)
-    # print(len(stack))
-    # print("--------")
     instr_idx = 0
 
     # consumed_elems = compute_elements(block_ins)
     # init_stack = len(stack)
-
     
     store_useless_block = False
     load_useless_block = False
@@ -4344,8 +4337,8 @@ def run(disasm_file=None,
             print("Storage Analysis finished in "+str(end-begin)+"s\n")
 
         else:
+            storage_accesses = None
             check_cfg_option(cfg,cname,execution)
-
             
         if mem_analysis == None:
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
@@ -4361,8 +4354,8 @@ def run(disasm_file=None,
                                              fbm = f2blocks, 
                                              source_info = source_info,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
-                                             sto = sto) 
-                                             ##storage_analysis = storage_accesses)
+                                             sto = sto, 
+                                             storage_analysis = storage_accesses)
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
