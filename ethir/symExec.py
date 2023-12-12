@@ -2310,7 +2310,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             position = get_push_value(position)
             new_var_name = ""
             if g_src_map:
+                # print("AQUI")
+                # print(g_src_map.instr_positions)
+                
                 source_code = g_src_map.get_source_code(global_state['pc'] - 1)
+                # print("--------------")
+                # print(source_code)
+                # print("--------------")
                 if source_code.startswith("function") and isReal(position):
                     # Delete commment blocks
                     # print("Source code: ")
@@ -2665,6 +2671,11 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
         stack_sym.insert(0,"DIFFICULTY")
 
+    elif opcode == "PREVRANDAO":  # information from block header
+        global_state["pc"] = global_state["pc"] + 1
+
+        stack.insert(0,gen.gen_prevrandao_var())
+        stack_sym.insert(0,"PREVRANDAO")
         
     elif opcode == "GASLIMIT":  # information from block header
         global_state["pc"] = global_state["pc"] + 1
@@ -3589,6 +3600,13 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         stack.insert(0, new_var_name)
 
         stack_sym.insert(0,"SELFBALANCE")
+
+    elif opcode == "BASEFEE":
+        global_state["pc"] = global_state["pc"] + 1
+        new_var_name = gen.gen_basefee_var()
+        stack.insert(0, new_var_name)
+
+        stack_sym.insert(0,"BASEFEE")
 
         
 

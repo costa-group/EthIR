@@ -48,7 +48,7 @@ def init_globals():
 
     global opcodes40
     opcodes40 = ["BLOCKHASH", "COINBASE", "TIMESTAMP", "NUMBER",
-                 "DIFFICULTY", "GASLIMIT","SELFBALANCE","CHAINID"]
+                 "DIFFICULTY","PREVRANDAO", "GASLIMIT","SELFBALANCE","CHAINID","BASEFEE"]
 
     global opcodes50
     opcodes50 = ["POP", "MLOAD", "MSTORE", "MSTORE8", "SLOAD",
@@ -677,6 +677,10 @@ def translateOpcodes40(opcode, index_variables,block):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = difficulty"
         update_bc_in_use("difficulty",block)
+    elif opcode == "PREVRANDAO":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = prevrandao"
+        update_bc_in_use("prevrandao",block)
     elif opcode == "GASLIMIT":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gaslimit"
@@ -689,6 +693,10 @@ def translateOpcodes40(opcode, index_variables,block):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = chainid"
         update_bc_in_use("chainid",block)
+    elif opcode == "BASEFEE":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = basefee"
+        update_bc_in_use("basefee",block)
 
     else:
         instr = "Error opcodes40: "+opcode

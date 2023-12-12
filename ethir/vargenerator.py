@@ -49,6 +49,12 @@ class Generator:
     def gen_origin_var(self):
         return "Io"
 
+    def gen_prevrandao_var(self):
+        return "Iprevrandao"
+
+    def gen_basefee_var(self):
+        return "Ibasefee"
+    
     def gen_balance_var(self):
         self.count += 1
         return "balance_" + str(self.count)
