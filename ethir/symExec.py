@@ -468,7 +468,8 @@ def build_cfg_and_analyze(evm_version):
     global edges
     global vertices
     global jump_type
-    
+    global block_cont
+
     change_format(evm_version)
     count_daos()
     with open(g_disasm_file, "r") as disasm_file:
@@ -491,34 +492,57 @@ def build_cfg_and_analyze(evm_version):
     compute_access2arrays_mem()
     update_block_info()
     if mem_analysis_flag == "jump_origin":
-        analyze_storage_jumps()
-        # TODO: modificar los bloques para que incluyan los bloques nuevos detectados
+        stable = False
+        previous_len = 0
+        while not stable:
+            analyze_storage_jumps()
+            if previous_len == len(storage_jumps):
+                stable = True
+                break
 
-        for origin, destination in storage_jumps:
-            if len(destination) == 1:
-                destination = list(destination)[0]
-                block_origin: BasicBlock = vertices.get(origin)
-                block_origin.add_jump(destination)
-                block_origin.set_block_type("unconditional")
-                jump_type[origin] = "unconditional"
-                
-                block_destination: BasicBlock = vertices.get(destination)
-                block_destination.add_origin(origin)
-                # visited_blocks.append(destination)
-                # if origin not in edges:
-                #     edges[origin] = [destination]
-                # else:
-                #     edges[origin].append(destination)
+            previous_len = len(storage_jumps)
 
-                for b in vertices:
-                    edges[b] = []
-                
-                visited_blocks = []
-                visited_edges = {}
-                construct_static_edges()
-                full_sym_exec()
-                update_block_info()
-                
+            for origin, destination in storage_jumps:
+                if len(destination) == 1:
+                    destination = list(destination)[0]
+                    block_origin: BasicBlock = vertices.get(origin)
+                    block_origin.add_jump(destination)
+                    block_origin.set_block_type("unconditional")
+                    jump_type[origin] = "unconditional"
+
+                    block_destination: BasicBlock = vertices.get(destination)
+                    block_destination.add_origin(origin)
+                    # visited_blocks.append(destination)
+                    # if origin not in edges:
+                    #     edges[origin] = [destination]
+                    # else:
+                    #     edges[origin].append(destination)
+
+                    for b in vertices:
+                        edges[b] = []
+
+                    visited_blocks = []
+                    visited_edges = {}
+
+                    duplicated_jump_targets = set()
+
+                    for _, block in vertices.items():
+                        if isinstance(block.get_jump_target(), str):
+                            duplicated_jump_targets.add(block.get_jump_target())
+
+                    vertices = dict(
+                        filter(
+                            lambda x: x[0] not in duplicated_jump_targets,
+                            vertices.items(),
+                        )
+                    )
+
+                    block_cont = {}
+
+                    construct_static_edges()
+                    full_sym_exec()
+                    update_block_info()
+
     delete_uncalled()
     build_push_jump_relations()
 
@@ -958,7 +982,7 @@ def add_falls_to():
     int_key_list = [key for key in jump_type.keys() if isinstance(key, int)]
     key_list = sorted(int_key_list)
     length = len(key_list)
-   
+
     for i, key in enumerate(key_list):
         if (
             jump_type[key] != "terminal"
@@ -1182,7 +1206,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, level, path):
     param_abs = ("", "")
     # st_arr = (False,False)
     # st_id = -1
-    
+
     vertices[block].add_stack(list(stack))
     vertices[block].add_path(path)
 
@@ -1462,7 +1486,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, level, path):
         total_no_of_paths += 1
 
     elif jump_type[block] == "unconditional":  # executing "JUMP"
-        successor = vertices[block].get_jump_target()        
+        successor = vertices[block].get_jump_target()
         new_params = params.copy()
         new_params.global_state["pc"] = get_initial_block_address(successor)
         if g_src_map:
@@ -3353,15 +3377,15 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
             found = False
             if storage_jumps != []:
                 i = 0
-                while(i<len(storage_jumps) and not found):
-                    o,s = storage_jumps[i]
+                while i < len(storage_jumps) and not found:
+                    o, s = storage_jumps[i]
                     if o == block:
                         target_address = list(s)[0]
                         push_block = "SLOAD"
                         found = True
                         jump_addresses.append(target_address)
-                    i+=1
-                    
+                    i += 1
+
             if not found:
                 if type(push_address) == tuple:
                     try:
@@ -3384,7 +3408,7 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
 
             push_jump_relations[block] = rel
             vertices[block].set_jump_target(target_address)
-            
+
             if target_address not in edges[block]:
                 edges[block].append(target_address)
         else:
@@ -4676,7 +4700,9 @@ def run(
         if collapse_cfg != "no" and collapse_cfg is not None:
             begin = dtimer()
 
-            collapser = Cfg_collapser(vertices, cname)
+            instructions = collapse_cfg == "instructions"
+
+            collapser = Cfg_collapser(vertices, cname, instructions)
 
             collapser.collapse()
 

@@ -165,6 +165,8 @@ class JumpOriginAbstractState:
             if len(instr.split()) == 2:
                 strvalue = instr.split()[1]
                 value = int(strvalue, 16)
+            elif instr == "PUSH0":
+                value = 0
             else:
                 value = -1
 
@@ -201,11 +203,10 @@ class JumpOriginAbstractState:
         elif op_code == "JUMP":
             direction = stack.pop(len(stack) - 1)
             top -= 1
-            if direction != {"*"}:
+            if direction == {"*"}:
                 sloaded_values = self.lsequence.get_storage_value()
                 if sloaded_values is not None:
                     direction = sloaded_values
-                print(f"Jump direction is {direction}")
                 self.jump_directions.append((self.parse_pc(pc), direction))
 
             treated = True
@@ -218,7 +219,6 @@ class JumpOriginAbstractState:
             else:
                 direction = sloaded_values
                 stack.pop(len(stack) - 1)
-                print(f"Jumpi direction is {direction}")
                 self.jump_directions.append((self.parse_pc(pc), direction))
             top -= 1
             stack.pop(len(stack) - 1)
@@ -249,7 +249,7 @@ class JumpOriginAbstractState:
                 top -= 1
 
             # Storage has not yet stored anything in that direction
-            if direction[0] in self.storage:
+            if direction[0] not in self.storage:
                 # Has no displacement
                 if len(direction) == 1:
                     self.storage[direction[0]] = values
@@ -276,6 +276,8 @@ class JumpOriginAbstractState:
 
         elif op_code.startswith("SLOAD"):
             direction = instr.split()[1]
+            if direction == "-1":
+                direction = "0"
             # get the value at the direction or if no explicit value has been stored, load the values that could go anywhere
             value = self.storage.get(direction, self.storage[-1])
             if value is None:
