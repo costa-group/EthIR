@@ -14,7 +14,7 @@ class ConstantsAbstractState:
         self.debug = debug
 
     def leq(self, state):
-        if self.stack_pos != state.stack_pos:
+        if self.debug and self.stack_pos != state.stack_pos:
             print("CONSTANT ANALYSIS WARNING: Different stacks in leq !!! ")
             print("CONSTANT ANALYSIS WARNING: " + str(self))
             print("CONSTANT ANALYSIS WARNING: " + str(state))
@@ -29,7 +29,7 @@ class ConstantsAbstractState:
     def lub(self, state):
         if self.debug:
             print("DOING LUB: " + str(self.stack) + " " + str(state.stack))
-        if self.stack_pos != state.stack_pos:
+        if self.debug and self.stack_pos != state.stack_pos:
             print("CONSTANT ANALYSIS WARNING: Different stacks in lub !!! ")
             print("CONSTANT ANALYSIS WARNING: " + str(self))
             print("CONSTANT ANALYSIS WARNING: " + str(state))

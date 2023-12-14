@@ -226,6 +226,7 @@ def analyze_disasm_bytecode():
             mem_abs=args.mem_interval,
             sto=args.storage_arrays,
             mem_analysis=args.mem_analysis,
+            compact_clones=args.compact_clones,
         )
     else:
         exit_code = -1
@@ -276,7 +277,9 @@ def analyze_bytecode():
             mem_abs=args.mem_interval,
             sto=args.storage_arrays,
             mem_analysis=args.mem_analysis,
+            compact_clones=args.compact_clones,
         )
+
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -331,6 +334,7 @@ def run_solidity_analysis(inputs, hashes):
                 opt_bytecode=(args.optimize_run or args.via_ir),
                 mem_analysis=args.mem_analysis,
                 collapse_cfg=args.collapse_cfg,
+                compact_clones=args.compact_clones,
             )
 
         except Exception as e:
@@ -371,6 +375,7 @@ def run_solidity_analysis(inputs, hashes):
                     opt_bytecode=(args.optimize_run or args.via_ir),
                     mem_analysis=args.mem_analysis,
                     collapse_cfg=args.collapse_cfg,
+                    compact_clones=args.compact_clones,
                 )
 
             except Exception as e:
@@ -468,6 +473,7 @@ def run_solidity_analysis_optimized(inp, hashes):
             go=args.goto,
             opt=opt_info,
             mem_analysis=args.mem_analysis,
+            compact_clones=args.compact_clones,
         )
 
         try:
@@ -765,7 +771,7 @@ def main():
     parser.add_argument(
         "-mem-analysis",
         "--mem-analysis",
-        help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option",
+        help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option. Jump origin runs the jump origin analysis to determine if the jump came from storage",
         choices=["baseref", "offset", "jump_origin"],
     )
     parser.add_argument(
@@ -773,6 +779,12 @@ def main():
         "--collapse-cfg",
         help="Joins blocks producing a compact cfg",
         choices=["no", "yes", "instructions"],
+    )
+    parser.add_argument(
+        "-compact-clones",
+        "--compact-clones",
+        help="Intersect blocks cloned before invoking GASOL superoptimizer",
+        action="store_true",
     )
 
     args = parser.parse_args()

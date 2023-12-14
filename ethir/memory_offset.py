@@ -178,6 +178,9 @@ class OffsetAnalysisAbstractState:
                     else:
                         result.add(suma)
         return result
-                    
+
+    def get_stack (self): 
+        return self.stack
+
     def __repr__(self):
         return (" stack^" + str(self.stack_pos) + " = " + str(self.stack))

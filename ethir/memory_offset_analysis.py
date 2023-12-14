@@ -8,11 +8,12 @@ class MemoryOffsetAbstractState:
     constancy = None
     g_found_outofslot = False
     
-    def __init__(self,stack_pos,stack,memory):
+    def __init__(self,stack_pos,stack,memory,debug):
         self.stack_pos = stack_pos
         self.stack = stack
         self.memory = memory 
-
+        self.debug = debug
+        
     @staticmethod
     def init_globals (slots,accesses,constancy): 
         MemoryOffsetAbstractState.accesses = accesses
@@ -36,7 +37,7 @@ class MemoryOffsetAbstractState:
         return True
 
     def lub (self,state): 
-        if self.stack_pos != state.get_stack_pos(): 
+        if self.debug and self.stack_pos != state.get_stack_pos(): 
             print("MEM ANALYSIS WARNING: Different stacks in lub !!! ")
             print("MEM ANALYSIS WARNING: " + str(self))
             print("MEM ANALYSIS WARNING: " + str(state))
@@ -74,7 +75,7 @@ class MemoryOffsetAbstractState:
         for elem in toremove: 
             res_memory.pop(elem)
 
-        return MemoryOffsetAbstractState(self.stack_pos, res_stack, res_memory)
+        return MemoryOffsetAbstractState(self.stack_pos, res_stack, res_memory,self.debug)
 
     def process_instruction (self,instr,pc):
        
@@ -149,8 +150,16 @@ class MemoryOffsetAbstractState:
             # if slottopm1 != None and ctopm1 != None:
             #     print("ADD ERROR top-1 [" + pc + "]:" + str(slottopm1) + " -- " + str(ctopm1))
 
+        # elif is_mload(instr,"64"):
+        #     self.accesses.add_red_access(pc,"mem40")
 
-        elif op_code == "MLOAD": 
+        # elif is_mload(instr,"4"):
+        #     self.accesses.add_read_access(pc,"mem4")
+
+        # elif is_mload(instr,"32"):
+        #     self.accesses.add_read_access(pc,"mem20")
+
+        elif op_code == "MLOAD":             
             self.add_read_access(top,pc,self.stack)
             self.perform_mload(self.stack, stack, memory, top)
 
@@ -158,14 +167,22 @@ class MemoryOffsetAbstractState:
         #     print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
 
         
-
-        
         #         self.accesses.add_read_access(pc,"unknown")
         
-            
-
         elif op_code == "MSTORE8":
             self.add_write_access(top,pc,self.stack)
+
+        elif is_mstore(instr,"64"):
+            self.accesses.add_write_access(pc,"mem40")
+
+        elif is_mstore(instr,"4"):
+            self.accesses.add_write_access(pc,"mem4")
+
+        elif is_mstore(instr,"32"):
+            self.accesses.add_write_access(pc,"mem20")
+
+        elif is_mstore(instr,"0"):
+            self.accesses.add_write_access(pc,"mem0")
 
         elif op_code == "MSTORE": 
             self.add_write_access(top,pc,self.stack)
@@ -174,17 +191,6 @@ class MemoryOffsetAbstractState:
         #         print("MEMORY ANALYSIS WARNING: Unknown access at this point " + pc)
         #         self.accesses.add_write_access(pc,"unknown")
         
-        elif is_mstore(instr,"64"):
-            self.accesses.add_write_access(pc,"mem40")
-
-        elif is_mstore(instr,"4"):
-            self.accesses.add_write_access(pc,"mem4")
-
-        elif is_mstore(instr,"32"):
-            self.accesses.add_write_access(pc,"mem0")
-
-        elif is_mstore(instr,"0"):
-            self.accesses.add_write_access(pc,"mem0")
 
         elif op_code == "RETURN" or op_code == "REVERT": 
             if top in self.stack: 
@@ -197,9 +203,17 @@ class MemoryOffsetAbstractState:
         elif op_code == "SHA3" or op_code == "KECCAK256": 
             if top in self.stack: 
                 self.add_read_access_top(top,pc,self.stack)
-            else:  
-                self.accesses.add_read_access(pc,"mem0") 
+                
+            else: # if 0 in self.constancy.get_analysis_results(pc,-1).get_constants(top) :
+                self.accesses.add_read_access(pc,"mem0")
+                self.accesses.add_read_access(pc,"mem20")
+                # ctopm1 = self.constancy.get_analysis_results(pc,-1).get_constants(top-1)
+                # if 64 in ctopm1:
+                #     self.accesses.add_read_access(pc,"mem32")
+                # elif (32 not in ctopm1) and (64 not in ctopm1):
+                #     self.accesses.add_read_access(pc,TOP)
 
+                
         elif op_code == "CALL" or op_code == "CALLCODE": 
             self.add_read_access_top(top-3,pc,self.stack)
             self.add_write_access_top(top-5,pc,self.stack)
@@ -217,7 +231,7 @@ class MemoryOffsetAbstractState:
         elif op_code.startswith("CREATE"):
             self.add_read_access_top(top-1,pc,self.stack)
 
-        return MemoryOffsetAbstractState(stack_res, stack, memory)
+        return MemoryOffsetAbstractState(stack_res, stack, memory, self.debug)
 
 
     def perform_mstore(self,stackin, memory, top):
@@ -314,6 +328,9 @@ class MemoryOffsetAbstractState:
         if pos in stack: 
             for memaddress in stack[pos]: 
                 self.accesses.add_write_access(pc,memaddress)
+
+    def get_stack (self): 
+        return self.stack
 
     def __repr__(self):
         return (#"pos = " + str(self.stack_pos) + 

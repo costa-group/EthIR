@@ -78,8 +78,10 @@ global num_calls
 num_calls = 0
 global num_loops
 num_loops = 0
-global memory_opt_blocks
-memory_opt_blocks = None
+global opt_blocks
+opt_blocks = None
+global file_info
+file_info = {}
 
 
 class Parameter:
@@ -2473,7 +2475,7 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
 
             new_var_name = gen.gen_arbitrary_var()
 
-            if s1 < 64:
+            if type(s1) == int and s1 < 64:
                 st_arr = (True, st_arr[1])
                 mapping_address_sto[new_var_name] = (st_id, block)
 
@@ -4075,18 +4077,19 @@ def analyze_next_block(
 
 def access_array_sim(opcode_ins, fake_stack):
     end = False
-    # print "BEGIN"
-    # print opcode
-    # print fake_stack
     opcode = opcode_ins.strip()
 
     if opcode == "ADD":
         if len(fake_stack) > 1:
             elem1 = fake_stack.pop(0)
             elem2 = fake_stack.pop(0)
-        else:
+        elif len(fake_stack) == 1:
             elem1 = fake_stack.pop(0)
             elem2 = 0
+        else:
+            elem1 = 0
+            elem2 = 0
+
         if elem1 == 1 or elem2 == 1:
             fake_stack.insert(0, 1)
             end = True
@@ -4548,6 +4551,7 @@ def run(
     opt_bytecode=False,
     mem_analysis=None,
     collapse_cfg=None,
+    compact_clones=False,
 ):
     global g_disasm_file
     global g_source_file
@@ -4565,6 +4569,8 @@ def run(
     global num_loops
     global memory_opt_blocks
     global mem_analysis_flag
+    global opt_blocks
+    global file_info
     mem_analysis_flag = mem_analysis
 
     if disasm_file_init != None:
@@ -4588,13 +4594,12 @@ def run(
     else:
         source_n = source_name
         s_name = source_name
-
-    if hashes is not None:
+    if hashes != None:
         f_hashes = hashes
 
     optimization = opt_bytecode
 
-    if cname is not None:
+    if cname != None:
         print("File: " + str(cname))
 
     if debug:
@@ -4604,6 +4609,7 @@ def run(
     verify = svc.get("verify", False)
 
     begin = dtimer()
+    begin_all = dtimer()
 
     if source_file != None and verify:
         public_fields = get_public_fields(source_file)
@@ -4694,7 +4700,6 @@ def run(
         # print("BASE REF VALUES")
         # print(base_refs)
         # print("\n\n\n")
-
         # TODO: Evaluate Collapse_cfg
 
         if collapse_cfg != "no" and collapse_cfg is not None:
@@ -4760,10 +4765,42 @@ def run(
             else:
                 memory_opt_blocks = memory_result[3].get_optimizable_memory_blocks()
 
+            memory_result = perform_memory_analysis(
+                vertices,
+                cname,
+                source_file,
+                component_of_blocks,
+                function_block_map,
+                mem_analysis,
+                debug_info,
+                compact_clones,
+            )
+
+            opt_blocks = memory_result[3].get_optimizable_blocks()
+
+            file_info[str(cname)] = {}
+            file_info[cname]["num_blocks"] = len(
+                set(list(map(lambda x: int(str(x).split("_")[0]), vertices.keys())))
+            )
+            file_info[cname]["num_blocks_cloning"] = len(list(vertices.keys()))
+            file_info[cname]["optimizable_blocks"] = len(
+                opt_blocks.get_optimizable_blocks()
+            )
+            file_info[cname]["memory_blocks"] = len(
+                list(filter(lambda x: x.get_num_memory_ins() > 0, vertices.values()))
+            )
+            file_info[cname]["memory_blocks2"] = len(
+                list(filter(lambda x: x.get_num_memory_ins() > 1, vertices.values()))
+            )
+            file_info[cname]["storage_blocks"] = len(
+                list(filter(lambda x: x.get_num_storage_ins() > 1, vertices.values()))
+            )
+            # file_info[cname]["mem2sto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
+
             end = dtimer()
 
+            file_info[cname]["time"] = str(end - begin_all)
             print("Memory Analysis: " + str(end - begin) + "s\n")
-
             check_cfg_option(cfg, cname, execution, memory_result)
 
         else:
@@ -4815,10 +4852,10 @@ def run(
     return [], 0
 
 
-def get_memory_opt_block():
-    global memory_opt_blocks
+def get_opt_block():
+    global opt_blocks
 
-    return memory_opt_blocks
+    return opt_blocks
 
 
 def analyze_init(

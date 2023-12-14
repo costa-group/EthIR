@@ -104,7 +104,8 @@ class Analysis:
 
             block_info.process_block()
 
-            self.process_jumps(block_id, block_info.get_output_state())
+            output_state = block_info.get_output_state()
+            self.process_jumps(block_id, output_state)
 
     def process_jumps(self, block_id, input_state):
         basic_block = self.vertices[block_id]
@@ -153,6 +154,8 @@ class Analysis:
         return self.blocks_info[block].get_state_at_instr(int(id) + posrel)
 
     def get_block_results(self, blockid):
+        if str(blockid).find("_") == -1:
+            blockid = int(blockid)
         return self.blocks_info[blockid]
 
     def __repr__(self):
@@ -196,12 +199,12 @@ def perform_memory_analysis(
 
     print("Slots analysis started!")
 
-    MemoryAccesses.init_globals(csource, cname)
+    MemoryAccesses.init_globals(csource, cname, type_analysis)
     accesses = MemoryAccesses({}, {}, {}, {}, vertices)
 
     init_slot = memory_slots.slots_autoid
     SlotsAbstractState.initglobals(accesses)
-    slots = Analysis(vertices, 0, SlotsAbstractState(set({}), {}, {}))
+    slots = Analysis(vertices, 0, SlotsAbstractState(set({}), {}, {}, debug_info))
     slots.analyze()
 
     print("Slots analysis finished!")
@@ -215,16 +218,16 @@ def perform_memory_analysis(
 
     if type_analysis == "baseref":
         MemoryAbstractState.initglobals(slots, accesses)
-        memory = Analysis(vertices, 0, MemoryAbstractState(0, {}, {}))
+        memory = Analysis(vertices, 0, MemoryAbstractState(0, {}, {}, debug_info))
         memory.analyze()
 
     elif type_analysis == "offset":
         MemoryOffsetAbstractState.init_globals(slots, accesses, constants)
-        memory = Analysis(vertices, 0, MemoryOffsetAbstractState(0, {}, {}))
+        memory = Analysis(vertices, 0, MemoryOffsetAbstractState(0, {}, {}, debug_info))
         memory.analyze()
 
     else:
-        raise Exception("Type for memory analysis uncorrect")
+        raise Exception("Type for memory analysis incorrect")
 
     # MemoryAbstractState.initglobals(slots,accesses)
     # memory = Analysis(vertices,0, MemoryAbstractState(0,{},{}))
@@ -236,10 +239,12 @@ def perform_memory_analysis(
     #     print("End Memory results:")
 
     print("Memory accesess analysis finished!\n\n")
-    print(accesses)
+    if debug_info:
+        print(accesses)
 
     #     print("\n\n")
     accesses.process_free_mstores()
+    print("GASOL: Useless accesses found: " + str(accesses.get_useless()))
 
     print("Free memory analyss finished\n\n")
 
@@ -261,10 +266,22 @@ def perform_memory_analysis(
 
     print("********************************** INIT")
     memopt = MemoryOptimizerConnector(
-        accesses.readset, accesses.writeset, vertices, cname
+        accesses.readset, accesses.writeset, vertices, cname, debug_info
     )
-    memopt.process_blocks_memory(debug_info)
-    # memopt.process_blocks_storage(debug_info)
+    memopt.process_blocks_memory()
+    memopt.process_blocks_storage()
+    memopt.add_useless_accesses_info(accesses.get_useless())
+    memopt.process_context_constancy(constants)
+
+    if type_analysis == "offset":
+        memopt.process_context_aliasing(memory)
+
+    print("COMPACT CLONES: " + str(compact_clones))
+
+    if compact_clones:
+        memopt.compact_clones()
+
+    memopt.print_optimization_info()
     print("********************************** END")
 
     return slots, memory, accesses, memopt
