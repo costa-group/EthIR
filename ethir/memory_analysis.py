@@ -186,16 +186,20 @@ def perform_storage_analysis(vertices, debug):
 
 
 def perform_memory_analysis(
-    vertices, cname, csource, compblocks, fblockmap, type_analysis, debug
+    vertices,
+    cname,
+    csource,
+    compblocks,
+    fblockmap,
+    type_analysis,
+    debug,
+    compact_clones,
 ):
     global debug_info
 
     debug_info = debug
 
     set_memory_utils_globals(compblocks, fblockmap)
-
-    if type_analysis == "jump_origin":
-        return perform_storage_analysis(vertices, debug)
 
     print("Slots analysis started!")
 
@@ -216,6 +220,8 @@ def perform_memory_analysis(
 
     print("Starting offset memory analysis " + str(cname))
 
+    jump_origin = None
+
     if type_analysis == "baseref":
         MemoryAbstractState.initglobals(slots, accesses)
         memory = Analysis(vertices, 0, MemoryAbstractState(0, {}, {}, debug_info))
@@ -225,6 +231,9 @@ def perform_memory_analysis(
         MemoryOffsetAbstractState.init_globals(slots, accesses, constants)
         memory = Analysis(vertices, 0, MemoryOffsetAbstractState(0, {}, {}, debug_info))
         memory.analyze()
+    elif type_analysis == "jump_origin":
+        memory = None
+        jump_origin = perform_storage_analysis(vertices, debug)
 
     else:
         raise Exception("Type for memory analysis incorrect")
@@ -284,4 +293,4 @@ def perform_memory_analysis(
     memopt.print_optimization_info()
     print("********************************** END")
 
-    return slots, memory, accesses, memopt
+    return slots, memory, accesses, memopt, jump_origin

@@ -4755,26 +4755,13 @@ def run(
                 function_block_map,
                 mem_analysis,
                 debug_info,
+                compact_clones,
             )
 
             if mem_analysis == "jump_origin":
-                print(f"Jumps: {memory_result}")
-                if set({"*"}) in memory_result:
+                print(f"Jumps: {memory_result[4]}")
+                if set({"*"}) in memory_result[4]:
                     print("WARNING: storage jump directon found")
-
-            else:
-                memory_opt_blocks = memory_result[3].get_optimizable_memory_blocks()
-
-            memory_result = perform_memory_analysis(
-                vertices,
-                cname,
-                source_file,
-                component_of_blocks,
-                function_block_map,
-                mem_analysis,
-                debug_info,
-                compact_clones,
-            )
 
             opt_blocks = memory_result[3].get_optimizable_blocks()
 
