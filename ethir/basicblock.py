@@ -22,6 +22,7 @@ class BasicBlock:
         self.sload_values = {}
         self.sstore_values = {}
         self.calldatavalues = []
+        self.and_values = []
         self.stack_info = []
         self.ret_val = -1
         self.currentId = 0
@@ -75,7 +76,8 @@ class BasicBlock:
         return self.falls_to
 
     def set_jump_target(self, address, cloning=None):
-        if isinstance(address, six.integer_types) and cloning is None:
+
+        if isinstance(address, six.integer_types) and cloning == None :
             self.jump_target = address
         elif cloning:
             self.jump_target = address
@@ -145,10 +147,8 @@ class BasicBlock:
         return self.clone
 
     def compute_cloning(self):
-        if (
-            self.falls_to == None and self.jump_target != 0
-        ):  # case when it is unconditional
-            if len(self.list_jumps) > 1:
+        if self.falls_to == None and self.jump_target != 0: #case when it is unconditional
+            if len(self.list_jumps)>1:
                 self.clone = True
         return self.clone
 
@@ -169,27 +169,12 @@ class BasicBlock:
         return result
 
     def get_num_memory_ins(self):
-        return len(
-            list(
-                filter(
-                    lambda x: x.find("MLOAD") != -1
-                    or (x.find("MSTORE") != -1 and x.find("MSTORE8") == -1),
-                    self.instructions,
-                )
-            )
-        )
+        return len(list(filter(lambda x: x.find("MLOAD")!=-1 or (x.find("MSTORE")!=-1 and x.find("MSTORE8") ==-1), self.instructions)))
 
     def get_num_storage_ins(self):
-        return len(
-            list(
-                filter(
-                    lambda x: x.find("SLOAD") != -1 or x.find("SSTORE") != -1,
-                    self.instructions,
-                )
-            )
-        )
-
-    def _set_mload_values(self, val):
+        return len(list(filter(lambda x: x.find("SLOAD")!=-1 or x.find("SSTORE")!=-1, self.instructions)))
+    
+    def _set_mload_values(self,val):
         self.mload_values = val
 
     def _set_mstore_values(self, val):
@@ -201,10 +186,7 @@ class BasicBlock:
     def _set_sstore_values(self, val):
         self.sstore_values = val
 
-    def _set_caldata_values(self, val):
-        self.calldatavalues = val
-
-    def add_ls_value(self, type_value, key, val):
+    def add_ls_value(self,type_value,key,val):
         if type_value == "mload":
             l = self.mload_values.get(key, -1)
             if l == -1:
@@ -230,12 +212,7 @@ class BasicBlock:
             else:
                 l.append(val)
         else:
-            raise Exception(
-                "Error when adding "
-                + type_value
-                + " value to block: "
-                + str(self.start_address)
-            )
+            raise Exception("Error when adding "+type_value+" value to block: "+ str(self.start))
 
     def get_ret_val(self):
         return self.ret_val
@@ -267,7 +244,7 @@ class BasicBlock:
 
     def _get_concrete_value(self, type_value, cont):
         if type_value == "mload":
-            l = self.mload_values.get(cont, -1)
+            l = self.mload_values.get(cont, [-1])
             if isinstance(l, int):
                 val = l
             elif len(l) == 1:
@@ -276,7 +253,7 @@ class BasicBlock:
                 val = self._check_same_elem(l[1:], str(l[0]))
 
         elif type_value == "mstore":
-            l = self.mstore_values.get(cont, -1)
+            l = self.mstore_values.get(cont, [-1])
             if isinstance(l, int):
                 val = l
             elif len(l) == 1:
@@ -285,7 +262,7 @@ class BasicBlock:
                 val = self._check_same_elem(l[1:], str(l[0]))
 
         elif type_value == "sload":
-            l = self.sload_values.get(cont, -1)
+            l = self.sload_values.get(cont, [-1])
             if isinstance(l, int):
                 val = l
             elif len(l) == 1:
@@ -294,7 +271,7 @@ class BasicBlock:
                 val = self._check_same_elem(l[1:], str(l[0]))
 
         else:  # sstore
-            l = self.sstore_values.get(cont, -1)
+            l = self.sstore_values.get(cont, [-1])
             if isinstance(l, int):
                 val = l
             elif len(l) == 1:
@@ -322,14 +299,16 @@ class BasicBlock:
 
     def set_comes_from(self, l):
         self.comes_from = list(l)
-
-    def update_instr(self):
+        
+    def update_instr(self,mem_analysis = False):
         new_instructions = []
         mload = 0
         mstore = 0
         sstore = 0
         sload = 0
 
+        
+        and_idx = 0
         for instr in self.instructions:
             instr = instr.strip(" ")
             if instr == "CALLDATALOAD":
@@ -347,9 +326,16 @@ class BasicBlock:
                 new_instr = instr + " " + self._get_concrete_value("sload", sload)
                 sload += 1
             elif instr == "SSTORE":
-                new_instr = instr + " " + self._get_concrete_value("sstore", sstore)
-                sstore += 1
-            # For the moment we don't annotate return evm
+                new_instr = instr + " " + self._get_concrete_value("sstore",sstore)
+                sstore+=1
+            elif instr == "AND" and mem_analysis:
+                # print("AQUI")
+                # print(self.start)
+                # print(self.instructions)
+                # print(self.and_values)
+                new_instr = instr+ " "+self.and_values[and_idx] if self.and_values[and_idx]!="unknownVal" else instr
+                and_idx+=1
+            #For the moment we don't annotate return evm 
             # elif instr == "RETURN":
             #     new_instr = instr + " " + str(self.ret_val)
             else:
@@ -448,12 +434,21 @@ class BasicBlock:
         if p not in self.path:
             end = list(map(lambda x: x[1], p))
             self.path.append(end)
-
     def set_paths(self, p):
         self.path = p
 
+    def add_and_value(self, val):
+        self.and_values.append(val)
+
+    def set_and_values(self, values):
+        self.and_values = values
+
+    def get_and_values(self):
+        return self.and_values
+        
     def copy(self):
-        new_obj = BasicBlock(self.start, self.end)
+        
+        new_obj =  BasicBlock(self.start, self.end)
         new_obj.set_instructions(list(self.instructions))
         new_obj.set_jump_target(self.jump_target, True)
 
@@ -466,6 +461,7 @@ class BasicBlock:
         new_obj._set_sload_values({})
         new_obj._set_sstore_values({})
         new_obj.set_calldataload_values(list(self.calldatavalues))
+        new_obj.set_and_values([])
         new_obj.set_comes_from([])
         new_obj.set_block_type(self.type)
         new_obj.set_depth_level(self.depth)

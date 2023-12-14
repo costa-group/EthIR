@@ -529,7 +529,7 @@ def cfg_dot(it,block_input,name = False,cloned = False):
     f.close()
 
 
-def cfg_memory_dot(it,block_input,memory_sets,name = False,cloned = False):
+def cfg_memory_dot(cfg_type,it,block_input,memory_sets,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
     if "costabs" not in os.listdir(global_params_ethir.tmp_path):
@@ -553,7 +553,7 @@ def cfg_memory_dot(it,block_input,memory_sets,name = False,cloned = False):
             name = global_params_ethir.costabs_path+name+"_cloned.dot"
         
     f = open(name,"w")
-    tree = build_tree_memory(vert[0],[("st",0)],block_input,memory_sets)
+    tree = build_tree_memory(vert[0],[("st",0)],block_input,cfg_type,memory_sets)
     tree.generatedot(f)
     f.close()
 

@@ -15,7 +15,9 @@ import six
 from collections import namedtuple
 from cfg_collapser import Cfg_collapser
 import gasol
-from memory_analysis import perform_memory_analysis, perform_storage_analysis
+from memory.jump_origin_analysis_caller import perform_jump_origin_analysis
+from memory.memory_analysis import perform_memory_analysis
+from storage.storage_analysis import perform_storage_analysis
 
 from vargenerator import *
 from basicblock import BasicBlock
@@ -23,40 +25,10 @@ import global_params_ethir
 
 import rbr
 from clone import compute_cloning
-from utils import (
-    cfg_dot,
-    cfg_memory_dot,
-    write_cfg,
-    update_map,
-    get_public_fields,
-    getLevel,
-    update_sstore_map,
-    correct_map_fields1,
-    get_push_value,
-    get_initial_block_address,
-    check_graph_consistency,
-    find_first_closing_parentheses,
-    check_if_same_stack,
-    is_integer,
-    isReal,
-    isAllReal,
-    to_symbolic,
-    isSymbolic,
-    ceil32,
-    custom_deepcopy,
-    to_unsigned,
-    get_uncalled_blocks,
-    getKey,
-    compute_stack_size,
-    to_signed,
-)
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed
 from opcodes import get_opcode
-from graph_scc import Graph_SCC, get_entry_all, filter_nested_scc
-from pattern import (
-    look_for_string_pattern,
-    check_sload_fragment_pattern,
-    sstore_fragment,
-)
+from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
+from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
 
 log = logging.getLogger(__name__)
 
@@ -379,6 +351,8 @@ def initGlobalVars():
     global storage_jumps
     storage_jumps = []
 
+    global is_mem_analysis
+    is_mem_analysis = False
 
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -441,19 +415,16 @@ def count_daos():
     with open(g_disasm_file, "r") as disasm_file:
         lines = disasm_file.readlines()[1:]
 
-        jumps = list(
-            filter(lambda x: x.find("JUMP") != -1 and x.find("JUMPI") == -1, lines)
-        )
-        num_jumps += len(jumps)
-        jumpis = list(filter(lambda x: x.find("JUMPI") != -1, lines))
-        num_jumpis += len(jumpis)
-        sloads = list(filter(lambda x: x.find("SLOAD") != -1, lines))
-        num_sloads += len(sloads)
-        sstores = list(filter(lambda x: x.find("SSTORE") != -1, lines))
-        num_sstores += len(sstores)
-        calls = list(filter(lambda x: x.find("CALL") != -1, lines))
-        num_calls += len(calls)
-
+        jumps = list(filter(lambda x: x.find("JUMP")!=-1 and x.find("JUMPI")==-1, lines))
+        num_jumps+=len(jumps)
+        jumpis = list(filter(lambda x: x.find("JUMPI")!=-1, lines))
+        num_jumpis+=len(jumpis)
+        sloads = list(filter(lambda x: x.find("SLOAD")!=-1, lines))
+        num_sloads+=len(sloads)
+        sstores = list(filter(lambda x: x.find("SSTORE")!=-1, lines))
+        num_sstores+=len(sstores)
+        calls = list(filter(lambda x: x.find("CALL")!=-1, lines))
+        num_calls+=len(calls)
 
 def print_daos():
     print("NUM JUMP: " + str(num_jumps))
@@ -514,12 +485,6 @@ def build_cfg_and_analyze(evm_version):
 
                     block_destination: BasicBlock = vertices.get(destination)
                     block_destination.add_origin(origin)
-                    # visited_blocks.append(destination)
-                    # if origin not in edges:
-                    #     edges[origin] = [destination]
-                    # else:
-                    #     edges[origin].append(destination)
-
                     for b in vertices:
                         edges[b] = []
 
@@ -554,6 +519,9 @@ def build_cfg_and_analyze(evm_version):
     #     print "Is Graph consistent?"
     #     print check_graph_consistency(vertices)
 
+def analyze_storage_jumps():
+    global storage_jumps
+    storage_jumps = perform_jump_origin_analysis(vertices, debug_info)
 
 # Added by Pablo Gordillo
 def update_block_info():
@@ -871,7 +839,8 @@ def construct_bb():
 
     sorted_addresses = sorted(instructions.keys())
     size = len(sorted_addresses)
-    for key, end_address in end_ins_dict.items():
+    for key in end_ins_dict:
+        end_address = end_ins_dict[key]
         block = BasicBlock(key, end_address)
 
         if key not in instructions:
@@ -889,9 +858,6 @@ def construct_bb():
         look_for_string_pattern(block)
 
 
-def analyze_storage_jumps():
-    global storage_jumps
-    storage_jumps = perform_storage_analysis(vertices, debug_info)
 
 
 def check_div_invalid_pattern(block, path):
@@ -998,22 +964,8 @@ def add_falls_to():
 
 
 def get_init_global_state(path_conditions_and_vars):
-    global_state = {"balance": {}, "pc": 0}
-    init_is = (
-        init_ia
-    ) = (
-        deposited_value
-    ) = (
-        sender_address
-    ) = (
-        receiver_address
-    ) = (
-        gas_price
-    ) = (
-        origin
-    ) = (
-        currentCoinbase
-    ) = currentNumber = currentDifficulty = currentGasLimit = callData = None
+    global_state = {"balance" : {}, "pc": 0}
+    init_is = init_ia = deposited_value = sender_address = receiver_address = gas_price = origin = currentCoinbase = currentNumber = currentDifficulty = currentGasLimit = callData = None
 
     if global_params_ethir.INPUT_STATE:
         with open("state.json") as f:
@@ -1124,7 +1076,7 @@ def updateCallDataValues(block, var_name):
     global calldataload_values
 
     laux = calldataload_values[block]
-    l = laux + [var_name]
+    l = [var_name]+laux
     calldataload_values[block] = l
 
 
@@ -1286,17 +1238,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call, level, path):
     mem_access = False
 
     bl = vertices[block]
-
-    # print("--------")
-    # print("BLOCK"+str(block))
-    # # print(stack)
-    # print(len(stack))
-    # print("--------")
     instr_idx = 0
 
     # consumed_elems = compute_elements(block_ins)
     # init_stack = len(stack)
-
     store_useless_block = False
     load_useless_block = False
     maintain_variable = True
@@ -2301,14 +2246,30 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
                 second_aux = int(second_aux)
 
                 computed = first_aux & second_aux
-
+                
+                vertices[block].add_and_value("unknownVal")
+                
                 if computed == first_aux:
                     computed = first
                 elif computed == second_aux:
                     computed = second
+                
             else:
-                computed = "AND(" + str(first) + "," + str(second) + ")"
-            # computed = simplify(computed) if is_expr(computed) else computed
+                if not is_mem_analysis:
+                    computed = "AND("+str(first)+","+str(second)+")"
+                else:
+                
+                    if (first_aux == 2**160-1 and not isReal(second_aux)):
+                        vertices[block].add_and_value(second_aux)
+                        computed = second_aux
+                    elif (second_aux == 2**160-1 and not isReal(first_aux)):
+                        vertices[block].add_and_value(first_aux)
+                        computed = first_aux
+                    else:
+                        vertices[block].add_and_value("unknownVal")
+                        computed = "AND("+str(first)+","+str(second)+")"
+                        
+            #computed = simplify(computed) if is_expr(computed) else computed
             stack.insert(0, computed)
         else:
             raise ValueError("STACK underflow")
@@ -2549,7 +2510,7 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
             position = get_push_value(position)
             new_var_name = ""
             if g_src_map:
-                source_code = g_src_map.get_source_code(global_state["pc"] - 1)
+                source_code = g_src_map.get_source_code(global_state['pc'] - 1)
                 if source_code.startswith("function") and isReal(position):
                     # Delete commment blocks
                     # print("Source code: ")
@@ -2590,17 +2551,9 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
                         params_list_aux = []
                         for param in params_list:
                             comments = param.split("\n")
-                            params_list_aux += list(
-                                filter(
-                                    lambda x: (not x.strip().startswith("//"))
-                                    and x != "",
-                                    comments,
-                                )
-                            )
+                            params_list_aux+= list(filter(lambda x: (not x.strip().startswith("//")) and x != "",comments))
 
-                        params_list_aux = list(
-                            filter(lambda x: x.strip() != "", params_list_aux)
-                        )
+                        params_list_aux = list(filter(lambda x: x.strip() != "",params_list_aux))
                         # print("Params list aux")
                         # print params_list_aux
 
@@ -2655,6 +2608,7 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
                         new_var_name = param_abs[1]
                     else:
                         new_var_name = gen.gen_data_var(position)
+                    
             else:
                 new_var_name = (
                     "CALLDATALOAD(" + str(position) + ")"
@@ -2906,6 +2860,12 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
 
         stack_sym.insert(0, "DIFFICULTY")
 
+    elif opcode == "PREVRANDAO":  # information from block header
+        global_state["pc"] = global_state["pc"] + 1
+
+        stack.insert(0,gen.gen_prevrandao_var())
+        stack_sym.insert(0,"PREVRANDAO")
+        
     elif opcode == "GASLIMIT":  # information from block header
         global_state["pc"] = global_state["pc"] + 1
         stack.insert(0, global_state["currentGasLimit"])
@@ -2972,20 +2932,16 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
                 memory_usage[address] = "null_val"  # new_base_ref
                 val = "null_val"
             else:
-                val = memory_usage.get(address, "mem(" + str(address) + ")")
-            # Added by Pablo Gordillo
-            vertices[block].add_ls_value("mload", ls_cont[0], address)
-            ls_cont[0] += 1
-            # stack.insert(0,val)
+                val = memory_usage.get(address,"mem("+str(address)+")")
+            #Added by Pablo Gordillo
+            vertices[block].add_ls_value("mload",ls_cont[0],address)
+            ls_cont[0]+=1
+            #stack.insert(0,val)
 
-            already_contained = memory_sets.get(
-                "MLOAD:" + str(block) + ":" + str(instr_index), []
-            )
-            already_contained.append((address, val))
-            memory_sets[
-                "MLOAD:" + str(block) + ":" + str(instr_index)
-            ] = already_contained
-
+            already_contained = memory_sets.get("MLOAD:"+str(block)+":"+str(instr_index),[])
+            already_contained.append((address,val))
+            memory_sets["MLOAD:"+str(block)+":"+str(instr_index)] = already_contained
+            
             # print("MLOAD")
             # print(address)
 
@@ -3069,13 +3025,9 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
             # print(memory_usage)
             memory_usage[stored_address] = stored_value
 
-            already_contained = memory_sets.get(
-                "MSTORE:" + str(block) + ":" + str(instr_index), []
-            )
-            already_contained.append((stored_address, stored_value))
-            memory_sets[
-                "MSTORE:" + str(block) + ":" + str(instr_index)
-            ] = already_contained
+            already_contained = memory_sets.get("MSTORE:"+str(block)+":"+str(instr_index),[])
+            already_contained.append((stored_address,stored_value))
+            memory_sets["MSTORE:"+str(block)+":"+str(instr_index)] = already_contained
 
             # print("MSTORE")
             # print(stored_address)
@@ -3212,12 +3164,8 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
             if isReal(position) and position in global_state["Ia"]:
                 value = global_state["Ia"][position]
                 stack.insert(0, value)
-
-            elif (
-                global_params_ethir.USE_GLOBAL_STORAGE
-                and isReal(position)
-                and position not in global_state["Ia"]
-            ):
+                
+            elif global_params_ethir.USE_GLOBAL_STORAGE and isReal(position) and position not in global_state["Ia"]:
                 value = data_source.getStorageAt(position)
                 global_state["Ia"][position] = value
                 stack.insert(0, value)
@@ -3375,33 +3323,20 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
             push_address = stack.pop(0)
 
             first_sym = stack_sym.pop(0)
-
-            found = False
-            if storage_jumps != []:
-                i = 0
-                while i < len(storage_jumps) and not found:
-                    o, s = storage_jumps[i]
-                    if o == block:
-                        target_address = list(s)[0]
-                        push_block = "SLOAD"
-                        found = True
-                        jump_addresses.append(target_address)
-                    i += 1
-
-            if not found:
-                if type(push_address) == tuple:
-                    try:
-                        target_address, push_block = push_address
-                    except:
-                        vertices[block].set_block_type("terminal")
-                        target_address, push_block = push_address  # hack
-                    jump_addresses.append(target_address)
-                else:
+            
+            if (type(push_address) == tuple):
+                try:
+                    target_address,push_block = push_address
+                except:
                     vertices[block].set_block_type("terminal")
-                    raise ValueError("Invalid jump address")
-            # Define push-jump relations for cloning
-            rel = push_jump_relations.get(block, {})
-            addresses = rel.get(target_address, [])
+                    target_address,push_block = push_address #hack
+                jump_addresses.append(target_address)
+            else:
+                vertices[block].set_block_type("terminal")
+                raise ValueError("Invalid jump address")
+            #Define push-jump relations for cloning
+            rel = push_jump_relations.get(block,{})
+            addresses = rel.get(target_address,[])
             if addresses != []:
                 if push_block not in addresses:
                     rel[target_address] = addresses.append(push_block)
@@ -3933,7 +3868,15 @@ def sym_exec_ins(params, block, instr, func_call, stack_first, instr_index):
         new_var_name = gen.gen_balance_var()
         stack.insert(0, new_var_name)
 
-        stack_sym.insert(0, "SELFBALANCE")
+        stack_sym.insert(0,"SELFBALANCE")
+
+    elif opcode == "BASEFEE":
+        global_state["pc"] = global_state["pc"] + 1
+        new_var_name = gen.gen_basefee_var()
+        stack.insert(0, new_var_name)
+
+        stack_sym.insert(0,"BASEFEE")
+
 
     elif opcode == "EXTCODEHASH":
         if len(stack) > 0:
@@ -3991,13 +3934,11 @@ def analyze_next_block(
 
             # We filter all nodes with same beginning, and check if there's one of those
             # nodes with same stack. Notice that one block may contain several stacks
-
-            if (block, successor) not in repeated:
-                update_matching_successor(
-                    successor, same_stack_successors[0], block, jump_type
-                )
-                repeated.append((block, same_stack_successors[0]))
-                # if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
+            
+            if (block,successor) not in repeated:
+                update_matching_successor(successor, same_stack_successors[0], block, jump_type)
+                repeated.append((block,same_stack_successors[0]))
+            # if ("MLOAD" in ins_new or "MSTORE" in ins_new or "SLOAD" in ins_new or "SSTORE" in ins_new) and successor not in memory_unknown:
                 # print "ENTRO"
                 # print successor
 
@@ -4057,9 +3998,7 @@ def analyze_next_block(
         path.append((block, successor))
         old_mem = dict(memory_usage)
         try:
-            sym_exec_block(
-                new_params, successor, block, depth, func_call, current_level + 1, path
-            )
+            sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
         except (ValueError, RuntimeError):
             if debug_info:
                 print("Unfeasible path")
@@ -4390,18 +4329,7 @@ def generate_saco_config_file(cname):
     with open(name, "w") as f:
         milist = list(function_block_map.items())
         # elems = list(map(lambda (x,y): "("+process_argument_function(x)+";"+str(y[0])+";"+str(y[1])+")", milist))
-        elems = list(
-            map(
-                lambda x: "("
-                + process_argument_function(x[0])
-                + ";"
-                + str(x[0][0])
-                + ";"
-                + str(x[0][1])
-                + ")",
-                milist,
-            )
-        )
+        elems = list(map(lambda x: "("+process_argument_function(x[0])+";"+str(x[1][0])+";"+str(x[1][1])+")", milist))
         elems2write = "\n".join(elems)
         f.write(elems2write)
     f.close()
@@ -4503,7 +4431,7 @@ def check_cfg_option(
                 write_cfg(execution, vertices, name=cname, cloned=True)
                 cfg_dot(execution, vertices, name=cname, cloned=True)
 
-    elif cfg == "memory":
+    elif cfg == "memory" or cfg == "storage":
         if cname == None:
             write_cfg(execution, vertices, name=cname)
             cfg_memory_dot(execution, vertices, memory_analysis)
@@ -4525,7 +4453,6 @@ def get_scc(edges):
         scc = get_scc(new_edges)
         scc_multiple.update(scc)
         return scc_multiple
-
 
 def run(
     disasm_file=None,
@@ -4551,6 +4478,7 @@ def run(
     opt_bytecode=False,
     mem_analysis=None,
     collapse_cfg=None,
+    storage_analysis=None,
     compact_clones=False,
 ):
     global g_disasm_file
@@ -4571,8 +4499,8 @@ def run(
     global mem_analysis_flag
     global opt_blocks
     global file_info
+    global is_mem_analysis
     mem_analysis_flag = mem_analysis
-
     if disasm_file_init != None:
         analyze_init(
             disasm_file_init, source_file, source_map_init, source_map, evm_version
@@ -4583,12 +4511,12 @@ def run(
     g_src_map = source_map
 
     initGlobalVars()
-
+    
     source_info = {}
 
     name = cname
-
-    if source_name is not None:
+    
+    if source_name != None:
         source_n = source_name
         s_name = source_name.split("/")[-1].split(".")[0]
     else:
@@ -4596,7 +4524,6 @@ def run(
         s_name = source_name
     if hashes != None:
         f_hashes = hashes
-
     optimization = opt_bytecode
 
     if cname != None:
@@ -4604,6 +4531,8 @@ def run(
 
     if debug:
         debug_info = debug
+
+    is_mem_analysis = mem_analysis or storage_analysis
 
     invalid_option = svc.get("invalid", False)
     verify = svc.get("verify", False)
@@ -4700,8 +4629,6 @@ def run(
         # print("BASE REF VALUES")
         # print(base_refs)
         # print("\n\n\n")
-        # TODO: Evaluate Collapse_cfg
-
         if collapse_cfg != "no" and collapse_cfg is not None:
             begin = dtimer()
 
@@ -4744,7 +4671,14 @@ def run(
 
         memory_result = []
 
-        if mem_analysis != None:
+        
+        if mem_analysis == "jump_origin":
+            memory_result = perform_jump_origin_analysis(vertices, debug_info)
+            print(f"Jumps: {memory_result}")
+            if set({"*"}) in memory_result:
+                print("WARNING: storage jump directon found")
+
+        elif mem_analysis != None:
             begin = dtimer()
 
             memory_result = perform_memory_analysis(
@@ -4758,10 +4692,6 @@ def run(
                 compact_clones,
             )
 
-            if mem_analysis == "jump_origin":
-                print(f"Jumps: {memory_result[4]}")
-                if set({"*"}) in memory_result[4]:
-                    print("WARNING: storage jump directon found")
 
             opt_blocks = memory_result[3].get_optimizable_blocks()
 
@@ -4770,47 +4700,49 @@ def run(
                 set(list(map(lambda x: int(str(x).split("_")[0]), vertices.keys())))
             )
             file_info[cname]["num_blocks_cloning"] = len(list(vertices.keys()))
-            file_info[cname]["optimizable_blocks"] = len(
-                opt_blocks.get_optimizable_blocks()
-            )
-            file_info[cname]["memory_blocks"] = len(
-                list(filter(lambda x: x.get_num_memory_ins() > 0, vertices.values()))
-            )
-            file_info[cname]["memory_blocks2"] = len(
-                list(filter(lambda x: x.get_num_memory_ins() > 1, vertices.values()))
-            )
-            file_info[cname]["storage_blocks"] = len(
-                list(filter(lambda x: x.get_num_storage_ins() > 1, vertices.values()))
-            )
+            file_info[cname]["optimizable_blocks"] = len(opt_blocks.get_optimizable_blocks())
+            file_info[cname]["memory_blocks"] = len(list(filter(lambda x: x.get_num_memory_ins()>0, vertices.values())))
+            file_info[cname]["memory_blocks2"] = len(list(filter(lambda x: x.get_num_memory_ins()>1, vertices.values())))
+            file_info[cname]["storage_blocks"] = len(list(filter(lambda x: x.get_num_storage_ins()>1, vertices.values())))
             # file_info[cname]["mem2sto_blocks"]= len(list(filter(lambda x: x.get_num_memory_ins()>1 and x.get_num_storage_ins()>1, vertices.values())))
 
             end = dtimer()
+            file_info[cname]["time"] = str(end-begin_all);
+            
+            print("Memory Analysis: "+str(end-begin)+"s\n")
+            check_cfg_option(cfg,cname,execution, memory_result)
 
-            file_info[cname]["time"] = str(end - begin_all)
-            print("Memory Analysis: " + str(end - begin) + "s\n")
-            check_cfg_option(cfg, cname, execution, memory_result)
+        elif storage_analysis:
+            begin = dtimer()
+
+            storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones, scc)
+            _,storage_accesses,sracold, srafinal = storage_result
+            check_cfg_option(cfg,cname,execution, storage_result)
+            generate_storage_saco_config_file(cname,sracold, srafinal)
+
+            end = dtimer()
+            print("Storage Analysis finished in "+str(end-begin)+"s\n")
 
         else:
-            check_cfg_option(cfg, cname, execution)
-
+            storage_accesses = None
+            check_cfg_option(cfg,cname,execution)
+            
         if mem_analysis == None:
-            rbr_rules = rbr.evm2rbr_compiler(
-                blocks_input=vertices,
-                stack_info=stack_h,
-                block_unbuild=blocks_to_create,
-                saco_rbr=saco,
-                c_rbr=cfile,
-                exe=execution,
-                contract_name=cname,
-                component=component_of_blocks,
-                scc=scc,
-                svc_labels=svc,
-                gotos=go,
-                fbm=f2blocks,
-                source_info=source_info,
-                mem_abs=(mem_abs, storage_arrays, mapping_address_sto, val_mem40),
-                sto=sto,
-            )
+            rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
+                                             stack_info = stack_h, 
+                                             block_unbuild = blocks_to_create,
+                                             saco_rbr = saco,
+                                             c_rbr = cfile, 
+                                             exe = execution, 
+                                             contract_name = cname, 
+                                             component = component_of_blocks,
+                                             scc = scc,svc_labels = svc,
+                                             gotos = go,
+                                             fbm = f2blocks, 
+                                             source_info = source_info,
+                                             mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
+                                             sto = sto, 
+                                             storage_analysis = storage_accesses)
         else:
             print("*************************************************************")
         # gasol.print_methods(rbr_rules,source_map,cname)
@@ -5031,14 +4963,38 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
                         + str(nLineEnd)
                     )
             except:
-                if a[0].find("baseref") == -1:
-                    print(
-                        "[NO MEMBASE]: "
-                        + str(elem)
-                        + " -- "
-                        + source_map.parent_filename
-                        + " "
-                        + nLineBeg
-                        + "-"
-                        + nLineEnd
-                    )
+                if a[0].find("baseref")==-1:
+                    print("[NO MEMBASE]: "+str(elem) + " -- " + source_map.parent_filename + " " + nLineBeg + "-" + nLineEnd)
+
+                    
+def generate_storage_saco_config_file(cname, sracold, srafinal):
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
+        
+    if cname == None:
+        name = global_params_ethir.costabs_path+"config_methods.storage"
+    else:
+        name = global_params_ethir.costabs_path+cname+".storage"
+
+    with open(name,"w") as f:
+        milist = list(function_block_map.items())
+        elems = list()
+        for elem in milist: 
+            method = process_argument_function(elem[0])
+            id = elem[1][0]
+            if str(id).find("_")==-1:
+                id = int(elem[1][0])
+            else:
+                id = str(id)
+            if id not in srafinal: 
+                nfinal = 0
+            else:
+                nfinal = srafinal[id]
+            if id not in sracold: 
+                ncold = 0
+            else:
+                ncold = sracold[id]
+            elems.append("("+method+";"+ str(ncold)+";"+str(nfinal)+")")
+        elems2write = "\n".join(elems)
+        f.write(elems2write)
+    f.close()

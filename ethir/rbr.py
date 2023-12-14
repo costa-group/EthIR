@@ -48,7 +48,7 @@ def init_globals():
 
     global opcodes40
     opcodes40 = ["BLOCKHASH", "COINBASE", "TIMESTAMP", "NUMBER",
-                 "DIFFICULTY", "GASLIMIT","SELFBALANCE","CHAINID"]
+                 "DIFFICULTY","PREVRANDAO", "GASLIMIT","SELFBALANCE","CHAINID","BASEFEE"]
 
     global opcodes50
     opcodes50 = ["POP", "MLOAD", "MSTORE", "MSTORE8", "SLOAD",
@@ -677,6 +677,10 @@ def translateOpcodes40(opcode, index_variables,block):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = difficulty"
         update_bc_in_use("difficulty",block)
+    elif opcode == "PREVRANDAO":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = prevrandao"
+        update_bc_in_use("prevrandao",block)
     elif opcode == "GASLIMIT":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gaslimit"
@@ -689,6 +693,10 @@ def translateOpcodes40(opcode, index_variables,block):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = chainid"
         update_bc_in_use("chainid",block)
+    elif opcode == "BASEFEE":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = basefee"
+        update_bc_in_use("basefee",block)
 
     else:
         instr = "Error opcodes40: "+opcode
@@ -1158,7 +1166,7 @@ They are remove when displaying.
 -nop is True when generating nop annotations with the opcode. False otherwise.
 -index_variables refers to the top stack index. int.
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
+def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_sto_analysis):
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -1215,8 +1223,17 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars):
         value = "Error. No opcode matchs"
         index_variables = variables
         rule.add_instr(value)
-
-    rule.add_instr("nop("+opcode_name+")")
+        
+    if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):
+        r = results_sto_analysis.pop(0)
+        if "*" in r:
+            new_opcode_name = opcode_name+"COLD"
+        else:
+            new_opcode_name = opcode_name+"WARM"
+        rule.add_instr("nop("+new_opcode_name+")")
+        
+    else:
+        rule.add_instr("nop("+opcode_name+")")
 
     return index_variables
 
@@ -1251,8 +1268,6 @@ Otherwise we have to convert it into a conditional jump.
  jump rule generated. If it is a jump, rule1 = rule2 = None.
 '''
 def create_uncond_jump(block_id,variables,jumps):
-    print(jumps)
-    print(block_id)
     if (len(jumps)>1):
         rule1, rule2 = create_uncond_jumpBlock(block_id,variables,jumps)
         stack_variables = get_stack_variables(variables)
@@ -1440,7 +1455,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block,state_vars):
+def compile_block(block,state_vars, results_sto_analysis = []):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1493,7 +1508,7 @@ def compile_block(block,state_vars):
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
 
-        elif l_instr[cont] == "JUMP" and block.get_block_type == "unconditional":
+        elif l_instr[cont] == "JUMP" and block.get_block_type() == "unconditional":
             rule1,rule2,instr = create_uncond_jump(block.get_start_address(),index_variables,block.get_list_jumps())
 
             if rule1:
@@ -1506,7 +1521,7 @@ def compile_block(block,state_vars):
             rule.add_instr("nop(JUMP)")
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),True,state_vars)
+                                                   index_variables,block.get_list_jumps(),True,state_vars,results_sto_analysis)
             has_lm40 = has_lm40 or is_mload40(l_instr[cont])
             has_sm40 = has_sm40 or is_mstore40(l_instr[cont])
             
@@ -1672,7 +1687,7 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None,mem_abs = None,sto = None):
+def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None,mem_abs = None,sto = None,storage_analysis = None):
     global rbr_blocks
     global stack_index
     global vertices
@@ -1720,9 +1735,15 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
             blocks = sorted(blocks_dict.values(), key = getKey)
             mem_creation = []
             for block in blocks:
+
+                if storage_analysis != None:
+                    results_sto_analysis = storage_analysis.get_cfg_info(str(block.get_start_address()))
+                else:
+                    results_sto_analysis = []
+
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
-                rule, mem_result = compile_block(block,mapping_state_variables)
+                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis)
 
                 if mem_result>0:
                     mem_creation.append((block.get_start_address(),mem_result))

@@ -20,15 +20,13 @@ import sys
 
 sys.setrecursionlimit(5000)
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/analysis/")
+sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/memory/")
+sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/storage/")
 
 def cmd_exists(cmd):
-    return (
-        subprocess.call(
-            "type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        == 0
-    )
-
+    return subprocess.call("type " + cmd, shell=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 def compare_versions(version1, version2):
     def normalize(v):
@@ -214,20 +212,19 @@ def analyze_disasm_bytecode():
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
 
-        result, exit_code = symExec.run(
-            disasm_file=args.source,
-            cfg=args.control_flow_graph,
-            saco=args.saco,
-            debug=args.debug,
-            evm_version=evm_version_modifications,
-            cfile=args.cfile,
-            svc=svc_options,
-            go=c_translation_opt,
-            mem_abs=args.mem_interval,
-            sto=args.storage_arrays,
-            mem_analysis=args.mem_analysis,
-            compact_clones=args.compact_clones,
-        )
+        result, exit_code = symExec.run(disasm_file=args.source,
+                                        cfg = args.control_flow_graph,
+                                        saco = args.saco,
+                                        debug = args.debug,
+                                        evm_version = evm_version_modifications,
+                                        cfile = args.cfile,
+                                        svc=svc_options,
+                                        go = c_translation_opt,
+                                        mem_abs = args.mem_interval,
+                                        sto=args.storage_arrays, 
+                                        mem_analysis = args.mem_analysis, 
+                                        storage_analysis = args.storage_analysis, 
+                                        compact_clones = args.compact_clones)
     else:
         exit_code = -1
         print(
@@ -264,22 +261,19 @@ def analyze_bytecode():
         c_translation_opt = {}
         c_translation_opt["gotos"] = args.goto
         c_translation_opt["args"] = args.args
-
-        result, exit_code = symExec.run(
-            disasm_file=inp["disasm_file"],
-            cfg=args.control_flow_graph,
-            saco=args.saco,
-            debug=args.debug,
-            evm_version=evm_version_modifications,
-            cfile=args.cfile,
-            svc=svc_options,
-            go=c_translation_opt,
-            mem_abs=args.mem_interval,
-            sto=args.storage_arrays,
-            mem_analysis=args.mem_analysis,
-            compact_clones=args.compact_clones,
-        )
-
+        result, exit_code = symExec.run(disasm_file=inp['disasm_file'],
+                                        cfg = args.control_flow_graph,
+                                        saco = args.saco,
+                                        debug = args.debug,
+                                        evm_version = evm_version_modifications,
+                                        cfile = args.cfile,
+                                        svc=svc_options,
+                                        go = c_translation_opt,
+                                        mem_abs = args.mem_interval,
+                                        sto=args.storage_arrays,
+                                        mem_analysis = args.mem_analysis, 
+                                        storage_analysis = args.storage_analysis, 
+                                        compact_clones = args.compact_clones)
         helper.rm_tmp_files()
     else:
         exit_code = -1
@@ -314,29 +308,26 @@ def run_solidity_analysis(inputs, hashes):
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
         try:
-            result, return_code = symExec.run(
-                disasm_file=inp["disasm_file"],
-                disasm_file_init=inp["disasm_file_init"],
-                source_map=inp["source_map"],
-                source_file=inp["source"],
-                cfg=args.control_flow_graph,
-                saco=args.saco,
-                execution=0,
-                cname=inp["c_name"],
-                hashes=function_names,
-                debug=args.debug,
-                evm_version=evm_version_modifications,
-                cfile=args.cfile,
-                svc=svc_options,
-                go=c_translation_opt,
-                mem_abs=args.mem_interval,
-                sto=args.storage_arrays,
-                opt_bytecode=(args.optimize_run or args.via_ir),
-                mem_analysis=args.mem_analysis,
-                collapse_cfg=args.collapse_cfg,
-                compact_clones=args.compact_clones,
-            )
-
+            result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                              disasm_file_init = inp['disasm_file_init'], 
+                                              source_map=inp['source_map'], 
+                                              source_file=inp['source'],
+                                              cfg = args.control_flow_graph,
+                                              saco = args.saco,execution = 0, 
+                                              cname = inp["c_name"],
+                                              hashes = function_names,
+                                              debug = args.debug,
+                                              evm_version = evm_version_modifications,
+                                              cfile = args.cfile,svc=svc_options,
+                                              go = c_translation_opt,
+                                              mem_abs = args.mem_interval,
+                                              sto=args.storage_arrays,
+                                              opt_bytecode = (args.optimize_run or args.via_ir), 
+                                              collapse_cfg=args.collapse_cfg,
+                                              mem_analysis = args.mem_analysis, 
+                                              storage_analysis = args.storage_analysis, 
+                                              compact_clones = args.compact_clones)
+            
         except Exception as e:
             traceback.print_exc()
 
@@ -353,31 +344,30 @@ def run_solidity_analysis(inputs, hashes):
         for inp in inputs:
             # print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
-            # logging.info("contract %s:", inp['contract'])
-            try:
-                result, return_code = symExec.run(
-                    disasm_file=inp["disasm_file"],
-                    disasm_file_init=inp["disasm_file_init"],
-                    source_map=inp["source_map"],
-                    source_file=inp["source"],
-                    cfg=args.control_flow_graph,
-                    saco=args.saco,
-                    execution=i,
-                    cname=inp["c_name"],
-                    hashes=function_names,
-                    debug=args.debug,
-                    evm_version=evm_version_modifications,
-                    cfile=args.cfile,
-                    svc=svc_options,
-                    go=c_translation_opt,
-                    mem_abs=args.mem_interval,
-                    sto=args.storage_arrays,
-                    opt_bytecode=(args.optimize_run or args.via_ir),
-                    mem_analysis=args.mem_analysis,
-                    collapse_cfg=args.collapse_cfg,
-                    compact_clones=args.compact_clones,
-                )
-
+            #logging.info("contract %s:", inp['contract'])
+            try:            
+                result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                                  disasm_file_init = inp['disasm_file_init'], 
+                                                  source_map=inp['source_map'], 
+                                                  source_file=inp['source'],
+                                                  cfg = args.control_flow_graph,
+                                                  saco = args.saco,
+                                                  execution = i,
+                                                  cname = inp["c_name"],
+                                                  hashes = function_names,
+                                                  debug = args.debug,
+                                                  evm_version = evm_version_modifications,
+                                                  cfile = args.cfile,
+                                                  svc=svc_options,
+                                                  go = c_translation_opt,
+                                                  mem_abs = args.mem_interval,
+                                                  sto=args.storage_arrays,
+                                                  opt_bytecode = (args.optimize_run or args.via_ir), 
+                                                  mem_analysis = args.mem_analysis, 
+                                                  storage_analysis = args.storage_analysis, 
+                                                  collapse_cfg=args.collapse_cfg,
+                                                  compact_clones = args.compact_clones)
+                
             except Exception as e:
                 traceback.print_exc()
                 if len(e.args) > 1:
@@ -457,24 +447,21 @@ def run_solidity_analysis_optimized(inp, hashes):
     function_names = hashes[inp["c_name"]]
 
     try:
-        result, return_code = symExec.run(
-            disasm_file=inp["disasm_file"],
-            source_map=inp["source_map"],
-            source_file=inp["source"],
-            cfg=args.control_flow_graph,
-            saco=args.saco,
-            execution=0,
-            cname=inp["c_name"],
-            hashes=function_names,
-            debug=args.debug,
-            evm_version=evm_version_modifications,
-            cfile=args.cfile,
-            svc=svc_opt,
-            go=args.goto,
-            opt=opt_info,
-            mem_analysis=args.mem_analysis,
-            compact_clones=args.compact_clones,
-        )
+        result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                          source_map=inp['source_map'], 
+                                          source_file=inp['source'],
+                                          cfg = args.control_flow_graph,
+                                          saco = args.saco,execution = 0, 
+                                          cname = inp["c_name"],
+                                          hashes = function_names,
+                                          debug = args.debug,
+                                          evm_version = evm_version_modifications,
+                                          cfile = args.cfile,
+                                          svc=svc_opt,
+                                          go = args.goto,
+                                          opt= opt_info, 
+                                          mem_analysis = args.mem_analysis, 
+                                          compact_clones = args.compact_clones)
 
         try:
             c_source = inp["c_source"]
@@ -513,24 +500,11 @@ def analyze_solidity(input_type="solidity"):
 
     if input_type == "solidity":
         print(args)
-        helper = InputHelper(
-            InputHelper.SOLIDITY,
-            source=args.source,
-            evm=args.evm,
-            runtime=is_runtime,
-            opt_options=compiler_opt,
-        )
-    elif input_type == "standard_json":
-        helper = InputHelper(
-            InputHelper.STANDARD_JSON,
-            source=args.source,
-            evm=args.evm,
-            allow_paths=args.allow_paths,
-        )
-    elif input_type == "standard_json_output":
-        helper = InputHelper(
-            InputHelper.STANDARD_JSON_OUTPUT, source=args.source, evm=args.evm
-        )
+        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
+    elif input_type == 'standard_json':
+        helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
+    elif input_type == 'standard_json_output':
+        helper = InputHelper(InputHelper.STANDARD_JSON_OUTPUT, source=args.source,evm=args.evm)
     inputs = helper.get_inputs()
 
     solc_version = helper.get_solidity_version()
@@ -614,178 +588,40 @@ def main():
     )
 
     # parser.add_argument("--version", action="version", version="EthIR version 1.0.7 - Commonwealth")
-    parser.add_argument(
-        "-glt",
-        "--global-timeout",
-        help="Timeout for symbolic execution",
-        action="store",
-        dest="global_timeout",
-        type=int,
-    )
-    parser.add_argument(
-        "-e", "--evm", help="Do not remove the .evm file.", action="store_true"
-    )
-    parser.add_argument(
-        "-b",
-        "--bytecode",
-        help="read bytecode in source instead of solidity file",
-        action="store_true",
-    )
-
-    # Added by Pablo Gordillo
-    parser.add_argument(
-        "-disasm",
-        "--disassembly",
-        help="Consider a dissasembly evm file directly",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-in",
-        "--init",
-        help="Consider the initialization of the fields",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-d",
-        "--debug",
-        help="Display the status of the stack after each opcode",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-cfg",
-        "--control-flow-graph",
-        help="Store the CFG",
-        choices=["normal", "memory"],
-    )
+    parser.add_argument("-glt", "--global-timeout", help="Timeout for symbolic execution", action="store", dest="global_timeout", type=int)
+    parser.add_argument( "-e",   "--evm",                    help="Do not remove the .evm file.", action="store_true")
+    parser.add_argument( "-b",   "--bytecode",               help="read bytecode in source instead of solidity file", action="store_true")
+    
+    #Added by Pablo Gordillo
+    parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
+    parser.add_argument( "-in", "--init",        help="Consider the initialization of the fields", action="store_true")
+    parser.add_argument( "-d", "--debug",                   help="Display the status of the stack after each opcode", action = "store_true")
+    parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", choices=["normal","memory", "storage"])
     # parser.add_argument( "-mcfg", "--memory-control-flow-graph",    help="Store the Memory CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
-    parser.add_argument(
-        "-saco", "--saco", help="Translate EthIR RBR to SACO RBR", action="store_true"
-    )
-    parser.add_argument(
-        "-c",
-        "--cfile",
-        help="Translate EthIR RBR to SACO RBR",
-        choices=["int", "uint", "uint256"],
-    )
-    parser.add_argument(
-        "-v",
-        "--verify",
-        help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with flag -c",
-        choices=["cpa", "verymax", "seahorn"],
-    )
-    parser.add_argument(
-        "-i",
-        "--invalid",
-        help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with flag -c",
-        choices=["array", "div0", "all"],
-    )
-    parser.add_argument(
-        "-g",
-        "--goto",
-        help="Transform recursive rules into iterative rules using gotos. Use with flag -c",
-        choices=["iterative", "recursive"],
-    )
-    parser.add_argument(
-        "-a",
-        "--args",
-        help="Transform of the parameters of the rules. Use with flag -c",
-        choices=["local", "global", "mix"],
-    )
-    parser.add_argument(
-        "-mem",
-        "--mem_interval",
-        help="Translate the memory into an interval representation. Use with flag -c",
-        choices=["length", "arrays"],
-        default="length",
-    )
-    parser.add_argument(
-        "-storage",
-        "--storage_arrays",
-        help="Translate storage arrays into arrays representation. Use with flag -c",
-        choices=["length", "arrays"],
-        default="length",
-    )
-    parser.add_argument(
-        "-cexec",
-        "--c-executable",
-        help="Generate a C program that can be executed. Use with flag -c",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-opt",
-        "--optimize",
-        help="Fields to be optimized by Gasol",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-optimize-run",
-        "--optimize-run",
-        help="Enable optimization flag in solc compiler",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-run",
-        "--run",
-        help="Set for how many contract runs to optimize (200 by default if --optimize-run)",
-        default=-1,
-        action="store",
-        type=int,
-    )
-    parser.add_argument(
-        "-no-yul-opt",
-        "--no-yul-opt",
-        help="Disable yul optimization in solc compiler (when possible)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-via-ir",
-        "--via-ir",
-        help="via-ir optimization in solc compiler (when possible)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-f", "--fields", type=str, help="Fields to be optimized by Gasol"
-    )
-    parser.add_argument(
-        "-cname",
-        "--contract_name",
-        type=str,
-        help="Name of the contract that is going to be optimized",
-    )
+    parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
+    parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", choices = ["int","uint","uint256"])
+    parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with flag -c", choices = ["cpa","verymax","seahorn"])
+    parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with flag -c", choices = ["array","div0","all"])
+    parser.add_argument("-g", "--goto",             help="Transform recursive rules into iterative rules using gotos. Use with flag -c", choices = ["iterative","recursive"])
+    parser.add_argument("-a", "--args",             help="Transform of the parameters of the rules. Use with flag -c", choices = ["local","global","mix"])
+    parser.add_argument("-mem", "--mem_interval",             help="Translate the memory into an interval representation. Use with flag -c", choices = ["length","arrays"], default="length")
+    parser.add_argument("-storage", "--storage_arrays", help="Translate storage arrays into arrays representation. Use with flag -c", choices = ["length","arrays"], default="length")
+    parser.add_argument("-cexec", "--c-executable", help="Generate a C program that can be executed. Use with flag -c",action = "store_true")
+    parser.add_argument("-opt", "--optimize",             help="Fields to be optimized by Gasol", action="store_true")
+    parser.add_argument("-optimize-run", "--optimize-run",             help="Enable optimization flag in solc compiler", action="store_true")
+    parser.add_argument("-run", "--run",             help="Set for how many contract runs to optimize (200 by default if --optimize-run)", default=-1,action="store",type=int)
+    parser.add_argument("-no-yul-opt", "--no-yul-opt",             help="Disable yul optimization in solc compiler (when possible)", action="store_true")
+    parser.add_argument("-via-ir", "--via-ir",             help="via-ir optimization in solc compiler (when possible)", action="store_true")
+    parser.add_argument("-f", "--fields", type=str, help="Fields to be optimized by Gasol")
+    parser.add_argument("-cname", "--contract_name", type=str, help="Name of the contract that is going to be optimized")
     parser.add_argument("-bl", "--block", type=str, help="block to be optimized")
-    parser.add_argument(
-        "-hashes",
-        "--hashes",
-        help="Generate a file that contains the functions of the solidity file",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-out",
-        "--out",
-        help="Generate a file that contains the functions of the solidity file",
-        action="store",
-        dest="path_out",
-        type=str,
-    )
-    parser.add_argument(
-        "-mem-analysis",
-        "--mem-analysis",
-        help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option. Jump origin runs the jump origin analysis to determine if the jump came from storage",
-        choices=["baseref", "offset", "jump_origin"],
-    )
-    parser.add_argument(
-        "-ccfg",
-        "--collapse-cfg",
-        help="Joins blocks producing a compact cfg",
-        choices=["no", "yes", "instructions"],
-    )
-    parser.add_argument(
-        "-compact-clones",
-        "--compact-clones",
-        help="Intersect blocks cloned before invoking GASOL superoptimizer",
-        action="store_true",
-    )
+    parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
+    parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
+    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", action="store_true")
+    parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
+    parser.add_argument( "-mem-analysis", "--mem-analysis", help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option. Jump origin runs the jump origin analysis to determine if the jump came from storage", choices=["baseref", "offset", "jump_origin"],)
+    parser.add_argument( "-ccfg", "--collapse-cfg", help="Joins blocks producing a compact cfg", choices=["no", "yes", "instructions"],)
 
     args = parser.parse_args()
     # if args.root_path:
@@ -862,13 +698,7 @@ def main():
         compiler_opt["no-yul"] = args.no_yul_opt
         compiler_opt["runs"] = args.run
         compiler_opt["via-ir"] = args.via_ir
-        helper = InputHelper(
-            InputHelper.SOLIDITY,
-            source=args.source,
-            evm=args.evm,
-            runtime=is_runtime,
-            opt_options=compiler_opt,
-        )
+        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
 
         solc_version = helper.get_solidity_version()
 
