@@ -567,7 +567,7 @@ def main():
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
     parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset"])
-    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", action="store_true")
+    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", choices = ["nopaths","allpaths"])
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
 
 
