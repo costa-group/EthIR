@@ -4329,9 +4329,10 @@ def run(disasm_file=None,
             begin = dtimer()
 
             storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones, scc)
-            _,storage_accesses,sracold, srafinal = storage_result
+            _,storage_accesses,sracold, srafinal, cfgdag = storage_result
             check_cfg_option(cfg,cname,execution, storage_result)
             generate_storage_saco_config_file(cname,sracold, srafinal)
+            generate_dag_file(cname,cfgdag.get_dag())
 
             end = dtimer()
             print("Storage Analysis finished in "+str(end-begin)+"s\n")
@@ -4590,4 +4591,28 @@ def generate_storage_saco_config_file(cname, sracold, srafinal):
             elems.append("("+method+";"+ str(ncold)+";"+str(nfinal)+")")
         elems2write = "\n".join(elems)
         f.write(elems2write)
+    f.close()
+
+
+def generate_dag_file(cname, dag):
+    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
+        os.mkdir(global_params_ethir.costabs_path)
+        
+    if cname == None:
+        name = global_params_ethir.costabs_path+"config_methods.dag"
+    else:
+        name = global_params_ethir.costabs_path+cname+".dag"
+
+    with open(name,"w") as f:
+        elems = list()
+        nnodes = len(dag)
+        f.write("nnodes("+str(nnodes)+").\n")
+
+        for node in dag: 
+            for dest in dag[node]: 
+                elems.append("edge("+str(node)+","+ str(dest)+").")
+        elems2write = "\n".join(elems)
+        f.write(elems2write)
+
+
     f.close()

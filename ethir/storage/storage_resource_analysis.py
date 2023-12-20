@@ -49,7 +49,7 @@ class StorageResourceAnalysis:
             paths = self.paths[entry]
             i = 0
             for path in paths: 
-                self.__process_path(entry, path,i)
+                self.__process_path(entry, path, i)
                 i = i + 1
 
     def __process_path(self, entry, path,i): 

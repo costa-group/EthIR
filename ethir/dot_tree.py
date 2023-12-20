@@ -223,7 +223,7 @@ def build_tree_memory(block,visited,block_input,cfg_type,memory_result,condTrue 
     if cfg_type == "memory":
         slots, memory, accesses, _ = memory_result
     else:
-        _, accesses,_,_ = memory_result
+        _, accesses,_,_,_ = memory_result
         
     mem_info = accesses.get_cfg_info(str(start))
     # print(mem_info)

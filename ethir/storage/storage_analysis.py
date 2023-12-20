@@ -2,16 +2,16 @@ import os
 import global_params_ethir
 
 from storage.storage_resource_analysis import StorageResourceAnalysis
-from storage.cfg2dag import CFG2DAG
+from cfg.cfg2dag import CFG2DAG
 from storage.storage_offset_abstate import StorageOffsetAbstractState
 from storage.storage_accesses import StorageAccesses
 from memory.memory_offset import OffsetAnalysisAbstractState,OFFSET_STORAGE
 from analysis.fixpoint_analysis import Analysis, BlockAnalysisInfo
 
 
-def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug, compact_clones, sccs):     
+def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, storage_analysis, debug, compact_clones, sccs):     
 
-    print("Storage analysis started! ")
+    print("Storage analysis started! " + storage_analysis)
 
     accesses = StorageAccesses()
 
@@ -41,7 +41,13 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, ty
 
     for fblock in input_blocks: 
         print("Processing paths: " + str(fblock))
-        cfgdag.process_all_paths_from(fblock)
+        # TODO: GRD Put a parameter
+        if storage_analysis == "allpaths": 
+            cfgdag.process_all_paths_from(fblock)
+        elif storage_analysis == "nopaths": 
+            cfgdag.process_all_blocks_in_method(fblock)
+    
+    print("PATH2TERMINAL: " + str(cfgdag.paths2terminal))
 
     sra = StorageResourceAnalysis (vertices,accesses,cfgdag.paths2terminal, cfgdag)
     print("Computing storage path accesses")
@@ -53,6 +59,6 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, ty
 
     print("SRA results: " + str(sra))
    
-    return storage, accesses, sra.get_cold_results(),sra.get_final_results()
+    return storage, accesses, sra.get_cold_results(),sra.get_final_results(),cfgdag
 
 

@@ -340,7 +340,7 @@ class StorageAccess:
         if self.access != TOP and self.offset == "0": 
             return KECCAK + "(" + str(self.access) + ")"
         
-        return KECCAK + "(" + str(self.access) + ")" + "," + str(self.offset)
+        return "<" + KECCAK + "(" + str(self.access) + ")" + "," + str(self.offset) + ">"
 
     def __eq__(self,ob):
         if not isinstance(ob, StorageAccess):
