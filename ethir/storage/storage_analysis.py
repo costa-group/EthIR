@@ -2,7 +2,7 @@ import os
 import global_params_ethir
 
 from storage.storage_resource_analysis import StorageResourceAnalysis
-from cfg.cfg2dag import CFG2DAG
+from storage.cfg2dag import CFG2DAG
 from storage.storage_offset_abstate import StorageOffsetAbstractState
 from storage.storage_accesses import StorageAccesses
 from memory.memory_offset import OffsetAnalysisAbstractState,OFFSET_STORAGE
