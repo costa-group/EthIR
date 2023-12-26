@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 UNSIGNED_BOUND_NUMBER = 2**256 - 1
 
-ebso_path = global_params_ethir.costabs_path+"blocks"
+ebso_path = global_params_ethir.costabs_path+"/costabs/blocks"
 
 # sys.setrecursionlimit(10**6)
 
@@ -4002,13 +4002,13 @@ def component_of_aux(block,visited):
     return visited
             
 def generate_saco_config_file(cname):
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs")
         
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"costabs/config_block.config"
     else:
-        name = global_params_ethir.costabs_path+cname+".config"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".config"
 
     with open(name,"w") as f:
         milist = list(function_block_map.items())
@@ -4041,13 +4041,13 @@ def process_argument_function(arg):
 def generate_verify_config_file(cname,scc):
     to_write = []
     remove_getters_has_invalid()
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs/")
         
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"/costabs/config_block.config"
     else:
-        name = global_params_ethir.costabs_path+cname+".config"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".config"
 
     entry_loops = get_functions_with_loop(scc)
     
@@ -4468,9 +4468,9 @@ def get_evm_block():
             str_b = str_b+op_val+num
         blocks[b] = str_b
 
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
-    if "blocks" not in os.listdir(global_params_ethir.costabs_path):
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs")
+    if "blocks" not in os.listdir(global_params_ethir.costabs_path+"/costabs/"):
         os.mkdir(ebso_path)
     for b in blocks:
         bl_path = ebso_path+"/block"+str(b)
@@ -4562,13 +4562,13 @@ def identify_memory_pos_no_baseref(memory_set, source_map):
 
                     
 def generate_storage_saco_config_file(cname, sracold, srafinal):
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs")
         
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_methods.storage"
+        name = global_params_ethir.costabs_path+"/costabs/config_methods.storage"
     else:
-        name = global_params_ethir.costabs_path+cname+".storage"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".storage"
 
     with open(name,"w") as f:
         milist = list(function_block_map.items())
@@ -4595,13 +4595,13 @@ def generate_storage_saco_config_file(cname, sracold, srafinal):
 
 
 def generate_dag_file(cname, dag):
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs")
         
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_methods.dag"
+        name = global_params_ethir.costabs_path+"/costabs/config_methods.dag"
     else:
-        name = global_params_ethir.costabs_path+cname+".dag"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".dag"
 
     with open(name,"w") as f:
         elems = list()

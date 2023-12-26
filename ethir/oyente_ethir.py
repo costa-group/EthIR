@@ -76,12 +76,13 @@ def has_dependencies_installed():
     return True
 
 def clean_dir():
+    
     ext = ["rbr","cfg","txt","config","dot","csv","c","pl","log","sol","bl","ethirui"]
-    if "costabs" in os.listdir(global_params_ethir.tmp_path):
-        for elem in os.listdir(global_params_ethir.costabs_path):
+    if "costabs" in os.listdir(global_params_ethir.costabs_path):
+        for elem in os.listdir(global_params_ethir.costabs_path+"/costabs"):
             last = elem.split(".")[-1]
             if last in ext:
-                os.remove(global_params_ethir.costabs_path+elem)
+                os.remove(global_params_ethir.costabs_path+"/costabs/"+elem)
 
 
 '''
@@ -468,6 +469,8 @@ def analyze_solidity(input_type='solidity'):
     solc_version = helper.get_solidity_version()
 
     hashes = process_hashes(args.source,solc_version)
+
+    global_params_ethir.costabs_path = global_params_ethir.tmp_path+helper.aux_path
     
     y = dtimer()
     print("*************************************************************")
@@ -516,7 +519,7 @@ def process_fields(src_map):
     return fields
 
 def generate_saco_hashes_file(dicc):
-    with open(global_params_ethir.costabs_path+"solidity_functions.txt", "w") as f:
+    with open(global_params_ethir.costabs_path+"/costabs/"+"solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
             cf_names1 = list(map(process_name,f_names))
@@ -613,7 +616,7 @@ def main():
 
     if args.path_out:
         global_params_ethir.tmp_path = args.path_out
-        global_params_ethir.costabs_path = global_params_ethir.tmp_path+"costabs/"
+        #global_params_ethir.costabs_path = global_params_ethir.tmp_path+"costabs/"
 
         
     if not has_dependencies_installed():
@@ -629,7 +632,7 @@ def main():
 
     # exit_code = 0
 
-    clean_dir()
+    #clean_dir()
 
     #Added by Pablo Gordillo
     if args.disassembly:
@@ -650,9 +653,8 @@ def main():
         compiler_opt["runs"] = args.run
         compiler_opt["via-ir"] = args.via_ir
         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
-
         solc_version = helper.get_solidity_version()
-        
+                
         mp = process_hashes(args.source, solc_version)
         generate_saco_hashes_file(mp)
         exit_code = 0

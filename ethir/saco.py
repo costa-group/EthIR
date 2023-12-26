@@ -528,14 +528,14 @@ def check_mul_div_pattern(new_instructions,instructions,idx):
 def write(rules,execution,cname):
     
     # if "costabs" not in os.listdir("/tmp/"):
-    #     os.mkdir("/tmp/costabs/")
-
+    #     os.mkdir("/tmp/costabs/"
+    
     if execution == None:
-        name = global_params_ethir.costabs_path+"rbr_saco.rbr"
+        name = global_params_ethir.costabs_path+"/costabs/"+"rbr_saco.rbr"
     elif cname == None:
-        name = global_params_ethir.costabs_path+"rbr"+str(execution)+"_saco.rbr"
+        name = global_params_ethir.costabs_path+"/costabs/rbr"+str(execution)+"_saco.rbr"
     else:
-        name = global_params_ethir.costabs_path+cname+"_saco.rbr"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+"_saco.rbr"
     with open(name,"w") as f:
         for rule in rules:
             f.write(rule+"\n")

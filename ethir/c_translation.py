@@ -2381,11 +2381,11 @@ def write_init(rules,execution,cname,num_mem_vars,field_names):
         s = s+"\n"
         
     if execution == None:
-        name = global_params_ethir.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"/costabs/rbr.c"
     elif cname == None:
-        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"/costabs/rbr"+str(execution)+".c"
     else:
-        name = global_params_ethir.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".c"
     with open(name,"w") as f:
         if(len(rules)>1):
             r = rules[1][0]
@@ -2725,11 +2725,11 @@ def update_stack_vars_global(vs):
 
 def write_main(execution,cname, init_vars):
     if execution == None:
-        name = global_params_ethir.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"/costabs/rbr.c"
     elif cname == None:
-        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"/costabs/rbr"+str(execution)+".c"
     else:
-        name = global_params_ethir.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".c"
 
     if not svcomp["exec"]:
         with open(name,"a") as f:
@@ -2761,11 +2761,11 @@ def write(head,rules,execution,cname):
     #     os.mkdir("/tmp/costabs/")
 
     if execution == None:
-        name = global_params_ethir.costabs_path+"rbr.c"
+        name = global_params_ethir.costabs_path+"/costabs/rbr.c"
     elif cname == None:
-        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".c"
+        name = global_params_ethir.costabs_path+"/costabs/rbr"+str(execution)+".c"
     else:
-        name = global_params_ethir.costabs_path+cname+".c"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".c"
     with open(name,"a") as f:
         f.write(head+"\n")
         
@@ -2920,9 +2920,9 @@ def vars_in_main(fields,local,blockchain,num):
 def get_invalids_entry_functions(components_of, rbr,cname):
 
     if cname == None:
-        name = global_params_ethir.costabs_path+"config_block.config"
+        name = global_params_ethir.costabs_path+"/costabs/config_block.config"
     else:
-        name = global_params_ethir.costabs_path+cname+".config"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".config"
 
 
     f = open(name,"r")
@@ -3094,11 +3094,11 @@ def process_blocks_ethirui_recur(rbr,new_rule):
 
 def write_ethirui_config(cname,execution):
     if execution == None:
-        name = global_params_ethir.costabs_path+"rbr.ethirui"
+        name = global_params_ethir.costabs_path+"/costabs/rbr.ethirui"
     elif cname == None:
-        name = global_params_ethir.costabs_path+"rbr"+str(execution)+".ethirui"
+        name = global_params_ethir.costabs_path+"/costabs/rbr"+str(execution)+".ethirui"
     else:
-        name = global_params_ethir.costabs_path+cname+".ethirui"
+        name = global_params_ethir.costabs_path+"/costabs/"+cname+".ethirui"
     with open(name,"w") as f:
         lines = "\n".join(mapping_ethirui)
         f.write(lines)
