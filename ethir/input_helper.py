@@ -73,8 +73,8 @@ class InputHelper:
 
         self.solc_version = self._get_solidity_version()
         self.init_compiled_contracts = []
-        self.aux_path = self.tmp_path+"/ethir_" + uuid.uuid4().hex
-        os.mkdir(self.aux_path)
+        self.aux_path = "ethir_" + uuid.uuid4().hex
+        os.mkdir(global_params_ethir.tmp_path+self.aux_path)
         
     def get_inputs(self):
         
@@ -116,6 +116,7 @@ class InputHelper:
                 if self.input_type == InputHelper.SOLIDITY:
                     #AQUI
                     source_map = SourceMap(contract, self.source, 'solidity', self.root_path,self.solc_version) #if self.solc_version != "v8" else None
+                    print(source_map.instr_positions)
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
 
@@ -314,11 +315,11 @@ class InputHelper:
     
     def _get_temporary_files(self, target):
         return {
-            "evm": self.aux_path+"/"+target.split(":")[-1] + ".evm",
-            "disasm": self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm",
-            "evm_init": self.aux_path+"/"+target.split(":")[-1] + "_init.evm",
-            "disasm_init": self.aux_path+"/"+target.split(":")[-1] + "_init.evm.disasm",
-            "log": self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm.log"
+            "evm": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + ".evm",
+            "disasm": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm",
+            "evm_init": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + "_init.evm",
+            "disasm_init": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + "_init.evm.disasm",
+            "log": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm.log"
         }
     
     def _write_evm_file(self, target, bytecode,init_contracts):
