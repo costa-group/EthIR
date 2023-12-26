@@ -299,6 +299,10 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         pos = instr.find("=",0)
         new = instr[:pos+1]+" s("+str(cont)+")"
         cont+=1
+    elif instr.find("keccak256",0)!=-1:
+        pos = instr.find("=",0)
+        new = instr[:pos+1]+" s("+str(cont)+")"
+        cont+=1
     elif instr.find("*")!=-1:
         nop = new_instructions[-1].strip(")")
         idx = nop.find("nop(PUSH")

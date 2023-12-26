@@ -38,7 +38,7 @@ def init_globals():
                  "XOR", "NOT", "BYTE","SHL","SHR","SAR"]
 
     global opcodes20
-    opcodes20 = ["SHA3"]
+    opcodes20 = ["SHA3", "KECCAK256"]
 
     global opcodes30
     opcodes30 = ["ADDRESS", "BALANCE", "ORIGIN", "CALLER",
@@ -533,6 +533,20 @@ def translateOpcodes20(opcode, index_variables,block):
         else:
             instr = v3+" = sha3("+ v1+", "+v2+")"
 
+    elif opcode == "KECCAK256":
+        
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_new_variable(updated_variables)
+
+        blocks_sha3 = list(map(lambda x: x[1],sha3_blocks_arr.values()))
+
+        if block in blocks_sha3:
+            instr = v3+" = 0"
+        else:
+            instr = v3+" = keccak256("+ v1+", "+v2+")"
+
+            
         
     else:
         instr = "Error opcodes20: "+opcode
