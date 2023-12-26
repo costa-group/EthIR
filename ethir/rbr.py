@@ -1127,7 +1127,7 @@ intruction.
 def is_conditional(instr):
     valid = True
     i = 1
-    if instr[0] in ["LT","GT","EQ","ISZERO"] and instr[-1] in ["JUMP","JUMPI"]:
+    if instr[0] in ["LT","SLT", "SGT","GT","EQ","ISZERO"] and instr[-1] in ["JUMP","JUMPI"]:
         while(i<len(instr)-2 and valid):
             ins = instr[i].split()
             if(ins[0] not in ["ISZERO","PUSH"]):
@@ -1152,9 +1152,9 @@ def get_opposite_guard(guard):
         opposite = "leq"+guard[2:]
     elif guard[:3] == "geq":
         opposite = "lt"+guard[3:]
-    elif guard == "slt":
+    elif guard[:3] == "slt":
         opposite = "geq"+guard[3:]
-    elif guard == "sgt":
+    elif guard[:3] == "sgt":
         opposite = "leq"+guard[3:]
     elif guard[:2] == "eq":
         opposite = "neq"+guard[2:]
@@ -1397,7 +1397,7 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
         _ , index_variables = get_consume_variable(variables)
         v1, index_variables = get_consume_variable(index_variables)
         guard = "eq("+v1+", 1 )"
-    
+        
     for elem in l_instr[1:]:
         if elem == "ISZERO":
             guard = get_opposite_guard(guard)
@@ -1408,7 +1408,7 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
             _, index_variables = get_consume_variable(index_variables)
         else:
             guard = "Error while creating the jump"
-    
+
     stack_variables = get_stack_variables(index_variables)
 
     top1 = get_stack_index(jumps[0])[0]
