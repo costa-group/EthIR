@@ -1,3 +1,5 @@
+import uuid
+
 # enable reporting of the result
 REPORT_MODE = 0
 
@@ -59,4 +61,6 @@ PARALLEL = 0
 #Paths to generate the files
 tmp_path = "/tmp/"
 
-costabs_path = tmp_path+"costabs/"
+#gastap_folder = "gastap_" + uuid.uuid4().hex
+
+costabs_path = ""
