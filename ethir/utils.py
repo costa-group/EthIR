@@ -391,24 +391,24 @@ def process_hashes(solidity_file,solidity_version):
 
 def write_cfg(it,vertices,name = False,cloned = False):
     vert = sorted(vertices.values(), key = getKey)
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs")
 
     if not cloned:
         if it == None:
-            name = global_params_ethir.costabs_path+"cfg_evm.cfg"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_evm.cfg"
         elif name == False:
-            name = global_params_ethir.costabs_path+"cfg_evm"+str(it)+".cfg"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_evm"+str(it)+".cfg"
         else:
-            name = global_params_ethir.costabs_path+"cfg_"+name+".cfg"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_"+name+".cfg"
 
     else:
         if it == None:
-            name = global_params_ethir.costabs_path+"cfg_cloned_evm.cfg"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_cloned_evm.cfg"
         elif name == False:
-            name = global_params_ethir.costabs_path+"cfg__cloned_evm"+str(it)+".cfg"
+            name = global_params_ethir.costabs_path+"/costabs/cfg__cloned_evm"+str(it)+".cfg"
         else:
-            name = global_params_ethir.costabs_path+"cfg_"+name+"_cloned.cfg"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_"+name+"_cloned.cfg"
         
     with open(name,"w") as f:
         for block in vert:
@@ -503,25 +503,25 @@ def compute_hex_vals_cfg(block):
 def cfg_dot(it,block_input,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs/")
     
     if not cloned:
 
         if it == None:
-            name = global_params_ethir.costabs_path+"cfg.dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg.dot"
         elif name == False:
-            name = global_params_ethir.costabs_path+"cfg"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg"+str(it)+".dot"
         else:
-            name = global_params_ethir.costabs_path+name+".dot"
+            name = global_params_ethir.costabs_path+"/costabs/"+name+".dot"
     else:
 
         if it == None:
-            name = global_params_ethir.costabs_path+"cfg_cloned.dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_cloned.dot"
         elif name == False:
-            name = global_params_ethir.costabs_path+"cfg_cloned_"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_cloned_"+str(it)+".dot"
         else:
-            name = global_params_ethir.costabs_path+name+"_cloned.dot"
+            name = global_params_ethir.costabs_path+"/costabs/"+name+"_cloned.dot"
         
     f = open(name,"w")
     tree = build_tree(vert[0],[("st",0)],block_input)
@@ -532,25 +532,25 @@ def cfg_dot(it,block_input,name = False,cloned = False):
 def cfg_memory_dot(cfg_type,it,block_input,memory_sets,name = False,cloned = False):
     vert = sorted(block_input.values(), key = getKey)
 
-    if "costabs" not in os.listdir(global_params_ethir.tmp_path):
-        os.mkdir(global_params_ethir.costabs_path)
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs/")
     
     if not cloned:
 
         if it == None:
-            name = global_params_ethir.costabs_path+"cfg.dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg.dot"
         elif name == False:
-            name = global_params_ethir.costabs_path+"cfg"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg"+str(it)+".dot"
         else:
-            name = global_params_ethir.costabs_path+name+".dot"
+            name = global_params_ethir.costabs_path+"/costabs/"+name+".dot"
     else:
 
         if it == None:
-            name = global_params_ethir.costabs_path+"cfg_cloned.dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_cloned.dot"
         elif name == False:
-            name = global_params_ethir.costabs_path+"cfg_cloned_"+str(it)+".dot"
+            name = global_params_ethir.costabs_path+"/costabs/cfg_cloned_"+str(it)+".dot"
         else:
-            name = global_params_ethir.costabs_path+name+"_cloned.dot"
+            name = global_params_ethir.costabs_path+"/costabs/"+name+"_cloned.dot"
         
     f = open(name,"w")
     tree = build_tree_memory(vert[0],[("st",0)],block_input,cfg_type,memory_sets)
@@ -565,7 +565,7 @@ def update_map(m,key,val):
     return m
 
 def store_times(oyente_time,ethir_time):
-    f = open(global_params_ethir.costabs_path+"times.csv","a")
+    f = open(global_params_ethir.costabs_path+"/costabs/times.csv","a")
     fp = csv.writer(f, delimiter=',')
     fp.writerow(["Oyente",oyente_time,"EthIR",ethir_time])
     f.close()
