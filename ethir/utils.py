@@ -1072,3 +1072,14 @@ def compute_gas(vertices):
             gas+=opcodes.get_ins_cost(i.strip())
 
     return gas
+
+
+def run_gastap(contract_name, entry_functions):
+
+    for bl in entry_functions:
+    
+        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes" 
+        FNULL = open(os.devnull, 'w')
+        print(cmd)
+        solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
+        print(solc_p.communicate()[0].decode())

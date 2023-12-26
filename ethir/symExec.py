@@ -24,7 +24,7 @@ import global_params_ethir
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -4357,9 +4357,14 @@ def run(disasm_file=None,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
                                              sto = sto, 
                                              storage_analysis = storage_accesses)
+
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
+        
+        if saco:
+            input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+            run_gastap(cname, input_blocks)
         
         if opt!= None:
         # fields = ["field1","field2"]
