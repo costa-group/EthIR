@@ -4130,7 +4130,7 @@ def run(disasm_file=None,
         source_map_init = None, 
         source_file=None, 
         cfg=None, 
-        saco = None, 
+        saco = (None,None), 
         execution = None,
         cname = None, 
         hashes = None, 
@@ -4279,10 +4279,10 @@ def run(disasm_file=None,
 
 
         if hashes != None:
-            if saco != None and not(verify): #Hashes is != None only if source file is solidity
+            if saco[0] != None and not(verify): #Hashes is != None only if source file is solidity
                 generate_saco_config_file(cname)
 
-            elif verify and not(saco):
+            elif verify and not(saco[0]):
                 generate_verify_config_file(cname,scc)
 
         # print((mem_abs,val_mem40))
@@ -4345,7 +4345,7 @@ def run(disasm_file=None,
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
                                              stack_info = stack_h, 
                                              block_unbuild = blocks_to_create,
-                                             saco_rbr = saco,
+                                             saco_rbr = saco[0],
                                              c_rbr = cfile, 
                                              exe = execution, 
                                              contract_name = cname, 
@@ -4362,7 +4362,7 @@ def run(disasm_file=None,
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
         
-        if saco:
+        if saco[1]:
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
             run_gastap(cname, input_blocks)
         

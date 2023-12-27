@@ -175,7 +175,7 @@ def analyze_disasm_bytecode():
 
         result, exit_code = symExec.run(disasm_file=args.source,
                                         cfg = args.control_flow_graph,
-                                        saco = args.saco,
+                                        saco = (args.saco,False),
                                         debug = args.debug,
                                         evm_version = evm_version_modifications,
                                         cfile = args.cfile,
@@ -225,7 +225,7 @@ def analyze_bytecode():
 
         result, exit_code = symExec.run(disasm_file=inp['disasm_file'],
                                         cfg = args.control_flow_graph,
-                                        saco = args.saco,
+                                        saco = (args.saco,False),
                                         debug = args.debug,
                                         evm_version = evm_version_modifications,
                                         cfile = args.cfile,
@@ -275,7 +275,8 @@ def run_solidity_analysis(inputs,hashes):
                                               source_map=inp['source_map'], 
                                               source_file=inp['source'],
                                               cfg = args.control_flow_graph,
-                                              saco = args.saco,execution = 0, 
+                                              saco = (args.saco,args.gastap),
+                                              execution = 0, 
                                               cname = inp["c_name"],
                                               hashes = function_names,
                                               debug = args.debug,
@@ -312,7 +313,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   source_map=inp['source_map'], 
                                                   source_file=inp['source'],
                                                   cfg = args.control_flow_graph,
-                                                  saco = args.saco,
+                                                  saco = (args.saco,args.gastap),
                                                   execution = i,
                                                   cname = inp["c_name"],
                                                   hashes = function_names,
@@ -410,7 +411,8 @@ def run_solidity_analysis_optimized(inp,hashes):
                                           source_map=inp['source_map'], 
                                           source_file=inp['source'],
                                           cfg = args.control_flow_graph,
-                                          saco = args.saco,execution = 0, 
+                                          saco = (args.saco,False),
+                                          execution = 0, 
                                           cname = inp["c_name"],
                                           hashes = function_names,
                                           debug = args.debug,
@@ -551,6 +553,7 @@ def main():
     # parser.add_argument( "-mcfg", "--memory-control-flow-graph",    help="Store the Memory CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
+    parser.add_argument( "-gastap", "--gastap",                 help="Calls to GASTAP directly from EthIR", action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", choices = ["int","uint","uint256"])
     parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with flag -c", choices = ["cpa","verymax","seahorn"])
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with flag -c", choices = ["array","div0","all"])
