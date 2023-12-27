@@ -1240,10 +1240,13 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_s
         
     if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):
         r = results_sto_analysis.pop(0)
+        
         if "*" in r:
             new_opcode_name = opcode_name+"COLD"
         else:
-            new_opcode_name = opcode_name+"WARM"
+            set_access = r.split("->")[-1].strip()
+            
+            new_opcode_name = opcode_name+"WARM"+set_access
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:
