@@ -29,6 +29,7 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, st
     storage = Analysis(vertices,0,StorageOffsetAbstractState(0,{},{},debug))
     storage.analyze()
 
+    print("Accesses")
     print(str(accesses))
 
     input_blocks = list(map(lambda x: fblockmap[x][0], fblockmap.keys()))
@@ -58,7 +59,7 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, st
     sra.compute_accesses_in_paths()
 
     print("SRA results: " + str(sra))
-   
+    
     return storage, accesses, sra.get_cold_results(),sra.get_final_results(),cfgdag
 
 
