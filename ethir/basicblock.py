@@ -558,3 +558,15 @@ class BasicBlock:
 
     def getTree(self):
         return Tree(self.start, self.start, self.start)
+
+    def get_instructions_gasol(self):
+        new_instructions = []
+        for i in self.instructions:
+            if i.find("SSTORE")!=-1 or i.find("SLOAD")!=-1 or i.find("MSTORE")!=-1 or i.find("MLOAD")!=-1 or i.find("CALLDATALOAD")!=-1:
+                new_ins = i.split()[0].strip()
+                new_instructions.append(new_ins)
+            else:
+                new_instructions.append(i.strip())
+
+        return new_instructions
+    
