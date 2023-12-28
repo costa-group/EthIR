@@ -160,6 +160,12 @@ def init_globals():
 
     global val_mem40
     val_mem40 = ""
+
+    global set_identifiers
+    set_identifiers = {}
+
+    global set_id
+    set_id = 0
     
 '''
 Given a block it returns a list containingn the height of its
@@ -1181,6 +1187,7 @@ They are remove when displaying.
 -index_variables refers to the top stack index. int.
 '''
 def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_sto_analysis):
+
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
     opcode_rest = ""
@@ -1244,9 +1251,9 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_s
         if "*" in r:
             new_opcode_name = opcode_name+"COLD"
         else:
-            set_access = r.split("->")[-1].strip()
-            
-            new_opcode_name = opcode_name+"WARM"+set_access
+            set_access = r.split("->")[-1].strip()[1:-1]
+            set_identifier = get_set_identifier(set_access)
+            new_opcode_name = opcode_name+"WARM;SET"+str(set_identifier)
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:
@@ -2104,3 +2111,32 @@ def get_func_name(line):
             name = line[pos_func+8::].strip()
 
     return name
+
+#set_accesses is a string with al the possible accesses
+def get_set_identifier(set_accesses):
+    global set_identifiers
+    global set_id
+    
+    accesses = set_accesses.split(",")
+    s = set()
+    for a in accesses:
+        s.add(a.strip())
+
+    found = False
+    i = 0
+    keys = list(set_identifiers.keys())
+    while(i<len(keys) and not found):
+        identifier = keys[i]
+        g = set_identifiers[identifier]
+        if g == s:
+            found = True
+
+        i+=1
+
+    if (found):
+        return identifier
+    else:
+        set_identifiers[set_id] = s
+        identifier = set_id
+        set_id+=1
+        return identifier
