@@ -1253,7 +1253,7 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_s
         else:
             set_access = r.split("->")[-1].strip()[1:-1]
             set_identifier = get_set_identifier(set_access)
-            new_opcode_name = opcode_name+"WARM;SET"+str(set_identifier)
+            new_opcode_name = opcode_name+"WARMSET"+str(set_identifier)
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:
