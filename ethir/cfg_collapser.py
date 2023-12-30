@@ -17,6 +17,8 @@ class Cfg_collapser:
 
     duplicated_series: Dict[int, List]
 
+    block_correspondence: Dict[int, List]
+
     def __init__(self, vertices, cname, instructions=False):
         self.old_vertices = vertices
 
@@ -33,6 +35,8 @@ class Cfg_collapser:
         self.block_sizes_collapsed = {}
 
         self.block_sizes = {}
+
+        self.block_correspondence = {}
 
     def get_collapsed_vertices(self):
         return self.collapsed_vertices
@@ -55,8 +59,9 @@ class Cfg_collapser:
             self.block_sizes[starting_address] = len(actual_node.get_instructions())
 
         # Duplicated node cases
-        if self.working_collapsed_node is not None and self.is_duplicated_node(
-            starting_address
+        if self.working_collapsed_node is not None and (
+            self.is_duplicated_node(starting_address)
+            or self.is_duplicated_node(self.working_collapsed_node.get_start_address())
         ):
             working_starting_address = self.simplify_address(
                 self.working_collapsed_node.get_start_address()
@@ -69,12 +74,12 @@ class Cfg_collapser:
                     working_starting_address
                 ]
 
-            # The previous node must have at least the same amount of nodes as the actual node
+            # The previous node must have the same amount of nodes as the actual node
             if len(
                 self.get_duplicated_nodes(
                     self.working_collapsed_node.get_start_address()
                 )
-            ) >= len(duplicated_nodes):
+            ) == len(duplicated_nodes):
                 sequence_correct = True
                 for node in duplicated_nodes:
                     comes_from = self.old_vertices[node].get_comes_from()
@@ -177,6 +182,8 @@ class Cfg_collapser:
             if len(node_list) == 1:
                 continue
 
+            print(node_list)
+
             for node in self.get_duplicated_nodes(node_list[0]):
                 self.working_collapsed_node = self.collapsed_vertices.get(node)
 
@@ -225,6 +232,20 @@ class Cfg_collapser:
             self.collapse_aux(falls_to)
 
     def join_blocks(self, new_block: BasicBlock):
+        if (
+            self.block_correspondence.get(
+                self.working_collapsed_node.get_start_address()
+            )
+            is None
+        ):
+            self.block_correspondence[
+                self.working_collapsed_node.get_start_address()
+            ] = [new_block.get_start_address()]
+        else:
+            self.block_correspondence[
+                self.working_collapsed_node.get_start_address()
+            ].append(new_block.get_start_address())
+
         self.working_collapsed_node.set_block_type(new_block.get_block_type())
         for instruction in new_block.get_instructions():
             self.working_collapsed_node.add_instruction(instruction)
