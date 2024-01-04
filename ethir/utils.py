@@ -1076,10 +1076,143 @@ def compute_gas(vertices):
 
 def run_gastap(contract_name, entry_functions):
 
+    outputs = []
     for bl in entry_functions:
     
-        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes" 
+        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
         FNULL = open(os.devnull, 'w')
         print(cmd)
         solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-        print(solc_p.communicate()[0].decode())
+        out = solc_p.communicate()[0].decode()
+        outputs.append(out)
+        print(out)
+    return outputs
+        
+        
+def get_all_scc_ids(scc_components):
+    unary = scc_components["unary"]
+    multiple = scc_components["multiple"]
+    l = multiple.values()
+    scc_ids_multiple = [x for y in l for x in y]
+    scc_ids = unary+scc_ids_multiple
+    
+    return scc_ids
+
+def compute_component_of_cfg(blocks, vertices):
+
+    component_of_blocks = {}
+    
+    for block in blocks:
+        # print(block)
+        comp = component_of(block,vertices)
+        component_of_blocks[block] = comp
+
+        # if block == 5132:
+        #     print comp
+        #     raise Exception
+        
+def component_of(block, vertices):
+    return component_of_aux(block,[], vertices)
+
+def component_of_aux(block,visited, vertices):
+    #print vertices[block].get_start_address()
+    blocks_conn = vertices[block].get_comes_from()
+    for elem in blocks_conn:
+        if elem not in visited:
+            visited.append(elem)
+            component_of_aux(elem,visited)
+    return visited
+
+
+def compute_join_conditionals(vertices,comes_from,scc_components):
+    rel = {}
+
+    all_scc = get_all_scc_ids(scc_components)
+
+
+    for v in vertices:
+        block = vertices[v]
+        if block.get_block_type() == "conditional" and v not in all_scc:
+
+            prev_blocks = comes_from[v]
+
+            left_branch = block.get_jump_target()
+            right_branch = block.get_falls_to()
+
+            if left_branch in comes_from[right_branch]:
+                found = True
+                c = right_branch
+
+            elif right_branch in comes_from[left_branch]:
+                found = True
+                c = left_branch
+
+            else:
+                
+                candidates = list(filter(lambda x: left_branch in comes_from[x] and right_branch in comes_from[x],vertices.keys()))
+                i = 0
+                found = False
+                
+                while i < len(candidates) and not found:
+                    #print(candidates[i])
+                    # el candidate tiene el comes_from de los dos hijos, y el aparece en el comes_from del resto de candidatos
+                    l = list(filter(lambda x: candidates[i] in comes_from[x], candidates))
+                    l.append(candidates[i])
+                    if left_branch in comes_from[candidates[i]] and right_branch in comes_from[candidates[i]] and set(candidates) == set(l):
+                        c = candidates[i]
+                        found = True
+                    i+=1
+
+        elif block.get_block_type() == "conditional" and v in all_scc and v not in scc_components["multiple"].keys():
+            prev_blocks = comes_from[v]
+
+            for scc in scc_components["multiple"]:
+                if v in scc_components["multiple"][scc]:
+                    entry_scc = scc
+            
+            left_branch = block.get_jump_target()
+            right_branch = block.get_falls_to()
+
+            if left_branch in comes_from[right_branch]:
+                found = True
+                c = right_branch
+                print("HOLA1")
+                print(v)
+                print(c)
+                print("*******")
+                
+            elif right_branch in comes_from[left_branch]:
+                found = True
+                c = left_branch
+                print("HOLA")
+                print(v)
+                print(c)
+                print("*****")
+                
+            else:
+                
+                candidates = list(filter(lambda x: left_branch in comes_from[x] and right_branch in comes_from[x] and x in scc_components["multiple"][entry_scc], vertices.keys()))
+                i = 0
+                found = False
+                
+                while i < len(candidates) and not found:
+                    #print(candidates[i])
+                    # el candidate tiene el comes_from de los dos hijos, y el aparece en el comes_from del resto de candidatos
+                    l = list(filter(lambda x: candidates[i] in comes_from[x], candidates))
+                    l.append(candidates[i])
+                    if left_branch in comes_from[candidates[i]] and right_branch in comes_from[candidates[i]] and set(candidates) == set(l):
+                        c = candidates[i]
+                        found = True
+                    i+=1
+    
+        
+        if not found:
+            print(v)
+            print("NO CIERRA: "+str(v))
+            rel[v] = -1
+        else:
+            rel[v] = c
+            found = False
+                    
+    print(rel)
+    return rel
