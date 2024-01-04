@@ -24,10 +24,12 @@ import global_params_ethir
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
+#from traverse_cfg import traverse_cfg
+
 
 log = logging.getLogger(__name__)
 
@@ -4262,6 +4264,8 @@ def run(disasm_file=None,
 
         num_loops+=len(scc_unary_new)+len(scc_multiple)
 
+        #rel = compute_join_conditionals(vertices,component_of_blocks,scc)
+        
     except:
         #traceback.print_exc()
         raise Exception("Error in SCC generation",7)
@@ -4364,8 +4368,11 @@ def run(disasm_file=None,
         
         if saco[1]:
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
-            run_gastap(cname, input_blocks)
-        
+            outputs = run_gastap(cname, input_blocks)
+
+            set_identifiers = list(rbr.set_identifiers.keys())
+            #TODO: ADD UB EVALUATION
+            
         if opt!= None:
         # fields = ["field1","field2"]
         # block = 70
