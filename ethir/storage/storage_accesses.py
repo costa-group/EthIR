@@ -39,12 +39,19 @@ class StorageAccesses:
 
     def get_cfg_info (self,block_in): 
         result = []
-        self.process_set(block_in,self.read_accesses, "R", result)
-        self.process_set(block_in,self.write_accesses, "W", result)
+        self.process_set_string(block_in,self.read_accesses, "R", result)
+        self.process_set_string(block_in,self.write_accesses, "W", result)
         
         return sorted(result,key=order_accesses)
 
-    def process_set (self,block_in, set_in, text, result): 
+    def get_storage_analysis_info(self, block_in):
+        result = []
+        self.process_set(block_in,self.read_accesses,result)
+        self.process_set(block_in,self.write_accesses,result)
+
+        return sorted(result,key=order_accesses)
+        
+    def process_set_string (self,block_in, set_in, text, result): 
         for pc in set_in: 
             block = pc.split(":")[0]
             offset = pc.split(":")[1]
@@ -53,6 +60,13 @@ class StorageAccesses:
                 #result.append(offset + " " + instr + "[" + text + "] -> " + str(list(set_in[pc]))) 
                 result.append(offset + " [" + text + "] -> " + str(list(set_in[pc]))) 
 
+    def process_set(self, block_in, set_in, result):
+        for pc in set_in: 
+            block = pc.split(":")[0]
+            offset = pc.split(":")[1]
+            if block == block_in: 
+                result.append(offset+" : "+str(list(set_in[pc])))
+                
     def get_read_accesses (self): 
         return self.read_accesses
 
