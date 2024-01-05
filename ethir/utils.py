@@ -1098,21 +1098,26 @@ def get_all_scc_ids(scc_components):
     
     return scc_ids
 
-def compute_component_of_cfg(blocks, vertices):
+#blocks are the list of blocks of the scc without the entry block
+def compute_component_of_cfg_scc(blocks, vertices,s):
 
-    component_of_blocks = {}
-    
+    component_of_blocks = {}    
     for block in blocks:
         # print(block)
-        comp = component_of(block,vertices)
+        comp = component_of(block,vertices,s)
+        pos = comp.index(s)
+        comp.pop(pos)
         component_of_blocks[block] = comp
 
         # if block == 5132:
         #     print comp
         #     raise Exception
-        
-def component_of(block, vertices):
-    return component_of_aux(block,[], vertices)
+    return component_of_blocks
+
+#For scc        
+def component_of(block, vertices,s):
+    r = component_of_aux(block,[s], vertices)
+    return r
 
 def component_of_aux(block,visited, vertices):
     #print vertices[block].get_start_address()
@@ -1120,8 +1125,31 @@ def component_of_aux(block,visited, vertices):
     for elem in blocks_conn:
         if elem not in visited:
             visited.append(elem)
-            component_of_aux(elem,visited)
+            component_of_aux(elem,visited, vertices)
     return visited
+
+
+def get_out_of_scc(block, vertices, scc_components):
+    m = scc_components["multiple"]
+    b = vertices[block]
+
+    
+    jump = b.get_jump_target()
+    falls = b.get_falls_to()
+
+    
+    if jump in m[block] and falls in m[block]:
+        print("SCC Entry: "+str(block)+ "has a different exit")
+        return -1
+    
+    if jump in m[block]:
+        return falls
+    elif falls in m[block]:
+        return jump
+    
+    else:
+        raise Exception("Error when searching the exit") 
+    
 
 
 def compute_join_conditionals(vertices,comes_from,scc_components):
@@ -1129,6 +1157,15 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
 
     all_scc = get_all_scc_ids(scc_components)
 
+    comes_from_scc = {}
+    
+    for s in scc_components["multiple"]:
+        blocks = scc_components["multiple"][s]
+        pos = blocks.index(s)
+        blocks.pop(pos)
+        r = compute_component_of_cfg_scc(blocks, vertices,s)
+        comes_from_scc[s] = r
+    print(comes_from_scc)
 
     for v in vertices:
         block = vertices[v]
@@ -1169,45 +1206,38 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
             for scc in scc_components["multiple"]:
                 if v in scc_components["multiple"][scc]:
                     entry_scc = scc
+
+            comes_from_entry = comes_from_scc[entry_scc]
             
             left_branch = block.get_jump_target()
             right_branch = block.get_falls_to()
 
-            if left_branch in comes_from[right_branch]:
+            if right_branch in scc_components["multiple"][entry_scc] and left_branch in comes_from_entry[right_branch]:
                 found = True
                 c = right_branch
-                print("HOLA1")
-                print(v)
-                print(c)
-                print("*******")
                 
-            elif right_branch in comes_from[left_branch]:
+            elif left_branch in scc_components["multiple"][entry_scc] and right_branch in comes_from_entry[left_branch]:
                 found = True
                 c = left_branch
-                print("HOLA")
-                print(v)
-                print(c)
-                print("*****")
                 
             else:
                 
-                candidates = list(filter(lambda x: left_branch in comes_from[x] and right_branch in comes_from[x] and x in scc_components["multiple"][entry_scc], vertices.keys()))
+                candidates = list(filter(lambda x: left_branch in comes_from_entry[x] and right_branch in comes_from_entry[x], scc_components["multiple"][entry_scc]))
                 i = 0
                 found = False
                 
                 while i < len(candidates) and not found:
                     #print(candidates[i])
                     # el candidate tiene el comes_from de los dos hijos, y el aparece en el comes_from del resto de candidatos
-                    l = list(filter(lambda x: candidates[i] in comes_from[x], candidates))
+                    l = list(filter(lambda x: candidates[i] in comes_from_entry[x], candidates))
                     l.append(candidates[i])
-                    if left_branch in comes_from[candidates[i]] and right_branch in comes_from[candidates[i]] and set(candidates) == set(l):
+                    if left_branch in comes_from_entry[candidates[i]] and right_branch in comes_from_entry[candidates[i]] and set(candidates) == set(l):
                         c = candidates[i]
                         found = True
                     i+=1
     
         
         if not found:
-            print(v)
             print("NO CIERRA: "+str(v))
             rel[v] = -1
         else:
