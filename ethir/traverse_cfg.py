@@ -5,7 +5,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
          r1 = translate_block_property(entry_point, property_information)
          if r1 != []:
              r = ["r",r1]
-             result.append(r)
+             result+=r
              
          left_block = vertices[entry_point].get_jump_target()
          rigth_block = vertices[entry_point].falls_to()
