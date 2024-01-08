@@ -48,6 +48,9 @@ def is_mstore(opcode, pos):
 def order_accesses(text): 
     return int(text.split()[0])
 
+def order_accesses_set(elem):
+    return int(elem[0])
+
 def get_block_id(pc):
     block = pc.split(":")[0]
     if str(block).find("_")==-1:
