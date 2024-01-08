@@ -1,6 +1,6 @@
 from memory.memory_utils import TOP
 from storage.storage_offset_abstate import StorageAccess
-from memory.memory_utils import order_accesses
+from memory.memory_utils import order_accesses, order_accesses_set
 
 class StorageAccesses: 
 
@@ -49,7 +49,7 @@ class StorageAccesses:
         self.process_set(block_in,self.read_accesses,result)
         self.process_set(block_in,self.write_accesses,result)
 
-        return sorted(result,key=order_accesses)
+        return sorted(result,key=order_accesses_set)
         
     def process_set_string (self,block_in, set_in, text, result): 
         for pc in set_in: 
@@ -65,7 +65,7 @@ class StorageAccesses:
             block = pc.split(":")[0]
             offset = pc.split(":")[1]
             if block == block_in: 
-                result.append(offset+" : "+str(list(set_in[pc])))
+                result.append((offset,list(set_in[pc])))
                 
     def get_read_accesses (self): 
         return self.read_accesses
