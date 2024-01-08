@@ -4371,11 +4371,12 @@ def run(disasm_file=None,
 
             result_sat = {}
             for i in input_blocks:
-                result = traverse_cfg(i, scc, rel, vertices, storage_accesses, [])
+                result = []
+                traverse_cfg(i, scc, rel, vertices, storage_accesses, result,-1)
+                print("RESULT")
                 print(result)
-                raise Exception
                 result_sat[i] = result
-
+            raise Exception
 
             outputs = run_gastap(cname, input_blocks)
 
