@@ -35,7 +35,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         print("SCC")
         print(result_scc)
         print(r)
-        r_total = r+r_scc
+        r_total = r+result_scc
         print(r_total)
         
         r = ["r",r_total]
@@ -102,7 +102,7 @@ def translate_block_property(block, property_information):
     if info != []:
         result = []
         for i in info:
-            elem = ["a",i.split(":")[-1]]
+            elem = ["a",i[1]]
             result.append(elem)
     else:
         result = []
