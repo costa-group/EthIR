@@ -1,6 +1,6 @@
 
 
-def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_information, result, end_point):
+def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_information, result, end_points):
     if entry_point in scc_components["unary"]:
          r1 = translate_block_property(entry_point, property_information)
          if r1 != []:
@@ -11,10 +11,10 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
          rigth_block = vertices[entry_point].falls_to()
 
          next_block = left_block if left_block != entry_point else rigth_block
-         traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result, -1)
+         traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result, end_points)
          #result.append(r1)
          
-    elif entry_point in scc_components["multiple"] and entry_point!=end_point:
+    elif entry_point in scc_components["multiple"] and (end_points == [] or entry_point not in end_points):
         print("HOLA MULTIPLE")
         r1 = translate_block_property(entry_point, property_information)
         if r1 != []:
@@ -30,7 +30,8 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         next_block = left_block if left_block in scc_components["multiple"][entry_point] else rigth_block
         out_block = left_block if left_block not in scc_components["multiple"][entry_point] else rigth_block
         result_scc = []
-        traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result_scc, entry_point)
+        end_points.append(entry_point)
+        traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result_scc, end_points)
 
         print("SCC")
         print(result_scc)
@@ -40,12 +41,12 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         
         r = ["r",r_total]
         result.append(r)
-        traverse_cfg(out_block, scc_components, join_relation, vertices, property_information, result, -1)
+        traverse_cfg(out_block, scc_components, join_relation, vertices, property_information, result, end_points)
         
     else:
         print("ENTRY:" + str(entry_point))
-        print("END: "+str(end_point))
-        if entry_point != end_point:
+        print("END: "+str(end_points))
+        if end_points == [] or entry_point not in end_points:
             print(entry_point)
             #print(result)
             r = translate_block_property(entry_point, property_information)
@@ -57,7 +58,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 print("uncond")
                 next_block = block.get_jump_target()
                 print(next_block)
-                traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, end_point)
+                traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, end_points)
                 print("R de uncond")
                 print(result)
                 
@@ -66,35 +67,49 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 end_point_join = join_relation[entry_point]
                 left_block = block.get_jump_target()
                 right_block = block.get_falls_to()
-                print("cond")
-
+                print("COND")
+                print(entry_point)
                 result_r1 = []
                 result_r2 = []
                 
-                traverse_cfg(left_block,scc_components, join_relation, vertices, property_information, result_r1, end_point_join)
-                traverse_cfg(right_block,scc_components, join_relation, vertices, property_information, result_r2, end_point_join)
+                end_points.append(end_point_join)
+                traverse_cfg(left_block,scc_components, join_relation, vertices, property_information, result_r1, end_points)
+
+                end_points.append(end_point_join)
+                traverse_cfg(right_block,scc_components, join_relation, vertices, property_information, result_r2, end_points)
+
+                print(result_r1)
+                print(result_r2)
                 
                 if result_r1 != [] and result_r2 != []:
+                    print("HOLA1")
                     r = ["c",[result_r1,result_r2]]
                 elif result_r1 != []:
+                    print("HOLA2")
                     r = ["c",[result_r1]]
-                else:
+                elif result_r2 != []:
+                    print("HOLA3")
                     r = ["c",[result_r2]]
+                else:
+                    r = []
 
-                result.append(r)
+                if r != []:
+                    result.append(r)
 
                 print("RESULT COND")
                 print(result)
                 
                 if end_point_join not in scc_components["multiple"]:
-                    traverse_cfg(end_point_join,scc_components, join_relation, vertices, property_information, result, -1)
+                    traverse_cfg(end_point_join,scc_components, join_relation, vertices, property_information, result, end_points)
                     
             elif block.get_block_type() == "falls_to":
                 next_block = block.get_falls_to()
                 print("falls_to")
-                print(end_point)
-                traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, end_point)
+                print(end_points)
+                traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, end_points)
                 print(result)
+        elif len(end_points)>0 and entry_point in end_points:
+            end_points.pop()
                 
 
 def translate_block_property(block, property_information):
