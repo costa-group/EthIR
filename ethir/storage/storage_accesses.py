@@ -7,6 +7,8 @@ class StorageAccesses:
     def __init__(self): 
         self.read_accesses = {}
         self.write_accesses = {}
+        self.written_values = {}
+
 
     def add_read_access (self,pc, slot):
         accesses = self.read_accesses.get(pc)
@@ -16,13 +18,23 @@ class StorageAccesses:
         else:    
             self.read_accesses[pc] = self.clean_under_top(set(accesses.union(slot)))
 
-    def add_write_access (self,pc, slot):
+    def add_write_access (self,pc, slot, inputval):
         accesses = self.write_accesses.get(pc)
 
         if accesses is None:
             self.write_accesses[pc] = set(slot)
         else:
             self.write_accesses[pc] = self.clean_under_top(set(accesses.union(slot)))
+
+        if inputval is None: 
+            inputval = TOP
+
+        values = self.written_values.get(pc)
+
+        if values is None:
+            self.written_values[pc] = set(inputval)
+        else:
+            self.written_values[pc] = values.union(inputval)
 
     def clean_under_top (self,accesses): 
         res = set([])
@@ -96,4 +108,6 @@ class StorageAccesses:
     def __repr__(self):
         return ("Storage: \n" + 
                 "   READ:  " + str(self.read_accesses) + " \n" +
-                "   WRITE: " + str(self.write_accesses) + " \n")
+                "   WRITE: " + str(self.write_accesses) + " \n" + 
+                "   WRITEN VALUES: " + str(self.written_values) + " \n")
+

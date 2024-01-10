@@ -1,17 +1,15 @@
 import os
+from storage.cfg2dag import CFG2DAG
 import global_params_ethir
 
 from storage.storage_resource_analysis import StorageResourceAnalysis
-from storage.cfg2dag import CFG2DAG
 from storage.storage_offset_abstate import StorageOffsetAbstractState
 from storage.storage_accesses import StorageAccesses
 from memory.memory_offset import OffsetAnalysisAbstractState,OFFSET_STORAGE
 from analysis.fixpoint_analysis import Analysis, BlockAnalysisInfo
 
 
-def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, storage_analysis, debug, compact_clones, sccs):     
-
-    print("Storage analysis started! " + storage_analysis)
+def perform_storage_analysis(vertices, debug):     
 
     accesses = StorageAccesses()
 
@@ -32,34 +30,38 @@ def perform_storage_analysis(vertices, cname, csource, compblocks, fblockmap, st
     print("Accesses")
     print(str(accesses))
 
-    input_blocks = list(map(lambda x: fblockmap[x][0], fblockmap.keys()))
+   
+    return storage, accesses
+
+
+def perform_sra_analysis (accesses, vertices, sccs, sra_analysis, input_blocks, cname): 
+
+    print("Ejecutando storage analysis")
+
     print("Input blocks: "+str(input_blocks))
 
-    ## Computed all simple paths compacting SCC's 
-    cfgdag = CFG2DAG(vertices, sccs)
+    if sra_analysis == "satsol": 
+        
+        pass
 
-    print("Processing paths")
+    else:
+        cfgdag = CFG2DAG(vertices, sccs)
+        perform_sra_no_backend_analysis (vertices, accesses, cfgdag)
 
-    for fblock in input_blocks: 
-        print("Processing paths: " + str(fblock))
-        # TODO: GRD Put a parameter
-        if storage_analysis == "allpaths": 
-            cfgdag.process_all_paths_from(fblock)
-        elif storage_analysis == "nopaths": 
-            cfgdag.process_all_blocks_in_method(fblock)
+        for fblock in input_blocks: 
+            print("Processing paths: " + str(fblock))
+            if sra_analysis == "allpaths": 
+                cfgdag.process_all_paths_from(fblock)
+            elif sra_analysis == "nopaths": 
+                cfgdag.process_all_blocks_in_method(fblock)
+
+        perform_sra_no_backend_analysis (vertices, accesses, cfgdag)
+
+
+def perform_sra_no_backend_analysis (vertices, accesses, cfgdag): 
     
-    print("PATH2TERMINAL: " + str(cfgdag.paths2terminal))
-
     sra = StorageResourceAnalysis (vertices,accesses,cfgdag.paths2terminal, cfgdag)
-    print("Computing storage path accesses")
+    print("Computing (non-backend) storage path accesses")
     sra.compute_paths_accesses()
-
-     # print("SRA sets: " + str(sra))
-
     sra.compute_accesses_in_paths()
-
     print("SRA results: " + str(sra))
-    
-    return storage, accesses, sra.get_cold_results(),sra.get_final_results(),cfgdag
-
-

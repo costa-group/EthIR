@@ -16,7 +16,7 @@ from collections import namedtuple
 import gasol
 
 from memory.memory_analysis import perform_memory_analysis
-from storage.storage_analysis import perform_storage_analysis
+from storage.storage_analysis import perform_sra_analysis, perform_storage_analysis
 
 from vargenerator import *
 from basicblock import BasicBlock
@@ -4149,6 +4149,7 @@ def run(disasm_file=None,
         opt_bytecode = False, 
         mem_analysis = None,
         storage_analysis = None, 
+        sra_analysis = None, 
         compact_clones = False):    
     
     global g_disasm_file
@@ -4332,14 +4333,32 @@ def run(disasm_file=None,
         elif storage_analysis:
             begin = dtimer()
 
-            storage_result = perform_storage_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, storage_analysis, debug_info, compact_clones, scc)
-            _,storage_accesses,sracold, srafinal, cfgdag = storage_result
-            check_cfg_option(cfg,cname,execution, storage_result)
-            generate_storage_saco_config_file(cname,sracold, srafinal)
-            generate_dag_file(cname,cfgdag.get_dag())
+            storage_result = perform_storage_analysis(vertices, 
+                                                      debug_info)
+            _,storage_accesses = storage_result
 
             end = dtimer()
+            
+            
             print("Storage Analysis finished in "+str(end-begin)+"s\n")
+            
+            print ("Tengo sra_analysis " + str(sra_analysis))
+            if sra_analysis: 
+                begin = dtimer()
+                input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+                # (accesses, vertices, sccs, sra_analysis, input_blocks)
+                perform_sra_analysis (storage_accesses,
+                                      vertices,
+                                      scc, 
+                                      sra_analysis, 
+                                      input_blocks, 
+                                      cname)
+                check_cfg_option(cfg,cname,execution, storage_result)
+                # generate_storage_saco_config_file(cname,sracold, srafinal)
+                # generate_dag_file(cname,cfgdag.get_dag())
+
+                end = dtimer()
+                print("SRA Analysis finished in "+str(end-begin)+"s\n")
 
         else:
             storage_accesses = None

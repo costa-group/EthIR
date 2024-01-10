@@ -185,6 +185,7 @@ def analyze_disasm_bytecode():
                                         sto=args.storage_arrays, 
                                         mem_analysis = args.mem_analysis, 
                                         storage_analysis = args.storage_analysis, 
+                                        sra_analysis = args.sra_analysis, 
                                         compact_clones = args.compact_clones)
     else:
         exit_code = -1
@@ -235,6 +236,7 @@ def analyze_bytecode():
                                         sto=args.storage_arrays,
                                         mem_analysis = args.mem_analysis, 
                                         storage_analysis = args.storage_analysis, 
+                                        sra_analysis = args.sra_analysis, 
                                         compact_clones = args.compact_clones)
         
         helper.rm_tmp_files()
@@ -288,6 +290,7 @@ def run_solidity_analysis(inputs,hashes):
                                               opt_bytecode = (args.optimize_run or args.via_ir), 
                                               mem_analysis = args.mem_analysis, 
                                               storage_analysis = args.storage_analysis, 
+                                              sra_analysis = args.sra_analysis, 
                                               compact_clones = args.compact_clones)
             
         except Exception as e:
@@ -327,6 +330,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   opt_bytecode = (args.optimize_run or args.via_ir), 
                                                   mem_analysis = args.mem_analysis, 
                                                   storage_analysis = args.storage_analysis, 
+                                                  sra_analysis = args.sra_analysis, 
                                                   compact_clones = args.compact_clones)
                 
             except Exception as e:
@@ -573,7 +577,8 @@ def main():
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
     parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset"])
-    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", choices = ["nopaths","allpaths"])
+    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", action="store_true")
+    parser.add_argument("-sra-analysis", "--sra-analysis",             help="Executes storage analysis", choices = ["nopaths","allpaths","smtsolver"])
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
 
 

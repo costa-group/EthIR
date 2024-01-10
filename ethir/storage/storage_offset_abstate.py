@@ -135,7 +135,10 @@ class StorageOffsetAbstractState:
             self.add_read_access(pc,stack[top])
 
         elif op_code == "SSTORE":
-            self.add_write_access(pc,stack[top])
+            value  = None
+            if top-1 in stack: 
+                value = stack[top-1]
+            self.add_write_access(pc,stack[top], value)
 
         elif op_code == "SHA3" or op_code == "KECCAK256": 
             ctop = stack[top]
@@ -242,8 +245,8 @@ class StorageOffsetAbstractState:
     def add_read_access (self,pc, accesses):
         StorageOffsetAbstractState.accesses.add_read_access(pc,accesses)
         
-    def add_write_access (self,pc, accesses):
-        StorageOffsetAbstractState.accesses.add_write_access(pc,accesses)
+    def add_write_access (self,pc, accesses, value):
+        StorageOffsetAbstractState.accesses.add_write_access(pc,accesses, value)
 
 
     def get_stack (self): 
