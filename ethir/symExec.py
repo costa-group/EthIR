@@ -13,7 +13,7 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
-from storage.sra_ub_manager import SRA_UB_manager
+#from storage.sra_ub_manager import SRA_UB_manager
 import gasol
 
 from memory.memory_analysis import perform_memory_analysis
@@ -4266,7 +4266,7 @@ def run(disasm_file=None,
 
         num_loops+=len(scc_unary_new)+len(scc_multiple)
 
-        rel = compute_join_conditionals(vertices,component_of_blocks,scc)
+        # rel = compute_join_conditionals(vertices,component_of_blocks,scc)
         
     except:
         #traceback.print_exc()
@@ -4400,9 +4400,19 @@ def run(disasm_file=None,
 
             outputs, ubs = run_gastap(cname, input_blocks)
 
+            items = list(function_block_map.items())
+            
+            for b in ubs:
+                for i in items:
+                    if b == i[1][0]:
+                        function_name = i[0]
+            
+                print("GASTAPRES: "+str(source_file)+","+str(cname)+","+ str(function_name)+",block"+str(b)+","+str(ubs[b]))
+            
+            
             set_identifiers = list(rbr.set_identifiers.keys())
 
-            ubmanager = SRA_UB_manager(ubs,set_identifiers)
+            # ubmanager = SRA_UB_manager(ubs,set_identifiers)
 
             #TODO: ADD UB EVALUATION
             
