@@ -13,6 +13,7 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
+from storage.sra_ub_manager import SRA_UB_manager
 import gasol
 
 from memory.memory_analysis import perform_memory_analysis
@@ -4388,18 +4389,21 @@ def run(disasm_file=None,
         if saco[1]:
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
-            result_sat = {}
-            for i in input_blocks:
-                result = []
-                traverse_cfg(i, scc, rel, vertices, storage_accesses, result,-1)
-                print("RESULT")
-                print(result)
-                result_sat[i] = result
-            raise Exception
+            # result_sat = {}
+            # for i in input_blocks:
+            #     result = []
+            #     traverse_cfg(i, scc, rel, vertices, storage_accesses, result,-1)
+            #     print("RESULT")
+            #     print(result)
+            #     result_sat[i] = result
+            # raise Exception
 
-            outputs = run_gastap(cname, input_blocks)
+            outputs, ubs = run_gastap(cname, input_blocks)
 
             set_identifiers = list(rbr.set_identifiers.keys())
+
+            ubmanager = SRA_UB_manager(ubs,set_identifiers)
+
             #TODO: ADD UB EVALUATION
             
         if opt!= None:

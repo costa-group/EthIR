@@ -1077,17 +1077,34 @@ def compute_gas(vertices):
 def run_gastap(contract_name, entry_functions):
 
     outputs = []
+    ubs = {}
+
     for bl in entry_functions:
     
-        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
+        cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
         FNULL = open(os.devnull, 'w')
         print(cmd)
         solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
         out = solc_p.communicate()[0].decode()
         outputs.append(out)
+        ub = filter_ub(out)
+        if ub == "" or ub == None: 
+            raise Exception("Error at cooking the ub expression")
+        ubs[bl] = ub
+
         print(out)
-    return outputs
-        
+
+    return outputs,ubs
+
+
+def filter_ub(out):
+    res = re.search("Total UB for .*",out)
+    if res: 
+        ub = res.group(0).split(":")[1]
+    else: 
+        ub = "unknown"
+    return ub
+
         
 def get_all_scc_ids(scc_components):
     unary = scc_components["unary"]
