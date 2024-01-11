@@ -58,9 +58,9 @@ class StorageAccesses:
 
     def get_storage_analysis_info(self, block_in):
         result = []
-        self.process_set(block_in,self.read_accesses,result)
-        self.process_set(block_in,self.write_accesses,result)
-
+        self.process_set(block_in,self.read_accesses,"l",result)
+        self.process_set(block_in,self.write_accesses,"s",result)
+        
         return sorted(result,key=order_accesses_set)
         
     def process_set_string (self,block_in, set_in, text, result): 
@@ -69,15 +69,24 @@ class StorageAccesses:
             offset = pc.split(":")[1]
             #instr = self.vertices[block_in].get_instructions()[offset]
             if block == block_in: 
-                #result.append(offset + " " + instr + "[" + text + "] -> " + str(list(set_in[pc]))) 
+                #result.append(offset + " " + instr + "[" + text + "] -> " + str(list(set_in[pc])))
                 result.append(offset + " [" + text + "] -> " + str(list(set_in[pc]))) 
 
-    def process_set(self, block_in, set_in, result):
+    def process_set(self, block_in, set_in, t_ins, result):
         for pc in set_in: 
             block = pc.split(":")[0]
             offset = pc.split(":")[1]
-            if block == block_in: 
-                result.append((offset,list(set_in[pc])))
+            if block == block_in:
+                if t_ins == "s":
+                    written_val = self.written_values[pc]
+                    if written_val == 0:
+                        zero = "z"
+                    else:
+                        zero = "nz"
+                else:
+                    zero = None
+                        
+                result.append((offset,list(set_in[pc]),t_ins,zero))
                 
     def get_read_accesses (self): 
         return self.read_accesses

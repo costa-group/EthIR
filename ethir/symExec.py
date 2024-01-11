@@ -26,7 +26,7 @@ import global_params_ethir
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals, get_blocks_per_function
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
@@ -4267,7 +4267,7 @@ def run(disasm_file=None,
 
         num_loops+=len(scc_unary_new)+len(scc_multiple)
 
-        # rel = compute_join_conditionals(vertices,component_of_blocks,scc)
+        rel = compute_join_conditionals(vertices,component_of_blocks,scc)
         
     except:
         #traceback.print_exc()
@@ -4364,7 +4364,6 @@ def run(disasm_file=None,
         else:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)
-            
         if mem_analysis == None:
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
                                              stack_info = stack_h, 
@@ -4389,10 +4388,16 @@ def run(disasm_file=None,
         if saco[1]:
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
-            # result_sat = {}
+            blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
+            # print(blocks_fun)
+
+            
+            result_sat = {}
+            
             # for i in input_blocks:
+                
             #     result = []
-            #     traverse_cfg(i, scc, rel, vertices, storage_accesses, result,-1)
+            #     traverse_cfg(i, scc, rel, vertices, storage_accesses, result, {}, [])
             #     print("RESULT")
             #     print(result)
             #     result_sat[i] = result
