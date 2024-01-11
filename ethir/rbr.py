@@ -1244,7 +1244,10 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_s
         value = "Error. No opcode matchs"
         index_variables = variables
         rule.add_instr(value)
-        
+
+    if opcode_name == "JUMPDEST":
+        rule.add_instr("nop(jumpdest(" + str(rule.blockId) +"))")
+
     if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):
         r = results_sto_analysis.pop(0)
         
@@ -1542,7 +1545,10 @@ def compile_block(block,state_vars, results_sto_analysis = []):
                 
             rule.add_instr(instr)
 
+
+            rule.add_instr("nop(jump(" + str(block.get_list_jumps()[0]) + "))")
             rule.add_instr("nop(JUMP)")
+
         else:
             index_variables = compile_instr(rule,l_instr[cont],
                                                    index_variables,block.get_list_jumps(),True,state_vars,results_sto_analysis)

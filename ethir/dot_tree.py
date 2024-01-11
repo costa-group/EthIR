@@ -222,6 +222,8 @@ def build_tree_memory(block,visited,block_input,cfg_type,memory_result,condTrue 
 
     if cfg_type == "memory":
         slots, memory, accesses, _ = memory_result
+    elif cfg_type == "storage":
+        _, accesses = memory_result
     else:
         _, accesses = memory_result
         

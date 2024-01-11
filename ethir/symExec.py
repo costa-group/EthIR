@@ -13,6 +13,7 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
+from storage.sra_ub_manager import SRA_UB_manager
 #from storage.sra_ub_manager import SRA_UB_manager
 import gasol
 
@@ -4343,7 +4344,6 @@ def run(disasm_file=None,
             
             print("Storage Analysis finished in "+str(end-begin)+"s\n")
             
-            print ("Tengo sra_analysis " + str(sra_analysis))
             if sra_analysis: 
                 begin = dtimer()
                 input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
@@ -4354,13 +4354,13 @@ def run(disasm_file=None,
                                       sra_analysis, 
                                       input_blocks, 
                                       cname)
-                check_cfg_option(cfg,cname,execution, storage_result)
                 # generate_storage_saco_config_file(cname,sracold, srafinal)
                 # generate_dag_file(cname,cfgdag.get_dag())
 
                 end = dtimer()
                 print("SRA Analysis finished in "+str(end-begin)+"s\n")
 
+            check_cfg_option(cfg,cname,execution, storage_result)
         else:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)
@@ -4398,7 +4398,7 @@ def run(disasm_file=None,
             #     result_sat[i] = result
             # raise Exception
 
-            outputs, ubs = run_gastap(cname, input_blocks)
+            outputs, ubs, params = run_gastap(cname, input_blocks)
 
             items = list(function_block_map.items())
             
@@ -4412,9 +4412,8 @@ def run(disasm_file=None,
             
             set_identifiers = list(rbr.set_identifiers.keys())
 
-            # ubmanager = SRA_UB_manager(ubs,set_identifiers)
+            ubmanager = SRA_UB_manager(ubs, params, scc)
 
-            #TODO: ADD UB EVALUATION
             
         if opt!= None:
         # fields = ["field1","field2"]

@@ -109,5 +109,5 @@ class StorageAccesses:
         return ("Storage: \n" + 
                 "   READ:  " + str(self.read_accesses) + " \n" +
                 "   WRITE: " + str(self.write_accesses) + " \n" + 
-                "   WRITEN VALUES: " + str(self.written_values) + " \n")
+                "   WRITTEN VALUES: " + str(self.written_values) + " \n")
 

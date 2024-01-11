@@ -1078,33 +1078,39 @@ def run_gastap(contract_name, entry_functions):
 
     outputs = []
     ubs = {}
+    ub_params = {}
 
     for bl in entry_functions:
     
-        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes" # -evmcc star" 
+        cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
+        
         FNULL = open(os.devnull, 'w')
-        #print(cmd)
+        print(cmd)
         solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
         out = solc_p.communicate()[0].decode()
         outputs.append(out)
-        ub = filter_ub(out)
+        ub, params = filter_ub(out)
         if ub == "" or ub == None:
             print("GASTAPERR: Error at cooking the ub expression. "+str(contract_name)+",block"+str(bl))
             # raise Exception("Error at cooking the ub expression")
         else:
             ubs[bl] = ub
+            ub_params[bl] = params
 
 
-    return outputs,ubs
+    return outputs,ubs, ub_params
 
 
 def filter_ub(out):
     res = re.search("Total UB for .*",out)
     if res: 
-        ub = res.group(0).split(":")[1]
+        sres = res.group(0).split(":")
+        params = sres[0]
+        params = params[params.find("(")+1:params.find(")")]
+        ub = sres[1]
     else: 
         ub = "unknown"
-    return ub
+    return ub, params
 
         
 def get_all_scc_ids(scc_components):
