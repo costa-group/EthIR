@@ -41,8 +41,9 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         print(r_total)
 
         rep = repetitions.get(entry_point,1)
-        r = [["r",rep],r_total]
-        result.append(r)
+        if r_total != []:
+            r = [["r",rep],r_total]
+            result.append(r)
         traverse_cfg(out_block, scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
         
     else:
