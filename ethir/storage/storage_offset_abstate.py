@@ -240,7 +240,7 @@ class StorageOffsetAbstractState:
     def add_read_access_top (self,pos, pc, stack):
         if pos in stack: 
             for access in stack[pos]: 
-                self.accesses.add_read_access(pc,StorageAccess(access.slot,TOP))
+                self.accesses.add_read_access(pc,StorageAccess(access.slot,TOP,access.noper))
 
     def add_read_access (self,pc, accesses):
         StorageOffsetAbstractState.accesses.add_read_access(pc,accesses)
@@ -307,7 +307,7 @@ class StorageAccess:
 
         if self.access != BOTTOM and operand.access != BOTTOM: 
             print("STORAGE ANALYSIS WARNING: Adding two keccak's " + str(self.access) + " " + str(operand.access))
-            return StorageAccess(TOP,TOP)
+            return StorageAccess(TOP,TOP,0)
         
         noper = self.noper + operand.noper + 1
 
