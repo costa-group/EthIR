@@ -1183,7 +1183,7 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
         blocks.pop(pos)
         r = compute_component_of_cfg_scc(blocks, vertices,s)
         comes_from_scc[s] = r
-    print(comes_from_scc)
+    # print(comes_from_scc)
 
     for v in vertices:
         block = vertices[v]
@@ -1256,7 +1256,7 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
     
         
         if not found:
-            print("NO CIERRA: "+str(v))
+            # print("NO CIERRA: "+str(v))
             rel[v] = -1
         else:
             rel[v] = c
@@ -1264,3 +1264,12 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
                     
     print(rel)
     return rel
+
+
+def get_blocks_per_function(entry_functions, comes_from):
+    result = {}
+    for b in entry_functions:
+        blocks = list(filter(lambda x: b in comes_from[x], comes_from))
+        result[b] = blocks
+
+    print(result)
