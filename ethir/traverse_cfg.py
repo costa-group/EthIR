@@ -16,7 +16,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
          #result.append(r1)
          
     elif entry_point in scc_components["multiple"] and (end_points == [] or entry_point not in end_points):
-        print("HOLA MULTIPLE")
+        # print("HOLA MULTIPLE")
         r1 = translate_block_property(entry_point, property_information)
         if r1 != []:
             r = [r1]
@@ -24,7 +24,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
             r = []
 
         block = vertices[entry_point]
-        print(r)
+        # print(r)
         left_block = block.get_jump_target()
         rigth_block = block.get_falls_to()
         
@@ -34,11 +34,11 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         end_points.append(entry_point)
         traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result_scc, repetitions, end_points)
 
-        print("SCC")
-        print(result_scc)
-        print(r)
+        # print("SCC")
+        # print(result_scc)
+        # print(r)
         r_total = r+result_scc
-        print(r_total)
+        # print(r_total)
 
         rep = repetitions.get(entry_point,1)
         if r_total != []:
@@ -47,10 +47,10 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         traverse_cfg(out_block, scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
         
     else:
-        print("ENTRY:" + str(entry_point))
-        print("END: "+str(end_points))
+        # print("ENTRY:" + str(entry_point))
+        # print("END: "+str(end_points))
         if end_points == [] or entry_point not in end_points:
-            print(entry_point)
+            # print(entry_point)
             #print(result)
             r = translate_block_property(entry_point, property_information)
             if r != []:
@@ -58,20 +58,20 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
 
             block = vertices[entry_point]
             if block.get_block_type() == "unconditional":
-                print("uncond")
+                # print("uncond")
                 next_block = block.get_jump_target()
-                print(next_block)
+                # print(next_block)
                 traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
-                print("R de uncond")
-                print(result)
+                # print("R de uncond")
+                # print(result)
                 
             elif block.get_block_type() == "conditional":
-                print(join_relation)
+                # print(join_relation)
                 end_point_join = join_relation[entry_point]
                 left_block = block.get_jump_target()
                 right_block = block.get_falls_to()
-                print("COND")
-                print(entry_point)
+                # print("COND")
+                # print(entry_point)
                 result_r1 = []
                 result_r2 = []
                 
@@ -81,17 +81,17 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 end_points.append(end_point_join)
                 traverse_cfg(right_block,scc_components, join_relation, vertices, property_information, result_r2, repetitions, end_points)
 
-                print(result_r1)
-                print(result_r2)
+                # print(result_r1)
+                # print(result_r2)
                 
                 if result_r1 != [] and result_r2 != []:
-                    print("HOLA1")
+                    # print("HOLA1")
                     r = [["c",1],[result_r1,result_r2]]
                 elif result_r1 != []:
-                    print("HOLA2")
+                    # print("HOLA2")
                     r = [["c",1],[result_r1]]
                 elif result_r2 != []:
-                    print("HOLA3")
+                    # print("HOLA3")
                     r = [["c",1],[result_r2]]
                 else:
                     r = []
@@ -99,18 +99,18 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 if r != []:
                     result.append(r)
 
-                print("RESULT COND")
-                print(result)
+                # print("RESULT COND")
+                # print(result)
                 
                 if end_point_join not in scc_components["multiple"]:
                     traverse_cfg(end_point_join,scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
                     
             elif block.get_block_type() == "falls_to":
                 next_block = block.get_falls_to()
-                print("falls_to")
-                print(end_points)
+                # print("falls_to")
+                # print(end_points)
                 traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
-                print(result)
+                # print(result)
         elif len(end_points)>0 and entry_point in end_points:
             end_points.pop()
                 
