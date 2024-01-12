@@ -123,8 +123,10 @@ def translate_block_property(block, property_information):
             first_elem = ["a",1,i[2]]
             if i[2] == "s" and i[3] == "z":
                 first_elem.append("z")
-            elem = [first_elem,i[1]]
-            result.append(elem)
+
+            if str(i[1]).find("*")==-1:
+                elem = [first_elem,i[1]]
+                result.append(elem)
     else:
         result = []
         
