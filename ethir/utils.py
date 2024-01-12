@@ -1082,7 +1082,7 @@ def run_gastap(contract_name, entry_functions):
 
     for bl in entry_functions:
     
-        cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
+        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
         
         FNULL = open(os.devnull, 'w')
         print(cmd)
@@ -1102,7 +1102,7 @@ def run_gastap(contract_name, entry_functions):
 
 
 def filter_ub(out):
-    res = re.search("Total UB for .*",out)
+    res = re.search("Total UB for .*",out)    
     if res: 
         sres = res.group(0).split(":")
         params = sres[0]
@@ -1193,6 +1193,7 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
 
     for v in vertices:
         block = vertices[v]
+        found = False
         if block.get_block_type() == "conditional" and v not in all_scc:
 
             prev_blocks = comes_from[v]
