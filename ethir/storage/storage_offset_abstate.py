@@ -140,27 +140,29 @@ class StorageOffsetAbstractState:
                 value = stack[top-1]
             self.add_write_access(pc,stack[top], value)
 
-        elif op_code == "SHA3" or op_code == "KECCAK256": 
-            ctop = stack[top]
-            ctopm1 = stack[top-1]
+        elif op_code == "SHA3" or op_code == "KECCAK256":
 
-            ## Reading a kecack for arrays
-            if (ctop == {StorageAccess(BOTTOM,str(0),0)} and ctopm1 == {StorageAccess(BOTTOM,str(32),0)}): 
-                res = set([])
-                for access in memory[MEM0]: 
-                    newAcc = StorageAccess(access,str("0"),access.noper)   
-                    res.add(newAcc)
-                stack[top-1] = res
-            elif (ctop == {StorageAccess(BOTTOM,str(0),0)} and ctopm1 == {StorageAccess(BOTTOM,str(64),0)}): 
-                res = set([])
-                for access in memory[MEM0]: 
-                    for access2 in memory[MEM20]: 
-                        if access2.access != BOTTOM: 
-                            newAcc = StorageAccess(access2.get_access_expr()+"#"+access.offset,str("0"),max(access2.noper,access.noper))   
-                        else: 
-                            newAcc = StorageAccess(access2.offset+"#"+access.offset ,str("0"),max(access2.noper,access.noper))   
+            if top in stack and top-1 in stack:
+                ctop = stack[top]
+                ctopm1 = stack[top-1]
+
+                ## Reading a kecack for arrays
+                if (ctop == {StorageAccess(BOTTOM,str(0),0)} and ctopm1 == {StorageAccess(BOTTOM,str(32),0)}): 
+                    res = set([])
+                    for access in memory[MEM0]: 
+                        newAcc = StorageAccess(access,str("0"),access.noper)   
                         res.add(newAcc)
-                stack[top-1] = res
+                    stack[top-1] = res
+                elif (ctop == {StorageAccess(BOTTOM,str(0),0)} and ctopm1 == {StorageAccess(BOTTOM,str(64),0)}): 
+                    res = set([])
+                    for access in memory[MEM0]: 
+                        for access2 in memory[MEM20]: 
+                            if access2.access != BOTTOM: 
+                                newAcc = StorageAccess(access2.get_access_expr()+"#"+access.offset,str("0"),max(access2.noper,access.noper))   
+                            else: 
+                                newAcc = StorageAccess(access2.offset+"#"+access.offset ,str("0"),max(access2.noper,access.noper))   
+                            res.add(newAcc)
+                    stack[top-1] = res
 
         elif op_code in "ADD":
             pass
