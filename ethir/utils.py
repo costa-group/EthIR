@@ -1180,7 +1180,12 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
     rel = {}
 
     all_scc = get_all_scc_ids(scc_components)
+    multiple = scc_components["multiple"]
+    l = multiple.values()
+    scc_ids_multiple = [x for y in l for x in y]
+    all_scc_multiple = scc_ids_multiple
 
+    
     comes_from_scc = {}
     
     for s in scc_components["multiple"]:
@@ -1225,7 +1230,7 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
                         found = True
                     i+=1
 
-        elif block.get_block_type() == "conditional" and v in all_scc and v not in scc_components["multiple"].keys():
+        elif block.get_block_type() == "conditional" and v in all_scc_multiple and v not in scc_components["multiple"].keys():
             prev_blocks = comes_from[v]
 
             for scc in scc_components["multiple"]:
