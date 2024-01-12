@@ -1580,12 +1580,14 @@ def compile_block(block,state_vars, results_sto_analysis = [], sccs = None):
             has_lm40 = False
             has_sm40 = False
 
-    if (block_jump in sccentries and 
-        rule.blockId not in sccs['unary'] and 
-        rule.blockId not in sccs['multiple'][block_jump]):
+    print(sccentries)
+            
+    if (block_jump in sccentries and block_jump in sccs["multiple"] and
+        rule.blockId not in sccs['unary'] and rule.blockId not in
+        sccs['multiple'][block_jump]):
         rule.add_instr("nop(jump(" + str(block_jump) + "))")
     
-    if (block_falls in sccentries and
+    if (block_falls in sccentries and block_falls in sccs["multiple"] and
         rule.blockId not in sccs['unary'] and 
         rule.blockId not in sccs['multiple'][block_falls]):
         rule.add_instr("nop(jump(" + str(block_falls) + "))")
