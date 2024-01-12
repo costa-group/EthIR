@@ -401,7 +401,7 @@ class InputHelper:
         lines = f.readlines()
         pragma = list(filter(lambda x: x.find("pragma solidity")!=-1, lines))
         if pragma == []:
-            return "v8" #Put here the highest version
+            return "v4" #Put here the highest version
 
         elif len(pragma) == 1:
             pragma_version = pragma[0].strip()
