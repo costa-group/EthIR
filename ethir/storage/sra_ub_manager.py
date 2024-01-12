@@ -1,14 +1,16 @@
 import re
+import ast
 
 from sympy import Function, symbols
 
 
 class SRA_UB_manager: 
     
-    def __init__(self, ubs, params, sccs) -> None:
+    def __init__(self, ubs, params, sccs, come_from) -> None:
         ## Ubs per public function identified by block id
         self.ubs = ubs
         self.params = params
+        self.come_from = come_from
 
         self.sccs = sccs
         self.ubs_info = {}
@@ -17,11 +19,21 @@ class SRA_UB_manager:
 
     def __compute_ubs(self): 
         for function in self.ubs: 
-            print("Procesando UBs de " + str(function))
             ubinfo = UB_info()
-            ubinfo.process_ubs(self.ubs[function], self.params[function], self.sccs)
+
+            sccsfun = list()
+            for type in self.sccs:
+                for scc in self.sccs[type]:  
+                    if function not in self.come_from[scc]: 
+                        continue
+                    sccsfun.append(scc)
+
+            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun)
 
             self.ubs_info[function] = ubinfo
+
+    def get_ub_info(self,function): 
+        return self.ubs_info[function]
 
     def __repr__(self) -> str:
         res = ""
@@ -31,21 +43,52 @@ class SRA_UB_manager:
 
         return res
     
+op_map = {
+    # binary
+    ast.Add: "+",
+    ast.Sub: "-",
+    ast.Div: "/",
+    ast.Mult: "*",
+    # unary
+    ast.UAdd: "",
+    ast.USub: "-",
+}
 
 class UB_info: 
 
     def __init__(self) -> None:
         self.gas_ub = "unknown"
         self.ubscc = {}
+        self.ubscclist = {}
 
     def process_ubs(self,origub,params,sccs): 
 
         self.gas_ub = self.__eval_gas_ub(origub, params)
 
-        for type in sccs:
-            for scc in sccs[type]:  
-                ub = self.__eval_niter_ub(origub, params, scc)
-                self.ubscc[scc] = ub
+        for scc in sccs:  
+            ub = self.__eval_niter_ub(origub, params, scc)
+            self.ubscc[scc] = ub
+            self.ubscclist[scc] = self.__compute(ast.parse(ub, mode="eval").body)
+
+    def __compute(self,expr):
+        match expr:
+            case ast.Constant(value=value):
+                return str(value)
+            case ast.Name(id=id): 
+                return str(id)
+            case ast.UnaryOp(op=op, operand=value): 
+                try:
+                    v = ""+op_map[type(op)] + self.__compute(value)
+                    return v
+                except KeyError:
+                    raise SyntaxError(f"Unknown operation {ast.unparse(expr)}")
+            case ast.BinOp(op=op, left=left, right=right):
+                try:
+                    return [op_map[type(op)], self.__compute(left), self.__compute(right)]
+                except KeyError:
+                    raise SyntaxError(f"Unknown operation {ast.unparse(expr)}")
+            case x:
+                raise SyntaxError(f"Invalid Node {ast.dump(x)}")
 
     def get_gas_ub(self): 
         return self.gasub
@@ -53,7 +96,6 @@ class UB_info:
     def __eval_gas_ub (self, origub, params): 
         ## Computing gas ub
         ub = origub.replace("c(g)","1")
-        print("UB: " + str(ub))
         ub = re.sub('(c\(.*?\))','0',ub)
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
@@ -66,24 +108,22 @@ class UB_info:
 
         ub = eval(ub)
         ub = str(ub).replace("maxub","max")
-        print("UB: " + str(ub))
+        # print("UB: " + str(ub))
         return ub
 
     def __eval_niter_ub(self, origub, params, scc): 
-        ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc))
-        print("   Ntimes UB[{}]: {}".format(scc,ntimesub))
+        ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc),"-1")
         ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc))
-        print("   NCalls UB[{}]: {}".format(scc,ncallsub))
-
         params = symbols(self.__filter_variables(params))
         param_dict = {str(p): p for p in params}
         locals().update(param_dict)
 
-        ub = "{}/{}".format(ntimesub,ncallsub)
+        ub = "({})/({})".format(ntimesub,ncallsub)
         ub = eval(ub)
+
         return str(ub)
 
-    def __eval_ub_cc(self,origub,params,cc): 
+    def __eval_ub_cc(self,origub,params,cc, addtoub=""): 
 
         ub = origub.replace("c(g)","0")
         ub = ub.replace("c(" + cc + ")","1")
@@ -97,7 +137,7 @@ class UB_info:
         param_dict = {str(p): p for p in params}
         locals().update(param_dict)
 
-        ub = eval(ub)
+        ub = eval(ub + addtoub)
         ub = str(ub).replace("maxub","max")
         return ub
 
@@ -110,10 +150,11 @@ class UB_info:
     def __repr__(self) -> str:
         res = "   UB_gas: {} \n".format(self.gas_ub)
         res += "   UB_SCC: {} \n".format(self.ubscc)
+        res += "   UB_SCC_LIST: {} \n".format(self.ubscclist)
+
 
         return res
     
-
 def is_variable(elem): 
     return not elem.isnumeric()
 

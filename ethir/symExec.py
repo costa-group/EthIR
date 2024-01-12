@@ -4388,8 +4388,8 @@ def run(disasm_file=None,
         if saco[1]:
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
-            blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
-            # print(blocks_fun)
+            # blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
+            # print("SBLOCKS " + str(component_of_blocks))
 
             
             result_sat = {}
@@ -4417,7 +4417,7 @@ def run(disasm_file=None,
             
             set_identifiers = list(rbr.set_identifiers.keys())
 
-            ubmanager = SRA_UB_manager(ubs, params, scc)
+            ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks)
 
             
         if opt!= None:

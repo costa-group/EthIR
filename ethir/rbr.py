@@ -1186,7 +1186,13 @@ They are remove when displaying.
 -nop is True when generating nop annotations with the opcode. False otherwise.
 -index_variables refers to the top stack index. int.
 '''
-def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_sto_analysis):
+def compile_instr(rule,evm_opcode,
+                  variables,
+                  list_jumps,
+                  cond,
+                  state_vars,
+                  results_sto_analysis, 
+                  sccentries):
 
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
@@ -1245,7 +1251,8 @@ def compile_instr(rule,evm_opcode,variables,list_jumps,cond,state_vars,results_s
         index_variables = variables
         rule.add_instr(value)
 
-    if opcode_name == "JUMPDEST":
+    if opcode_name == "JUMPDEST" and rule.blockId in sccentries:
+        print ("Adding jumpdest para " + str(rule.blockId))
         rule.add_instr("nop(jumpdest(" + str(rule.blockId) +"))")
 
     if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):
@@ -1482,7 +1489,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block,state_vars, results_sto_analysis = []):
+def compile_block(block,state_vars, results_sto_analysis = [], sccs = None):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1504,20 +1511,28 @@ def compile_block(block,state_vars, results_sto_analysis = []):
     rule = RBRRule(block_id, "block",is_string_getter,all_state_vars)
     rule.set_index_input(block.get_stack_info()[0])
     l_instr = block.get_instructions()
-    
+
+    sccentries = set()
+    for type in sccs: 
+        for scc in sccs[type]: 
+            sccentries.add(scc)
+
     mem_creation = 0 #mem_abs
     
     while not(finish) and cont< len(l_instr):
+        block_jump = None
+        if len(block.get_list_jumps()) > 0: 
+            block_jump = block.get_list_jumps()[0]
+        block_falls = block.get_falls_to()
         if block.get_block_type() == "conditional" and is_conditional(l_instr[cont:]):
             rule1,rule2, instr = create_cond_jump(block.get_start_address(), l_instr[cont:],
                         index_variables, block.get_list_jumps(),
                                                   block.get_falls_to(),True)
             rule.add_instr(instr)
-            
+
             for elem in l_instr[cont:]:
                 rule.add_instr("nop("+elem.split()[0]+")")
                     
-
             rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             finish = True
             
@@ -1542,16 +1557,19 @@ def compile_block(block,state_vars, results_sto_analysis = []):
                 rbr_blocks[rule1.get_rule_name()]=[rule1,rule2]
             else:
                 rule.set_call_to(block.get_list_jumps()[0])
-                
+
             rule.add_instr(instr)
-
-
-            rule.add_instr("nop(jump(" + str(block.get_list_jumps()[0]) + "))")
+            
             rule.add_instr("nop(JUMP)")
 
         else:
             index_variables = compile_instr(rule,l_instr[cont],
-                                                   index_variables,block.get_list_jumps(),True,state_vars,results_sto_analysis)
+                                            index_variables,
+                                            block.get_list_jumps(),
+                                            True,
+                                            state_vars,
+                                            results_sto_analysis,
+                                            sccentries)
             has_lm40 = has_lm40 or is_mload40(l_instr[cont])
             has_sm40 = has_sm40 or is_mstore40(l_instr[cont])
             
@@ -1562,9 +1580,21 @@ def compile_block(block,state_vars, results_sto_analysis = []):
             has_lm40 = False
             has_sm40 = False
 
+    if (block_jump in sccentries and 
+        rule.blockId not in sccs['unary'] and 
+        rule.blockId not in sccs['multiple'][block_jump]):
+        rule.add_instr("nop(jump(" + str(block_jump) + "))")
+    
+    if (block_falls in sccentries and
+        rule.blockId not in sccs['unary'] and 
+        rule.blockId not in sccs['multiple'][block_falls]):
+        rule.add_instr("nop(jump(" + str(block_falls) + "))")
+
+
     if(block.get_block_type()=="falls_to"):
         instr = process_falls_to_blocks(index_variables,block.get_falls_to())
         rule.set_call_to(block.get_falls_to())
+            
         rule.add_instr(instr)
 
     rule.set_fresh_index(top_index)
@@ -1719,7 +1749,23 @@ Main function that build the rbr representation from the CFG of a solidity file.
 -saco_rbr is True if it has to generate the RBR in SACO syntax.
 -exe refers to the number of smart contracts analyzed.
 '''
-def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = None,saco_rbr = None,c_rbr = None, exe = None, contract_name = None, component = None, oyente_time = 0,scc = None,svc_labels = None,gotos=None,fbm = [], source_info = None,mem_abs = None,sto = None,storage_analysis = None):
+def evm2rbr_compiler(blocks_input = None, 
+                     stack_info = None, 
+                     block_unbuild = None,
+                     saco_rbr = None,
+                     c_rbr = None, 
+                     exe = None, 
+                     contract_name = None, 
+                     component = None, 
+                     oyente_time = 0,
+                     scc = None,
+                     svc_labels = None,
+                     gotos=None,fbm = [], 
+                     source_info = None,
+                     mem_abs = None,
+                     sto = None,
+                     storage_analysis = None):
+    
     global rbr_blocks
     global stack_index
     global vertices
@@ -1731,7 +1777,8 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
     global sha3_blocks_arr
     global val_mem40
 
-    
+    print("SCCS': " + str(scc))
+
     init_globals()
     c_trans = c_rbr
     
@@ -1775,7 +1822,7 @@ def evm2rbr_compiler(blocks_input = None, stack_info = None, block_unbuild = Non
 
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
-                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis)
+                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis, scc)
 
                 if mem_result>0:
                     mem_creation.append((block.get_start_address(),mem_result))
