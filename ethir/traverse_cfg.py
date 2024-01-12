@@ -41,8 +41,9 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         print(r_total)
 
         rep = repetitions.get(entry_point,1)
-        r = [["r",rep],r_total]
-        result.append(r)
+        if r_total != []:
+            r = [["r",rep],r_total]
+            result.append(r)
         traverse_cfg(out_block, scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
         
     else:
@@ -122,8 +123,10 @@ def translate_block_property(block, property_information):
             first_elem = ["a",1,i[2]]
             if i[2] == "s" and i[3] == "z":
                 first_elem.append("z")
-            elem = [first_elem,i[1]]
-            result.append(elem)
+
+            if str(i[1]).find("*")==-1:
+                elem = [first_elem,i[1]]
+                result.append(elem)
     else:
         result = []
         
