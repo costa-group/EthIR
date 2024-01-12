@@ -14,7 +14,6 @@ import logging
 import six
 from collections import namedtuple
 from storage.sra_ub_manager import SRA_UB_manager
-#from storage.sra_ub_manager import SRA_UB_manager
 import gasol
 
 from memory.memory_analysis import perform_memory_analysis
@@ -4391,18 +4390,6 @@ def run(disasm_file=None,
             # blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
             # print("SBLOCKS " + str(component_of_blocks))
 
-            
-            result_sat = {}
-            
-            # for i in input_blocks:
-                
-            #     result = []
-            #     traverse_cfg(i, scc, rel, vertices, storage_accesses, result, {}, [])
-            #     print("RESULT")
-            #     print(result)
-            #     result_sat[i] = result
-            # raise Exception
-
             outputs, ubs, params = run_gastap(cname, input_blocks)
 
             items = list(function_block_map.items())
@@ -4419,6 +4406,24 @@ def run(disasm_file=None,
 
             ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks)
 
+            result_sat = {}
+            for i in input_blocks:
+                
+                result = []
+                ub_info = ubmanager.get_ub_info(i)
+                print(ub_info)
+                traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
+                print("RESULT")
+                print(result)
+                result_sat[i] = result
+                if result != []:
+                    print(result)
+                    with open(global_params_ethir.costabs_path+"/costabs/"+cname+"_block"+str(i)+".cold","w") as json_file:
+                        json.dump(result,json_file)
+
+            # raise Exception
+
+            
             
         if opt!= None:
         # fields = ["field1","field2"]
