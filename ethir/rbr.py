@@ -1579,8 +1579,6 @@ def compile_block(block,state_vars, results_sto_analysis = [], sccs = None):
             mem_creation += 1
             has_lm40 = False
             has_sm40 = False
-
-    print(sccentries)
             
     if (block_jump in sccentries and block_jump in sccs["multiple"] and
         rule.blockId not in sccs['unary'] and rule.blockId not in
