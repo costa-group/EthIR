@@ -125,7 +125,10 @@ def translate_block_property(block, property_information):
                 first_elem.append("z")
 
             if str(i[1]).find("*")==-1:
-                elem = [first_elem,i[1]]
+                new_set = []
+                for e in i[1]:
+                    new_set.append(str(e))
+                elem = [first_elem,new_set]
                 result.append(elem)
     else:
         result = []
