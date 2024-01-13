@@ -4732,10 +4732,17 @@ def run(
 
             block_sizes_collapsed = list(collapser.block_sizes_collapsed.values())
 
+            num_non_duplicated_vertices = len(list(filter(lambda x: isinstance(x, int), vertices.keys())))
+            num_non_duplicated_collapsed_vertices = len(list(filter(lambda x: isinstance(x, int), collapsed_vertices.keys())))
+
             print(f"Graph collapse: {end - begin} s")
 
             print(
                 f"Blocks: {len(vertices)} - Collapsed blocks: {len(collapsed_vertices)}"
+            )
+
+            print(
+                f"Blocks (no duplicated): {num_non_duplicated_vertices} - Collapsed blocks: {num_non_duplicated_collapsed_vertices}"
             )
             print(
                 f"Mean un-Collapsed Blocks: {sum(block_sizes) /len(block_sizes)} - Mean Collapsed blocks: {sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n"
@@ -4746,9 +4753,8 @@ def run(
 
             name = global_params_ethir.costabs_path
 
-            with open(f"/{name}/collapse_analytics.txt", "w") as f:
-                f.write(
-                    f"{len(vertices)},{len(collapsed_vertices)},{sum(block_sizes) /len(block_sizes)},{sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n"
+            print(
+                f"BLOCK_COLLAPSE_ANALYTICS: {num_non_duplicated_vertices};{num_non_duplicated_collapsed_vertices};{sum(block_sizes) /len(block_sizes)};{sum(block_sizes_collapsed) /len(block_sizes_collapsed)}\n"
                 )
 
             key = f"{g_source_file}_{cname}"
