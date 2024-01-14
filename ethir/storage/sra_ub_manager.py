@@ -3,7 +3,6 @@ import ast
 
 from sympy import Function, symbols
 
-
 class SRA_UB_manager: 
     
     def __init__(self, ubs, params, sccs, come_from) -> None:
@@ -63,6 +62,20 @@ class UB_info:
 
     def process_ubs(self,origub,params,sccs): 
 
+        #Some special cases treatment
+        if origub.find("maximize_failed") != -1: 
+            print("UB Warn: Non maximixed expression ")
+            self.gas_ub = "Non maximixed expression"
+            return
+
+        if origub.find("no_rf") != -1: 
+            failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
+            print("UB WARN Non terminating loop found: " + str(failed))
+            self.gas_ub = "non terminating "+ str(failed)
+            return
+
+
+
         self.gas_ub = self.__eval_gas_ub(origub, params)
 
         for scc in sccs:  
@@ -94,21 +107,26 @@ class UB_info:
         return self.gasub
 
     def __eval_gas_ub (self, origub, params): 
+
+        
         ## Computing gas ub
         ub = origub.replace("c(g)","1")
-        ub = re.sub('(c\(.*?\))','0',ub)
+        ub = re.sub('(c\([fst].*?\))','0',ub)
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
         ub = ub.replace("]","")
 
         params = symbols(self.__filter_variables(params))
         nat = Function("nat")
+        field = Function("f")
+        l = Function("l")
+        c = Function("")
         param_dict = {str(p): p for p in params}
+        
         locals().update(param_dict)
 
         ub = eval(ub)
         ub = str(ub).replace("maxub","max")
-        # print("UB: " + str(ub))
         return ub
 
     def __eval_niter_ub(self, origub, params, scc): 
@@ -127,7 +145,7 @@ class UB_info:
 
         ub = origub.replace("c(g)","0")
         ub = ub.replace("c(" + cc + ")","1")
-        ub = re.sub('(c\(.*?\))','0',ub)
+        ub = re.sub('(c\([fst].*?\))','0',ub)
 
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
@@ -161,6 +179,15 @@ def is_variable(elem):
 def nat (n): 
     return n 
 
+def field(f): 
+    return f
+
+def l (n): 
+    return n
+
+def c (n): 
+    return n
+
 maxub = Function("maxub")
 
 def mymax (*expr): 
@@ -183,6 +210,4 @@ def mymax (*expr):
         return maxub(*nonumbers) 
     else: 
         return maxub(maxval,*nonumbers)    
-
-
-
+    
