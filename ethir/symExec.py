@@ -4399,7 +4399,7 @@ def run(disasm_file=None,
                     if b == i[1][0]:
                         function_name = i[0]
             
-                print("GASTAPRES: "+str(source_file)+","+str(cname)+","+ str(function_name)+",block"+str(b)+","+str(ubs[b]))
+
             
             
             set_identifiers = list(rbr.set_identifiers.keys())
@@ -4411,11 +4411,19 @@ def run(disasm_file=None,
                 
                 result = []
                 ub_info = ubmanager.get_ub_info(i)
+
+                for ii in items:
+                    if i == ii[1][0]:
+                        function_name = ii[0]
+                
+                print("GASTAPRES: "+str(source_file)+","+str(cname)+","+ str(function_name)+",block"+str(i)+","+str(ub_info.gas_ub))
+
                 print(ub_info)
                 traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
                 print("RESULT")
                 print(result)
                 result_sat[i] = result
+                
                 if result != []:
                     print(result)
                     with open(global_params_ethir.costabs_path+"/costabs/"+cname+"_block"+str(i)+".cold","w") as json_file:
