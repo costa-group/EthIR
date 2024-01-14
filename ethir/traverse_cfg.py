@@ -7,9 +7,9 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
              rep = repetitions.get(entry_point,1)
              r = [["r",rep],r1]
              result.append(r)
-             
+        
          left_block = vertices[entry_point].get_jump_target()
-         rigth_block = vertices[entry_point].falls_to()
+         rigth_block = vertices[entry_point].get_falls_to()
 
          next_block = left_block if left_block != entry_point else rigth_block
          traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
