@@ -1081,7 +1081,10 @@ def run_gastap(contract_name, entry_functions):
     ub_params = {}
 
     for bl in entry_functions:
-    
+
+        # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
+        #     continue
+        
         cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
         
         FNULL = open(os.devnull, 'w')
@@ -1107,6 +1110,10 @@ def filter_ub(out):
         sres = res.group(0).split(":")
         params = sres[0]
         params = params[params.find("(")+1:params.find(")")]
+        if params != "":
+            params+=",call,staticcall,delegatecall"
+        else:
+            params+="call,staticcall,delegatecall"
         ub = sres[1]
     else: 
         ub = "unknown"
