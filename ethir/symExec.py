@@ -1005,7 +1005,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     param_abs = ("","")
     # st_arr = (False,False)
     # st_id = -1
-
+    
     vertices[block].add_stack(list(stack))
     vertices[block].add_path(path)
     
@@ -1279,6 +1279,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         new_params = params.copy()
         new_params.global_state["pc"] = get_initial_block_address(successor)
 
+        if successor not in edges[block]:
+            edges[block].append(successor)
+        
         analyze_next_block(block, successor, stack, path, func_call, depth, current_level, new_params, "falls_to")
 
             
@@ -1291,6 +1294,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         new_params = params.copy()
         new_params.global_state["pc"] = get_initial_block_address(left_branch)
 
+        if left_branch not in edges[block]:
+            edges[block].append(left_branch)
+            
         analyze_next_block(block, left_branch, stack, path, func_call, depth, current_level, new_params, jump_type)
 
         right_branch = vertices[block].get_falls_to()
@@ -1302,6 +1308,10 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         
         new_params = params.copy()
         new_params.global_state["pc"] = get_initial_block_address(right_branch) 
+
+        if right_branch not in edges[block]:
+            edges[block].append(right_branch)
+
         analyze_next_block(block, right_branch, stack, path, func_call, depth, current_level, new_params, "falls_to")
         updated_count_number = visited_edges[current_edge] - 1
         visited_edges.update({current_edge: updated_count_number})
@@ -3153,6 +3163,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             if target_address not in edges[block]:
                 edges[block].append(target_address)
+
         else:
             raise ValueError('STACK underflow')
     elif opcode == "PC":
@@ -4263,7 +4274,7 @@ def run(disasm_file=None,
 
         # scc["unary"] = scc_unary
         # scc["multiple"] = scc_multiple
-
+        
         num_loops+=len(scc_unary_new)+len(scc_multiple)
 
         rel = compute_join_conditionals(vertices,component_of_blocks,scc)
