@@ -4426,7 +4426,8 @@ def run(disasm_file=None,
                 
                 if result != []:
                     print(result)
-                    with open(global_params_ethir.costabs_path+"/costabs/"+cname+"_block"+str(i)+".cold","w") as json_file:
+                    source_file_path = source_file.split("/")[-1].strip(".sol")
+                    with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".cold","w") as json_file:
                         json.dump(result,json_file)
 
             # raise Exception
