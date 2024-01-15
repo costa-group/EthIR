@@ -1110,6 +1110,7 @@ def filter_ub(out):
         ub = sres[1]
     else: 
         ub = "unknown"
+        params = ""
     return ub, params
 
         
