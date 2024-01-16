@@ -1,6 +1,9 @@
 
 
 def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_information, result, repetitions, end_points):
+    print("ENTRY")
+    print(entry_point)
+
     if entry_point in scc_components["unary"]:
          r1 = translate_block_property(entry_point, property_information)
          if r1 != []:
@@ -33,7 +36,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         result_scc = []
         end_points.append(entry_point)
         traverse_cfg(next_block, scc_components, join_relation, vertices, property_information, result_scc, repetitions, end_points)
-
+        end_points.pop()
         # print("SCC")
         # print(result_scc)
         # print(r)
@@ -50,7 +53,9 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         # print("ENTRY:" + str(entry_point))
         # print("END: "+str(end_points))
         if end_points == [] or entry_point not in end_points:
-            # print(entry_point)
+            print("ENTRY REAL")
+            print(entry_point)
+            
             #print(result)
             r = translate_block_property(entry_point, property_information)
             if r != []:
@@ -77,10 +82,11 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 
                 end_points.append(end_point_join)
                 traverse_cfg(left_block,scc_components, join_relation, vertices, property_information, result_r1, repetitions, end_points)
-
+                end_points.pop()
+                
                 end_points.append(end_point_join)
                 traverse_cfg(right_block,scc_components, join_relation, vertices, property_information, result_r2, repetitions, end_points)
-
+                end_points.pop()
                 # print(result_r1)
                 # print(result_r2)
                 
@@ -102,7 +108,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 # print("RESULT COND")
                 # print(result)
                 
-                if end_point_join not in scc_components["multiple"]:
+                if end_point_join not in scc_components["multiple"] and end_point_join != -1:
                     traverse_cfg(end_point_join,scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
                     
             elif block.get_block_type() == "falls_to":
@@ -111,12 +117,14 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 # print(end_points)
                 traverse_cfg(next_block,scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
                 # print(result)
-        elif len(end_points)>0 and entry_point in end_points:
-            end_points.pop()
+        # elif len(end_points)>0 and entry_point in end_points:
+        #     end_points.pop()
                 
 
 def translate_block_property(block, property_information):
+    print(block)
     info = property_information.get_storage_analysis_info(str(block))
+    print(info)
     if info != []:
         result = []
         for i in info:
