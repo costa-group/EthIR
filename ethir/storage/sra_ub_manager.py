@@ -14,6 +14,7 @@ class SRA_UB_manager:
         self.sccs = sccs
         self.ubs_info = {}
         self.__compute_ubs()
+
         print(str(self))
 
     def __compute_ubs(self): 
@@ -57,6 +58,8 @@ class UB_info:
 
     def __init__(self) -> None:
         self.gas_ub = "unknown"
+        self.storage_accesses = "unknown"
+        self.sstore_accesses = "unknown"
         self.ubscc = {}
         self.ubscclist = {}
 
@@ -77,6 +80,8 @@ class UB_info:
 
 
         self.gas_ub = self.__eval_gas_ub(origub, params)
+        self.storage_accesses = self.__eval_stoacceses_ub(origub, params)
+        self.sstore_accesses = self.__eval_sstore_ub(origub, params)
 
         for scc in sccs:  
             ub = self.__eval_niter_ub(origub, params, scc)
@@ -106,8 +111,57 @@ class UB_info:
     def get_gas_ub(self): 
         return self.gasub
 
-    def __eval_gas_ub (self, origub, params): 
 
+
+    def __eval_sstore_ub (self, origub, params): 
+        
+        ## Computing gas ub
+        ub = origub.replace("c(g)","0")
+        ub = re.sub('(c\([ft].*?\))','0',ub)
+        ub = re.sub('(c\(store.*?\))','1',ub)
+        ub = re.sub('(c\(set.*?\))','0',ub)
+        ub = ub.replace("max", "mymax")
+        ub = ub.replace("[","")
+        ub = ub.replace("]","")
+
+        params = symbols(self.__filter_variables(params))
+        nat = Function("nat")
+        field = Function("f")
+        l = Function("l") 
+        c = Function("")
+        param_dict = {str(p): p for p in params}
+        
+        locals().update(param_dict)
+
+        ub = eval(ub)
+        ub = str(ub).replace("maxub","max")
+        return ub
+
+    def __eval_stoacceses_ub (self, origub, params): 
+        
+        ## Computing gas ub
+        ub = origub.replace("c(g)","0")
+        ub = re.sub('(c\([ft].*?\))','0',ub)
+        ub = re.sub('(c\(store.*?\))','0',ub)
+        ub = re.sub('(c\(set.*?\))','1',ub)
+        ub = ub.replace("max", "mymax")
+        ub = ub.replace("[","")
+        ub = ub.replace("]","")
+
+        params = symbols(self.__filter_variables(params))
+        nat = Function("nat")
+        field = Function("f")
+        l = Function("l") 
+        c = Function("")
+        param_dict = {str(p): p for p in params}
+        
+        locals().update(param_dict)
+
+        ub = eval(ub)
+        ub = str(ub).replace("maxub","max")
+        return ub
+
+    def __eval_gas_ub (self, origub, params): 
         
         ## Computing gas ub
         ub = origub.replace("c(g)","1")
@@ -119,7 +173,7 @@ class UB_info:
         params = symbols(self.__filter_variables(params))
         nat = Function("nat")
         field = Function("f")
-        l = Function("l")
+        l = Function("l") 
         c = Function("")
         param_dict = {str(p): p for p in params}
         
@@ -167,6 +221,8 @@ class UB_info:
 
     def __repr__(self) -> str:
         res = "   UB_gas: {} \n".format(self.gas_ub)
+        res += "   UB_storage_acceses: {} \n".format(self.storage_accesses)
+        res += "   UB_sstore_acceses: {} \n".format(self.sstore_accesses)
         res += "   UB_SCC: {} \n".format(self.ubscc)
         res += "   UB_SCC_LIST: {} \n".format(self.ubscclist)
 
