@@ -4427,7 +4427,7 @@ def run(disasm_file=None,
                     if i == ii[1][0]:
                         function_name = ii[0]
                 
-                print("GASTAPRES: "+str(source_file)+","+str(cname)+","+ str(function_name)+",block"+str(i)+","+str(ub_info.gas_ub))
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(ub_info.gas_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses))
 
                 print(ub_info)
                 traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
