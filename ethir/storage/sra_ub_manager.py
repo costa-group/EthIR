@@ -32,7 +32,7 @@ class SRA_UB_manager:
             self.ubs_info[function] = ubinfo
 
     def get_ub_info(self,function): 
-        return self.ubs_info[function]
+        return self.ubs_info.get(function, UB_info)
 
     def __repr__(self) -> str:
         res = ""
@@ -73,8 +73,6 @@ class UB_info:
             print("UB WARN Non terminating loop found: " + str(failed))
             self.gas_ub = "non terminating "+ str(failed)
             return
-
-
 
         self.gas_ub = self.__eval_gas_ub(origub, params)
 
