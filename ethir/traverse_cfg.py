@@ -8,7 +8,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
          r1 = translate_block_property(entry_point, property_information)
          if r1 != []:
              rep = repetitions.get(entry_point,1)
-             r = [["r",rep],r1]
+             r = [["r",entry_point,rep],r1]
              result.append(r)
         
          left_block = vertices[entry_point].get_jump_target()
@@ -45,7 +45,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
 
         rep = repetitions.get(entry_point,1)
         if r_total != []:
-            r = [["r",rep],r_total]
+            r = [["r",entry_point,rep],r_total]
             result.append(r)
         traverse_cfg(out_block, scc_components, join_relation, vertices, property_information, result, repetitions, end_points)
         
