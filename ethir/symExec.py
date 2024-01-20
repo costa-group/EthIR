@@ -15,6 +15,7 @@ import six
 from collections import namedtuple
 from storage.sra_ub_manager import SRA_UB_manager
 import gasol
+import sympy
 
 from memory.memory_analysis import perform_memory_analysis
 from storage.storage_analysis import perform_sra_analysis, perform_storage_analysis
@@ -4445,7 +4446,8 @@ def run(disasm_file=None,
                 else:
                     a = b = 0
 
-                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(ub_info.gas_ub+" +"+str(a*2000+b*100))+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
+                final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100))
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
 
                 
             # raise Exception
