@@ -19,6 +19,8 @@ import gasol
 from memory.memory_analysis import perform_memory_analysis
 from storage.storage_analysis import perform_sra_analysis, perform_storage_analysis
 
+from storage.cold import compute_accesses as compute_accesses_cold
+
 from vargenerator import *
 from basicblock import BasicBlock
 import global_params_ethir
@@ -4427,8 +4429,6 @@ def run(disasm_file=None,
                     if i == ii[1][0]:
                         function_name = ii[0]
                 
-                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(ub_info.gas_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses))
-
                 print(ub_info)
                 traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
                 print("RESULT")
@@ -4441,6 +4441,13 @@ def run(disasm_file=None,
                     with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".cold","w") as json_file:
                         json.dump(result,json_file)
 
+                    (a, b) = compute_accesses_cold(result)
+                else:
+                    a = b = 0
+
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(ub_info.gas_ub+" +"+str(a*2000+b*100))+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
+
+                
             # raise Exception
 
             
