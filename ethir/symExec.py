@@ -4431,7 +4431,12 @@ def run(disasm_file=None,
                         function_name = ii[0]
                 
                 print(ub_info)
-                traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
+                try:
+                    traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
+                except Exception as e:
+                    print("GASTAPERROR: Error in TRAVERSE")
+                    raise e
+                
                 print("RESULT")
                 print(result)
                 result_sat[i] = result
@@ -4441,8 +4446,12 @@ def run(disasm_file=None,
                     source_file_path = source_file.split("/")[-1].strip(".sol")
                     with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".cold","w") as json_file:
                         json.dump(result,json_file)
-
-                    (a, b) = compute_accesses_cold(result)
+                        
+                    try:
+                        (a, b) = compute_accesses_cold(result)
+                    except Exception as e:
+                        a = b = 0
+                        print("GASTAPERROR: Error in COLD")
                 else:
                     a = b = 0
 
