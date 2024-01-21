@@ -1,8 +1,6 @@
 
 
 def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_information, result, repetitions, end_points):
-    print("ENTRY")
-    print(entry_point)
 
     if entry_point in scc_components["unary"]:
          r1 = translate_block_property(entry_point, property_information)
@@ -53,8 +51,8 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         # print("ENTRY:" + str(entry_point))
         # print("END: "+str(end_points))
         if end_points == [] or entry_point not in end_points:
-            print("ENTRY REAL")
-            print(entry_point)
+            # print("ENTRY REAL")
+            # print(entry_point)
             
             #print(result)
             r = translate_block_property(entry_point, property_information)
@@ -122,9 +120,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 
 
 def translate_block_property(block, property_information):
-    print(block)
     info = property_information.get_storage_analysis_info(str(block))
-    print(info)
     if info != []:
         result = []
         for i in info:
