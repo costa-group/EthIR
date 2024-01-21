@@ -4429,8 +4429,6 @@ def run(disasm_file=None,
                 for ii in items:
                     if i == ii[1][0]:
                         function_name = ii[0]
-                
-                print(ub_info)
                 try:
                     traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
                 except Exception as e:
