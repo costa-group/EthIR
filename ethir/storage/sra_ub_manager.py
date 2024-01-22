@@ -85,11 +85,11 @@ class UB_info:
             ub = self.__eval_niter_ub(origub, params, scc)
             self.ubscc[scc] = ub
             ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
-            # if not isinstance(ub_as_list,list):
-            #     try:
-            #         ub_as_list = int(float(ub_as_list))
-            #     except:
-            #         ub_as_list = [ub_as_list]
+            if not isinstance(ub_as_list,list):
+                try:
+                    ub_as_list = [int(float(ub_as_list))]
+                except:
+                    ub_as_list = [ub_as_list]
 
             self.ubscclist[scc] = ub_as_list
 

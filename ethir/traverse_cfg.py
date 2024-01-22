@@ -90,13 +90,13 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
                 
                 if result_r1 != [] and result_r2 != []:
                     # print("HOLA1")
-                    r = [["c",1],[result_r1,result_r2]]
+                    r = [["c",[1]],[result_r1,result_r2]]
                 elif result_r1 != []:
                     # print("HOLA2")
-                    r = [["c",1],[result_r1]]
+                    r = [["c",[1]],[result_r1]]
                 elif result_r2 != []:
                     # print("HOLA3")
-                    r = [["c",1],[result_r2]]
+                    r = [["c",[1]],[result_r2]]
                 else:
                     r = []
 
@@ -124,7 +124,7 @@ def translate_block_property(block, property_information):
     if info != []:
         result = []
         for i in info:
-            first_elem = ["a",1,i[2]]
+            first_elem = ["a",[1],i[2]]
             if i[2] == "s" and i[3] == "z":
                 first_elem.append("z")
 
