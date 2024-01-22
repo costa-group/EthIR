@@ -5,7 +5,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
     if entry_point in scc_components["unary"]:
          r1 = translate_block_property(entry_point, property_information)
          if r1 != []:
-             rep = repetitions.get(entry_point,1)
+             rep = repetitions[entry_point]# .get(entry_point,1)
              r = [["r",entry_point,rep],r1]
              result.append(r)
         
@@ -41,7 +41,7 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
         r_total = r+result_scc
         # print(r_total)
 
-        rep = repetitions.get(entry_point,1)
+        rep = repetitions[entry_point]# .get(entry_point,1)
         if r_total != []:
             r = [["r",entry_point,rep],r_total]
             result.append(r)
