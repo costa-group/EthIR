@@ -4453,7 +4453,12 @@ def run(disasm_file=None,
                 else:
                     a = b = 0
 
-                final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100))
+
+                if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
+                    final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100))
+                else:
+                    final_ub = ub_info.gas_ub
+                    
                 print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
 
                 
