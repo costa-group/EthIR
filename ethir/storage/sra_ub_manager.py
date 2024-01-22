@@ -1,6 +1,6 @@
 import re
 import ast
-
+from  utils import isReal
 from sympy import Function, symbols
 
 class SRA_UB_manager: 
@@ -76,7 +76,7 @@ class UB_info:
             print("UB WARN Non terminating loop found: " + str(failed))
             self.gas_ub = "non terminating "+ str(failed)
             return
-
+                
         self.gas_ub = self.__eval_gas_ub(origub, params)
         self.storage_accesses = self.__eval_stoacceses_ub(origub, params)
         self.sstore_accesses = self.__eval_sstore_ub(origub, params)
@@ -84,13 +84,20 @@ class UB_info:
         for scc in sccs:  
             ub = self.__eval_niter_ub(origub, params, scc)
             self.ubscc[scc] = ub
-            self.ubscclist[scc] = self.__compute(ast.parse(ub, mode="eval").body)
+            ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
+            # if not isinstance(ub_as_list,list):
+            #     try:
+            #         ub_as_list = int(float(ub_as_list))
+            #     except:
+            #         ub_as_list = [ub_as_list]
+
+            self.ubscclist[scc] = ub_as_list
 
     def __compute(self,expr):
         match expr:
             case ast.Constant(value=value):
                 return str(value)
-            case ast.Name(id=id): 
+            case ast.Name(id=id):
                 return str(id)
             case ast.UnaryOp(op=op, operand=value): 
                 try:
@@ -159,7 +166,7 @@ class UB_info:
         ub = str(ub).replace("maxub","max")
         return ub
 
-    def __eval_gas_ub (self, origub, params): 
+    def __eval_gas_ub (self, origub, params):
         
         ## Computing gas ub
         ub = origub.replace("c(g)","1")
