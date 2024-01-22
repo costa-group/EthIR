@@ -168,7 +168,12 @@ class UB_info:
         ub = ub.replace("[","")
         ub = ub.replace("]","")
 
-        params = symbols(self.__filter_variables(params))
+        
+        if params == "":
+            params = []
+        else:
+            params = symbols(self.__filter_variables(params))
+            
         nat = Function("nat")
         field = Function("f")
         l = Function("l") 
