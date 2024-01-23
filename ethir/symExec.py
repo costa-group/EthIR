@@ -4431,29 +4431,29 @@ def run(disasm_file=None,
                         function_name = ii[0]
                 try:
                     traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
+                    
+                    print("RESULT")
+                    print(result)
+                    result_sat[i] = result
+                
+                    if result != []:
+                        print(result)
+                        source_file_path = source_file.split("/")[-1].strip(".sol")
+                        with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".cold","w") as json_file:
+                            json.dump(result,json_file)
+                        
+                        try:
+                            (a, b) = compute_accesses_cold(result)
+                        except Exception as e:
+                            a = b = 0
+                            print("GASTAPERROR: Error in COLD")
+                    else:
+                        a = b = 0
+
                 except Exception as e:
                     print("GASTAPERROR: Error in TRAVERSE")
-                    raise e
-                
-                print("RESULT")
-                print(result)
-                result_sat[i] = result
-                
-                if result != []:
-                    print(result)
-                    source_file_path = source_file.split("/")[-1].strip(".sol")
-                    with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".cold","w") as json_file:
-                        json.dump(result,json_file)
-                        
-                    try:
-                        (a, b) = compute_accesses_cold(result)
-                    except Exception as e:
-                        a = b = 0
-                        print("GASTAPERROR: Error in COLD")
-                else:
                     a = b = 0
-
-
+                
                 if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
                     final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100))
                 else:
