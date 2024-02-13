@@ -4448,9 +4448,18 @@ def run(disasm_file=None,
                         
                         try:
                             (a, b) = compute_accesses_cold(result)
+                            if a == -1:
+                                raise Exception()
                         except Exception as e:
                             a = b = 0
                             print("GASTAPERROR: Error in COLD")
+
+                        try:
+                            cost_sstores = compute_sstore_cost(result,smt_option)
+
+                        except Exception as e:
+                            cost_sstores = 0
+                            print("GASTAPERROR: Error in sstore cost")
                     else:
                         a = b = 0
 
@@ -4459,7 +4468,8 @@ def run(disasm_file=None,
                     a = b = 0
                 
                 if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
-                    final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100))
+                    
+                    final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+"+"+str(cost_sstores))
                 else:
                     final_ub = ub_info.gas_ub
                     
@@ -4725,3 +4735,30 @@ def generate_dag_file(cname, dag):
 
 
     f.close()
+
+def compute_sstore_cost(result, smt_option):
+    try:
+        if smt_option == "complete":
+            (a, b) = compute_stores(result)
+
+        elif smt_option == "odd":
+            if str(result).find("['r',") != -1:
+                (a, b) = compute_stores(result)
+                if (a == -1):
+                    raise Exception()
+                cost = sympy.simplify(a*10050 + b*9950)
+            else:
+                a = compute_stores_final(result)
+                if (a == -1):
+                    raise Exception()
+                cost = sympy.simplify(a*9950)
+        else:
+            raise Exception("UNKNOWN option for sstore costs")
+    
+    except Exception as e:
+        print("GASTAPERROR: Error in sstore cost")
+        a = b = 0
+        cost = 0
+        
+    return a, b
+    
