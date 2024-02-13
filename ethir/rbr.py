@@ -1826,7 +1826,7 @@ def evm2rbr_compiler(blocks_input = None,
             for block in blocks:
 
                 if storage_analysis[0] != None:
-                    results_sto_analysis = storage_analysis.get_cfg_info(str(block.get_start_address()))
+                    results_sto_analysis = storage_analysis[0].get_cfg_info(str(block.get_start_address()))
                 else:
                     results_sto_analysis = []
 
