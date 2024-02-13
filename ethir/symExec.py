@@ -20,7 +20,7 @@ import sympy
 from memory.memory_analysis import perform_memory_analysis
 from storage.storage_analysis import perform_sra_analysis, perform_storage_analysis
 
-from storage.cold import compute_accesses as compute_accesses_cold
+from storage.cold import compute_accesses as compute_accesses_cold, compute_stores, compute_stores_final
 
 from vargenerator import *
 from basicblock import BasicBlock
