@@ -277,7 +277,7 @@ def run_solidity_analysis(inputs,hashes):
                                               source_map=inp['source_map'], 
                                               source_file=inp['source'],
                                               cfg = args.control_flow_graph,
-                                              saco = (args.saco,args.gastap, args.stm_stores),
+                                              saco = (args.saco,args.gastap, args.smt_stores),
                                               execution = 0, 
                                               cname = inp["c_name"],
                                               hashes = function_names,
