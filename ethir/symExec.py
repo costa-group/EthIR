@@ -4392,13 +4392,17 @@ def run(disasm_file=None,
                                              source_info = source_info,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
                                              sto = sto, 
-                                             storage_analysis = storage_accesses)
+                                             storage_analysis = (storage_accesses, saco[2]))
 
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
         
         if saco[1]:
+
+            smt_option = saco[2] # it could be complete or odd
+            
+            
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
             # blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
