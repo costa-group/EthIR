@@ -1193,7 +1193,8 @@ def compile_instr(rule,evm_opcode,
                   state_vars,
                   results_sto_analysis,
                   sstore_cost,
-                  sccentries):
+                  sccentries,
+                  component_of):
 
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
@@ -1259,9 +1260,12 @@ def compile_instr(rule,evm_opcode,
     if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):
         r = results_sto_analysis.pop(0)
 
-        if sstore_cost == "complete":
+        sstore_cost_gas = sstore_cost[0]
+        entry_functions_with_loops = sstore_cost[1]
+        
+        if sstore_cost_gas == "complete":
             sstore_suffix = "COMP"
-        elif sstore_cost == "odd":
+        elif sstore_cost_gas == "odd":
             sstore_suffix = "ODD"
         else:
             raise Exception("ERROR. SSTORE cost option is nor recognized")
@@ -1498,7 +1502,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "", sccs = None):
+def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "", sccs = None, component_of = {}):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1579,7 +1583,8 @@ def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "",
                                             state_vars,
                                             results_sto_analysis,
                                             sstore_cost,
-                                            sccentries)
+                                            sccentries,
+                                            component_of)
             has_lm40 = has_lm40 or is_mload40(l_instr[cont])
             has_sm40 = has_sm40 or is_mstore40(l_instr[cont])
             
@@ -1832,8 +1837,8 @@ def evm2rbr_compiler(blocks_input = None,
 
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
-                sstore_cost = storage_analysis[1]
-                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,scc)
+                sstore_cost = (storage_analysis[1], storage_analysis[2])
+                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,scc,component_of)
 
                 if mem_result>0:
                     mem_creation.append((block.get_start_address(),mem_result))
