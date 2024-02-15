@@ -330,6 +330,16 @@ def orderRBR(rbr):
 
     # return rbr[0].get_Id()
 
+def get_rule_id(rbr):
+    block_id = rbr.get_Id()
+
+    if str(block_id).find("_") == -1:
+        val = int(block_id)
+    else:
+        val = block_id
+
+    return val
+    
 
 def delete_dup(l):
     r = []
