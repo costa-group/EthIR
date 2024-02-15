@@ -3,7 +3,7 @@
 from rbr_rule import RBRRule
 import opcodes
 from basicblock import Tree
-from utils import getKey, orderRBR, getLevel, store_times
+from utils import getKey, orderRBR, getLevel, store_times, get_rule_id
 import os
 import saco
 import c_translation
@@ -1275,8 +1275,15 @@ def compile_instr(rule,evm_opcode,
         else:
             set_access = r.split("->")[-1].strip()[1:-1]
             set_identifier = get_set_identifier(set_access)
+
             
-            new_opcode_name = opcode_name+sstore_suffix+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
+            val = get_rule_id(rule)
+            candidates = list(filter(lambda x:x in component_of[val], entry_functions_with_loops))
+            
+            if sstore_suffix == "ODD" and candidates == []:
+                new_opcode_name = opcode_name+sstore_suffix+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
+            else:
+                new_opcode_name = opcode_name+"COPM"+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:
