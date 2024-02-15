@@ -780,7 +780,7 @@ def annotate_invalid(path):
 
 def get_functions_with_loop(scc):
     block_with_loop = []
-    entry_multiples = scc['multiple'].keys()
+    entry_multiples = list(scc['multiple'].keys())
     scc_blocks = scc['unary']+entry_multiples
     
     entry_points = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
@@ -4392,14 +4392,14 @@ def run(disasm_file=None,
                                              source_info = source_info,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
                                              sto = sto, 
-                                             storage_analysis = (storage_accesses, saco[2]))
+                                             storage_analysis = (storage_accesses, saco[2], get_functions_with_loop(scc))) #saco[2] constains the smt option to translate cost of sstores
 
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
         
         if saco[1]:
-
+            
             smt_option = saco[2] # it could be complete or odd
             
             
