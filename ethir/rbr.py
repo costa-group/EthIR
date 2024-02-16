@@ -1265,8 +1265,8 @@ def compile_instr(rule,evm_opcode,
         
         if sstore_cost_gas == "complete":
             sstore_suffix = "COMP"
-        elif sstore_cost_gas == "odd":
-            sstore_suffix = "ODD"
+        elif sstore_cost_gas == "final":
+            sstore_suffix = "FINAL"
         else:
             raise Exception("ERROR. SSTORE cost option is nor recognized")
         
@@ -1280,10 +1280,10 @@ def compile_instr(rule,evm_opcode,
             val = get_rule_id(rule)
             candidates = list(filter(lambda x:x in component_of[val], entry_functions_with_loops))
             
-            if sstore_suffix == "ODD" and candidates == []:
+            if sstore_suffix == "COMP" and candidates == []:
                 new_opcode_name = opcode_name+sstore_suffix+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
             else:
-                new_opcode_name = opcode_name+"COPM"+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
+                new_opcode_name = opcode_name+"FINAL"+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:

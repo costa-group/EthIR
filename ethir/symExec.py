@@ -4400,7 +4400,7 @@ def run(disasm_file=None,
         
         if saco[1]:
             
-            smt_option = saco[2] # it could be complete or odd
+            smt_option = saco[2] # it could be complete or final
             
             
             input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
@@ -4738,17 +4738,17 @@ def generate_dag_file(cname, dag):
 
 def compute_sstore_cost(result, smt_option):
     try:
-        if smt_option == "complete":
+        if smt_option == "final":
             (a, b) = compute_stores(result)
 
-        elif smt_option == "odd":
+        elif smt_option == "complete":
             if str(result).find("['r',") != -1:
-                (a, b) = compute_stores(result)
+                (a, b) = compute_stores_final(result)
                 if (a == -1):
                     raise Exception()
                 cost = sympy.simplify(a*10050 + b*9950)
             else:
-                a = compute_stores_final(result)
+                a = compute_stores(result)
                 if (a == -1):
                     raise Exception()
                 cost = sympy.simplify(a*9950)

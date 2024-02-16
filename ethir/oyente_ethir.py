@@ -580,7 +580,7 @@ def main():
     parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", action="store_true")
     parser.add_argument("-sra-analysis", "--sra-analysis",             help="Executes storage analysis", choices = ["nopaths","allpaths","smtsolver"])
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
-    parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","odd"], default= "complete")
+    parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","final"], default= "complete")
 
     args = parser.parse_args()
     # if args.root_path:
