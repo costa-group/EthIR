@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from z3 import *
+import traceback
 import sys
 import json
 import os
@@ -597,15 +598,15 @@ class Access_Problem:
         assert(isinstance(ins,list))
         assert(len(ins))
         if ins[0][0] == 'r':
-            flat = flatten_or_unroll(ins)
+            flat = flatten_or_unroll_one(ins)
             # returns a sequence of accesses
             self.generate_sequence(v,flat)
         elif ins[0][0] == 'c':
-            assert(ins[0][1] == 1)
+            assert(ins[0][1][0] == 1)
             self.generate_conditional(v,ins[1])
         else:
             assert(ins[0][0]== 'a')
-            assert(ins[0][1] == 1)
+            assert(ins[0][1][0] == 1)
             self.generate_poslist(v,ins[0][2],ins[1])
 
     def generate_conditional(self,v,cond):
@@ -853,7 +854,8 @@ def compute_accesses(spositions,verbose = False):
                 res = 'sat'
             print(os.path.basename(f),len(spos2npos),maxseq,mpos,new_maxseq,smpos,c,sc,res)
         return (c,sc)
-    except:
+    except Exception:
+        traceback.print_exc()
         return (-1,0)
 
 def compute_stores(spositions,verbose = False):
@@ -916,10 +918,12 @@ if __name__ == '__main__':
         exit(1)
 
     name = ' '
+    print(sys.argv[1])
+    print(os.path.exists(sys.argv[1]))
     if os.path.exists(sys.argv[1]):
         name = os.path.abspath(sys.argv[1])
     else:
-        assert(False,'The first argument must be an existing file name or a folder name')
+        assert False,'The first argument must be an existing file name or a folder name'
 
     action = 'cold'
     if len(sys.argv) == 3:
