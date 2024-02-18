@@ -4408,7 +4408,7 @@ def run(disasm_file=None,
             # blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
             # print("SBLOCKS " + str(component_of_blocks))
 
-            outputs, ubs, params = run_gastap(cname, input_blocks)
+            outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
 
             items = list(function_block_map.items())
             
@@ -4416,9 +4416,6 @@ def run(disasm_file=None,
                 for i in items:
                     if b == i[1][0]:
                         function_name = i[0]
-            
-
-            
             
             set_identifiers = list(rbr.set_identifiers.keys())
 
@@ -4443,11 +4440,12 @@ def run(disasm_file=None,
                     if result != []:
                         print(result)
                         source_file_path = source_file.split("/")[-1].strip(".sol")
-                        with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".cold","w") as json_file:
+                        with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".smt","w") as json_file:
                             json.dump(result,json_file)
                         
                         try:
                             (a, b) = compute_accesses_cold(result)
+                            
                             if a == -1:
                                 raise Exception()
                         except Exception as e:
@@ -4468,8 +4466,9 @@ def run(disasm_file=None,
                     a = b = 0
                 
                 if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
-                    
-                    final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+"+"+str(cost_sstores))
+                    print(ub_info.gas_ub)
+                    print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+                    final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
                 else:
                     final_ub = ub_info.gas_ub
                     
@@ -4739,19 +4738,21 @@ def generate_dag_file(cname, dag):
 def compute_sstore_cost(result, smt_option):
     try:
         if smt_option == "final":
-            (a, b) = compute_stores(result)
-
+            a = compute_stores_final(result)
+            if a == -1:
+                raise Exception()
+            cost = sympy.simplify(a*9950)
         elif smt_option == "complete":
             if str(result).find("['r',") != -1:
-                (a, b) = compute_stores_final(result)
-                if (a == -1):
-                    raise Exception()
-                cost = sympy.simplify(a*10050 + b*9950)
-            else:
-                a = compute_stores(result)
+                a = compute_stores_final(result)
                 if (a == -1):
                     raise Exception()
                 cost = sympy.simplify(a*9950)
+            else:
+                (a, b) = compute_stores(result)
+                if (a == -1):
+                    raise Exception()
+                cost = sympy.simplify(a*10050+b*9950)
         else:
             raise Exception("UNKNOWN option for sstore costs")
     
@@ -4760,5 +4761,5 @@ def compute_sstore_cost(result, smt_option):
         a = b = 0
         cost = 0
         
-    return a, b
+    return cost
     
