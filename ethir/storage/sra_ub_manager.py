@@ -60,6 +60,7 @@ class UB_info:
         self.gas_ub = "unknown"
         self.storage_accesses = "unknown"
         self.sstore_accesses = "unknown"
+        self.sload_accesses = "unknown"
         self.ubscc = {}
         self.ubscclist = {}
 
@@ -80,7 +81,8 @@ class UB_info:
         self.gas_ub = self.__eval_gas_ub(origub, params)
         self.storage_accesses = self.__eval_stoacceses_ub(origub, params)
         self.sstore_accesses = self.__eval_sstore_ub(origub, params)
-
+        self.sload_accesses = self.__eval_sload_ub(origub,params)
+        
         for scc in sccs:  
             ub = self.__eval_niter_ub(origub, params, scc)
             self.ubscc[scc] = ub
@@ -124,6 +126,33 @@ class UB_info:
         ub = origub.replace("c(g)","0")
         ub = re.sub('(c\([ft].*?\))','0',ub)
         ub = re.sub('(c\(store.*?\))','1',ub)
+        ub = re.sub('(c\(load.*?\))','0',ub)
+        ub = re.sub('(c\(set.*?\))','0',ub)
+        ub = ub.replace("max", "mymax")
+        ub = ub.replace("[","")
+        ub = ub.replace("]","")
+
+        params = symbols(self.__filter_variables(params))
+        nat = Function("nat")
+        field = Function("f")
+        l = Function("l") 
+        c = Function("")
+        param_dict = {str(p): p for p in params}
+        
+        locals().update(param_dict)
+
+        ub = eval(ub)
+        ub = str(ub).replace("maxub","max")
+        return ub
+
+
+    def __eval_sload_ub (self, origub, params): 
+        
+        ## Computing gas ub
+        ub = origub.replace("c(g)","0")
+        ub = re.sub('(c\([ft].*?\))','0',ub)
+        ub = re.sub('(c\(store.*?\))','0',ub)
+        ub = re.sub('(c\(load.*?\))','1',ub)
         ub = re.sub('(c\(set.*?\))','0',ub)
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
@@ -148,6 +177,7 @@ class UB_info:
         ub = origub.replace("c(g)","0")
         ub = re.sub('(c\([ft].*?\))','0',ub)
         ub = re.sub('(c\(store.*?\))','0',ub)
+        ub = re.sub('(c\(load.*?\))','0',ub)
         ub = re.sub('(c\(set.*?\))','1',ub)
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
@@ -170,7 +200,7 @@ class UB_info:
         
         ## Computing gas ub
         ub = origub.replace("c(g)","1")
-        ub = re.sub('(c\([fst].*?\))','0',ub)
+        ub = re.sub('(c\([fstl].*?\))','0',ub)
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
         ub = ub.replace("]","")
@@ -201,15 +231,19 @@ class UB_info:
         locals().update(param_dict)
 
         ub = "({})/({})".format(ntimesub,ncallsub)
-        ub = eval(ub)
-
+        print(ub)
+        try:
+            ub = eval(ub)
+        except:
+            print("GASTAPERROR: ERROR in eval ub")
+            ub = 0
         return str(ub)
 
     def __eval_ub_cc(self,origub,params,cc, addtoub=""): 
 
         ub = origub.replace("c(g)","0")
         ub = ub.replace("c(" + cc + ")","1")
-        ub = re.sub('(c\([fst].*?\))','0',ub)
+        ub = re.sub('(c\([fstl].*?\))','0',ub)
 
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
