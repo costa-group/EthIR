@@ -1084,7 +1084,7 @@ def compute_gas(vertices):
     return gas
 
 
-def run_gastap(contract_name, entry_functions):
+def run_gastap(contract_name, entry_functions, storage_analysis = False):
 
     outputs = []
     ubs = {}
@@ -1094,9 +1094,11 @@ def run_gastap(contract_name, entry_functions):
 
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
-        
-        cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
-        
+        if storage_analysis:
+            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
+        else:
+            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes" 
+            
         FNULL = open(os.devnull, 'w')
         print(cmd)
         solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
