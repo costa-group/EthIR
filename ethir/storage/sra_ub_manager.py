@@ -147,6 +147,8 @@ class UB_info:
 
 
     def __eval_sload_ub (self, origub, params): 
+
+        
         
         ## Computing gas ub
         ub = origub.replace("c(g)","0")
@@ -157,7 +159,7 @@ class UB_info:
         ub = ub.replace("max", "mymax")
         ub = ub.replace("[","")
         ub = ub.replace("]","")
-
+        
         params = symbols(self.__filter_variables(params))
         nat = Function("nat")
         field = Function("f")
@@ -232,11 +234,11 @@ class UB_info:
 
         ub = "({})/({})".format(ntimesub,ncallsub)
         print(ub)
-        try:
-            ub = eval(ub)
-        except:
-            print("GASTAPERROR: ERROR in eval ub")
-            ub = 0
+        # try:
+        ub = eval(ub)
+        # except:
+        #     print("GASTAPERROR: ERROR in eval ub")
+        #     ub = 0
         return str(ub)
 
     def __eval_ub_cc(self,origub,params,cc, addtoub=""): 
@@ -267,6 +269,7 @@ class UB_info:
         res = "   UB_gas: {} \n".format(self.gas_ub)
         res += "   UB_storage_acceses: {} \n".format(self.storage_accesses)
         res += "   UB_sstore_acceses: {} \n".format(self.sstore_accesses)
+        res += "   UB_sload_acceses: {} \n".format(self.sload_accesses)
         res += "   UB_SCC: {} \n".format(self.ubscc)
         res += "   UB_SCC_LIST: {} \n".format(self.ubscclist)
 
