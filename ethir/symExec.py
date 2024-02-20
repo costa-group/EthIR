@@ -4398,86 +4398,15 @@ def run(disasm_file=None,
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
         
-        if saco[1]:
-            
-            smt_option = saco[2] # it could be complete or final
-            
-            
-            input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+        if saco[1] and storage_analysis:
 
-            # blocks_fun = get_blocks_per_function(input_blocks,component_of_blocks)
-            # print("SBLOCKS " + str(component_of_blocks))
-
-            outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
-
-            items = list(function_block_map.items())
-            
-            for b in ubs:
-                for i in items:
-                    if b == i[1][0]:
-                        function_name = i[0]
-            
-            set_identifiers = list(rbr.set_identifiers.keys())
-
-            ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks)
-
-            result_sat = {}
-            for i in input_blocks:
-                
-                result = []
-                ub_info = ubmanager.get_ub_info(i)
-
-                for ii in items:
-                    if i == ii[1][0]:
-                        function_name = ii[0]
-                try:
-                    traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
-                    
-                    print("RESULT")
-                    print(result)
-                    result_sat[i] = result
-                
-                    if result != []:
-                        print(result)
-                        source_file_path = source_file.split("/")[-1].strip(".sol")
-                        with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".smt","w") as json_file:
-                            json.dump(result,json_file)
-                        
-                        try:
-                            (a, b) = compute_accesses_cold(result)
-                            
-                            if a == -1:
-                                raise Exception()
-                        except Exception as e:
-                            a = b = 0
-                            print("GASTAPERROR: Error in COLD")
-
-                        try:
-                            cost_sstores = compute_sstore_cost(result,smt_option)
-
-                        except Exception as e:
-                            cost_sstores = 0
-                            print("GASTAPERROR: Error in sstore cost")
-                    else:
-                        a = b = 0
-
-                except Exception as e:
-                    print("GASTAPERROR: Error in TRAVERSE")
-                    a = b = 0
-                
-                if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
-                    print(ub_info.gas_ub)
-                    print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
-                    final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
-                else:
-                    final_ub = ub_info.gas_ub
-                    
-                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
-
+            compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel)
                 
             # raise Exception
 
-            
+        elif saco[1]: #without storage_analysis
+
+            compute_cost_without_storage_analysis()
             
         if opt!= None:
         # fields = ["field1","field2"]
@@ -4763,3 +4692,82 @@ def compute_sstore_cost(result, smt_option):
         
     return cost
     
+
+
+def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel):
+    smt_option = saco[2] # it could be complete or final
+            
+            
+    input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+    outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
+
+    items = list(function_block_map.items())
+            
+    for b in ubs:
+        for i in items:
+            if b == i[1][0]:
+                function_name = i[0]
+            
+    set_identifiers = list(rbr.set_identifiers.keys())
+
+    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks)
+
+    result_sat = {}
+    for i in input_blocks:
+                
+        result = []
+        ub_info = ubmanager.get_ub_info(i)
+
+        for ii in items:
+            if i == ii[1][0]:
+                function_name = ii[0]
+        try:
+            traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
+                    
+            print("RESULT")
+            print(result)
+            result_sat[i] = result
+                
+            if result != []:
+                print(result)
+                source_file_path = source_file.split("/")[-1].strip(".sol")
+                with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".smt","w") as json_file:
+                    json.dump(result,json_file)
+                        
+                try:
+                    (a, b) = compute_accesses_cold(result)
+                            
+                    if a == -1:
+                        raise Exception()
+                except Exception as e:
+                    a = b = 0
+                    print("GASTAPERROR: Error in COLD")
+
+                try:
+                    cost_sstores = compute_sstore_cost(result,smt_option)
+
+                except Exception as e:
+                    cost_sstores = 0
+                    print("GASTAPERROR: Error in sstore cost")
+            else:
+                print("RESULT")
+                a = b = 0
+                cost_sstores = 0
+                
+        except Exception as e:
+            print("GASTAPERROR: Error in TRAVERSE")
+            traceback.print_exc()
+            a = b = 0
+                
+        if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
+            print(ub_info.gas_ub)
+            print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+            final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+        else:
+            final_ub = ub_info.gas_ub
+                    
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
+
+
+def compute_cost_without_storage_analysis():
+    pass
