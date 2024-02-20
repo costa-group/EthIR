@@ -4406,7 +4406,7 @@ def run(disasm_file=None,
 
         elif saco[1]: #without storage_analysis
 
-            compute_cost_without_storage_analysis()
+            compute_cost_without_storage_analysis(cname,source_file,storage_analysis)
             
         if opt!= None:
         # fields = ["field1","field2"]
@@ -4703,10 +4703,10 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
     items = list(function_block_map.items())
             
-    for b in ubs:
-        for i in items:
-            if b == i[1][0]:
-                function_name = i[0]
+    # for b in ubs:
+    #     for i in items:
+    #         if b == i[1][0]:
+    #             function_name = i[0]
             
     set_identifiers = list(rbr.set_identifiers.keys())
 
@@ -4766,8 +4766,24 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
         else:
             final_ub = ub_info.gas_ub
                     
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100))
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100)+";"+str(cost_sstores))
 
+        
 
-def compute_cost_without_storage_analysis():
-    pass
+def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
+
+    input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+    outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
+
+    
+    items = list(function_block_map.items())
+
+    print(ubs)
+    
+    for b in ubs:
+        for ii in items:
+            if b == ii[1][0]:
+                function_name = ii[0]
+
+        final_ub = ubs[b].strip()
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(final_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0))
