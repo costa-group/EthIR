@@ -1,6 +1,5 @@
 #!/usr/bin/python
 from z3 import *
-import traceback
 import sys
 import json
 import os
@@ -175,12 +174,26 @@ def mult_list(l):
         p *= m
     return p
 
+def is_int(e):
+    try:
+        int(e)
+        return True
+    except:
+        return False
+    
 def evalue_if_num(e):
-    if isinstance(e,int):
+    if is_int(e):
+        return int(e)
+    if isinstance(e,str):
         return e
     assert(isinstance(e,list))
     if len(e) == 1:
-        return int(e[0])
+        aux = evalue_if_num(e[0])
+        if isinstance(aux,str):
+            return [aux]
+        else:
+            assert(isinstance(aux,str))
+            return aux
     if e[0] == '-':
         assert(len(e) <= 3)
         if (len(e) == 2):
@@ -308,7 +321,10 @@ def longest_seq_access(pos):
             lc.append(longest_seq_access_list(c))
         for c in lc:
             if isinstance(c,list):#Someone is not a number
-                return ['max']+lc
+                if len(lc) > 1:
+                    return ['max']+lc
+                else:
+                    return lc
             else:
                 assert(isinstance(c,int))
         return max(lc)
@@ -329,7 +345,10 @@ def longest_seq_access_list(pos):
         npos.append(longest_seq_access(e))
     for e in npos:
         if isinstance(e,list): #Someone is not a number
-            retrun ['+']+npos
+            if len(npos) > 1:
+                return ['+']+npos
+            else:
+                return npos
         else:
             assert(isinstance(e,int))
     return sum(npos)
@@ -364,7 +383,10 @@ def longest_seq_store_list(pos):
         npos.append(longest_seq_store(e))
     for e in npos:
         if isinstance(e,list): #Someone is not a number
-            retrun ['+']+npos
+            if len(npos) > 1:
+                return ['+']+npos
+            else:
+                return npos
         else:
             assert(isinstance(e,int))
     return sum(npos)
@@ -451,7 +473,7 @@ def flatten_or_unroll_one(ins):
             else:
                 return flatten_all(floops)*n #there are no loops
         else:
-            return flatten_all(ins[2])
+            return flatten_all(ins[1])
     elif ins[0][0] == 'c':
         # revise for stores (put them first when possible)
         lf = []
@@ -602,11 +624,11 @@ class Access_Problem:
             # returns a sequence of accesses
             self.generate_sequence(v,flat)
         elif ins[0][0] == 'c':
-            assert(ins[0][1][0] == 1)
+            assert(ins[0][1] == 1 or ins[0][1][0] == 1)
             self.generate_conditional(v,ins[1])
         else:
             assert(ins[0][0]== 'a')
-            assert(ins[0][1][0] == 1)
+            assert(ins[0][1] == 1 or ins[0][1][0] == 1)
             self.generate_poslist(v,ins[0][2],ins[1])
 
     def generate_conditional(self,v,cond):
@@ -837,14 +859,15 @@ def compute_accesses(spositions,verbose = False):
     #print(spositions)
     positions = get_numbered_positions_list(spositions,spos2npos)
     maxseq = longest_seq_access_list(positions)
-    mpos = check_multipos(positions)
+    #mpos = check_multipos(positions)
     #print(positions,maxseq)
     #opositions = positions.copy()
     sim_pos = simplify_positions_cold(positions, []) #initially the continuations are empty
     new_maxseq = longest_seq_access_list(sim_pos)
-    smpos = check_multipos(sim_pos)
+    #smpos = check_multipos(sim_pos)
     #print(sim_pos,new_maxseq)
     #print(len(spos2npos),maxseq,new_maxseq)
+    (c,sc) = ap.get_worse_case_cold(sim_pos)
 
     try:
         (c,sc) = ap.get_worse_case_cold(sim_pos)
@@ -852,10 +875,11 @@ def compute_accesses(spositions,verbose = False):
             res = ''
             if c >= 0 :
                 res = 'sat'
-            print(os.path.basename(f),len(spos2npos),maxseq,mpos,new_maxseq,smpos,c,sc,res)
+            print(os.path.basename(f),len(spos2npos),maxseq,new_maxseq,c,sc,res)
         return (c,sc)
-    except Exception:
-        traceback.print_exc()
+    except:
+        if verbose:
+            print(os.path.basename(f),'Error')
         return (-1,0)
 
 def compute_stores(spositions,verbose = False):
@@ -882,6 +906,8 @@ def compute_stores(spositions,verbose = False):
             print(os.path.basename(f),new_maxseq,smpos,s,es,res)
         return (new_maxseq,smpos,s,es)
     except:
+        if verbose:
+            print(os.path.basename(f),'Error')
         return (-1,0)
 
 def compute_stores_final(spositions,verbose = False):
@@ -905,6 +931,8 @@ def compute_stores_final(spositions,verbose = False):
             print(os.path.basename(f),es,res)
         return es
     except:
+        if verbose:
+            print(os.path.basename(f),'Error')
         return -1
 
 ######################################
@@ -918,12 +946,10 @@ if __name__ == '__main__':
         exit(1)
 
     name = ' '
-    print(sys.argv[1])
-    print(os.path.exists(sys.argv[1]))
     if os.path.exists(sys.argv[1]):
         name = os.path.abspath(sys.argv[1])
     else:
-        assert False,'The first argument must be an existing file name or a folder name'
+        assert(False,'The first argument must be an existing file name or a folder name')
 
     action = 'cold'
     if len(sys.argv) == 3:
@@ -954,5 +980,4 @@ if __name__ == '__main__':
             compute_stores_final(spositions,True)
         else:
             compute_accesses(spositions,True)
-
     exit(0)
