@@ -233,7 +233,7 @@ class UB_info:
         locals().update(param_dict)
 
         ub = "({})/({})".format(ntimesub,ncallsub)
-        print(ub)
+        # print(ub)
         # try:
         ub = eval(ub)
         # except:

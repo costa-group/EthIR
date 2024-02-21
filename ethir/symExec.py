@@ -4724,12 +4724,12 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
         try:
             traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
                     
-            print("RESULT")
-            print(result)
+            # print("RESULT")
+            # print(result)
             result_sat[i] = result
                 
             if result != []:
-                print(result)
+                # print(result)
                 source_file_path = source_file.split("/")[-1].strip(".sol")
                 with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".smt","w") as json_file:
                     json.dump(result,json_file)
@@ -4750,7 +4750,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                     cost_sstores = 0
                     print("GASTAPERROR: Error in sstore cost")
             else:
-                print("RESULT")
+                # print("RESULT")
                 a = b = 0
                 cost_sstores = 0
                 
@@ -4760,8 +4760,8 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             a = b = 0
                 
         if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
-            print(ub_info.gas_ub)
-            print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+            # print(ub_info.gas_ub)
+            # print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
         else:
             final_ub = ub_info.gas_ub
@@ -4777,8 +4777,6 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
 
     
     items = list(function_block_map.items())
-
-    print(ubs)
     
     for b in ubs:
         for ii in items:
