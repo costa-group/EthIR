@@ -867,8 +867,7 @@ def compute_accesses(spositions,verbose = False):
     #smpos = check_multipos(sim_pos)
     #print(sim_pos,new_maxseq)
     #print(len(spos2npos),maxseq,new_maxseq)
-    (c,sc) = ap.get_worse_case_cold(sim_pos)
-
+    #(c,sc) = ap.get_worse_case_cold(sim_pos)
     try:
         (c,sc) = ap.get_worse_case_cold(sim_pos)
         if verbose:
@@ -897,8 +896,8 @@ def compute_stores(spositions,verbose = False):
     smpos = check_stores(sim_pos)
     #print(sim_pos,new_maxseq)
     #print(len(spos2npos),maxseq,new_maxseq)
-    (s,es) = ap.get_worse_case_store(sim_pos)
     try:
+        (s,es) = ap.get_worse_case_store(sim_pos)
         if verbose:
             res = ''
             if s >= 0 :
@@ -921,9 +920,9 @@ def compute_stores_final(spositions,verbose = False):
     #print(positions,maxseq)
     #opositions = positions.copy()
     sim_pos = simplify_positions_store(positions) #initially the continuations are empty
-    es = ap.get_worse_case_store_final(sim_pos)
     #print(sim_pos,es)
     try:
+        es = ap.get_worse_case_store_final(sim_pos)
         if verbose:
             res = ''
             if es >= 0 :
