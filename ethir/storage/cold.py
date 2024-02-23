@@ -903,7 +903,7 @@ def compute_stores(spositions,verbose = False):
             if s >= 0 :
                 res = 'sat'
             print(os.path.basename(f),new_maxseq,smpos,s,es,res)
-        return (new_maxseq,smpos,s,es)
+        return (s,es)
     except:
         if verbose:
             print(os.path.basename(f),'Error')

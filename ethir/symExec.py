@@ -4686,6 +4686,7 @@ def compute_sstore_cost(result, smt_option):
             raise Exception("UNKNOWN option for sstore costs")
     
     except Exception as e:
+        traceback.print_exc()
         print("GASTAPERROR: Error in sstore cost")
         a = b = 0
         cost = 0
