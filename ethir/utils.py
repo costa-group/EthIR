@@ -15,6 +15,7 @@ import six
 import global_params_ethir
 from dot_tree import Tree, build_tree, build_tree_memory
 import opcodes
+from timeit import default_timer as dtimer
 
 
 def ceil32(x):
@@ -1089,9 +1090,10 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False):
     outputs = []
     ubs = {}
     ub_params = {}
-
+    times = {}
+    
     for bl in entry_functions:
-
+        
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
         if storage_analysis:
@@ -1101,8 +1103,16 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False):
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
+
+        x = dtimer()
+        
         solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
         out = solc_p.communicate()[0].decode()
+
+        y = dtimer()
+
+        times[bl] = y-x
+
         outputs.append(out)
         ub, params = filter_ub(out)
 
@@ -1114,7 +1124,7 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False):
             ub_params[bl] = params
 
 
-    return outputs,ubs, ub_params
+    return outputs, ubs, ub_params, times
 
 
 # def filter_ub(out):

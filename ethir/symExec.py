@@ -4355,7 +4355,9 @@ def run(disasm_file=None,
             end = dtimer()
             
             
-            print("Storage Analysis finished in "+str(end-begin)+"s\n")
+            print("Storage Analysis finished in: "+str(end-begin)+"s\n")
+
+            time_storage_analysis = end-begin
             
             if sra_analysis: 
                 begin = dtimer()
@@ -4372,7 +4374,7 @@ def run(disasm_file=None,
 
                 end = dtimer()
                 print("SRA Analysis finished in "+str(end-begin)+"s\n")
-
+                
             check_cfg_option(cfg,cname,execution, storage_result)
         else:
             storage_accesses = None
@@ -4700,7 +4702,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             
             
     input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
-    outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis)
 
     items = list(function_block_map.items())
             
@@ -4736,17 +4738,26 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                     json.dump(result,json_file)
                         
                 try:
+                    x = dtimer()
                     (a, b) = compute_accesses_cold(result)
-                            
+                    y = dtimer()
+                    cold_time = y-x
                     if a == -1:
                         raise Exception()
                 except Exception as e:
                     a = b = 0
+                    # traceback.print_exc()
                     print("GASTAPERROR: Error in COLD")
 
                 try:
+                    x = dtimer()
+
                     cost_sstores = compute_sstore_cost(result,smt_option)
 
+                    y = dtimer()
+
+                    storage_time = y-x
+                    
                 except Exception as e:
                     cost_sstores = 0
                     print("GASTAPERROR: Error in sstore cost")
@@ -4769,15 +4780,15 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             final_ub = ub_info.gas_ub
 
 
-        memory_ub = ub_info.memory_ub
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(a*2000+b*100)+";"+str(cost_sstores))
+        memory_ub = ub_info.memory_ub.strip()
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(a*2000+b*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
 
         
 
 def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
 
     input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
-    outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis)
     
     items = list(function_block_map.items())
     
@@ -4789,4 +4800,4 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
         (memory_ub, opcode_ub) = ubs[b]
         memory_ub = memory_ub.strip()
         opcode_ub = opcode_ub.strip()
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0))
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
