@@ -4759,15 +4759,18 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             print("GASTAPERROR: Error in TRAVERSE")
             traceback.print_exc()
             a = b = 0
-                
+
+
         if (not ub_info.gas_ub.startswith("Non maximixed expression") and not ub_info.gas_ub.startswith("non terminating")):
             # print(ub_info.gas_ub)
             # print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
         else:
             final_ub = ub_info.gas_ub
-                    
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(ub_info.storage_accesses)+";"+str(ub_info.sstore_accesses)+";"+str(a*2000+b*100)+";"+str(cost_sstores))
+
+
+        memory_ub = ub_info.memory_ub
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(i)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(a*2000+b*100)+";"+str(cost_sstores))
 
         
 
@@ -4775,7 +4778,6 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
 
     input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
     outputs, ubs, params = run_gastap(cname, input_blocks, storage_analysis)
-
     
     items = list(function_block_map.items())
     
@@ -4784,5 +4786,7 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
             if b == ii[1][0]:
                 function_name = ii[0]
 
-        final_ub = ubs[b].strip()
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(final_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0))
+        (memory_ub, opcode_ub) = ubs[b]
+        memory_ub = memory_ub.strip()
+        opcode_ub = opcode_ub.strip()
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0))

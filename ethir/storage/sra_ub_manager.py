@@ -58,6 +58,7 @@ class UB_info:
 
     def __init__(self) -> None:
         self.gas_ub = "unknown"
+        self.memory_ub = "unknown"
         self.storage_accesses = "unknown"
         self.sstore_accesses = "unknown"
         self.sload_accesses = "unknown"
@@ -65,7 +66,10 @@ class UB_info:
         self.ubscclist = {}
 
     def process_ubs(self,origub,params,sccs): 
-
+        
+        self.memory_ub = origub[0]
+        origub = origub[1]
+        
         #Some special cases treatment
         if origub.find("maximize_failed") != -1: 
             print("UB Warn: Non maximixed expression ")
@@ -77,7 +81,7 @@ class UB_info:
             print("UB WARN Non terminating loop found: " + str(failed))
             self.gas_ub = "non terminating "+ str(failed)
             return
-                
+
         self.gas_ub = self.__eval_gas_ub(origub, params)
         self.storage_accesses = self.__eval_stoacceses_ub(origub, params)
         self.sstore_accesses = self.__eval_sstore_ub(origub, params)
@@ -116,10 +120,12 @@ class UB_info:
                 raise SyntaxError(f"Invalid Node {ast.dump(x)}")
 
     def get_gas_ub(self): 
-        return self.gasub
+        return self.gas_ub
 
+    def get_mem_ub(self): 
+        return self.mem_ub
 
-
+    
     def __eval_sstore_ub (self, origub, params): 
         
         ## Computing gas ub
@@ -267,6 +273,7 @@ class UB_info:
 
     def __repr__(self) -> str:
         res = "   UB_gas: {} \n".format(self.gas_ub)
+        res = "   UB_memory: {} \n".format(self.memory_ub)
         res += "   UB_storage_acceses: {} \n".format(self.storage_accesses)
         res += "   UB_sstore_acceses: {} \n".format(self.sstore_accesses)
         res += "   UB_sload_acceses: {} \n".format(self.sload_accesses)

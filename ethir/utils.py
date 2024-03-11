@@ -1095,9 +1095,9 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False):
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
         if storage_analysis:
-            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes -evmcc star" 
+            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem yes -cost_model gas -custom_out_path yes -evmcc star" 
         else:
-            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem no -cost_model gas -custom_out_path yes" 
+            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem yes -cost_model gas -custom_out_path yes" 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
@@ -1105,6 +1105,7 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False):
         out = solc_p.communicate()[0].decode()
         outputs.append(out)
         ub, params = filter_ub(out)
+
         if ub == "" or ub == None:
             print("GASTAPERR: Error at cooking the ub expression. "+str(contract_name)+",block"+str(bl))
             # raise Exception("Error at cooking the ub expression")
@@ -1116,8 +1117,39 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False):
     return outputs,ubs, ub_params
 
 
+# def filter_ub(out):
+#     res = re.search("Total UB for .*",out)    
+#     if res: 
+#         sres = res.group(0).split(":")
+#         params = sres[0]
+#         params = params[params.find("(")+1:params.find(")")]
+#         if params != "":
+#             params+=",call,staticcall,delegatecall"
+#         else:
+#             params+="call,staticcall,delegatecall"
+#         ub = sres[1]
+#     else: 
+#         ub = "unknown"
+#         params = ""
+#     return ub, params
+
 def filter_ub(out):
-    res = re.search("Total UB for .*",out)    
+    res = re.search("Memory UB for .*",out)    
+    if res: 
+        sres = res.group(0).split(":")
+        params = sres[0]
+        params = params[params.find("(")+1:params.find(")")]
+        if params != "":
+            params+=",call,staticcall,delegatecall"
+        else:
+            params+="call,staticcall,delegatecall"
+        ub_mem = sres[1]
+    else: 
+        ub_mem = "unknown"
+        params = ""
+
+
+    res = re.search("Opcodes UB for .*",out)    
     if res: 
         sres = res.group(0).split(":")
         params = sres[0]
@@ -1130,7 +1162,8 @@ def filter_ub(out):
     else: 
         ub = "unknown"
         params = ""
-    return ub, params
+        
+    return (ub_mem, ub), params
 
         
 def get_all_scc_ids(scc_components):
