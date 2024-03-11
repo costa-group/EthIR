@@ -92,19 +92,25 @@ class StorageOffsetAbstractState:
                 memory[MEM0] = stack[top-1]
             else: 
                 memory[MEM0] = {StorageAccess(BOTTOM,TOP,0)}
-        
-        elif is_mload(instr,"0"):
-            stack[top] = memory[MEM0]
 
         elif is_mstore(instr,"32") and top-1 in stack:
             if top-1 in stack:
                 memory[MEM20] = stack[top-1]
             else: 
-                memory[MEM0] = {StorageAccess(BOTTOM,TOP,0)}
+                memory[MEM20] = {StorageAccess(BOTTOM,TOP,0)}
 
+        elif is_mload(instr,"0"):
+            
+            if MEM0 in memory: 
+                stack[top] = memory[MEM0]
+            else: 
+                stack[top] = {StorageAccess(BOTTOM,TOP,0)}
 
         elif is_mload(instr,"32"):
-            stack[top] = memory[MEM20]
+            if MEM20 in memory:
+                stack[top] = memory[MEM20]
+            else: 
+                stack[top] = {StorageAccess(BOTTOM,TOP,0)}
 
         elif op_code == "PUSH0":
             stack[self.stack_pos] = {StorageAccess(BOTTOM,str(0),0)} 
