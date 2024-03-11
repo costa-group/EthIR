@@ -349,6 +349,10 @@ def initGlobalVars():
 
     global is_mem_analysis
     is_mem_analysis = False
+
+    #Blocks that contian a storage instruction
+    global has_storage
+    has_storage = []
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -1472,6 +1476,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global load_useless_block
     global store_useless_block
     global useless_blocks
+    global has_storage
     
     stack = params.stack
     stack_sym = params.stack_sym
@@ -2925,6 +2930,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         else:
             raise ValueError('STACK underflow')
     elif opcode == "SLOAD":
+        if block not in has_storage:
+            has_storage.append(block)
+            
         if len(stack) > 0:
             global_state["pc"] = global_state["pc"] + 1
 
@@ -3023,6 +3031,10 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             raise ValueError('STACK underflow')
 
     elif opcode == "SSTORE":
+        
+        if block not in has_storage:
+            has_storage.append(block)
+
         if len(stack) > 1:
             for call_pc in calls:
                 calls_affect_state[call_pc] = True
@@ -4697,11 +4709,25 @@ def compute_sstore_cost(result, smt_option):
     
 
 
+def compute_entry_functions_with_storage_instructions(input_blocks_aux):
+    input_blocks = set()
+    for b in has_storage:
+        c = component_of_blocks[b]
+        candidates = set(c).intersection(set(input_blocks_aux)) 
+        if(len(candidates) != 0):
+            input_blocks = input_blocks.union(candidates)
+
+    input_blocks = sorted(list(input_blocks))
+    return input_blocks
+
 def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel):
     smt_option = saco[2] # it could be complete or final
             
             
-    input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+    input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+
+    input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
+    
     outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis)
 
     items = list(function_block_map.items())
@@ -4787,7 +4813,10 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
 def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
 
-    input_blocks = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+    input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+
+    input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
+    
     outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis)
     
     items = list(function_block_map.items())
