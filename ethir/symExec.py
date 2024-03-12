@@ -4751,14 +4751,18 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
         warms = 0
         cost_sstores = 0
 
+        cold_time = 0
+        storage_time = 0
+        
+        for ii in items:
+            if i == ii[1][0]:
+                function_name = ii[0]
+
 
         if (not ub_info.gas_ub.startswith("Non maximixed expression") and 
             not ub_info.gas_ub.startswith("non terminating") and 
             not ub_info.gas_ub.startswith("unknown")):
 
-            for ii in items:
-                if i == ii[1][0]:
-                    function_name = ii[0]
             try:
                 traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
                         
