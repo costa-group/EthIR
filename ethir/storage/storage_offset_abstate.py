@@ -76,6 +76,8 @@ class StorageOffsetAbstractState:
         op_code = instr.split()[0]
         if len(instr.split()) > 1:
             op_operand = instr.split()[1]
+        else: 
+            op_operand = None
 
         stack = self.stack.copy()
         memory = self.memory.copy()
@@ -193,10 +195,17 @@ class StorageOffsetAbstractState:
                 stack[top-1] = res                    
 
         elif op_code.startswith("CALLDATALOAD"):
-            stack[top] = {StorageAccess(BOTTOM,op_operand,0)}
+            if op_operand: 
+                stack[top] = {StorageAccess(BOTTOM,op_operand,0)}
+            else:
+                stack[top] = {StorageAccess(BOTTOM,TOP,0)}
+
 
         elif op_code == "AND" and len(instr.split()) > 1: #For considering arguments of CALLDATALOAD
-            stack[top-1] = {StorageAccess(BOTTOM,op_operand,0)}
+            if op_operand: 
+                stack[top-1] = {StorageAccess(BOTTOM,op_operand,0)}
+            else:
+                stack[top] = {StorageAccess(BOTTOM,TOP,0)}
             
         else: 
             for i in range( self.stack_pos-stack_in,self.stack_pos): 

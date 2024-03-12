@@ -28,7 +28,7 @@ class SRA_UB_manager:
                         continue
                     sccsfun.append(scc)
 
-            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun)
+            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun, function)
 
             self.ubs_info[function] = ubinfo
 
@@ -65,7 +65,7 @@ class UB_info:
         self.ubscc = {}
         self.ubscclist = {}
 
-    def process_ubs(self,origub,params,sccs): 
+    def process_ubs(self,origub,params,sccs, function): 
         
         self.memory_ub = origub[0]
         origub = origub[1]
@@ -82,13 +82,18 @@ class UB_info:
             self.gas_ub = "non terminating "+ str(failed)
             return
 
-        self.gas_ub = self.__eval_gas_ub(origub, params)
-        self.storage_accesses = self.__eval_stoacceses_ub(origub, params)
-        self.sstore_accesses = self.__eval_sstore_ub(origub, params)
-        self.sload_accesses = self.__eval_sload_ub(origub,params)
-        
+        if origub.find("unknown") != -1: 
+            print("UB WARN: Unknown UB " + str(function))
+            self.gas_ub = "unknown"
+            return
+
+
+        self.gas_ub = self.__eval_gas_ub(origub, params, function)
+        self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function)
+        self.sstore_accesses = self.__eval_sstore_ub(origub, params, function)
+        self.sload_accesses = self.__eval_sload_ub(origub,params, function)
         for scc in sccs:  
-            ub = self.__eval_niter_ub(origub, params, scc)
+            ub = self.__eval_niter_ub(origub, params, scc,function)
             self.ubscc[scc] = ub
             ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
             if not isinstance(ub_as_list,list):
@@ -126,143 +131,167 @@ class UB_info:
         return self.mem_ub
 
     
-    def __eval_sstore_ub (self, origub, params): 
+    def __eval_sstore_ub (self, origub, params, function): 
         
-        ## Computing gas ub
-        ub = origub.replace("c(g)","0")
-        ub = re.sub('(c\([ft].*?\))','0',ub)
-        ub = re.sub('(c\(store.*?\))','1',ub)
-        ub = re.sub('(c\(load.*?\))','0',ub)
-        ub = re.sub('(c\(set.*?\))','0',ub)
-        ub = ub.replace("max", "mymax")
-        ub = ub.replace("[","")
-        ub = ub.replace("]","")
+        try:
+            ## Computing gas ub
+            ub = origub.replace("c(g)","0")
+            ub = re.sub('(c\([ft].*?\))','0',ub)
+            ub = re.sub('(c\(store.*?\))','1',ub)
+            ub = re.sub('(c\(load.*?\))','0',ub)
+            ub = re.sub('(c\(set.*?\))','0',ub)
+            ub = ub.replace("max", "mymax")
+            ub = ub.replace("[","")
+            ub = ub.replace("]","")
 
-        params = symbols(self.__filter_variables(params))
-        nat = Function("nat")
-        field = Function("f")
-        l = Function("l") 
-        c = Function("")
-        param_dict = {str(p): p for p in params}
-        
-        locals().update(param_dict)
-
-        ub = eval(ub)
-        ub = str(ub).replace("maxub","max")
-        return ub
-
-
-    def __eval_sload_ub (self, origub, params): 
-
-        
-        
-        ## Computing gas ub
-        ub = origub.replace("c(g)","0")
-        ub = re.sub('(c\([ft].*?\))','0',ub)
-        ub = re.sub('(c\(store.*?\))','0',ub)
-        ub = re.sub('(c\(load.*?\))','1',ub)
-        ub = re.sub('(c\(set.*?\))','0',ub)
-        ub = ub.replace("max", "mymax")
-        ub = ub.replace("[","")
-        ub = ub.replace("]","")
-        
-        params = symbols(self.__filter_variables(params))
-        nat = Function("nat")
-        field = Function("f")
-        l = Function("l") 
-        c = Function("")
-        param_dict = {str(p): p for p in params}
-        
-        locals().update(param_dict)
-
-        ub = eval(ub)
-        ub = str(ub).replace("maxub","max")
-        return ub
-
-    def __eval_stoacceses_ub (self, origub, params): 
-        
-        ## Computing gas ub
-        ub = origub.replace("c(g)","0")
-        ub = re.sub('(c\([ft].*?\))','0',ub)
-        ub = re.sub('(c\(store.*?\))','0',ub)
-        ub = re.sub('(c\(load.*?\))','0',ub)
-        ub = re.sub('(c\(set.*?\))','1',ub)
-        ub = ub.replace("max", "mymax")
-        ub = ub.replace("[","")
-        ub = ub.replace("]","")
-
-        params = symbols(self.__filter_variables(params))
-        nat = Function("nat")
-        field = Function("f")
-        l = Function("l") 
-        c = Function("")
-        param_dict = {str(p): p for p in params}
-        
-        locals().update(param_dict)
-
-        ub = eval(ub)
-        ub = str(ub).replace("maxub","max")
-        return ub
-
-    def __eval_gas_ub (self, origub, params):
-        
-        ## Computing gas ub
-        ub = origub.replace("c(g)","1")
-        ub = re.sub('(c\([fstl].*?\))','0',ub)
-        ub = ub.replace("max", "mymax")
-        ub = ub.replace("[","")
-        ub = ub.replace("]","")
-
-        
-        if params == "":
-            params = []
-        else:
             params = symbols(self.__filter_variables(params))
+            nat = Function("nat")
+            field = Function("f")
+            l = Function("l") 
+            c = Function("")
+            param_dict = {str(p): p for p in params}
             
-        nat = Function("nat")
-        field = Function("f")
-        l = Function("l") 
-        c = Function("")
-        param_dict = {str(p): p for p in params}
-        
-        locals().update(param_dict)
+            locals().update(param_dict)
 
-        ub = eval(ub)
-        ub = str(ub).replace("maxub","max")
+            ub = eval(ub)
+            ub = str(ub).replace("maxub","max")
+        except: 
+            print(f"WARN: Error in evaluating UB (sstore) of {function}: {origub}")
+            ub = origub
         return ub
 
-    def __eval_niter_ub(self, origub, params, scc): 
-        ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc),"-1")
-        ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc))
-        params = symbols(self.__filter_variables(params))
-        param_dict = {str(p): p for p in params}
-        locals().update(param_dict)
 
-        ub = "({})/({})".format(ntimesub,ncallsub)
-        # print(ub)
-        # try:
-        ub = eval(ub)
-        # except:
-        #     print("GASTAPERROR: ERROR in eval ub")
-        #     ub = 0
+    def __eval_sload_ub (self, origub, params, function): 
+
+        try:         
+            ## Computing gas ub
+            ub = origub.replace("c(g)","0")
+            ub = re.sub('(c\([ft].*?\))','0',ub)
+            ub = re.sub('(c\(store.*?\))','0',ub)
+            ub = re.sub('(c\(load.*?\))','1',ub)
+            ub = re.sub('(c\(set.*?\))','0',ub)
+            ub = ub.replace("max", "mymax")
+            ub = ub.replace("[","")
+            ub = ub.replace("]","")
+            
+            params = symbols(self.__filter_variables(params))
+            nat = Function("nat")
+            field = Function("f")
+            l = Function("l") 
+            c = Function("")
+            param_dict = {str(p): p for p in params}
+            
+            locals().update(param_dict)
+
+            ub = eval(ub)
+            ub = str(ub).replace("maxub","max")
+        except: 
+            print(f"WARN: Error in evaluating UB (sload) of {function}: {origub}")
+            ub = origub
+        return ub
+
+    def __eval_stoacceses_ub (self, origub, params, function): 
+        
+        try:         
+            ## Computing gas ub
+            ub = origub.replace("c(g)","0")
+            ub = re.sub('(c\([ft].*?\))','0',ub)
+            ub = re.sub('(c\(store.*?\))','0',ub)
+            ub = re.sub('(c\(load.*?\))','0',ub)
+            ub = re.sub('(c\(set.*?\))','1',ub)
+            ub = ub.replace("max", "mymax")
+            ub = ub.replace("[","")
+            ub = ub.replace("]","")
+
+            params = symbols(self.__filter_variables(params))
+            nat = Function("nat")
+            field = Function("f")
+            l = Function("l") 
+            c = Function("")
+            param_dict = {str(p): p for p in params}
+            
+            locals().update(param_dict)
+
+            ub = eval(ub)
+            ub = str(ub).replace("maxub","max")
+        except: 
+            print(f"WARN: Error in evaluating UB (stoaccess) of {function}: {origub}")
+            ub = origub
+
+        return ub
+
+    def __eval_gas_ub (self, origub, params, function):
+        try: 
+            ## Computing gas ub
+            ub = origub.replace("c(g)","1")
+            ub = re.sub('(c\([fstl].*?\))','0',ub)
+            ub = ub.replace("max", "mymax")
+            ub = ub.replace("[","")
+            ub = ub.replace("]","")
+
+            
+            if params == "":
+                params = []
+            else:
+                params = symbols(self.__filter_variables(params))
+                
+            nat = Function("nat")
+            field = Function("f")
+            l = Function("l") 
+            c = Function("")
+            param_dict = {str(p): p for p in params}
+            
+            locals().update(param_dict)
+
+            ub = eval(ub)
+            ub = str(ub).replace("maxub","max")
+        except: 
+            print(f"WARN: Error in evaluating UB (gas) of {function}: {origub}")
+            ub = origub
+        
+        return ub
+
+    def __eval_niter_ub(self, origub, params, scc, function): 
+
+        try:         
+            ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc),"-1")
+            ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc))
+            params = symbols(self.__filter_variables(params))
+            param_dict = {str(p): p for p in params}
+            locals().update(param_dict)
+
+            ub = "({})/({})".format(ntimesub,ncallsub)
+            # print(ub)
+            # try:
+            ub = eval(ub)
+            # except:
+            #     print("GASTAPERROR: ERROR in eval ub")
+            #     ub = 0
+        except: 
+            print(f"WARN: Error in evaluating UB (niter) of {function}: {origub}")
+            ub = origub
+
         return str(ub)
 
-    def __eval_ub_cc(self,origub,params,cc, addtoub=""): 
+    def __eval_ub_cc(self,origub,params,cc, function, addtoub=""): 
+        try: 
+            ub = origub.replace("c(g)","0")
+            ub = ub.replace("c(" + cc + ")","1")
+            ub = re.sub('(c\([fstl].*?\))','0',ub)
 
-        ub = origub.replace("c(g)","0")
-        ub = ub.replace("c(" + cc + ")","1")
-        ub = re.sub('(c\([fstl].*?\))','0',ub)
+            ub = ub.replace("max", "mymax")
+            ub = ub.replace("[","")
+            ub = ub.replace("]","")
 
-        ub = ub.replace("max", "mymax")
-        ub = ub.replace("[","")
-        ub = ub.replace("]","")
+            params = symbols(self.__filter_variables(params))
+            param_dict = {str(p): p for p in params}
+            locals().update(param_dict)
 
-        params = symbols(self.__filter_variables(params))
-        param_dict = {str(p): p for p in params}
-        locals().update(param_dict)
-
-        ub = eval(ub + addtoub)
-        ub = str(ub).replace("maxub","max")
+            ub = eval(ub + addtoub)
+            ub = str(ub).replace("maxub","max")
+        except: 
+            print(f"WARN: Error in evaluating UB (ub_cc) of {function}: {origub}")
+            ub = origub
         return ub
 
 
