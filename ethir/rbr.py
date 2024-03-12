@@ -136,6 +136,9 @@ def init_globals():
 
     global extcodehash_cont
     extcodehash_cont = 0
+
+    global calldataload_cont
+    calldataload_cont = 0
     
     global c_trans
     c_trans = False
@@ -594,7 +597,7 @@ def translateOpcodes30(opcode, value, index_variables,block):
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         val = str(value).split("_")
-        if val[0] == "Id":
+        if val[0] == "Id" or value == "":
             instr = v1+" = calldataload"
             update_bc_in_use("calldataload",block)
         elif str(value).startswith("/*"):
@@ -603,6 +606,8 @@ def translateOpcodes30(opcode, value, index_variables,block):
             update_bc_in_use(val,block)
         else:
             if not c_trans:
+                print("YUUUUJUUUU")
+                print(value)
                 instr = v1+" = "+str(value).strip("_")
                 update_bc_in_use(str(value).strip("_"),block)
             else:
