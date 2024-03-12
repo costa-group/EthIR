@@ -1026,8 +1026,9 @@ def translateOpcodesF(opcode, index_variables, addr,block):
     #     pass
     # elif opcode == "CALLSTATIC":
     #     pass
-    # elif opcode == "INVALID":
-    #     pass
+    elif opcode == "INVALID":
+        instr = ""
+        updated_variables = index_variables
     elif opcode == "SUICIDE":
         instr = ""
         updated_variables = index_variables
