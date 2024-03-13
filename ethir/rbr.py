@@ -606,8 +606,6 @@ def translateOpcodes30(opcode, value, index_variables,block):
             update_bc_in_use(val,block)
         else:
             if not c_trans:
-                print("YUUUUJUUUU")
-                print(value)
                 instr = v1+" = "+str(value).strip("_")
                 update_bc_in_use(str(value).strip("_"),block)
             else:
@@ -846,10 +844,13 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     elif opcode == "JUMP":
         instr = ""
         updated_variables = index_variables
-    # elif opcode == "JUMPI":
-    #     pass
-    # elif opcode == "PC":
-    #     pass
+    elif opcode == "JUMPI":
+        instr = ""
+        updated_variables = index_variables
+    elif opcode == "PC":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = "+"pc"
+        update_bc_in_use("pc",block)
     elif opcode == "MSIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1 + " = msize"
@@ -872,7 +873,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     else:
         instr = "Error opcodes50: "+ opcode
         updated_variables = index_variables
-
+        print("ERROR OPCODES 50")
     return instr, updated_variables
 '''
 It simulates the execution of evm bytecodes.  It consumes or

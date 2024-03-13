@@ -43,15 +43,19 @@ opcodes = {
     "EXTCODESIZE": [0x3b, 1, 1],
     "EXTCODECOPY": [0x3c, 4, 0],
     "MCOPY": [0x3d, 3, 0],
+    "RETURNDATASIZE": [0x3d,0,1],
+    "RETURNDATACOPY":[0x3e, 3, 0],
     "EXTCODEHASH": [0x3f, 1, 1],
     "BLOCKHASH": [0x40, 1, 1],
     "COINBASE": [0x41, 0, 1],
     "TIMESTAMP": [0x42, 0, 1],
     "NUMBER": [0x43, 0, 1],
     "DIFFICULTY": [0x44, 0, 1],
+    "PREVRANDAO": [0x44, 0, 1],
     "GASLIMIT": [0x45, 0, 1],
     "CHAINID": [0x46,0,1],
     "SELFBALANCE": [0x47,0,1],
+    "BASEFEE":[0x48,0,1],
     "POP": [0x50, 1, 0],
     "MLOAD": [0x51, 1, 1],
     "MSTORE": [0x52, 2, 0],
@@ -138,11 +142,12 @@ GCOST = {
     "Gextcodehash":400
 }
 
-Wzero = ("STOP", "RETURN", "REVERT", "ASSERTFAIL")
+Wzero = ("STOP", "RETURN", "REVERT", "ASSERTFAIL","INVALID")
 
 Wbase = ("ADDRESS", "ORIGIN", "CALLER", "CALLVALUE", "CALLDATASIZE",
          "CODESIZE", "GASPRICE", "COINBASE", "TIMESTAMP", "NUMBER",
-         "DIFFICULTY", "GASLIMIT", "POP", "PC", "MSIZE", "GAS","CHAINID","PUSH0")
+         "DIFFICULTY","PREVRANDAO", "GASLIMIT", "POP", "PC", "MSIZE",
+         "GAS","CHAINID","PUSH0","BASEFEE")
 
 Wverylow = ("ADD", "SUB", "NOT", "LT", "GT", "SLT", "SGT", "EQ",
             "ISZERO", "AND", "OR", "XOR", "BYTE", "CALLDATALOAD",
