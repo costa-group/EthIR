@@ -4845,11 +4845,6 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gas
                 function_name = ii[0]
 
         (memory_ub, opcode_ub) = ubs[b]
-<<<<<<< HEAD
-        memory_ub = memory_ub.strip()
-        opcode_ub = opcode_ub.strip()
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
-=======
 
         if gastap_op == "mem":
             memory_ub = memory_ub.strip()
@@ -4861,4 +4856,3 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gas
             memory_ub = memory_ub.strip()
             opcode_ub = opcode_ub.strip()
         print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
->>>>>>> 0cb9633c249f684f44dad897b498250160b35f6a
