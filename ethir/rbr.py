@@ -843,8 +843,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         except ValueError:
             #instr = ["gs(1) = "+ v0, "gs(2) = "+v1,"FORGET STR"]
             instr = ["gs(1) = "+ v0, "gs(2) = "+v1]
-    # elif opcode == "JUMP":
-    #     pass
+    elif opcode == "JUMP":
+        instr = ""
+        updated_variables = index_variables
     # elif opcode == "JUMPI":
     #     pass
     # elif opcode == "PC":
