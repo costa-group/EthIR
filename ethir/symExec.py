@@ -4412,15 +4412,15 @@ def run(disasm_file=None,
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
         
-        if saco[1] and storage_analysis:
+        if saco[1]!= None and storage_analysis:
 
             compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel)
                 
             # raise Exception
 
-        elif saco[1]: #without storage_analysis
+        elif saco[1] != None: #without storage_analysis
 
-            compute_cost_without_storage_analysis(cname,source_file,storage_analysis)
+            compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco[1])
             
         if opt!= None:
         # fields = ["field1","field2"]
@@ -4721,6 +4721,8 @@ def compute_entry_functions_with_storage_instructions(input_blocks_aux):
     return input_blocks
 
 def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel):
+
+    gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
             
             
@@ -4728,7 +4730,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op)
 
     items = list(function_block_map.items())
             
@@ -4820,17 +4822,20 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             warms = 0
             cost_sstores = 0
 
-        memory_ub = ub_info.memory_ub.strip()
+        if gastap_op == "all":
+            memory_ub = ub_info.memory_ub.strip()
+        else:
+            memory_ub = 0
         print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
         
 
-def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
+def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gastap_op):
 
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op)
     
     items = list(function_block_map.items())
     
@@ -4840,6 +4845,14 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis):
                 function_name = ii[0]
 
         (memory_ub, opcode_ub) = ubs[b]
-        memory_ub = memory_ub.strip()
-        opcode_ub = opcode_ub.strip()
+
+        if gastap_op == "mem":
+            memory_ub = memory_ub.strip()
+            opcode_ub = 0
+        elif gastap_op == "op":
+            memory_ub = 0
+            opcode_ub = opcode_ub.strip()
+        else:
+            memory_ub = memory_ub.strip()
+            opcode_ub = opcode_ub.strip()
         print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))

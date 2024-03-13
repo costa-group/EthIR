@@ -1085,21 +1085,30 @@ def compute_gas(vertices):
     return gas
 
 
-def run_gastap(contract_name, entry_functions, storage_analysis = False):
+def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all"):
 
     outputs = []
     ubs = {}
     ub_params = {}
     times = {}
+
+    if gastap_op == "op":
+        ethir_mem_op = "no"
+    elif gastap_op == "mem":
+        ethir_mem_op = "only"
+    elif gastap_op == "all":
+        ethir_mem_op = "yes"
+    else:
+        raise Exception("Unrecognized option for GASTAP")
     
     for bl in entry_functions:
         
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
         if storage_analysis:
-            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem yes -cost_model gas -custom_out_path yes -evmcc star" 
+            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star" 
         else:
-            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem yes -cost_model gas -custom_out_path yes" 
+            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
@@ -1169,9 +1178,22 @@ def filter_ub(out):
         else:
             params+="call,staticcall,delegatecall"
         ub = sres[1]
-    else: 
-        ub = "unknown"
-        params = ""
+    else:
+
+        res = re.search("Total UB for .*",out)    
+        if res: 
+            sres = res.group(0).split(":")
+            params = sres[0]
+            params = params[params.find("(")+1:params.find(")")]
+            if params != "":
+                params+=",call,staticcall,delegatecall"
+            else:
+                params+="call,staticcall,delegatecall"
+            ub = sres[1]
+        
+        else:
+            ub = "unknown"
+            params = ""
         
     return (ub_mem, ub), params
 

@@ -557,7 +557,7 @@ def main():
     # parser.add_argument( "-mcfg", "--memory-control-flow-graph",    help="Store the Memory CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
-    parser.add_argument( "-gastap", "--gastap",                 help="Calls to GASTAP directly from EthIR", action="store_true")
+    parser.add_argument( "-gastap", "--gastap",                 help="Calls to GASTAP directly from EthIR", choices = ["op","mem","all"])    #action="store_true")
     parser.add_argument( "-c", "--cfile",                 help="Translate EthIR RBR to SACO RBR", choices = ["int","uint","uint256"])
     parser.add_argument("-v", "--verify",             help="Applies abstraction depending on the verifier (CPAchecker, VeryMax or SeaHorn). Use with flag -c", choices = ["cpa","verymax","seahorn"])
     parser.add_argument("-i", "--invalid",             help="Translate the specified invalid bytecodes into SV-COMP error labels. Use with flag -c", choices = ["array","div0","all"])
