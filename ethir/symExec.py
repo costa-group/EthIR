@@ -1226,7 +1226,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
         s0 = vertices[block].get_block_gas()
         vertices[block].set_cost(s0)
         
-    if (function_info[0] and jump_type[block] == "conditional"):
+    elif (function_info[0] and jump_type[block] == "conditional"):
         signature = function_info[1]
         open_idx = signature.find("(")
         name = signature[:open_idx]
@@ -1257,7 +1257,11 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
                 
         #        function_block_map[name]=vertices[block].get_jump_target()
         function_info = (False,"")
-    
+
+    else:
+        s = vertices[block].get_block_gas()+vertices[pre_block].get_cost()
+        vertices[block].set_cost(s)
+        
     # Go to next Basic Block(s)
     if jump_type[block] == "terminal" or depth > global_params_ethir.DEPTH_LIMIT:
         #vertices[block].add_new_path(path)
