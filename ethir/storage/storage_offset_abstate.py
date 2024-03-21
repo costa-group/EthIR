@@ -7,6 +7,28 @@ MEM0 = 0
 global MEM20
 MEM20 = 32
 
+global KECCAKs
+KECCAKs = {"0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563": "0", 
+           "0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6": "1", 
+           "0x405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace": "2",
+           "0xc2575a0e9e593c00f959f8c92f12db2869c3395a3b0502d05e2516446f71f85b": "3", 
+           "0x8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19b": "4",
+           "0x036b6384b5eca791c62761152d0c79bb0604c104a5fb6f4eb0703f3154bb3db0": "5", 
+           "0xf652222313e28459528d920b65115c16c04f3efc82aaedc97be59f3f377c0d3f": "6", 
+           "0xa66cc928b5edb82af9bd49922954155ab7b0942694bea4ce44661d9a8736c688": "7", 
+           "0xf3f7a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee3": "8", 
+           "0x6e1540171b6c0c960b71a7020d9f60077f6af931a8bbf590da0223dacf75c7af": "9", 
+           "0xc65a7bb8d6351c1cf70c95a316cc6a92839c986682d98bc35f958f4883f9d2a8": "10", 
+           "0x0175b7a638427703f0dbe7bb9bbf987a2551717b34e79f33b5b1008d1fa01db9": "11", 
+           "0xdf6966c971051c3d54ec59162606531493a51404a002842f56009d7e5cf4a8c7": "12", 
+           "0xd7b6990105719101dabeb77144f2a3385c8033acd3af97e9423a695e81ad1eb5": "13",
+           "0xbb7b4a454dc3493923482f07822329ed19e8244eff582cc204f8554c3620c3fd": "14", 
+           "0x8d1108e10bcb7c27dddfc02ed9d693a074039d026cf4ea4240b40f7d581ac802": "15", 
+           "0x1b6847dc741a1b0cd08d278845f9d819d87b734759afb55fe2de5cb82a9ae672": "16", 
+           "0x31ecc21a745e3968a04e9570e4425bc18fa8019c68028196b546d1669c200c68": "17", 
+           "0xbb8a6a4669ba250d26cd7a459eca9d215f8307e33aebe50379bc5a3617ec3444": "18", 
+           "0x66de8ffda797e3de9c05e8fc57b3bf0ec28a930d40b0d285d93c06501cf6a090": "19", 
+           "0xce6d7b5282bd9a3661ae061feed1dbda4e52ab073b1f9285be6e155d9c38d4ec": "20"}
 
 class StorageOffsetAbstractState:          
     
@@ -120,6 +142,12 @@ class StorageOffsetAbstractState:
         # TODO Decidir que push guardar... 
         elif (op_code == "PUSH1"): 
             stack[self.stack_pos] = {StorageAccess(BOTTOM,str(int(op_operand,16)),0)}
+
+        # Keccaks pre-cooked
+        elif (op_code == "PUSH32"):
+
+            if str(op_operand) in KECCAKs: 
+                stack[self.stack_pos] = {StorageAccess(KECCAKs[str(op_operand)],str(0),0)}
 
         elif op_code.startswith("DUP",0):
             position = top-int(op_code[3:], 10)+1

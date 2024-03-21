@@ -1085,7 +1085,7 @@ def compute_gas(vertices):
     return gas
 
 
-def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all"):
+def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 1):
 
     outputs = []
     ubs = {}
@@ -1106,32 +1106,37 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
         if storage_analysis:
-            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
+            cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star" 
         else:
-            cmd = "sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
+            cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
 
         x = dtimer()
+        try:
+            solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
+            out = solc_p.communicate(timeout=timeoutval)[0].decode()
+            
+            y = dtimer()
+
+            times[bl] = y-x
+
+            outputs.append(out)
+            ub, params = filter_ub(out)
+
+            if ub == "" or ub == None:
+                print("GASTAPERR: Error at cooking the ub expression. "+str(contract_name)+",block"+str(bl))
+
+            else:
+                ubs[bl] = ub
+                ub_params[bl] = params
+        except subprocess.TimeoutExpired: 
+            print (f"WARN: Detected timeout in block {bl}")
+            ubs[bl] = ("timeout","timeout")
+            ub_params[bl] = None
+            times[bl] = timeoutval
         
-        solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-        out = solc_p.communicate()[0].decode()
-
-        y = dtimer()
-
-        times[bl] = y-x
-
-        outputs.append(out)
-        ub, params = filter_ub(out)
-
-        if ub == "" or ub == None:
-            print("GASTAPERR: Error at cooking the ub expression. "+str(contract_name)+",block"+str(bl))
-            # raise Exception("Error at cooking the ub expression")
-        else:
-            ubs[bl] = ub
-            ub_params[bl] = params
-
 
     return outputs, ubs, ub_params, times
 
@@ -1178,9 +1183,11 @@ def filter_ub(out):
         else:
             params+="call,staticcall,delegatecall"
         ub = sres[1]
+
     else:
 
         res = re.search("Total UB for .*",out)    
+        
         if res: 
             sres = res.group(0).split(":")
             params = sres[0]
