@@ -1085,7 +1085,7 @@ def compute_gas(vertices):
     return gas
 
 
-def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 1):
+def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 30):
 
     outputs = []
     ubs = {}
