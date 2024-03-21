@@ -124,6 +124,7 @@ def translate_block_property(block, property_information):
     if info != []:
         result = []
         for i in info:
+            print(i)
             first_elem = ["a",[1],i[2]]
             if i[2] == "s" and i[3] == "z":
                 first_elem.append("z")
@@ -131,6 +132,9 @@ def translate_block_property(block, property_information):
             if str(i[1]).find("*")==-1:
                 new_set = list(map(lambda x: str(x),i[1]))
                 elem = [first_elem,new_set]
+                result.append(elem)
+            else: #* are included as empty lists
+                elem = [first_elem,[]]
                 result.append(elem)
     else:
         result = []
