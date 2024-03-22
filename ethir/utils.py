@@ -1106,9 +1106,9 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
         if storage_analysis:
-            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star" 
+            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star" 
         else:
-            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
+            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
