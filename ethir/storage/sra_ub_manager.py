@@ -57,6 +57,7 @@ op_map = {
 class UB_info: 
 
     def __init__(self) -> None:
+        self.allOK = True
         self.gas_ub = "unknown"
         self.memory_ub = "unknown"
         self.storage_accesses = "unknown"
@@ -73,36 +74,50 @@ class UB_info:
         #Some special cases treatment
         if origub.find("maximize_failed") != -1: 
             print("UB Warn: Non maximixed expression ")
-            self.gas_ub = "Non maximixed expression"
+            self.gas_ub = "maximize_failed"
+            self.allOK = False
             return
 
         if origub.find("no_rf") != -1: 
             failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
             print("UB WARN Non terminating loop found: " + str(failed))
-            self.gas_ub = "non terminating "+ str(failed)
+            self.gas_ub = "nontermin"
+            self.allOK = False
             return
 
         if origub.find("unknown") != -1: 
             print("UB WARN: Unknown UB " + str(function))
             self.gas_ub = "unknown"
+            self.allOK = False
+            return
+
+        if origub.find("timeout") != -1: 
+            print("UB WARN: Timeout UB " + str(function))
+            self.gas_ub = "timeout"
+            self.allOK = False
             return
 
 
-        self.gas_ub = self.__eval_gas_ub(origub, params, function)
-        self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function)
-        self.sstore_accesses = self.__eval_sstore_ub(origub, params, function)
-        self.sload_accesses = self.__eval_sload_ub(origub,params, function)
-        for scc in sccs:  
-            ub = self.__eval_niter_ub(origub, params, scc,function)
-            self.ubscc[scc] = ub
-            ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
-            if not isinstance(ub_as_list,list):
-                try:
-                    ub_as_list = [int(float(ub_as_list))]
-                except:
-                    ub_as_list = [ub_as_list]
+        try: 
+            self.gas_ub = self.__eval_gas_ub(origub, params, function)
+            self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function)
+            self.sstore_accesses = self.__eval_sstore_ub(origub, params, function)
+            self.sload_accesses = self.__eval_sload_ub(origub,params, function)
+            for scc in sccs:  
+                ub = self.__eval_niter_ub(origub, params, scc,function)
+                ub = ub.strip()
+                self.ubscc[scc] = ub
+                ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
+                if not isinstance(ub_as_list,list):
+                    try:
+                        ub_as_list = [int(float(ub_as_list))]
+                    except:
+                        ub_as_list = [ub_as_list]
 
-            self.ubscclist[scc] = ub_as_list
+                self.ubscclist[scc] = ub_as_list
+        except Exception as exc: 
+            self.allOK = False
+            print(f"WARN: Error processing SCC {scc} with UB -> {str(exc)}") 
 
     def __compute(self,expr):
         match expr:
@@ -261,7 +276,6 @@ class UB_info:
             locals().update(param_dict)
 
             ub = "({})/({})".format(ntimesub,ncallsub)
-            # print(ub)
             # try:
             ub = eval(ub)
             # except:
@@ -269,29 +283,30 @@ class UB_info:
             #     ub = 0
         except: 
             print(f"WARN: Error in evaluating UB (niter) of {function}: {origub}")
-            ub = origub
+            ub = "unknown"
 
         return str(ub)
 
     def __eval_ub_cc(self,origub,params,cc, function, addtoub=""): 
-        try: 
-            ub = origub.replace("c(g)","0")
-            ub = ub.replace("c(" + cc + ")","1")
-            ub = re.sub('(c\([fstl].*?\))','0',ub)
+#        try: 
+        ub = origub.replace("c(g)","0")
+        ub = ub.replace("c(" + cc + ")","1")
+        ub = re.sub('(c\([fstl].*?\))','0',ub)
 
-            ub = ub.replace("max", "mymax")
-            ub = ub.replace("[","")
-            ub = ub.replace("]","")
+        ub = ub.replace("max", "mymax")
+        ub = ub.replace("[","")
+        ub = ub.replace("]","")
 
-            params = symbols(self.__filter_variables(params))
-            param_dict = {str(p): p for p in params}
-            locals().update(param_dict)
+        params = symbols(self.__filter_variables(params))
+        param_dict = {str(p): p for p in params}
+        locals().update(param_dict)
 
-            ub = eval(ub + addtoub)
-            ub = str(ub).replace("maxub","max")
-        except: 
-            print(f"WARN: Error in evaluating UB (ub_cc) of {function}: {origub}")
-            ub = origub
+        format(f"Vamos ahi {ub}")
+        ub = eval(ub + addtoub)
+        ub = str(ub).replace("maxub","max")
+        # except: 
+        #     print(f"WARN: Error in evaluating UB (ub_cc) of {function} with cc {cc}: {origub}")
+        #     ub = origub
         return ub
 
 

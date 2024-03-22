@@ -4764,10 +4764,13 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             if i == ii[1][0]:
                 function_name = ii[0]
 
+        allOK = ub_info.allOK
 
-        if (not ub_info.gas_ub.startswith("Non maximixed expression") and 
-            not ub_info.gas_ub.startswith("non terminating") and 
-            not ub_info.gas_ub.startswith("unknown")):
+        if allOK : 
+            #gas_ub.startswith("Non maximixed expression") and 
+            #not ub_info.gas_ub.startswith("non terminating") and 
+            #not ub_info.gas_ub.startswith("unknown") and
+            #not ub_info.gas_ub.startswith("timeout")):
 
             try:
                 traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
@@ -4787,8 +4790,9 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                         if colds == -1:
                             raise Exception()
                     except Exception as e:
-                        colds = 0 
-                        warms = 0
+                        colds = "error" 
+                        warms = "error"
+                        allOK = False
                         print("GASTAPERROR: Error in COLD cost computation")
 
                     try:
@@ -4801,37 +4805,47 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                         storage_time = y-x
                         
                     except Exception as e:
-                        cost_sstores = 0
+                        allOK = False
+                        cost_sstores = "error"
                         print("GASTAPERROR: Error in sstore cost")
                 else:
                     # print("RESULT")
-                    colds = 0 
-                    warms = 0
-                    cost_sstores = 0
+                    colds = "error" 
+                    warms = "error"
+                    cost_sstores = "error"
                     
             except Exception as e:
                 print("GASTAPERROR: Error in TRAVERSE")
                 traceback.print_exc()
-                colds = 0 
-                warms = 0
-                cost_sstores = 0
+                colds = "error" 
+                warms = "error"
+                cost_sstores = "error"
+                allOK = False
 
 
-            # print(ub_info.gas_ub)
-            # print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+        print(f"Llego hasta aqui {allOK} {ub_info.gas_ub}")
+        # print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+        if allOK: 
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
-        else:
+        else: 
             final_ub = ub_info.gas_ub
-            colds = 0 
-            warms = 0
-            cost_sstores = 0
+
+        # else:
+        #     final_ub = ub_info.gas_ub
+        #     colds = 0 
+        #     warms = 0
+        #     cost_sstores = 0
 
         if gastap_op == "all":
             memory_ub = ub_info.memory_ub.strip()
         else:
             memory_ub = 0
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
-        
+
+        if allOK:     
+            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str("ok")+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+        else: 
+            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+
 
 def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gastap_op):
 

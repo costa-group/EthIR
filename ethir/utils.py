@@ -1085,7 +1085,7 @@ def compute_gas(vertices):
     return gas
 
 
-def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 30):
+def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 60):
 
     outputs = []
     ubs = {}
@@ -1106,17 +1106,21 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
         # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
         #     continue
         if storage_analysis:
-            cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star" 
+            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star" 
         else:
-            cmd = "sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
+            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes" 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
 
         x = dtimer()
-        try:
+        try: 
             solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
             out = solc_p.communicate(timeout=timeoutval)[0].decode()
+            
+            ## Timeout
+            if solc_p.returncode == 124:
+                raise Exception("Timeout")
             
             y = dtimer()
 
@@ -1131,12 +1135,11 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
             else:
                 ubs[bl] = ub
                 ub_params[bl] = params
-        except subprocess.TimeoutExpired: 
+        except: 
             print (f"WARN: Detected timeout in block {bl}")
             ubs[bl] = ("timeout","timeout")
             ub_params[bl] = None
             times[bl] = timeoutval
-        
 
     return outputs, ubs, ub_params, times
 
