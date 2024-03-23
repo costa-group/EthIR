@@ -72,7 +72,13 @@ class UB_info:
         origub = origub[1]
         
         #Some special cases treatment
-        if origub.find("maximize_failed") != -1: 
+        if origub.find("execerror") != -1:
+            print("UB WARN: Error running costabs " + str(function))
+            self.gas_ub = "execerror"
+            self.allOK = False
+            return
+
+        if origub.find("maximize_failed") != -1:
             print("UB Warn: Non maximixed expression ")
             self.gas_ub = "maximize_failed"
             self.allOK = False
@@ -96,7 +102,6 @@ class UB_info:
             self.gas_ub = "timeout"
             self.allOK = False
             return
-
 
         try: 
             self.gas_ub = self.__eval_gas_ub(origub, params, function)
@@ -276,7 +281,7 @@ class UB_info:
             locals().update(param_dict)
 
             ub = "({})/({})".format(ntimesub,ncallsub)
-            # try:
+            # try:  
             ub = eval(ub)
             # except:
             #     print("GASTAPERROR: ERROR in eval ub")
@@ -301,7 +306,6 @@ class UB_info:
         param_dict = {str(p): p for p in params}
         locals().update(param_dict)
 
-        format(f"Vamos ahi {ub}")
         ub = eval(ub + addtoub)
         ub = str(ub).replace("maxub","max")
         # except: 

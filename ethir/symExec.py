@@ -4734,7 +4734,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file)
 
     items = list(function_block_map.items())
             
@@ -4764,6 +4764,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             if i == ii[1][0]:
                 function_name = ii[0]
 
+        print("Vamos a ver que pasa " + str(ub_info.allOK))
         allOK = ub_info.allOK
 
         if allOK : 
@@ -4853,7 +4854,7 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gas
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file)
     
     items = list(function_block_map.items())
     
@@ -4873,4 +4874,9 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gas
         else:
             memory_ub = memory_ub.strip()
             opcode_ub = opcode_ub.strip()
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str("ok")+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
+
+        res = "ok"
+        if opcode_ub in ["unknown","execerror","timeout"]:
+            res = "uberror"
+
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(res)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
