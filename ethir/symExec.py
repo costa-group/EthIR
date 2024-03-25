@@ -4163,7 +4163,7 @@ def run(disasm_file=None,
         source_map_init = None, 
         source_file=None, 
         cfg=None, 
-        saco = (None,None), 
+        saco = (None,None, None, None), 
         execution = None,
         cname = None, 
         hashes = None, 
@@ -4424,7 +4424,7 @@ def run(disasm_file=None,
 
         elif saco[1] != None: #without storage_analysis
 
-            compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco[1])
+            compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco)
             
         if opt!= None:
         # fields = ["field1","field2"]
@@ -4728,13 +4728,13 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
-            
+    timeoutvalue = saco[3]         
             
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
 
     items = list(function_block_map.items())
             
@@ -4824,7 +4824,6 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                 allOK = False
 
 
-        print(f"Llego hasta aqui {allOK} {ub_info.gas_ub}")
         # print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
         if allOK: 
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
@@ -4848,13 +4847,16 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
 
 
-def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,gastap_op):
+def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco):
+
+    gastap_op = saco[1]
+    timeoutvalue = saco[3]
 
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
     
     items = list(function_block_map.items())
     

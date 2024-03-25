@@ -1262,7 +1262,7 @@ def compile_instr(rule,evm_opcode,
         rule.add_instr(value)
 
     if opcode_name == "JUMPDEST" and rule.blockId in sccentries:
-        print ("Adding jumpdest para " + str(rule.blockId))
+        # print ("Adding jumpdest para " + str(rule.blockId))
         rule.add_instr("nop(jumpdest(" + str(rule.blockId) +"))")
 
     if results_sto_analysis != [] and (opcode_name.startswith("SLOAD") or opcode_name.startswith("SSTORE")):

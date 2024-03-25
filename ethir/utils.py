@@ -1109,11 +1109,11 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
         if source_file: 
             sourceparam = "-solfilename " + str(source_file)
 
-
+        print ("TIMEOUT " + str(timeoutval))
         if storage_analysis:
-            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam
+            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam
         else:
-            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
+            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
@@ -1121,7 +1121,7 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
         x = dtimer()
         try: 
             solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-            out = solc_p.communicate(timeout=timeoutval)[0].decode()
+            out = solc_p.communicate()[0].decode()
 
             if solc_p.returncode == 124:
                 raise subprocess.TimeoutExpired("",str(timeoutval))
