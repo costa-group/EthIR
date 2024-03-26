@@ -19,11 +19,10 @@ def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_
     elif entry_point in scc_components["multiple"] and (end_points == [] or entry_point not in end_points):
         # print("HOLA MULTIPLE")
         r1 = translate_block_property(entry_point, property_information)
+        r = []
         if r1 != []:
-            r = [r1]
-        else:
-            r = []
-
+            r += r1
+        
         block = vertices[entry_point]
         # print(r)
         left_block = block.get_jump_target()
