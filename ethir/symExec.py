@@ -4764,7 +4764,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             if i == ii[1][0]:
                 function_name = ii[0]
 
-        print("Vamos a ver que pasa " + str(ub_info.allOK))
+        # print("Vamos a ver que pasa " + str(ub_info.allOK))
         allOK = ub_info.allOK
 
         if allOK : 

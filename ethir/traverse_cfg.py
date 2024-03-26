@@ -124,7 +124,6 @@ def translate_block_property(block, property_information):
     if info != []:
         result = []
         for i in info:
-            print(i)
             first_elem = ["a",[1],i[2]]
             if i[2] == "s" and i[3] == "z":
                 first_elem.append("z")
