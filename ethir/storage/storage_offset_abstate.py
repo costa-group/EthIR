@@ -168,13 +168,26 @@ class StorageOffsetAbstractState:
                 stack[top] = valpos
 
         elif op_code == "SLOAD":
-            self.add_read_access(pc,stack[top])
-
+            value = None
+            if top in stack:
+                value = stack[top]
+            else:
+                print("WARNING: No value for SLOAD")
+                value = {StorageAccess(BOTTOM,TOP,0)}
+            self.add_read_access(pc,value)
+            
+                
         elif op_code == "SSTORE":
             value  = None
             if top-1 in stack: 
                 value = stack[top-1]
-            self.add_write_access(pc,stack[top], value)
+            if top in stack:
+                value_address = stack[top]
+            else:
+                print("WARNING: No value for SSTORE")
+                value_address = {StorageAccess(BOTTOM,TOP,0)}
+                
+            self.add_write_access(pc,value_address, value)
 
         elif op_code == "SHA3" or op_code == "KECCAK256":
 
