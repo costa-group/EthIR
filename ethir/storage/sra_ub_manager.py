@@ -91,6 +91,13 @@ class UB_info:
             self.allOK = False
             return
 
+        if origub.find("cover_point") != -1: 
+            failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
+            print("UB WARN No cover point found: " + str(failed))
+            self.gas_ub = "nocoverpoint"
+            self.allOK = False
+            return
+
         if origub.find("unknown") != -1: 
             print("UB WARN: Unknown UB " + str(function))
             self.gas_ub = "unknown"
