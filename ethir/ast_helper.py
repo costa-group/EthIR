@@ -106,7 +106,8 @@ class AstHelper:
     #Modified by PG
     #It does not return constant state variables
     def extract_state_variable_names(self, c_name):
-        state_variables = self.extract_states_definitions()[c_name]
+        
+        state_variables = self.extract_states_definitions().get(c_name,[])
         var_names = []
         for var_name in state_variables:
             
