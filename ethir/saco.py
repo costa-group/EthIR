@@ -407,6 +407,34 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             new_instructions.append(new)
             new_instructions.append(top)
             new = instr
+    elif instr.find("nop(CREATE)")!=-1:
+        top = new_instructions.pop()
+        val = top.split("=")[0].strip()
+        if val.startswith("s("):
+            num = val.split("(")[1].strip(")")
+            num_var = int(num)
+            exp = "s("+str(num_var+1)+")+"+val
+            new = "'$acquire'(noncu,("+exp+")/32)"
+            new_instructions.append(new)
+            new = "'$release'(noncu)"
+            new_instructions.append(new)
+            new_instructions.append(top)
+            new = instr
+
+    elif instr.find("nop(CREATE2)")!=-1:
+        top = new_instructions.pop()
+        val = top.split("=")[0].strip()
+        if val.startswith("s("):
+            num = val.split("(")[1].strip(")")
+            num_var = int(num)
+            exp = "s("+str(num_var+1)+")+s("+str(num_var+2)+")"
+            new = "'$acquire'(noncu,("+exp+")/32)"
+            new_instructions.append(new)
+            new = "'$release'(noncu)"
+            new_instructions.append(new)
+            new_instructions.append(top)
+            new = instr
+            
     elif instr.find("nop(CALLDATACOPY)")!=-1 or instr.find("nop(CODECOPY)")!=-1 or instr.find("nop(RETURNDATACOPY)")!=-1:
         top = new_instructions[-3]
         val = top.split("=")[0].strip()
@@ -455,7 +483,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             new = "'$release'(noncu)"
             new_instructions.append(new)
             new = instr
-    elif instr.find("nop(CALL)")!=-1:
+    elif instr.find("nop(CALL)")!=-1 or instr.find("nop(CALLCODE")!=-1:
         top = new_instructions[-3]
         last = new_instructions.pop()
         val = top.split("=")[0].strip()
@@ -475,7 +503,26 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             new_instructions.append(last)
             new = instr
 
-                
+    elif instr.find("nop(STATICCALL")!=-1 or instr.find("nop(DELEGATECALL")!=-1:
+        top = new_instructions[-3]
+        last = new_instructions.pop()
+        val = top.split("=")[0].strip()
+        if val.startswith("s("):
+            num = val.split("(")[1].strip(")")
+            num_var = int(num)
+            exp = "s("+str(num_var-2)+")+"+"s("+str(num_var-3)+")"
+            new = "'$acquire'(noncu,("+exp+")/32)"
+            new_instructions.append(new)
+            new = "'$release'(noncu)"
+            new_instructions.append(new)
+            exp = "s("+str(num_var-4)+")+"+"s("+str(num_var-5)+")"
+            new = "'$acquire'(noncu,("+exp+")/32)"
+            new_instructions.append(new)
+            new = "'$release'(noncu)"
+            new_instructions.append(new)
+            new_instructions.append(last)
+            new = instr
+
     elif len(instr.split("=")) > 1:
         slices = instr.split("=")
         name = slices[1].strip()
@@ -492,7 +539,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             
     else:
         new = instr
-            
+
     new_instructions.append(new)
         
     return cont
