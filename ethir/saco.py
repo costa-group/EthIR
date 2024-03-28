@@ -394,7 +394,7 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             new_instructions.append(new)
             new_instructions.append(top)
             new = instr
-    elif instr.find("nop(SHA3)")!=-1:
+    elif instr.find("nop(SHA3)")!=-1 or instr.find("nop(KECCAK")!=-1:
         top = new_instructions.pop()
         val = top.split("=")[0].strip()
         if val.startswith("s("):
