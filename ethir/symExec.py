@@ -997,6 +997,8 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global maintain_variable
     global involved_variable
     global potential_variable
+
+    # print(vertices[block].display())
     
     visited = params.visited
     stack = params.stack
@@ -2761,14 +2763,16 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             else:
                 val = memory_usage.get(address,"mem("+str(address)+")")
 
+                if (val.find("Ia_store")!=-1 and val.find("mem(") == -1) and (first_sym.find("ADD")== -1 and first_sym.find("SUB")==-1 and first_sym.find("MUL")==-1 and first_sym.find("DIV")==-1):
+                    pval = val.split("Ia_store_")[-1]
+                    sval = pval.find(")")
+                    if sval !=-1:
+                        try:
+                            idx_val = int(pval[:sval])
+                            vertices[block].add_potential_storage_val(idx_val)
+                        except:
+                            pass
 
-            if (val.find("Ia_store")!=-1 and val.find("mem(") == -1) and (first_sym.find("ADD")== -1 and first_sym.find("SUB")==-1):
-                pval = val.split("Ia_store_")[-1]
-                sval = pval.find(")")
-                if sval !=-1:
-                    idx_val = int(pval[:sval])
-                    vertices[block].add_potential_storage_val(idx_val)
-            
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
