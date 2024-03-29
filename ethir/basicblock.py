@@ -40,7 +40,8 @@ class BasicBlock:
         self.pcs = []
         self.pcs_stored = False
         self.symbolic_stacks = []
-        
+
+        self.potential_storage_val = []
         
     def get_start_address(self):
         return self.start
@@ -55,7 +56,16 @@ class BasicBlock:
     def set_end_address(self,address):
         self.end = address
 
-    
+
+    def add_potential_storage_val(self, val):
+        self.potential_storage_val.append(val)
+
+    def get_potential_storage(self):
+        return self.potential_storage_val
+
+    def is_unique_storage_val(self):
+        return len(set(self.potential_storage_val)) == 1
+            
     def add_instruction(self, instruction):
         self.instructions.append(instruction)
 

@@ -747,19 +747,26 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
-            l_idx = get_local_variable(value)
 
-            if memory_intervals == "arrays" and val_mem40 != value:
-                instr = v1+ " = " + "l(mem"+str(value)+")"
-                update_local_variables(str(value),block)
-
-            elif memory_intervals == "arrays" and val_mem40 == value:
-                instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
-                new_fid+=1
-
+            if vertices[block].is_unique_storage_val():
+                idx = str(vertices[block].get_potential_storage()[0])
+                var_name = state_names.get(idx,idx)
+                instr = v1+" = " + "g(" + str(var_name) + ")"
+                update_field_index(str(var_name),block)
             else:
-                instr = v1+ " = " + "l(l"+str(l_idx)+")"
-                update_local_variables(l_idx,block)
+                l_idx = get_local_variable(value)
+
+                if memory_intervals == "arrays" and val_mem40 != value:
+                    instr = v1+ " = " + "l(mem"+str(value)+")"
+                    update_local_variables(str(value),block)
+
+                elif memory_intervals == "arrays" and val_mem40 == value:
+                    instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
+                    new_fid+=1
+
+                else:
+                    instr = v1+ " = " + "l(l"+str(l_idx)+")"
+                    update_local_variables(l_idx,block)
         except ValueError:
             instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
