@@ -1104,8 +1104,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     #by PG: For str patterns in v8 solc
     div_pattern = look_for_str_pattern1(bl)
     if div_pattern:
-        print("YEEEEES")
-        print(block)
         bl.set_div_str_pattern(True)
     elif vertices[pre_block].get_div_str_pattern() and not div_pattern:
         and_pattern = look_for_str_pattern2(bl)
