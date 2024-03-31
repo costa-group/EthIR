@@ -280,7 +280,15 @@ def get_local_variable(address):
         #var = "l(" + str(current_local_var) + ")"
         current_local_var += 1
         return current_local_var-1
+    except ValueError:
+        if address in local_variables:
+            idx = local_variables[address]
+            return idx
+        local_variables[address] = current_local_var
+        current_local_var += 1
+        return current_local_var-1
 
+    
 '''
 It adds to the list max_field_list the index of the field used.
 -value: index_field. int.
@@ -356,12 +364,22 @@ def translateOpcodes0(opcode,index_variables,block):
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
-        instr = v3+" = " + v1 + "/" + v2
+
+        if vertices[block].get_div_str_pattern():
+            instr = v3+" = " + v1
+        else:
+            instr = v3+" = " + v1 + "/" + v2
+
     elif opcode == "SDIV":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
         v3, updated_variables = get_new_variable(updated_variables)
-        instr = v3+" = " + v1 + "/" + v2
+
+        if vertices[block].get_div_str_pattern():
+            instr = v3+" = " + v1
+        else:
+            instr = v3+" = " + v1 + "/" + v2
+            
     elif opcode == "MOD":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
@@ -411,7 +429,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes10(opcode, index_variables,cond):
+def translateOpcodes10(opcode, index_variables,cond, block):
     if opcode == "LT":
         v1, updated_variables = get_consume_variable(index_variables)
         v2, updated_variables = get_consume_variable(updated_variables)
@@ -470,7 +488,11 @@ def translateOpcodes10(opcode, index_variables,cond):
             v1, updated_variables = get_consume_variable(index_variables)
             v2, updated_variables = get_consume_variable(updated_variables)
             v3, updated_variables = get_new_variable(updated_variables)
-            instr = v3+" = and(" + v1 + ", " + v2+")"
+
+            if(vertices[block].get_and_str_pattern()):
+                instr = v3+" = "+v1
+            else:
+                instr = v3+" = and(" + v1 + ", " + v2+")"
 
     elif opcode == "OR":
         v1, updated_variables = get_consume_variable(index_variables)
@@ -1216,14 +1238,14 @@ def compile_instr(rule,evm_opcode,
     opcode_rest = ""
     
     if len(opcode) > 1:
-        opcode_rest = opcode[1]
+        opcode_rest = " ".join(opcode[1:])
 
     if opcode_name in opcodes0:
         value, index_variables = translateOpcodes0(opcode_name, variables,rule.get_Id())
         rule.add_instr(value)
             
     elif opcode_name in opcodes10:
-        value, index_variables = translateOpcodes10(opcode_name, variables,cond)
+        value, index_variables = translateOpcodes10(opcode_name, variables,cond, rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes20:
         value, index_variables = translateOpcodes20(opcode_name, variables,rule.get_Id())
@@ -1447,7 +1469,7 @@ def create_cond_jump(block_id,l_instr,variables,jumps,falls_to,guard = None):
 '''
 def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
     if guard:
-        guard, index_variables = translateOpcodes10(l_instr[0], variables,False)
+        guard, index_variables = translateOpcodes10(l_instr[0], variables,False,block_id)
     else:
         _ , index_variables = get_consume_variable(variables)
         v1, index_variables = get_consume_variable(index_variables)
@@ -1931,7 +1953,9 @@ def evm2rbr_compiler(blocks_input = None,
 
 
             # print(mem_creation)
-                
+
+            # print(local_variables)
+            
             # print "********************************************"
             # print storage_arrays
             if saco_rbr:

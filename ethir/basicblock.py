@@ -1,6 +1,7 @@
 import six
 from dot_tree import Tree
 from opcodes import get_ins_cost
+import sympy
 
 class BasicBlock:
     def __init__(self, start_address, end_address):
@@ -42,6 +43,10 @@ class BasicBlock:
         self.symbolic_stacks = []
 
         self.potential_storage_val = []
+        self.div_str_pattern = False
+        self.and_str_pattern = False
+        self.div_str_pattern_value = []
+        
         
     def get_start_address(self):
         return self.start
@@ -243,8 +248,11 @@ class BasicBlock:
             else:
                 int(elem)
                 val = elem
-        except:
-            val = "?"
+        except: # it maintain the baserefs for memory location
+            if str(elem).find("baseref")!=-1:
+                val = sympy.simplify(str(elem))
+            else:
+                val = "?"
         return val
         
     def _check_same_elem(self,l,elem):
@@ -252,7 +260,10 @@ class BasicBlock:
         if len(list_aux) == 0: #All the elements are the same (and numerical)
             val = self._is_numerical(elem)
         else:
-            val = "?"
+            if str(elem).find("baseref")!=-1:
+                val = sympy.simplify(str(elem))
+            else:
+                val = "?"
         return val
     
     def _get_concrete_value(self,type_value,cont):
@@ -264,6 +275,8 @@ class BasicBlock:
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
+            
+                
         elif type_value == "mstore":
             l = self.mstore_values.get(cont,[-1])
             if len(l) == 1:
@@ -454,7 +467,20 @@ class BasicBlock:
 
     def get_and_values(self):
         return self.and_values
-        
+
+    def get_div_str_pattern(self):
+        return self.div_str_pattern
+
+    def set_div_str_pattern(self, val):
+        self.div_str_pattern = val
+
+    def get_and_str_pattern(self):
+        return self.and_str_pattern
+
+    def set_and_str_pattern(self, val):
+        self.and_str_pattern = val
+
+    
     def copy(self):
         
         new_obj =  BasicBlock(self.start, self.end)
@@ -483,6 +509,9 @@ class BasicBlock:
         new_obj.set_access_array(self.access_array)
         new_obj.set_div_invalid_pattern(self.div_invalid_pattern)
         new_obj.set_assertfail_in_getter(self.assertfail_in_getter)
+
+        new_obj.set_div_str_pattern(self.div_str_pattern)
+        new_obj.set_and_str_pattern(self.and_str_pattern)
         
         #AHC: When we copy, we just forget about old stacks
         new_obj.set_stacks([])

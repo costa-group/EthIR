@@ -14,12 +14,49 @@ sub_pattern = ["PUSH1 0x01",
                "SWAP1",
                "DIV"]
 
+pattern1_str_v8 = ["JUMPDEST","PUSH0","PUSH1 0x02","DUP3","DIV","SWAP1","POP","PUSH","DUP3","AND","DUP1","PUSH","JUMPI"]
+pattern2_str_v8 = ["PUSH1 0x7f","DUP3","AND","SWAP2","POP"]
+
 
 pre_pattern_sstore = ["PUSH","DUP","PUSH","EXP","DUP"]
 post_pattern_sstore = ["DUP","PUSH","MUL","NOT","AND","SWAP","DUP","PUSH","AND","MUL","OR","SWAP"]
 
 pre_pattern_sload = ["PUSH","PUSH","SWAP",]
 post_pattern_sload = ["SWAP","PUSH","EXP","SWAP","DIV","PUSH"]
+
+
+
+def look_for_str_pattern1(block):
+    instrs = block.get_instructions()
+    if len(instrs) != len(pattern1_str_v8):
+        return False
+
+    i = 0
+    while(i<len(instrs)):
+        ins_pattern = pattern1_str_v8[i]
+        ins_block = instrs[i]
+        if not ins_block.strip().startswith(ins_pattern):
+            return False
+        i+=1
+    return True
+
+def look_for_str_pattern2(block):
+    instrs = block.get_instructions()
+    if len(instrs) != len(pattern2_str_v8):
+        return False
+
+    i = 0
+    while(i<len(instrs)):
+        ins_pattern = pattern2_str_v8[i]
+        ins_block = instrs[i]
+        if not ins_block.strip().startswith(ins_pattern):
+            return False
+        i+=1
+    return True
+
+
+
+
 ## String Pattern
     
 def look_for_string_pattern(block):

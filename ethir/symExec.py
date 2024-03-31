@@ -31,7 +31,7 @@ from clone import compute_cloning
 from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals, get_blocks_per_function
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
-from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment
+from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment, look_for_str_pattern1, look_for_str_pattern2
 from traverse_cfg import traverse_cfg
 
 
@@ -1101,7 +1101,17 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     involved_variable = ""
     potential_variable = ""
 
-    
+    #by PG: For str patterns in v8 solc
+    div_pattern = look_for_str_pattern1(bl)
+    if div_pattern:
+        print("YEEEEES")
+        print(block)
+        bl.set_div_str_pattern(True)
+    elif vertices[pre_block].get_div_str_pattern() and not div_pattern:
+        and_pattern = look_for_str_pattern2(bl)
+        if and_pattern:
+            bl.set_and_str_pattern(True)
+
     for instr in block_ins:
         # print instr
         if not bl.get_pcs_stored():
@@ -2725,6 +2735,9 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             stack_sym.insert(0,"MLOAD("+first_sym+")")
 
+            # print("+^+^+^+")
+            # print(address)
+            # print(memory_val)
             
             # print(memory_usage)
 
@@ -2773,6 +2786,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
                         except:
                             pass
 
+                
             #Added by Pablo Gordillo
             vertices[block].add_ls_value("mload",ls_cont[0],address)
             ls_cont[0]+=1
