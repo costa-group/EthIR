@@ -17,6 +17,7 @@ sub_pattern = ["PUSH1 0x01",
 pattern1_str_v8 = ["JUMPDEST","PUSH0","PUSH1 0x02","DUP3","DIV","SWAP1","POP","PUSH","DUP3","AND","DUP1","PUSH","JUMPI"]
 pattern2_str_v8 = ["PUSH1 0x7f","DUP3","AND","SWAP2","POP"]
 
+pattern_mem_str_v8 = ["JUMPDEST","PUSH0","PUSH1 0x1f","NOT","PUSH1 0x1f","DUP4","ADD","AND","SWAP1","POP","SWAP2","SWAP1","POP","JUMP"]
 
 pre_pattern_sstore = ["PUSH","DUP","PUSH","EXP","DUP"]
 post_pattern_sstore = ["DUP","PUSH","MUL","NOT","AND","SWAP","DUP","PUSH","AND","MUL","OR","SWAP"]
@@ -54,7 +55,19 @@ def look_for_str_pattern2(block):
         i+=1
     return True
 
+def look_for_str_mem_pattern(block):
+    instrs = block.get_instructions()
+    if len(instrs) != len(pattern_mem_str_v8):
+        return False
 
+    i = 0
+    while(i<len(instrs)):
+        ins_pattern = pattern_mem_str_v8[i]
+        ins_block = instrs[i]
+        if not ins_block.strip().startswith(ins_pattern):
+            return False
+        i+=1
+    return True
 
 
 ## String Pattern
