@@ -2778,8 +2778,8 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             else:
                 val = memory_usage.get(address,"mem("+str(address)+")")
 
-                if (val.find("Ia_store")!=-1 and val.find("mem(") == -1) and (first_sym.find("ADD")== -1 and first_sym.find("SUB")==-1 and first_sym.find("MUL")==-1 and first_sym.find("DIV")==-1):
-                    pval = val.split("Ia_store_")[-1]
+                if (str(val).find("Ia_store")!=-1 and str(val).find("mem(") == -1) and (first_sym.find("ADD")== -1 and first_sym.find("SUB")==-1 and first_sym.find("MUL")==-1 and first_sym.find("DIV")==-1):
+                    pval = str(val).split("Ia_store_")[-1]
                     sval = pval.find(")")
                     if sval !=-1:
                         try:
