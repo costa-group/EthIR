@@ -147,11 +147,11 @@ Wzero = ("STOP", "RETURN", "REVERT", "ASSERTFAIL","INVALID")
 Wbase = ("ADDRESS", "ORIGIN", "CALLER", "CALLVALUE", "CALLDATASIZE",
          "CODESIZE", "GASPRICE", "COINBASE", "TIMESTAMP", "NUMBER",
          "DIFFICULTY","PREVRANDAO", "GASLIMIT", "POP", "PC", "MSIZE",
-         "GAS","CHAINID","PUSH0","BASEFEE")
+         "GAS","CHAINID","PUSH0","BASEFEE","RETURNDATASIZE")
 
 Wverylow = ("ADD", "SUB", "NOT", "LT", "GT", "SLT", "SGT", "EQ",
             "ISZERO", "AND", "OR", "XOR", "BYTE", "CALLDATALOAD",
-            "MLOAD", "MSTORE", "MSTORE8", "PUSH", "DUP", "SWAP")
+            "MLOAD", "MSTORE", "MSTORE8", "PUSH", "DUP", "SWAP","SHR","SHL","SAR")
 
 Wlow = ("MUL", "DIV", "SDIV", "MOD", "SMOD", "SIGNEXTEND","SELFBALANCE")
 
@@ -228,6 +228,8 @@ def get_ins_cost(opcode):
         return GCOST["Gcreate2"]
     elif opcode in ("CALL", "CALLCODE"):
         return GCOST["Gcall"]
+    elif opcode in ("DELEGATECALL", "STATICCALL"):
+        return GCOST["Gcall"]
     elif opcode in ("LOG0", "LOG1", "LOG2", "LOG3", "LOG4"):
         num_topics = int(opcode[3:])
         return GCOST["Glog"] + num_topics * GCOST["Glogtopic"]
@@ -235,7 +237,7 @@ def get_ins_cost(opcode):
         return GCOST["Gextcode"]
     elif opcode == "EXTCODEHASH":
         return GCOST["Gextcodehash"]
-    elif opcode in ("CALLDATACOPY", "CODECOPY"):
+    elif opcode in ("CALLDATACOPY", "CODECOPY","RETURNDATACOPY"):
         return GCOST["Gverylow"]
     elif opcode == "BALANCE":
         return GCOST["Gbalance"]
@@ -243,4 +245,6 @@ def get_ins_cost(opcode):
         return GCOST["Gblockhash"]
     elif opcode == "SSTORE":
         return 20000
-    return 0
+    else:
+        print("WARNING COST 0")
+        return 0
