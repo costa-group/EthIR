@@ -1265,8 +1265,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             # print(ch_block)
             # print(jump_type[ch_block]) == "unconditional"
             if (elem[0]>ch_block) or (jump_type[elem[0]] == "conditional"):
-                print(block)
-                raise Exception
                 function_block_map[signature] = (ch_block,s)
                 
         #        function_block_map[name]=vertices[block].get_jump_target()
