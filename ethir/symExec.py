@@ -1252,7 +1252,6 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
 
         # print(signature)
         elem = function_block_map.get(signature,-1)
-        # print(elem)
         # print("*********")
         if elem == -1:
             #if ch_block == 113:
@@ -1265,8 +1264,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
             # print(jump_type[elem[0]])
             # print(ch_block)
             # print(jump_type[ch_block]) == "unconditional"
-            if elem[0]>ch_block or (jump_type[elem[0]] == "conditional"):
-                # print("BOOOM")
+            if (elem[0]>ch_block) or (jump_type[elem[0]] == "conditional"):
+                print(block)
+                raise Exception
                 function_block_map[signature] = (ch_block,s)
                 
         #        function_block_map[name]=vertices[block].get_jump_target()
@@ -3259,8 +3259,15 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         global_state["pc"] = global_state["pc"] + 1 + position
         hs = str(instr_parts[1])[2:] #To delete 0x...
         if f_hashes and hs in f_hashes :
-            name = f_hashes[hs]
-            function_info = (True,name)
+            instructions = vertices[block].get_instructions()
+            try:
+                idx = instructions.index(instr)
+            except:
+                print("WARNING: Error in index")
+            
+            if instructions[idx+1].startswith("EQ"):
+                name = f_hashes[hs]
+                function_info = (True,name)
             
 
 
