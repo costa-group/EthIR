@@ -4814,7 +4814,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                 traverse_cfg(i, scc, rel, vertices, storage_accesses, result, ub_info.ubscclist, [])
                         
                 result_sat[i] = result
-                    
+                   
                 if result != []:
                     source_file_path = source_file.split("/")[-1].strip(".sol")
                     with open(global_params_ethir.costabs_path+"/costabs/"+source_file_path+"_"+cname+"_block"+str(i)+".smt","w") as json_file:
@@ -4847,10 +4847,10 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                         cost_sstores = "error"
                         print("GASTAPERROR: Error in sstore cost")
                 else:
-                    # print("RESULT")
-                    colds = "error" 
-                    warms = "error"
-                    cost_sstores = "error"
+                    colds = 0 
+                    warms = 0
+                    cost_sstores = 0
+
                     
             except Exception as e:
                 print("GASTAPERROR: Error in TRAVERSE")
@@ -4861,7 +4861,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                 allOK = False
 
 
-        # print(ub_info.gas_ub+" +"+str(a*2000+b*100)+" +"+str(cost_sstores))
+        # print("TENGO UB " + ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
         if allOK: 
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
         else: 
@@ -4870,7 +4870,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
         # else:
         #     final_ub = ub_info.gas_ub
         #     colds = 0 
-        #     warms = 0
+        #     warms = 0 
         #     cost_sstores = 0
 
         if gastap_op == "all":
