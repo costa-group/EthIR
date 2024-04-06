@@ -250,7 +250,10 @@ class BasicBlock:
                 val = elem
         except: # it maintain the baserefs for memory location
             if str(elem).find("baseref")!=-1:
-                val = sympy.simplify(str(elem))
+                try:
+                    val = sympy.simplify(str(elem))
+                except:
+                    val = str(elem)
             else:
                 val = "?"
         return val
@@ -261,7 +264,10 @@ class BasicBlock:
             val = self._is_numerical(elem)
         else:
             if str(elem).find("baseref")!=-1:
-                val = sympy.simplify(str(elem))
+                try:
+                    val = sympy.simplify(str(elem))
+                except:
+                    val = str(elem)
             else:
                 val = "?"
         return val
