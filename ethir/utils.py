@@ -750,11 +750,14 @@ def is_integer(num):
 #     while(i < len(state_variables)):
 
 def get_push_value(elem):
-    try:
-        push_val, _ = elem
-        return push_val
-    except:
-        return elem
+    if type(elem) != str:
+        try:
+            push_val, _ = elem
+            return push_val
+        except:
+            return elem
+    else:
+        return elem    
 
 # Added by AHC
 
