@@ -1,5 +1,6 @@
 import re
 import ast
+import traceback
 from  utils import isReal
 from sympy import Function, symbols
 
@@ -99,13 +100,13 @@ class UB_info:
             return
 
         if origub.find("unknown") != -1: 
-            print("UB WARN: Unknown UB " + str(function))
+            print("UB WARN:** Unknown UB for function " + str(function))
             self.gas_ub = "unknown"
             self.allOK = False
             return
 
         if origub.find("timeout") != -1: 
-            print("UB WARN: Timeout UB " + str(function))
+            print("UB WARN: Timeout UB for function " + str(function))
             self.gas_ub = "timeout"
             self.allOK = False
             return
@@ -293,13 +294,13 @@ class UB_info:
             # except:
             #     print("GASTAPERROR: ERROR in eval ub")
             #     ub = 0
-        except: 
+        except:
             print(f"WARN: Error in evaluating UB (niter) of {function}: {origub}")
             ub = "unknown"
 
         return str(ub)
 
-    def __eval_ub_cc(self,origub,params,cc, function, addtoub=""): 
+    def __eval_ub_cc(self,origub,params,cc, addtoub=""): 
 #        try: 
         ub = origub.replace("c(g)","0")
         ub = ub.replace("c(" + cc + ")","1")
