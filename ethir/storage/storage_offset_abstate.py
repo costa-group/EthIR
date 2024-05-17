@@ -241,14 +241,17 @@ class StorageOffsetAbstractState:
 
                 stack[top-1] = res                    
 
-        elif op_code.startswith("CALLDATALOAD"):
+        elif op_code.startswith("CALLDATALOAD") and instr.split()[1].startswith("Id"):
+
             if op_operand: 
                 stack[top] = {StorageAccess(BOTTOM,op_operand,0)}
             else:
                 stack[top] = {StorageAccess(BOTTOM,TOP,0)}
 
 
-        elif op_code == "AND" and len(instr.split()) > 1: #For considering arguments of CALLDATALOAD
+        elif op_code == "AND" and len(instr.split()) > 1 and instr.split()[1].startswith("Id"): #For considering arguments of CALLDATALOAD
+            print("Tengo INST: " + str(instr))
+
             if op_operand: 
                 stack[top-1] = {StorageAccess(BOTTOM,op_operand,0)}
             else:

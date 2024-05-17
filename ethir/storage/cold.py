@@ -22,7 +22,7 @@ import os
 #
 
 #
-# Use calling directly the funcition that compute total sstore cost (the result may be wrong if there are loops)
+# Use calling directly print(f"POS[0][2]: {pos[0][2]} {type(pos[0][2])}")the funcition that compute total sstore cost (the result may be wrong if there are loops)
 # with a list of lists like the contents of the json file
 # (a,b) = compute_stores(ojson)
 # if a == -1 means the result is not valid
@@ -192,7 +192,7 @@ def evalue_if_num(e):
         if isinstance(aux,str):
             return [aux]
         else:
-            assert(isinstance(aux,str))
+            # assert(isinstance(aux,str))
             return aux
     if e[0] == '-':
         assert(len(e) <= 3)
