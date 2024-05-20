@@ -4266,7 +4266,7 @@ def run(disasm_file=None,
         f_hashes = hashes
         
     optimization = opt_bytecode
-        
+    
     if cname != None:
         print("File: "+str(cname))
         
@@ -4401,7 +4401,7 @@ def run(disasm_file=None,
             print("Memory Analysis: "+str(end-begin)+"s\n")
             check_cfg_option(cfg,cname,execution, memory_result)
 
-        elif storage_analysis:
+        if storage_analysis:
             begin = dtimer()
 
             storage_result = perform_storage_analysis(vertices, 
@@ -4435,7 +4435,7 @@ def run(disasm_file=None,
         else:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)
-        if mem_analysis == None:
+        if mem_analysis == None or saco[2] != None:
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
                                              stack_info = stack_h, 
                                              block_unbuild = blocks_to_create,
@@ -4894,7 +4894,8 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
 
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
-    input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
+    # input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
+    input_blocks = input_blocks_aux
     
     outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
     
