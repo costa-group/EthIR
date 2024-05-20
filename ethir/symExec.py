@@ -4435,7 +4435,7 @@ def run(disasm_file=None,
         else:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)
-        if mem_analysis == None or saco[2] != None:
+        if mem_analysis == None and saco[2] != None:
             rbr_rules = rbr.evm2rbr_compiler(blocks_input = vertices,
                                              stack_info = stack_h, 
                                              block_unbuild = blocks_to_create,
