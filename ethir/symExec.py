@@ -4154,6 +4154,7 @@ def generate_verify_config_file(cname,scc):
     # print(lines)
     
 def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False, blocks_to_clone = None):
+
     if cfg == "normal" and (not cloned):
         if cname == None:
             write_cfg(execution,vertices)
@@ -4174,12 +4175,22 @@ def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
     elif cfg == "memory" or cfg == "storage":
+        print("HOLA")
         if cname == None:
             write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(cfg,execution,vertices,memory_analysis)
         else:
             write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(cfg,execution,vertices,memory_analysis, name = cname)
+
+    elif cfg.find("all") != -1:
+        cfg_type = cfg.split("_")[-1]
+        if cname == None:
+            write_cfg(execution,vertices,name = cname+"_"+cfg_type)
+            cfg_memory_dot(cfg_type,execution,vertices,memory_analysis)
+        else:
+            write_cfg(execution,vertices,name = cname+"_"+cfg_type)
+            cfg_memory_dot(cfg_type,execution,vertices,memory_analysis, name = cname+"_"+cfg_type)
             
             
                 
@@ -4399,7 +4410,12 @@ def run(disasm_file=None,
             file_info[cname]["time"] = str(end-begin_all);
             
             print("Memory Analysis: "+str(end-begin)+"s\n")
-            check_cfg_option(cfg,cname,execution, memory_result)
+
+            if cfg == "all":
+
+                check_cfg_option(cfg+"_memory",cname,execution, memory_result)
+            else:
+                check_cfg_option(cfg,cname,execution, memory_result)
 
         if storage_analysis:
             begin = dtimer()
@@ -4430,9 +4446,12 @@ def run(disasm_file=None,
 
                 end = dtimer()
                 print("SRA Analysis finished in "+str(end-begin)+"s\n")
-                
-            check_cfg_option(cfg,cname,execution, storage_result)
-        else:
+            if cfg == "all":
+                check_cfg_option(cfg+"_storage",cname,execution, storage_result)
+            else:
+                print(storage_result)
+                check_cfg_option(cfg,cname,execution, storage_result)
+        if not is_mem_analysis:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)
         if mem_analysis == None and saco[2] != None:

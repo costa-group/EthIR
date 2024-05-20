@@ -424,7 +424,7 @@ def write_cfg(it,vertices,name = False,cloned = False):
     with open(name,"w") as f:
         for block in vert:
             f.write("================\n")
-            pcs = block.get_pcs()
+            pcs = list(block.get_pcs())
             start_addr, end_addr, jump_addr, falls_addr = compute_hex_vals_cfg(block)
             
             f.write("start address: "+ str(start_addr)+"\n")

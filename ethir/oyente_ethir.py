@@ -553,7 +553,7 @@ def main():
     parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
     parser.add_argument( "-in", "--init",        help="Consider the initialization of the fields", action="store_true")
     parser.add_argument( "-d", "--debug",                   help="Display the status of the stack after each opcode", action = "store_true")
-    parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", choices=["normal","memory", "storage"])
+    parser.add_argument( "-cfg", "--control-flow-graph",    help="Store the CFG", choices=["normal","memory", "storage", "all"])
     # parser.add_argument( "-mcfg", "--memory-control-flow-graph",    help="Store the Memory CFG", action="store_true")
     # parser.add_argument( "-eop", "--evm-opcodes",           help="Include the EVM opcodes in the translation", action="store_true")
     parser.add_argument( "-saco", "--saco",                 help="Translate EthIR RBR to SACO RBR", action="store_true")
