@@ -1,11 +1,11 @@
 from analysis.fixpoint_analysis import Analysis, BlockAnalysisInfo
 
-import memory.memory_slots
+
 from memory.memory_accesses import MemoryAccesses
 from memory.memory_basic_analysis import MemoryAbstractState
 from memory.memory_offset_analysis import MemoryOffsetAbstractState
 from memory.memory_offset import OffsetAnalysisAbstractState, OFFSET_MEMORY
-from memory.memory_slots import SlotsAbstractState
+from memory.memory_slots import SlotsAbstractState, get_slots_autoid
 from memory.memory_utils import set_memory_utils_globals
 from memory.memory_optimizer_connector import MemoryOptimizerConnector
 
@@ -26,7 +26,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     MemoryAccesses.init_globals(csource, cname, type_analysis)
     accesses = MemoryAccesses({},{},{},{},vertices)
     
-    init_slot = memory_slots.slots_autoid
+    init_slot = get_slots_autoid()
     SlotsAbstractState.initglobals(accesses)
     slots = Analysis(vertices,0,SlotsAbstractState(set({}),{},{},debug_info))
     slots.analyze()
@@ -74,7 +74,7 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
 
     print('Free memory analyss finished\n\n')
 
-    nslots = memory_slots.slots_autoid - init_slot
+    nslots = get_slots_autoid() - init_slot
 
     print ("SLOTS Contract " + cname + ": " + str(nslots))
     print("Memory read accesses Contract"+ cname+": "+str(len(accesses.readset.keys())))

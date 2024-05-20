@@ -4,6 +4,11 @@ from memory.memory_utils import is_mload, is_mstore
 global slots_autoid 
 slots_autoid = 0
 
+
+def get_slots_autoid():
+    return slots_autoid
+
+
 class SlotsAbstractState:
 
     accesses = None
