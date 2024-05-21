@@ -4183,7 +4183,7 @@ def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False
             write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(cfg,execution,vertices,memory_analysis, name = cname)
 
-    elif cfg.find("all") != -1:
+    elif str(cfg).find("all") != -1:
         cfg_type = cfg.split("_")[-1]
         if cname == None:
             write_cfg(execution,vertices,name = cname+"_"+cfg_type)
