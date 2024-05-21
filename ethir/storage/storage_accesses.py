@@ -1,6 +1,7 @@
 from memory.memory_utils import TOP
 from storage.storage_offset_abstate import StorageAccess
 from memory.memory_utils import order_accesses, order_accesses_set
+from optimizer.optimizer_connector import EQUALS, NONEQUALS, UNKOWN
 
 class StorageAccesses: 
 
@@ -93,6 +94,43 @@ class StorageAccesses:
 
     def get_write_accesses (self): 
         return self.write_accesses
+
+    def compare_accesses (self,pp1,pp2): 
+
+        if pp1 not in self.read_accesses and pp1 not in self.write_accesses: 
+            print(f"Warning: access at program point {pp1} not found")
+            return UNKOWN
+
+        if pp2 not in self.read_accesses and pp2 not in self.write_accesses: 
+            print(f"Warning: access at program point {pp2} not found")
+            return UNKOWN
+        
+        if pp1 in self.read_accesses: 
+            accesses1 = self.read_accesses[pp1]
+        if pp1 in self.write_accesses: 
+            accesses1 = self.write_accesses[pp1]
+
+        if pp2 in self.read_accesses: 
+            accesses2 = self.read_accesses[pp2]
+        if pp2 in self.write_accesses: 
+            accesses2 = self.write_accesses[pp2]
+
+        print (f"   Comparing storage accesses: {pp1} {pp2} {accesses1}--{accesses2}")
+
+        # Contains only one access
+        if len(accesses1) == 1 and len(accesses2) == 1: 
+            return StorageAccess.compare_acesses(list(accesses1)[0],list(accesses2)[0])
+
+
+        ## All must return NONEQUALS, otherwise, we return unknown
+        for a1 in accesses1: 
+            for a2 in accesses2: 
+                cmp = StorageAccess.compare_acesses(a1,a2)
+                if cmp == EQUALS or cmp == UNKOWN: 
+                    return UNKOWN
+
+        return NONEQUALS
+
 
     def is_mload_concrete (self, pp): 
         if pp not in self.read_accesses: 

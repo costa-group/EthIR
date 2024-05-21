@@ -19,17 +19,12 @@ def perform_storage_analysis(vertices, debug):
     offsets = Analysis(vertices,0, OffsetAnalysisAbstractState(0,{},OFFSET_STORAGE,debug))
     offsets.analyze()
 
-    if debug: 
-        print("\n*************************************************************")
-        print("*************************************************************")
-
     StorageOffsetAbstractState.init_globals(accesses, offsets)
     storage = Analysis(vertices,0,StorageOffsetAbstractState(0,{},{},debug))
     storage.analyze()
 
     print("Accesses")
     print(str(accesses))
-
    
     return storage, accesses
 

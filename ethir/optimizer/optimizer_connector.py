@@ -13,18 +13,26 @@ NONEQUALS = "!="
 global UNKNOWN
 UNKOWN = "UNK"
 
-class MemoryOptimizerConnector :
+class OptimizerConnector :
 
     optimizable_blocks = None
     debug = False
+    readset = None
+    writeset = None
+    storage = None
     
-    def __init__(self,readset, writeset, vertices, cname, debug):
-        self.readset = readset
-        self.writeset = writeset
+    def __init__(self,vertices, cname, debug):
         self.vertices = vertices
         self.contract = cname
         self.optimizable_blocks = OptimizableBlocks(vertices, cname, debug)
         self.debug = debug
+
+    def set_memory(self, readset, writeset): 
+        self.readset = readset
+        self.writeset = writeset
+
+    def set_storage(self, storage): 
+        self.storage = storage
 
     def process_blocks_memory (self): 
         for pc in self.writeset:
@@ -63,9 +71,7 @@ class MemoryOptimizerConnector :
                 if res == EQUALS or res == NONEQUALS: 
                     self.optimizable_blocks.add_block_info(block,pc,readpc,res,"memory")
 
-
     def process_blocks_storage (self): 
-        
         for block in self.vertices: 
             instructions=self.vertices[block].instructions
             # if not self.contains_two_or_more_storageins(instructions): 
@@ -75,11 +81,6 @@ class MemoryOptimizerConnector :
             for inst1 in instructions: 
                 pc1 = pc1 + 1
                 if not inst1.startswith("SLOAD") and not inst1.startswith("SSTORE"): 
-                    
-                    continue
-
-                access1 = access1 = inst1.split(" ")[1].split("_")
-                if access1 == "?": 
                     continue
 
                 pc2 = -1
@@ -88,18 +89,51 @@ class MemoryOptimizerConnector :
                     if pc1 == pc2 or not inst2.startswith("SLOAD") and not inst2.startswith("SSTORE"): 
                         continue
 
-                    access2 = inst2.split(" ")[1].split("_")
-                    if access2 == "?": 
-                        continue
-
-                    if access1 == access2: 
-                        cmp = EQUALS
-                    else: 
-                        cmp = NONEQUALS
-
                     bpc1 = str(str(block) + ":" + str(pc1))
                     bpc2 = str(str(block) + ":" + str(pc2))
+
+                    cmp = self.storage.compare_accesses(bpc1,bpc2)
+
                     self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp,"storage")
+
+    ## Old proccess of storage accesses
+    # def process_blocks_storage (self): 
+        
+    #     print("Procesando optimizador con storage....")
+    #     for block in self.vertices: 
+    #         instructions=self.vertices[block].instructions
+    #         # if not self.contains_two_or_more_storageins(instructions): 
+    #         #     continue
+
+    #         pc1 = -1
+    #         for inst1 in instructions: 
+    #             pc1 = pc1 + 1
+    #             if not inst1.startswith("SLOAD") and not inst1.startswith("SSTORE"): 
+                    
+    #                 continue
+
+    #             access1 = access1 = inst1.split(" ")[1].split("_")
+    #             if access1 == "?": 
+    #                 continue
+
+    #             pc2 = -1
+    #             for inst2 in instructions: 
+    #                 pc2 = pc2 + 1
+    #                 if pc1 == pc2 or not inst2.startswith("SLOAD") and not inst2.startswith("SSTORE"): 
+    #                     continue
+
+    #                 access2 = inst2.split(" ")[1].split("_")
+    #                 if access2 == "?": 
+    #                     continue
+
+    #                 if access1 == access2: 
+    #                     cmp = EQUALS
+    #                 else: 
+    #                     cmp = NONEQUALS
+
+    #                 bpc1 = str(str(block) + ":" + str(pc1))
+    #                 bpc2 = str(str(block) + ":" + str(pc2))
+    #                 self.optimizable_blocks.add_block_info(str(block),bpc1,bpc2,cmp,"storage")
 
     def add_useless_accesses_info(self, useless): 
         self.optimizable_blocks.add_useless_info(useless)
@@ -132,14 +166,12 @@ class MemoryOptimizerConnector :
         self.optimizable_blocks.add_context_aliasing(aliasing)       
 
     def compact_clones(self):
-
         self.optimizable_blocks.compact_clones()
 
     def print_optimization_info(self): 
-        if self.debug:
-            print("\nMemory block dependences")
-            print("------------\n")
-            self.optimizable_blocks.print_blocks()
+        print("\nMemory block dependences")
+        print("------------\n")
+        self.optimizable_blocks.print_blocks()
     
         
 class OptimizableBlocks: 

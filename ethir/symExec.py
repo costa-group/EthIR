@@ -13,6 +13,7 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
+from optimizer.optimizer_connector import OptimizerConnector
 from storage.sra_ub_manager import SRA_UB_manager
 import gasol
 import sympy
@@ -4388,13 +4389,15 @@ def run(disasm_file=None,
         
         memory_result = []
         
+        optimizer = OptimizerConnector(vertices, cname, debug_info)
+
         if mem_analysis != None:
         
             begin = dtimer()
 
-            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info, compact_clones)        
+            memory_result = perform_memory_analysis(vertices, cname, source_file, component_of_blocks, function_block_map, mem_analysis, debug_info, compact_clones, optimizer)        
             
-            opt_blocks = memory_result[3].get_optimizable_blocks()
+            opt_blocks = optimizer.get_optimizable_blocks() # memory_result[3].get_optimizable_blocks()
 
             file_info[str(cname)] = {}
             file_info[cname]["num_blocks"] = len(set(list(map(lambda x: int(str(x).split("_")[0]),vertices.keys()))))
@@ -4418,14 +4421,19 @@ def run(disasm_file=None,
                 check_cfg_option(cfg,cname,execution, memory_result)
 
         if storage_analysis:
+
             begin = dtimer()
 
             storage_result = perform_storage_analysis(vertices, 
                                                       debug_info)
             _,storage_accesses = storage_result
 
+            optimizer.set_storage(storage_accesses)
+            optimizer.process_blocks_storage()
+
+            optimizer.print_optimization_info()
+
             end = dtimer()
-            
             
             print("Storage Analysis finished in: "+str(end-begin)+"s\n")
 
@@ -4446,11 +4454,13 @@ def run(disasm_file=None,
 
                 end = dtimer()
                 print("SRA Analysis finished in "+str(end-begin)+"s\n")
+
             if cfg == "all":
                 check_cfg_option(cfg+"_storage",cname,execution, storage_result)
             else:
                 print(storage_result)
-                check_cfg_option(cfg,cname,execution, storage_result)
+                check_cfg_option(cfg,cname,execution, storage_result)        
+        
         if not is_mem_analysis:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)

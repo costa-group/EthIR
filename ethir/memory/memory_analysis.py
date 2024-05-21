@@ -7,12 +7,12 @@ from memory.memory_offset_analysis import MemoryOffsetAbstractState
 from memory.memory_offset import OffsetAnalysisAbstractState, OFFSET_MEMORY
 from memory.memory_slots import SlotsAbstractState, get_slots_autoid
 from memory.memory_utils import set_memory_utils_globals
-from memory.memory_optimizer_connector import MemoryOptimizerConnector
+from optimizer.optimizer_connector import OptimizerConnector
 
 global debug_info
 
 
-def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug, compact_clones):     
+def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, type_analysis, debug, compact_clones, optimizer):     
     global debug_info 
 
     debug_info = debug
@@ -80,25 +80,22 @@ def perform_memory_analysis(vertices, cname, csource, compblocks, fblockmap, typ
     print("Memory read accesses Contract"+ cname+": "+str(len(accesses.readset.keys())))
     print("Memory write accesses Contract"+ cname+": "+str(len(accesses.writeset.keys())))
     
-    print("********************************** INIT")
-    memopt = MemoryOptimizerConnector(accesses.readset, accesses.writeset, vertices, cname, debug_info)
-    memopt.process_blocks_memory()
-    memopt.process_blocks_storage()
-    memopt.add_useless_accesses_info(accesses.get_useless())
-    memopt.process_context_constancy(offsets)
-    
+    print("Creating optimizer information")
+    optimizer.set_memory(accesses.readset, accesses.writeset)
+    optimizer.process_blocks_memory()
+    optimizer.add_useless_accesses_info(accesses.get_useless())
+    optimizer.process_context_constancy(offsets)
 
     if type_analysis == "offset": 
-        memopt.process_context_aliasing(memory)
-
-    print("COMPACT CLONES: " + str(compact_clones))
+        optimizer.process_context_aliasing(memory)
 
     if compact_clones: 
-        memopt.compact_clones()
+        optimizer.compact_clones()
 
-    memopt.print_optimization_info()
-    print("********************************** END")
+    print("---------------------------------")
+    optimizer.print_optimization_info()
+    print("---------------------------------")
     
-    return slots, memory, accesses, memopt
+    return slots, memory, accesses, optimizer
 
 

@@ -8,7 +8,6 @@ from memory.memory_offset_analysis import MemoryOffsetAbstractState
 from memory.memory_offset import OffsetAnalysisAbstractState
 from memory.memory_slots import SlotsAbstractState
 from memory.memory_utils import set_memory_utils_globals
-from memory.memory_optimizer_connector import MemoryOptimizerConnector
 
 global debug_info
 
