@@ -4433,6 +4433,8 @@ def run(disasm_file=None,
 
             optimizer.print_optimization_info()
 
+            opt_blocks = optimizer.get_optimizable_blocks()
+
             end = dtimer()
             
             print("Storage Analysis finished in: "+str(end-begin)+"s\n")
