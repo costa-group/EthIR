@@ -1393,3 +1393,7 @@ def get_blocks_per_function(entry_functions, comes_from):
         result[b] = blocks
 
     print(result)
+
+def get_function_hash(function_hashes, function_name):
+    l = list(filter(lambda x: x[1]==function_name,function_hashes.items()))
+    return l[0][0]
