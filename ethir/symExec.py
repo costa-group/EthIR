@@ -4921,6 +4921,8 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
 def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco):
 
+    global f_hashes
+
     gastap_op = saco[1]
     timeoutvalue = saco[3]
 
@@ -4937,6 +4939,8 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
         for ii in items:
             if b == ii[1][0]:
                 function_name = ii[0]
+                function_hash = get_function_hash(f_hashes,function_name)
+
 
         (memory_ub, opcode_ub) = ubs[b]
 
@@ -4954,4 +4958,4 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
         if opcode_ub in ["unknown","execerror","timeout"]:
             res = "uberror"
 
-        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";block"+str(b)+";"+str(res)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
+        print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+"_block"+str(b)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(b)+";"+str(res)+";"+str(opcode_ub)+";"+str(memory_ub)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(0)+";"+str(round(times[b],3))+";"+str(0)+";"+str(0))
