@@ -1382,7 +1382,7 @@ def compute_join_conditionals(vertices,comes_from,scc_components):
             rel[v] = c
             found = False
                     
-    print(rel)
+    #print(rel)
     return rel
 
 

@@ -66,7 +66,7 @@ def has_dependencies_installed():
         logging.critical("solc is missing. Please install the solidity compiler and make sure solc is in the path.")
         return False
     else:
-        cmd = "solc --version"
+        cmd = "solcv8 --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
         tested_solc_version = '0.7.4'

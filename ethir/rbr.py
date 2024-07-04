@@ -1836,7 +1836,7 @@ def evm2rbr_compiler(blocks_input = None,
     global sha3_blocks_arr
     global val_mem40
 
-    print("SCCS': " + str(scc))
+    # print("SCCS': " + str(scc))
 
     init_globals()
     c_trans = c_rbr
