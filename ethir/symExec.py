@@ -4176,7 +4176,7 @@ def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False
                 cfg_dot(execution, vertices, name = cname, cloned = True)
 
     elif cfg == "memory" or cfg == "storage":
-        print("HOLA")
+        #print("HOLA")
         if cname == None:
             write_cfg(execution,vertices,name = cname)
             cfg_memory_dot(cfg,execution,vertices,memory_analysis)
@@ -4431,7 +4431,7 @@ def run(disasm_file=None,
             optimizer.set_storage(storage_accesses)
             optimizer.process_blocks_storage()
 
-            optimizer.print_optimization_info()
+            #optimizer.print_optimization_info()
 
             opt_blocks = optimizer.get_optimizable_blocks()
 
