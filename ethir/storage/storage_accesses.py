@@ -115,7 +115,7 @@ class StorageAccesses:
         if pp2 in self.write_accesses: 
             accesses2 = self.write_accesses[pp2]
 
-        print (f"   Comparing storage accesses: {pp1} {pp2} {accesses1}--{accesses2}")
+        # print (f"   Comparing storage accesses: {pp1} {pp2} {accesses1}--{accesses2}")
 
         # Contains only one access
         if len(accesses1) == 1 and len(accesses2) == 1: 
