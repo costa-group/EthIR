@@ -91,6 +91,7 @@ class InputHelper:
             self.solc_version = self._get_solidity_version()
 
             contracts = self._get_compiled_contracts()
+            asm_json = self.asm_contracts
 
             if not self.runtime:
                 contracts_init = self._get_compiled_contracts_init(contracts)
@@ -137,8 +138,9 @@ class InputHelper:
                         'c_name': cname,
                         'disasm_file': disasm_file,
                         'disasm_file_init': disasm_file_init,
-                        'assembly': None
+                        'assembly': asm_json
                     })
+        print(inputs)
         return inputs
 
     # Modified by Pablo Gordillo
@@ -170,7 +172,9 @@ class InputHelper:
     def _get_compiled_contracts(self):
         if not self.compiled_contracts:
             if self.input_type == InputHelper.SOLIDITY:
-                self.compiled_contracts = self._compile_solidity_runtime()
+                bin_runtime, asm_json = self._compile_solidity_runtime()
+                self.compiled_contracts = bin_runtime
+                self.asm_contracts = asm_json
             elif self.input_type == InputHelper.STANDARD_JSON:
                 self.compiled_contracts = self._compile_standard_json()
             elif self.input_type == InputHelper.STANDARD_JSON_OUTPUT:
@@ -184,7 +188,7 @@ class InputHelper:
         options = ""
         options = self._get_optimize_options()
 
-        cmd = solc + " --bin-runtime " + options + " %s" % self.source
+        cmd = solc + " --bin-runtime --asm-json " + options + " %s" % self.source
 
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
@@ -192,8 +196,7 @@ class InputHelper:
         if libs and self.solc_version == "v4":
             return self._link_libraries(self.source, libs)
         else:
-
-            return self._extract_bin_str(out)  # self._extract_asm_json(out)
+            return self._extract_bin_str(out), self._extract_asm_json(out)
 
     def _compile_solidity_init(self):
 
@@ -276,10 +279,10 @@ class InputHelper:
 
         contracts = [contract for contract in contracts if contract[1]]
         if not contracts:
-            logging.critical("Solidity compilation failed")
+            logging.critical("ASM Json compilation failed")
             # print self.source
             if global_params_ethir.WEB:
-                six.print_({"error": "Solidity compilation failed"})
+                six.print_({"error": "ASM JSON compilation failed"})
             exit(1)
         return contracts
 
