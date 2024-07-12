@@ -25,9 +25,9 @@ class InputHelper:
                 'source': None,
                 'evm': False,
                 'runtime': True,
-                'solc_version':"v8",
-                'opt_options':{},
-                'tmp_path':global_params_ethir.tmp_path
+                'solc_version': "v8",
+                'opt_options': {},
+                'tmp_path': global_params_ethir.tmp_path
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
@@ -36,9 +36,9 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
-                'solc_version':"v8",
-                'opt_options':{},
-                'tmp_path':global_params_ethir.tmp_path
+                'solc_version': "v8",
+                'opt_options': {},
+                'tmp_path': global_params_ethir.tmp_path
             }
         elif input_type == InputHelper.STANDARD_JSON:
             attr_defaults = {
@@ -48,9 +48,9 @@ class InputHelper:
                 'root_path': "",
                 'allow_paths': None,
                 'compiled_contracts': [],
-                'solc_version':"v8",
-                'opt_options':{},
-                'tmp_path':global_params_ethir.tmp_path
+                'solc_version': "v8",
+                'opt_options': {},
+                'tmp_path': global_params_ethir.tmp_path
             }
         elif input_type == InputHelper.STANDARD_JSON_OUTPUT:
             attr_defaults = {
@@ -59,9 +59,9 @@ class InputHelper:
                 'runtime': True,
                 'root_path': "",
                 'compiled_contracts': [],
-                'solc_version':"v8",
-                'opt_options':{},
-                'tmp_path':global_params_ethir.tmp_path
+                'solc_version': "v8",
+                'opt_options': {},
+                'tmp_path': global_params_ethir.tmp_path
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
@@ -74,10 +74,10 @@ class InputHelper:
         self.solc_version = self._get_solidity_version()
         self.init_compiled_contracts = []
         self.aux_path = "ethir_" + uuid.uuid4().hex
-        os.mkdir(global_params_ethir.tmp_path+self.aux_path)
-        
+        os.mkdir(global_params_ethir.tmp_path + self.aux_path)
+
     def get_inputs(self):
-        
+
         inputs = []
         if self.input_type == InputHelper.BYTECODE:
             with open(self.source, 'r') as f:
@@ -98,24 +98,26 @@ class InputHelper:
             empty = self._prepare_disasm_files_for_analysis(contracts)
 
             if not self.runtime:
-                empty = self._prepare_disasm_files_for_analysis(contracts,contracts_init)
+                empty = self._prepare_disasm_files_for_analysis(contracts, contracts_init)
 
-                for contract_init,_ in contracts_init:
+                for contract_init, _ in contracts_init:
                     if self.input_type == InputHelper.SOLIDITY:
-                        #AQUI
-                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path,self.solc_version) #if self.solc_version != "v8" else None
+                        # AQUI
+                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path,
+                                                    self.solc_version)  # if self.solc_version != "v8" else None
                     else:
-                        source_map_init = SourceMap(contract, self.source, 'standard json', self.root_path)
+                        source_map_init = SourceMap(contract_init, self.source, 'standard json', self.root_path)
 
             else:
                 source_map_init = None
-                        
+
             for contract, _ in contracts:
                 c_source, cname = contract.split(':')
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
-                    #AQUI
-                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path,self.solc_version) #if self.solc_version != "v8" else None
+                    # AQUI
+                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path,
+                                           self.solc_version)  # if self.solc_version != "v8" else None
                     print(source_map.instr_positions)
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
@@ -134,14 +136,15 @@ class InputHelper:
                         'c_source': c_source,
                         'c_name': cname,
                         'disasm_file': disasm_file,
-                        'disasm_file_init': disasm_file_init
+                        'disasm_file_init': disasm_file_init,
+                        'assembly': None
                     })
         return inputs
-    
-    #Modified by Pablo Gordillo
-    #Not remove tmp files (dissasamble files)
+
+    # Modified by Pablo Gordillo
+    # Not remove tmp files (dissasamble files)
     def rm_tmp_files(self):
-        #i = 0
+        # i = 0
         if self.input_type == InputHelper.BYTECODE:
             self._rm_tmp_files(self.source)
         else:
@@ -149,50 +152,48 @@ class InputHelper:
 
     def get_aux_path(self):
         return self.aux_path
-            
 
-    def _get_compiled_contracts_init(self,runtime_contracts):
+    def _get_compiled_contracts_init(self, runtime_contracts):
         contracts = self._compile_solidity_init()
         init_contracts = []
-        for name_contract,evm in runtime_contracts:
-            name_r,evm_r = contracts.pop(0)
+        for name_contract, evm in runtime_contracts:
+            name_r, evm_r = contracts.pop(0)
             if name_contract != name_r:
                 raise Exception("Something was wrong during the decompiled process...")
             else:
                 pos = evm_r.find(evm)
-                init_contracts.append((name_r,evm_r[:pos]))
-                
+                init_contracts.append((name_r, evm_r[:pos]))
+
         self.init_compiled_contracts = init_contracts
         return init_contracts
 
     def _get_compiled_contracts(self):
         if not self.compiled_contracts:
             if self.input_type == InputHelper.SOLIDITY:
-                self.compiled_contracts = self._compile_solidity_runtime() 
+                self.compiled_contracts = self._compile_solidity_runtime()
             elif self.input_type == InputHelper.STANDARD_JSON:
                 self.compiled_contracts = self._compile_standard_json()
             elif self.input_type == InputHelper.STANDARD_JSON_OUTPUT:
                 self.compiled_contracts = self._compile_standard_json_output(self.source)
 
         return self.compiled_contracts
-    
+
     def _compile_solidity_runtime(self):
         solc = get_solc_executable(self.solc_version)
 
         options = ""
         options = self._get_optimize_options()
-        
-        cmd = solc+" --bin-runtime " +options+ " %s" % self.source
-        # print(cmd)
-        
+
+        cmd = solc + " --bin-runtime " + options + " %s" % self.source
+
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
         libs = set(libs)
         if libs and self.solc_version == "v4":
             return self._link_libraries(self.source, libs)
         else:
-            
-            return self._extract_bin_str(out)
+
+            return self._extract_bin_str(out)  # self._extract_asm_json(out)
 
     def _compile_solidity_init(self):
 
@@ -201,9 +202,9 @@ class InputHelper:
         options = ""
 
         options = self._get_optimize_options()
-        
-        cmd = solc+" --bin-runtime "+options+" %s" % self.source
-            
+
+        cmd = solc + " --bin-runtime " + options + " %s" % self.source
+
         out = run_command(cmd)
 
         libs = re.findall(r"_+(.*?)_+", out)
@@ -213,16 +214,15 @@ class InputHelper:
         else:
             return self._extract_bin_str_init(out)
 
-        
     def _compile_standard_json(self):
         FNULL = open(os.devnull, 'w')
         cmd = "cat %s" % self.source
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
         solc = get_solc_executable(self.solc_version)
-        
-        cmd = solc+" --allow-paths %s --standard-json" % self.allow_paths
-            
+
+        cmd = solc + " --allow-paths %s --standard-json" % self.allow_paths
+
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0]
@@ -252,14 +252,32 @@ class InputHelper:
         if self.solc_version == "v4":
             binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part: \n(.*?)\n"
         else:
-            binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part:\n(.*?)\n"
+            binary_regex = r"======= (.*?) =======\n(?:(?!Binary of the runtime part:).*\n)*Binary of the runtime part:\n(.*)"
 
         contracts = re.findall(binary_regex, s)
-        
+
         contracts = [contract for contract in contracts if contract[1]]
         if not contracts:
             logging.critical("Solidity compilation failed")
-            #print self.source
+            # print self.source
+            if global_params_ethir.WEB:
+                six.print_({"error": "Solidity compilation failed"})
+            exit(1)
+        return contracts
+
+    def _extract_asm_json(self, s):
+        if self.solc_version == "v4":
+            # TODO: format for v4
+            raise NotImplementedError
+        else:
+            binary_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:).*\n)*EVM assembly:\n(.*)"
+
+        contracts = re.findall(binary_regex, s)
+
+        contracts = [contract for contract in contracts if contract[1]]
+        if not contracts:
+            logging.critical("Solidity compilation failed")
+            # print self.source
             if global_params_ethir.WEB:
                 six.print_({"error": "Solidity compilation failed"})
             exit(1)
@@ -275,28 +293,28 @@ class InputHelper:
                 six.print_({"error": "Solidity compilation failed"})
             exit(1)
         return contracts
-    
+
     def _link_libraries(self, filename, libs):
         option = ""
         for idx, lib in enumerate(libs):
-            lib_address = "0x" + hex(idx+1)[2:].zfill(40)
+            lib_address = "0x" + hex(idx + 1)[2:].zfill(40)
             option += " --libraries %s:%s" % (lib, lib_address)
         FNULL = open(os.devnull, 'w')
 
         solc = get_solc_executable(self.solc_version)
 
-        cmd = solc+" --bin-runtime %s" % filename
+        cmd = solc + " --bin-runtime %s" % filename
 
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
-        cmd = solc+" --link%s" %option
-        
+        cmd = solc + " --link%s" % option
+
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0].decode()
         return self._extract_bin_str(out)
 
-    def _prepare_disasm_files_for_analysis(self, contracts,init_contracts=None):
+    def _prepare_disasm_files_for_analysis(self, contracts, init_contracts=None):
         empty = {}
         if not init_contracts:
             for contract, bytecode in contracts:
@@ -304,37 +322,38 @@ class InputHelper:
                 empty[contract] = empty_c
         else:
             for contract, bytecode in init_contracts:
-                empty_c = self._prepare_disasm_file(contract, bytecode,True)
+                empty_c = self._prepare_disasm_file(contract, bytecode, True)
                 empty[contract] = empty_c
         return empty
-    
-    def _prepare_disasm_file(self, target, bytecode,init_contracts=False):
-        self._write_evm_file(target, bytecode,init_contracts)
-        empty = self._write_disasm_file(target,init_contracts)
+
+    def _prepare_disasm_file(self, target, bytecode, init_contracts=False):
+        self._write_evm_file(target, bytecode, init_contracts)
+        empty = self._write_disasm_file(target, init_contracts)
         return empty
-    
+
     def _get_temporary_files(self, target):
         return {
-            "evm": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + ".evm",
-            "disasm": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm",
-            "evm_init": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + "_init.evm",
-            "disasm_init": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + "_init.evm.disasm",
-            "log": global_params_ethir.tmp_path+self.aux_path+"/"+target.split(":")[-1] + ".evm.disasm.log"
+            "evm": global_params_ethir.tmp_path + self.aux_path + "/" + target.split(":")[-1] + ".evm",
+            "disasm": global_params_ethir.tmp_path + self.aux_path + "/" + target.split(":")[-1] + ".evm.disasm",
+            "evm_init": global_params_ethir.tmp_path + self.aux_path + "/" + target.split(":")[-1] + "_init.evm",
+            "disasm_init": global_params_ethir.tmp_path + self.aux_path + "/" + target.split(":")[
+                -1] + "_init.evm.disasm",
+            "log": global_params_ethir.tmp_path + self.aux_path + "/" + target.split(":")[-1] + ".evm.disasm.log"
         }
-    
-    def _write_evm_file(self, target, bytecode,init_contracts):
+
+    def _write_evm_file(self, target, bytecode, init_contracts):
 
         if init_contracts:
             evm_file = self._get_temporary_files(target)["evm_init"]
         else:
             evm_file = self._get_temporary_files(target)["evm"]
-            
+
         with open(evm_file, 'w') as of:
             of.write(self._removeSwarmHash(bytecode))
 
-    def _write_disasm_file(self, target,init_contracts):
+    def _write_disasm_file(self, target, init_contracts):
         empty = False
-        
+
         tmp_files = self._get_temporary_files(target)
 
         if init_contracts:
@@ -360,13 +379,13 @@ class InputHelper:
             logging.critical("Disassembly failed.")
             exit()
 
-        if len(str(disasm_out).split())>1:
+        if len(str(disasm_out).split()) > 1:
             with open(disasm_file, 'w') as of:
                 of.write(disasm_out)
         else:
             empty = True
         return empty
-        
+
     def _rm_tmp_files_of_multiple_contracts(self, contracts):
         if self.input_type in ['standard_json', 'standard_json_output']:
             self._rm_file('standard_json_output')
@@ -374,10 +393,10 @@ class InputHelper:
             self._rm_tmp_files(contract)
 
         if self.init_compiled_contracts:
-            for contract,_ in self.init_compiled_contracts:
-                self._rm_tmp_files(contract,True)
+            for contract, _ in self.init_compiled_contracts:
+                self._rm_tmp_files(contract, True)
 
-    def _rm_tmp_files(self, target,init_contract=False):
+    def _rm_tmp_files(self, target, init_contract=False):
         tmp_files = self._get_temporary_files(target)
         if not init_contract:
             if not self.evm:
@@ -390,24 +409,22 @@ class InputHelper:
                 self._rm_file(tmp_files["evm_init"])
                 self._rm_file(tmp_files["disasm_init"])
 
-                
     def _rm_file(self, path):
         if os.path.isfile(path):
             os.unlink(path)
 
-
     def _get_solidity_version(self):
-        f = open(self.source,"r")
+        f = open(self.source, "r")
         lines = f.readlines()
-        pragma = list(filter(lambda x: x.find("pragma solidity")!=-1, lines))
+        pragma = list(filter(lambda x: x.find("pragma solidity") != -1, lines))
         if pragma == []:
-            return "v4" #Put here the highest version
+            return "v4"  # Put here the highest version
 
         elif len(pragma) == 1:
             pragma_version = pragma[0].strip()
             id_p = pragma_version.find("^")
             if id_p != -1:
-                elem = pragma_version[id_p+1:]
+                elem = pragma_version[id_p + 1:]
                 solc_v = elem.split(".")[1].strip()
             else:
                 elem = pragma_version.split()[-1]
@@ -415,22 +432,22 @@ class InputHelper:
                 if solc_v > "8":
                     solc_v = "8"
 
-            return "v"+solc_v
+            return "v" + solc_v
 
         else:
             v = self._get_suitable_version(pragma)
             return v
-            
+
     def get_solidity_version(self):
         return self.solc_version
 
-    def _get_suitable_version(self,pragmas):
-        v4 = len(list(filter(lambda x: x.find("0.4")!=-1,pragmas)))
-        v5 = len(list(filter(lambda x: x.find("0.5")!=-1,pragmas)))
-        v6 = len(list(filter(lambda x: x.find("0.6")!=-1,pragmas)))
-        v7 = len(list(filter(lambda x: x.find("0.7")!=-1,pragmas)))
-        v8 = len(list(filter(lambda x: x.find("0.8")!=-1,pragmas)))
-        m = max([v4,v5,v6,v7,v8])
+    def _get_suitable_version(self, pragmas):
+        v4 = len(list(filter(lambda x: x.find("0.4") != -1, pragmas)))
+        v5 = len(list(filter(lambda x: x.find("0.5") != -1, pragmas)))
+        v6 = len(list(filter(lambda x: x.find("0.6") != -1, pragmas)))
+        v7 = len(list(filter(lambda x: x.find("0.7") != -1, pragmas)))
+        v8 = len(list(filter(lambda x: x.find("0.8") != -1, pragmas)))
+        m = max([v4, v5, v6, v7, v8])
 
         if m == v4:
             return "v4"
@@ -449,7 +466,7 @@ class InputHelper:
         opt = ""
         compiler_opt = self.opt_options
 
-        if (compiler_opt["no-yul"] or compiler_opt["runs"]!=-1) and not compiler_opt["optimize"]:
+        if (compiler_opt["no-yul"] or compiler_opt["runs"] != -1) and not compiler_opt["optimize"]:
             print("Flags --no-yul and --runs should go with the flag --optimize")
             exit()
 
@@ -457,22 +474,22 @@ class InputHelper:
         run = compiler_opt["runs"]
         yul = compiler_opt["no-yul"]
         viaIr = compiler_opt["via-ir"]
-        
-        if compiler_opt["optimize"] and run==-1:
+
+        if compiler_opt["optimize"] and run == -1:
             opt = "--optimize"
-        elif run !=-1:
-            opt = "--optimize-run "+str(run)
+        elif run != -1:
+            opt = "--optimize-run " + str(run)
 
         if viaIr:
-            if opt.find("optimize")!=-1:
-                opt+= " --via-ir"
+            if opt.find("optimize") != -1:
+                opt += " --via-ir"
             else:
-                opt+= " --optimize --via-ir"
-                
+                opt += " --optimize --via-ir"
+
         if yul and (self.solc_version != "v4" and self.solc_version != "v5"):
-            opt+=" --no-optimize-yul"
+            opt += " --no-optimize-yul"
 
         if not yul and (self.solc_version == "v5"):
-            opt+=" --optimize-yul"
-            
+            opt += " --optimize-yul"
+
         return opt
