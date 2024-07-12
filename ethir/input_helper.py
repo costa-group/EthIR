@@ -92,6 +92,7 @@ class InputHelper:
 
             contracts = self._get_compiled_contracts()
             asm_json = self.asm_contracts
+            print("ASMJSON", asm_json)
 
             if not self.runtime:
                 contracts_init = self._get_compiled_contracts_init(contracts)
@@ -138,7 +139,7 @@ class InputHelper:
                         'c_name': cname,
                         'disasm_file': disasm_file,
                         'disasm_file_init': disasm_file_init,
-                        'assembly': asm_json
+                        'assembly': asm_json[contract]
                     })
         print(inputs)
         return inputs
@@ -269,6 +270,9 @@ class InputHelper:
         return contracts
 
     def _extract_asm_json(self, s):
+        """
+        Returns a dictionary with the assembly representation of each contract
+        """
         if self.solc_version == "v4":
             # TODO: format for v4
             raise NotImplementedError
@@ -276,8 +280,7 @@ class InputHelper:
             binary_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:).*\n)*EVM assembly:\n(.*)"
 
         contracts = re.findall(binary_regex, s)
-
-        contracts = [contract for contract in contracts if contract[1]]
+        contracts = {contract[0]: json.loads(contract[1]) for contract in contracts if contract[1]}
         if not contracts:
             logging.critical("ASM Json compilation failed")
             # print self.source
