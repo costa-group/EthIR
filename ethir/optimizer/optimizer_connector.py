@@ -181,7 +181,9 @@ class OptimizableBlocks:
         self.vertices = vertices    
         self.optimizable_blocks = {}
         self.debug = debug
-        
+        self.block_order = {str(program_point): i for i, program_point in
+                            enumerate(sorted([vertex for vertex in vertices if isinstance(vertex, int)]))}
+
     def get_contract_name(self):
         return self.contract
         
@@ -201,8 +203,9 @@ class OptimizableBlocks:
         if block not in self.optimizable_blocks:
             (instr,stacksize) = self.get_block_info(block)
             instr = self._process_instructions(instr)
-                
-            self.optimizable_blocks[block] = OptimizableBlockInfo(block, list(instr), stacksize)
+            block_info = OptimizableBlockInfo(block, list(instr), stacksize)
+            block_info.block_number = self.block_order.get(block, None)
+            self.optimizable_blocks[block] = block_info
         
         info = self.optimizable_blocks[block].add_pair(pc1,pc2,cmpres, location)
 
@@ -294,7 +297,14 @@ class OptimizableBlocks:
             print("-----")
             print(self.optimizable_blocks[elem])
             print(".....")
-                
+
+    def __repr__(self):
+        text_repr = ["CONTRACT: " + self.contract]
+        for elem in self.optimizable_blocks:
+            text_repr.extend(["-----", str(self.optimizable_blocks[elem]), "-----"])
+        return '\n'.join(text_repr)
+
+
 class OptimizableBlockInfo: 
 
     INSTRUCTIONS_IGNORE = ["RETURN","REVERT"]
@@ -310,6 +320,7 @@ class OptimizableBlockInfo:
         self.useless = []
         self.constancy_context = []
         self.aliasing_context = []
+        self.block_number = None
 
     def add_pair(self,pc1,pc2,cmpres, location):
 
@@ -416,7 +427,8 @@ class OptimizableBlockInfo:
                 self.block_id + "-NonEquals Sto: << " + str(self.nonequal_pairs_storage) + ">> \n" + 
                 self.block_id + "-Useless: " + str(self.useless) + "\n" + 
                 self.block_id + "-Constancy: " + str(self.constancy_context) + "\n" + 
-                self.block_id + "-ContextAliasing: " + str(self.aliasing_context) + "\n")
+                self.block_id + "-ContextAliasing: " + str(self.aliasing_context) + "\n" +
+                self.block_id + "-Block Number: " + str(self.block_number) + "\n")
 
 class CmpPair: 
     def __init__(self,pc1,pc2):
