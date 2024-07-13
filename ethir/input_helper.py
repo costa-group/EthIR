@@ -92,7 +92,6 @@ class InputHelper:
 
             contracts = self._get_compiled_contracts()
             asm_json = self.asm_contracts
-            print("ASMJSON", asm_json)
 
             if not self.runtime:
                 contracts_init = self._get_compiled_contracts_init(contracts)
@@ -120,7 +119,6 @@ class InputHelper:
                     # AQUI
                     source_map = SourceMap(contract, self.source, 'solidity', self.root_path,
                                            self.solc_version)  # if self.solc_version != "v8" else None
-                    print(source_map.instr_positions)
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
 
@@ -141,7 +139,6 @@ class InputHelper:
                         'disasm_file_init': disasm_file_init,
                         'assembly': asm_json[contract]
                     })
-        print(inputs)
         return inputs
 
     # Modified by Pablo Gordillo
