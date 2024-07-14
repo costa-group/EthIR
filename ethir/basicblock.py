@@ -610,7 +610,8 @@ class BasicBlock:
     def get_instructions_gasol(self):
         new_instructions = []
         for i in self.instructions:
-            if i.find("SSTORE")!=-1 or i.find("SLOAD")!=-1 or i.find("MSTORE")!=-1 or i.find("MLOAD")!=-1 or i.find("CALLDATALOAD")!=-1:
+            if i.find("SSTORE")!=-1 or i.find("SLOAD")!=-1 or i.find("MSTORE")!=-1 or i.find("MLOAD")!=-1 or \
+                    i.find("CALLDATALOAD") != -1 or i.find("AND") != -1:
                 new_ins = i.split()[0].strip()
                 new_instructions.append(new_ins)
             else:
