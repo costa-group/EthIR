@@ -287,7 +287,7 @@ class InputHelper:
         return contracts
 
     def _extract_bin_str_init(self, s):
-        binary_regex = r"\n======= (.*?) =======\nBinary: \n(.*?)\n"
+        binary_regex = r"======= (.*?) =======\n(?:(?!Binary:).*\n)*Binary:\n(.*)"
         contracts = re.findall(binary_regex, s)
         contracts = [contract for contract in contracts if contract[1]]
         if not contracts:
@@ -419,7 +419,7 @@ class InputHelper:
     def _get_solidity_version(self):
         f = open(self.source, "r")
         lines = f.readlines()
-        pragma = list(filter(lambda x: x.find("pragma solidity") != -1, lines))
+        pragma = [line for line in lines if not line.startswith("//") and "pragma solidity" in line]
         if pragma == []:
             return "v4"  # Put here the highest version
 
