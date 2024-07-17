@@ -29,7 +29,7 @@ import global_params_ethir
 
 import rbr
 from clone import compute_cloning
-from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals, get_blocks_per_function, get_function_hash
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals, get_blocks_per_function, get_function_hash, compute_gas
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment, look_for_str_pattern1, look_for_str_pattern2, look_for_str_mem_pattern
@@ -4462,6 +4462,12 @@ def run(disasm_file=None,
             else:
                 print(storage_result)
                 check_cfg_option(cfg,cname,execution, storage_result)        
+
+
+
+        gas = compute_gas(vertices)
+        print("GAS for "+cname+": "+str(gas))
+
         
         if not is_mem_analysis:
             storage_accesses = None

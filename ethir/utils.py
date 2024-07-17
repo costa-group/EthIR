@@ -1083,7 +1083,12 @@ def compute_gas(vertices):
     for v in vertices:
         instructions = vertices[v].get_instructions()
         for i in instructions:
-            gas+=opcodes.get_ins_cost(i.strip())
+            instruction = i.split()
+            if len(instruction) > 1:
+                ins = instruction[0]
+            else:
+                ins = i
+            gas+=opcodes.get_ins_cost(ins.strip())
 
     return gas
 
