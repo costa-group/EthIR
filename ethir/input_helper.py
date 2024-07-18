@@ -118,6 +118,7 @@ class InputHelper:
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
                     # AQUI
+                    print(contract)
                     source_map = SourceMap(contract, self.source, 'solidity', self.root_path,
                                            self.solc_version)  # if self.solc_version != "v8" else None
                 else:
@@ -251,7 +252,7 @@ class InputHelper:
 
     def _extract_bin_str(self, s):
         # In v.4, we must be careful because "Binary of the runtime part:" is followed by a white space
-        binary_regex = r"======= (.*?) =======\n(?:(?!Binary of the runtime part:\s*).*\n)*Binary of the runtime part:\s*\n(.*)\n"
+        binary_regex = r"======= (.*?) =======\n(?:(?!Binary of the runtime part: *).*\n)*Binary of the runtime part: *\n(.*)\n"
 
         contracts = re.findall(binary_regex, s)
 
@@ -274,7 +275,7 @@ class InputHelper:
             contracts = re.findall(asm_json_regex, s)
         else:
             # V7 and before appears in multiple lines (similarly to pretty-json)
-            asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:\s*).*\n)*EVM assembly:\s*\n([\s\S]*)(?=\n\}\n)"
+            asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly: *).*\n)*EVM assembly: *\n([\s\S]*)(?=\n\}\n)"
 
             # We need to add the final '}', as it is not captured
             contracts = [(contract_name, match + "}") for contract_name, match in re.findall(asm_json_regex, s)]
