@@ -7,6 +7,7 @@ import json
 import global_params_ethir
 import six
 import uuid
+from typing import List, Dict, Tuple
 from source_map import SourceMap
 from utils import run_command, get_solc_executable
 
@@ -249,11 +250,8 @@ class InputHelper:
         return evm_without_hash
 
     def _extract_bin_str(self, s):
-
-        if self.solc_version == "v4":
-            binary_regex = r"\n======= (.*?) =======\nBinary of the runtime part: \n(.*?)\n"
-        else:
-            binary_regex = r"======= (.*?) =======\n(?:(?!Binary of the runtime part:).*\n)*Binary of the runtime part:\n(.*)"
+        # In v.4, we must be careful because "Binary of the runtime part:" is followed by a white space
+        binary_regex = r"======= (.*?) =======\n(?:(?!Binary of the runtime part:\s*).*\n)*Binary of the runtime part:\s*\n(.*)\n"
 
         contracts = re.findall(binary_regex, s)
 
@@ -270,13 +268,17 @@ class InputHelper:
         """
         Returns a dictionary with the assembly representation of each contract
         """
-        if self.solc_version == "v4":
-            # TODO: format for v4
-            raise NotImplementedError
+        if self.solc_version == "v8":
+            # V8 appears the dict in a single line (unless pretty-json option is specified)
+            asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:).*\n)*EVM assembly:\n(.*)"
+            contracts = re.findall(asm_json_regex, s)
         else:
-            binary_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:).*\n)*EVM assembly:\n(.*)"
+            # V7 and before appears in multiple lines (similarly to pretty-json)
+            asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:\s*).*\n)*EVM assembly:\s*\n([\s\S]*)(?=\n\}\n)"
 
-        contracts = re.findall(binary_regex, s)
+            # We need to add the final '}', as it is not captured
+            contracts = [(contract_name, match + "}") for contract_name, match in re.findall(asm_json_regex, s)]
+
         contracts = {contract[0]: json.loads(contract[1]) for contract in contracts if contract[1]}
         if not contracts:
             logging.critical("ASM Json compilation failed")
@@ -306,7 +308,7 @@ class InputHelper:
 
         solc = get_solc_executable(self.solc_version)
 
-        cmd = solc + " --bin-runtime %s" % filename
+        cmd = solc + " --bin-runtime --asm-json %s" % filename
 
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
@@ -315,7 +317,7 @@ class InputHelper:
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0].decode()
-        return self._extract_bin_str(out)
+        return self._extract_bin_str(out), self._extract_asm_json(out)
 
     def _prepare_disasm_files_for_analysis(self, contracts, init_contracts=None):
         empty = {}
