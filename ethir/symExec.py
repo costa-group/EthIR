@@ -4466,8 +4466,8 @@ def run(disasm_file=None,
 
 
         gas = compute_gas(vertices)
-        print("GAS for "+cname+": "+str(gas))
-
+        print("GAS for " + str(cname) + ": " + str(gas))
+        print("BLOCKS for " + str(cname) + ": " + str(len(vertices)))
         
         if not is_mem_analysis:
             storage_accesses = None
