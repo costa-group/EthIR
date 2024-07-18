@@ -69,7 +69,7 @@ def has_dependencies_installed():
         cmd = "solcv8 --version"
         out = run_command(cmd).strip()
         solc_version = re.findall(r"Version: (\d*.\d*.\d*)", out)[0]
-        tested_solc_version = '0.7.4'
+        tested_solc_version = '0.8.24'
         if compare_versions(solc_version, tested_solc_version) > 0:
             logging.warning("You are using solc version %s, The latest supported version is %s" % (solc_version, tested_solc_version))
 
