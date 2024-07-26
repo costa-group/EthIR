@@ -282,14 +282,20 @@ class InputHelper:
                 while i < len(text_lines) and not text_lines[i].startswith("EVM assembly:"):
                     i += 1
 
+                    if re.match(contract_regex, text_lines[i]):
+                        continue
+
                 if i == len(text_lines):
                     continue
 
                 initial_idx = i + 1
+
+                if not text_lines[initial_idx].startswith("{"):
+                    continue
+
                 # Finally match all the enclosing lines in the json
                 while i < len(text_lines) and not text_lines[i].startswith("}"):
                     i += 1
-                    print("LINE:" + text_lines[i])
 
                 if i == len(text_lines):
                     continue
