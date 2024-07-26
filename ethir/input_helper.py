@@ -189,6 +189,7 @@ class InputHelper:
         options = self._get_optimize_options()
 
         cmd = solc + " --bin-runtime --asm-json " + options + " %s" % self.source
+        print(cmd)
 
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
@@ -265,6 +266,40 @@ class InputHelper:
             exit(1)
         return contracts
 
+    def _match_assembly_json(self, s):
+        """
+        Matchs the json structure of the EVM assembly
+        """
+        contract_regex = r"======= (.*?) ======="
+        i = 0
+        text_lines = s.split('\n')
+        contracts = []
+        while i < len(text_lines):
+            # First match the contract name
+            contract_name_match = re.match(contract_regex, text_lines[i])
+            if contract_name_match is not None:
+                # Then match EVM assembly
+                while i < len(text_lines) and not text_lines[i].startswith("EVM assembly:"):
+                    i += 1
+
+                if i == len(text_lines):
+                    continue
+
+                initial_idx = i + 1
+                # Finally match all the enclosing lines in the json
+                while i < len(text_lines) and not text_lines[i].startswith("}"):
+                    i += 1
+                    print("LINE:" + text_lines[i])
+
+                if i == len(text_lines):
+                    continue
+
+                contract_json = '\n'.join(text_lines[initial_idx: i + 1])
+                contracts.append([contract_name_match.group(1), contract_json])
+
+            i += 1
+        return contracts
+
     def _extract_asm_json(self, s):
         """
         Returns a dictionary with the assembly representation of each contract
@@ -275,10 +310,7 @@ class InputHelper:
             contracts = re.findall(asm_json_regex, s)
         else:
             # V7 and before appears in multiple lines (similarly to pretty-json)
-            asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly: *).*\n)*EVM assembly: *\n([\s\S]*)(?=\n\}\n)"
-
-            # We need to add the final '}', as it is not captured
-            contracts = [(contract_name, match + "}") for contract_name, match in re.findall(asm_json_regex, s)]
+            contracts = self._match_assembly_json(s)
 
         contracts = {contract[0]: json.loads(contract[1]) for contract in contracts if contract[1]}
         if not contracts:
