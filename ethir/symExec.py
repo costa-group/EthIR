@@ -4806,21 +4806,15 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
     timeoutvalue = saco[3]      
-
+    s_cost = saco[4]
+    
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
+    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, sstore_cost = s_cost, source_file=source_file, timeoutval=timeoutvalue)
 
     items = list(function_block_map.items())
-            
-    # for b in ubs:
-    #     for i in items:
-    #         if b == i[1][0]:
-    #             function_name = i[0]
-            
-    # set_identifiers = list(rbr.set_identifiers.keys())
 
     ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks)
 
