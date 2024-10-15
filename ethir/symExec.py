@@ -4215,7 +4215,7 @@ def run(disasm_file=None,
         source_map_init = None, 
         source_file=None, 
         cfg=None, 
-        saco = (None,None, None, None), 
+        saco = (None,None, None, None, None), 
         execution = None,
         cname = None, 
         hashes = None, 
@@ -4759,24 +4759,31 @@ def generate_dag_file(cname, dag):
 
     f.close()
 
-def compute_sstore_cost(result, smt_option):
+def compute_sstore_cost(result, smt_option, initial_value):
+
+    if initial_value == "zero":
+        store_correction = 9950
+    else: 
+        store_correction = 1400
+    warm_correction = 100
+
     try:
         if smt_option == "final":
             a = compute_stores_final(result)
             if a == -1:
                 raise Exception()
-            cost = sympy.simplify(a*9950)
+            cost = sympy.simplify(a * store_correction)
         elif smt_option == "complete":
             if str(result).find("['r',") != -1:
                 a = compute_stores_final(result)
                 if (a == -1):
                     raise Exception()
-                cost = sympy.simplify(a*9950)
+                cost = sympy.simplify(a * store_correction)
             else:
                 (a, b) = compute_stores(result)
                 if (a == -1):
                     raise Exception()
-                cost = sympy.simplify(a*10050+b*9950)
+                cost = sympy.simplify(a * (store_correction+warm_correction) + b * store_correction)
         else:
             raise Exception("UNKNOWN option for sstore costs")
     
@@ -4806,6 +4813,9 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
     timeoutvalue = saco[3]      
+    initial_storage = saco[4]
+
+    print(f"Tengo initial storage a {initial_storage}")
 
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
@@ -4877,13 +4887,14 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                     try:
                         x = dtimer()
 
-                        cost_sstores = compute_sstore_cost(result,smt_option)
+                        cost_sstores = compute_sstore_cost(result,smt_option, initial_storage)
 
                         y = dtimer()
 
                         storage_time = y-x
                         
                     except Exception as e:
+                        traceback.print_exc()
                         allOK = False
                         cost_sstores = "error"
                         print("GASTAPERROR: Error in sstore cost")
@@ -4931,6 +4942,7 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
 
     gastap_op = saco[1]
     timeoutvalue = saco[3]
+
 
     input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
