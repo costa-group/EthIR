@@ -1,5 +1,6 @@
 from memory.memory_utils import TOP
 from storage.storage_offset_abstate import StorageAccess
+from storage.storage_access import  BOTTOM
 from memory.memory_utils import order_accesses, order_accesses_set
 from optimizer.optimizer_connector import EQUALS, NONEQUALS, UNKOWN
 
@@ -80,7 +81,8 @@ class StorageAccesses:
             if block == block_in:
                 if t_ins == "s":
                     written_val = self.written_values[pc]
-                    if written_val == 0:
+                    
+                    if len(written_val) == 1 and StorageAccess(BOTTOM,str(0),0) in written_val:
                         zero = "z"
                     else:
                         zero = "nz"
