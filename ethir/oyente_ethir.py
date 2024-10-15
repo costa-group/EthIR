@@ -175,7 +175,7 @@ def analyze_disasm_bytecode():
 
         result, exit_code = symExec.run(disasm_file=args.source,
                                         cfg = args.control_flow_graph,
-                                        saco = (args.saco,False,None,None),
+                                        saco = (args.saco,False,None,None,None),
                                         debug = args.debug,
                                         evm_version = evm_version_modifications,
                                         cfile = args.cfile,
@@ -226,7 +226,7 @@ def analyze_bytecode():
 
         result, exit_code = symExec.run(disasm_file=inp['disasm_file'],
                                         cfg = args.control_flow_graph,
-                                        saco = (args.saco,False, None, None),
+                                        saco = (args.saco,False, None, None, None),
                                         debug = args.debug,
                                         evm_version = evm_version_modifications,
                                         cfile = args.cfile,
@@ -277,7 +277,7 @@ def run_solidity_analysis(inputs,hashes):
                                               source_map=inp['source_map'], 
                                               source_file=inp['source'],
                                               cfg = args.control_flow_graph,
-                                              saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout),
+                                              saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
                                               execution = 0, 
                                               cname = inp["c_name"],
                                               hashes = function_names,
@@ -316,7 +316,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   source_map=inp['source_map'], 
                                                   source_file=inp['source'],
                                                   cfg = args.control_flow_graph,
-                                                  saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout),
+                                                  saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
                                                   execution = i,
                                                   cname = inp["c_name"],
                                                   hashes = function_names,
@@ -415,7 +415,7 @@ def run_solidity_analysis_optimized(inp,hashes):
                                           source_map=inp['source_map'], 
                                           source_file=inp['source'],
                                           cfg = args.control_flow_graph,
-                                          saco = (args.saco,False, None, None),
+                                          saco = (args.saco,False, None, None, None),
                                           execution = 0, 
                                           cname = inp["c_name"],
                                           hashes = function_names,
@@ -582,6 +582,7 @@ def main():
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
     parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","final"], default= "final")
     parser.add_argument("-gastap-timeout","--gastap-timeout", help="Gastap invocation timeout", default= "60")
+    parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation", choices = ["zero","nonzero"], default= "zero")
 
     args = parser.parse_args()
     # if args.root_path:
