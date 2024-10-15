@@ -126,7 +126,9 @@ def translate_block_property(block, property_information):
             first_elem = ["a",[1],i[2]]
             if i[2] == "s" and i[3] == "z":
                 first_elem.append("z")
-
+            elif i[2] == "s" and i[3] == "nz":
+                first_elem.append("ukn")
+                
             if str(i[1]).find("*")==-1:
                 new_set = list(map(lambda x: str(x),i[1]))
                 elem = [first_elem,new_set]
