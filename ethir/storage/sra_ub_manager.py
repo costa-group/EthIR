@@ -6,7 +6,7 @@ from sympy import Function, symbols
 
 class SRA_UB_manager: 
     
-    def __init__(self, ubs, params, sccs, come_from) -> None:
+    def __init__(self, ubs, params, sccs, come_from, sto_init_cost) -> None:
         ## Ubs per public function identified by block id
         self.ubs = ubs
         self.params = params
@@ -14,11 +14,11 @@ class SRA_UB_manager:
 
         self.sccs = sccs
         self.ubs_info = {}
-        self.__compute_ubs()
+        self.__compute_ubs(sto_init_cost)
 
         print(str(self))
 
-    def __compute_ubs(self): 
+    def __compute_ubs(self, sto_init_cost): 
         for function in self.ubs: 
             ubinfo = UB_info()
 
@@ -29,7 +29,7 @@ class SRA_UB_manager:
                         continue
                     sccsfun.append(scc)
 
-            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun, function)
+            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun, function, sto_init_cost)
 
             self.ubs_info[function] = ubinfo
 
@@ -67,7 +67,7 @@ class UB_info:
         self.ubscc = {}
         self.ubscclist = {}
 
-    def process_ubs(self,origub,params,sccs, function): 
+    def process_ubs(self,origub,params,sccs, function, sto_init_cost): 
         
         self.memory_ub = origub[0]
         origub = origub[1]
@@ -112,7 +112,7 @@ class UB_info:
             return
 
         try: 
-            self.gas_ub = self.__eval_gas_ub(origub, params, function)
+            self.gas_ub = self.__eval_gas_ub(origub, params, function, sto_init_cost)
             self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function)
             self.sstore_accesses = self.__eval_sstore_ub(origub, params, function)
             self.sload_accesses = self.__eval_sload_ub(origub,params, function)
@@ -248,10 +248,15 @@ class UB_info:
 
         return ub
 
-    def __eval_gas_ub (self, origub, params, function):
+    def __eval_gas_ub (self, origub, params, function, sto_init_cost):
+
+        sto_val = 10050 if sto_init_cost == "zero" else 1500
+        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        
         try: 
             ## Computing gas ub
             ub = origub.replace("c(g)","1")
+            ub = origub.replace(sto_val_cc, sto_val)
             ub = re.sub('(c\([fstl].*?\))','0',ub)
             ub = ub.replace("max", "mymax")
             ub = ub.replace("[","")
