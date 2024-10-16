@@ -250,7 +250,7 @@ class UB_info:
 
     def __eval_gas_ub (self, origub, params, function, sto_init_cost):
 
-        sto_val = "10050" if sto_init_cost == "zero" else "1500"xs
+        sto_val = "10050" if sto_init_cost == "zero" else "1500"
         sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
         
         try: 
