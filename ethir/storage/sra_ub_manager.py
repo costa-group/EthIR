@@ -250,13 +250,13 @@ class UB_info:
 
     def __eval_gas_ub (self, origub, params, function, sto_init_cost):
 
-        sto_val = "10050" if sto_init_cost == "zero" else "1500"
+        sto_val = "10050" if sto_init_cost == "zero" else "1500"xs
         sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
         
         try: 
             ## Computing gas ub
             ub = origub.replace("c(g)","1")
-            ub = origub.replace(sto_val_cc, sto_val)
+            ub = ub.replace(sto_val_cc, sto_val)
             ub = re.sub('(c\([fstl].*?\))','0',ub)
             ub = ub.replace("max", "mymax")
             ub = ub.replace("[","")
