@@ -161,12 +161,17 @@ class UB_info:
     
     def __eval_sstore_ub (self, origub, params, function, sto_init_cost): 
 
-        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
+
+        sto_val_cc = "c(stofinalcost)"
+        sto_val_cold_cc = "c(stocoldcost)"
         
         try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
             ub = ub.replace(sto_val_cc,"0")
+            ub = ub.replace(sto_val_cold_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','1',ub)
             ub = re.sub('(c\(load.*?\))','0',ub)
@@ -194,12 +199,17 @@ class UB_info:
 
     def __eval_sload_ub (self, origub, params, function, sto_init_cost): 
 
-        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
+
+        sto_val_cc = "c(stofinalcost)"
+        sto_val_cold_cc = "c(stocoldcost)"
         
-        try:         
+        try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
-            ub = ub.replace(sto_val_cc, "0")
+            ub = ub.replace(sto_val_cc,"0")
+            ub = ub.replace(sto_val_cold_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','0',ub)
             ub = re.sub('(c\(load.*?\))','1',ub)
@@ -226,12 +236,17 @@ class UB_info:
 
     def __eval_stoacceses_ub (self, origub, params, function, sto_init_cost): 
 
-        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
+
+        sto_val_cc = "c(stofinalcost)"
+        sto_val_cold_cc = "c(stocoldcost)"
         
-        try:         
+        try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
-            ub = ub.replace(sto_val_cc, "0")
+            ub = ub.replace(sto_val_cc,"0")
+            ub = ub.replace(sto_val_cold_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','0',ub)
             ub = re.sub('(c\(load.*?\))','0',ub)
@@ -251,7 +266,8 @@ class UB_info:
 
             ub = eval(ub)
             ub = str(ub).replace("maxub","max")
-        except: 
+        except:
+            traceback.print_exc()
             print(f"WARN: Error in evaluating UB (stoaccess) of {function}: {origub}")
             ub = origub
 
@@ -260,12 +276,18 @@ class UB_info:
     def __eval_gas_ub (self, origub, params, function, sto_init_cost):
 
         sto_val = "10050" if sto_init_cost == "zero" else "1500"
-        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        sto_val_cc = "c(stofinalcost)"
         
-        try: 
+        stocold_val = "22100" if sto_init_cost == "zero" else "3000"
+        # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
+        sto_val_cold_cc = "c(stocoldcost)"
+        
+        try:
             ## Computing gas ub
             ub = origub.replace("c(g)","1")
             ub = ub.replace(sto_val_cc, sto_val)
+            ub = ub.replace(sto_val_cold_cc, stocold_val)
             ub = re.sub('(c\([fstl].*?\))','0',ub)
             ub = ub.replace("max", "mymax")
             ub = ub.replace("[","")
@@ -295,11 +317,15 @@ class UB_info:
 
     def __eval_niter_ub(self, origub, params, scc, function, sto_init_cost): 
 
-        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
+
+        sto_val_cc = "c(stofinalcost)"
+        sto_val_cold_cc = "c(stocoldcost)"
         
         try:         
-            ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc), sto_val_cc, "-1")
-            ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc), sto_val_cc)
+            ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc), sto_val_cc, sto_val_cold_cc, "-1")
+            ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc), sto_val_cc, sto_val_cold_cc)
             params = symbols(self.__filter_variables(params))
             param_dict = {str(p): p for p in params}
             locals().update(param_dict)
@@ -316,10 +342,11 @@ class UB_info:
 
         return str(ub)
 
-    def __eval_ub_cc(self,origub,params,cc, sto_val_cc, addtoub=""): 
+    def __eval_ub_cc(self,origub,params,cc, sto_val_cc, sto_val_cold_cc, addtoub=""): 
 #        try: 
         ub = origub.replace("c(g)","0")
         ub = ub.replace(sto_val_cc, "0")
+        ub = ub.replace(sto_val_cold_cc, "0")
         ub = ub.replace("c(" + cc + ")","1")
         ub = re.sub('(c\([fstl].*?\))','0',ub)
 
