@@ -1402,3 +1402,40 @@ def get_blocks_per_function(entry_functions, comes_from):
 def get_function_hash(function_hashes, function_name):
     l = list(filter(lambda x: x[1]==function_name,function_hashes.items()))
     return l[0][0]
+
+
+def get_complete_storage_analysis_info(vertices, storage_analysis_result):
+
+
+    num_total_info = 0
+    num_total_zeros = 0
+    
+    for block in vertices:
+
+        info = storage_analysis_result.get_storage_analysis_info(str(block))
+        if info != []:
+            result = []
+            
+            for i in info:
+                num_total_info +=1
+                first_elem = ["a",[1],i[2]]
+                if i[2] == "s" and i[3] == "z":
+                    first_elem.append("z")
+                    if (str(i[1]).find("*") == -1):
+                        num_total_zeros+=1
+
+                elif i[2] == "s" and i[3] == "nz":
+                    first_elem.append("ukn")
+                
+                if str(i[1]).find("*")==-1:
+                    new_set = list(map(lambda x: str(x),i[1]))
+                    elem = [first_elem,new_set]
+                    result.append(elem)
+
+                    
+        else:
+            result = []
+    print("ACCESSRES: TOTAL ACCESSES -> "+str(num_total_info))
+    print("ACCESSRES: TOTAL ZERO ACCESSES -> "+str(num_total_zeros))
+    return result
+
