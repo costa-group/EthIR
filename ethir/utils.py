@@ -1435,7 +1435,7 @@ def get_complete_storage_analysis_info(vertices, storage_analysis_result):
                     
         else:
             result = []
-    print("ACCESSRES: TOTAL ACCESSES -> "+str(num_total_info))
-    print("ACCESSRES: TOTAL ZERO ACCESSES -> "+str(num_total_zeros))
+    print("ACCESSZERORES: TOTAL ACCESSES -> "+str(num_total_info))
+    print("ACCESSZERORES: TOTAL ZERO ACCESSES -> "+str(num_total_zeros))
     return result
 
