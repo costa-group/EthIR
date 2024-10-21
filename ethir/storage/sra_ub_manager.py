@@ -113,11 +113,11 @@ class UB_info:
 
         try: 
             self.gas_ub = self.__eval_gas_ub(origub, params, function, sto_init_cost)
-            self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function)
-            self.sstore_accesses = self.__eval_sstore_ub(origub, params, function)
-            self.sload_accesses = self.__eval_sload_ub(origub,params, function)
+            self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function, sto_init_cost)
+            self.sstore_accesses = self.__eval_sstore_ub(origub, params, function, sto_init_cost)
+            self.sload_accesses = self.__eval_sload_ub(origub,params, function, sto_init_cost)
             for scc in sccs:  
-                ub = self.__eval_niter_ub(origub, params, scc,function)
+                ub = self.__eval_niter_ub(origub, params, scc,function, sto_init_cost)
                 ub = ub.strip()
                 self.ubscc[scc] = ub
                 ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
@@ -159,11 +159,14 @@ class UB_info:
         return self.mem_ub
 
     
-    def __eval_sstore_ub (self, origub, params, function): 
+    def __eval_sstore_ub (self, origub, params, function, sto_init_cost): 
+
+        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
         
         try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
+            ub = ub.replace(sto_val_cc,"0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','1',ub)
             ub = re.sub('(c\(load.*?\))','0',ub)
@@ -183,17 +186,20 @@ class UB_info:
 
             ub = eval(ub)
             ub = str(ub).replace("maxub","max")
-        except: 
+        except:
             print(f"WARN: Error in evaluating UB (sstore) of {function}: {origub}")
             ub = origub
         return ub
 
 
-    def __eval_sload_ub (self, origub, params, function): 
+    def __eval_sload_ub (self, origub, params, function, sto_init_cost): 
 
+        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        
         try:         
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
+            ub = ub.replace(sto_val_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','0',ub)
             ub = re.sub('(c\(load.*?\))','1',ub)
@@ -218,11 +224,14 @@ class UB_info:
             ub = origub
         return ub
 
-    def __eval_stoacceses_ub (self, origub, params, function): 
+    def __eval_stoacceses_ub (self, origub, params, function, sto_init_cost): 
+
+        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
         
         try:         
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
+            ub = ub.replace(sto_val_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','0',ub)
             ub = re.sub('(c\(load.*?\))','0',ub)
@@ -284,11 +293,13 @@ class UB_info:
         
         return ub
 
-    def __eval_niter_ub(self, origub, params, scc, function): 
+    def __eval_niter_ub(self, origub, params, scc, function, sto_init_cost): 
 
+        sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
+        
         try:         
-            ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc),"-1")
-            ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc))
+            ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc), sto_val_cc, "-1")
+            ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc), sto_val_cc)
             params = symbols(self.__filter_variables(params))
             param_dict = {str(p): p for p in params}
             locals().update(param_dict)
@@ -305,9 +316,10 @@ class UB_info:
 
         return str(ub)
 
-    def __eval_ub_cc(self,origub,params,cc, addtoub=""): 
+    def __eval_ub_cc(self,origub,params,cc, sto_val_cc, addtoub=""): 
 #        try: 
         ub = origub.replace("c(g)","0")
+        ub = ub.replace(sto_val_cc, "0")
         ub = ub.replace("c(" + cc + ")","1")
         ub = re.sub('(c\([fstl].*?\))','0',ub)
 
