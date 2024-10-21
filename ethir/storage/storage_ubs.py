@@ -161,12 +161,21 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                 cost_sstores = "error"
                 allOK = False
 
+        if initial_storage == "zero":
+            opposite_initial_storage = "nonzero"
+        else:
+            opposite_initial_storage = "zero"
 
+        ubmanager_aux = SRA_UB_manager(ubs, params, scc, component_of_blocks, opposite_initial_storage)
+        ub_info_aux = ubmanager_aux.get_ub_info(i)
+        
         # print("TENGO UB " + ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
         if allOK: 
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
+            final_ub_aux = sympy.simplify(ub_info_aux.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
         else: 
             final_ub = ub_info.gas_ub
+            final_ub_aux = ub_info_aux.gas_ub
 
         # else:
         #     final_ub = ub_info.gas_ub
@@ -180,9 +189,9 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             memory_ub = 0
 
         if allOK:     
-            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("ok")+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("ok")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
         else: 
-            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
 
 
 def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes):
