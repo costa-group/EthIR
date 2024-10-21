@@ -13,30 +13,36 @@ from timeit import default_timer as dtimer
 import logging
 import six
 from collections import namedtuple
-
-from storage.storage_ubs import compute_cost_with_storage_analysis, compute_cost_without_storage_analysis
-
-from optimizer.optimizer_connector import OptimizerConnector
-from storage.sra_ub_manager import SRA_UB_manager
-import gasol
 import sympy
-
-from memory.memory_analysis import perform_memory_analysis
-from storage.storage_analysis import perform_sra_analysis, perform_storage_analysis
-
-from storage.cold import compute_accesses as compute_accesses_cold, compute_stores, compute_stores_final
 
 from vargenerator import *
 from basicblock import BasicBlock
 import global_params_ethir
 
+#Opt gasol1
+import gasol
+
+#Memory analysis
+from memory.memory_analysis import perform_memory_analysis
+
+#Memory and storage analysis (Green project)
+from optimizer.optimizer_connector import OptimizerConnector
+
+#Storage analysis
+from storage.storage_analysis import perform_sra_analysis, perform_storage_analysis
+from storage.storage_ubs import compute_cost_with_storage_analysis, compute_cost_without_storage_analysis
+from storage.sra_ub_manager import SRA_UB_manager
+
 import rbr
+
 from clone import compute_cloning
-from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals, get_blocks_per_function, get_function_hash, compute_gas
+
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, run_gastap, compute_join_conditionals, get_blocks_per_function, get_function_hash, compute_gas, get_complete_storage_analysis_info
+
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
+
 from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment, look_for_str_pattern1, look_for_str_pattern2, look_for_str_mem_pattern
-from traverse_cfg import traverse_cfg
 
 
 log = logging.getLogger(__name__)
@@ -4311,27 +4317,6 @@ def run(disasm_file=None,
 
     compute_component_of_cfg()
     
-    # if len(blocks_to_clone)!=0:
-    #     try:
-    #         print blocks_to_clone[0].get_start_address()
-    #         compute_cloning(blocks_to_clone,vertices,stack_h,component_of_blocks)
-    #     except:
-    #         traceback.print_exc()
-    #         raise Exception("Error in clonning process",3)
-        
-    
-    # check_cfg_option(cfg,cname,execution,True,blocks_to_clone)
-    
-    # begin1 = dtimer()
-    # compute_component_of_cfg()
-    
-    # #compute_transitive_mstore_value()
-    
-    # end = dtimer()
-    # oyente_t = end-begin
-    # print("OYENTE tool: "+str(oyente_t)+"s")
-
-    #update_edges(vertices, edges)
 
     scc = {}
     # if go:
@@ -4495,6 +4480,8 @@ def run(disasm_file=None,
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
+
+        get_complete_storage_analysis_info(vertices, storage_accesses)
         
         if saco[1]!= None and storage_analysis:
 
