@@ -1409,6 +1409,7 @@ def get_complete_storage_analysis_info(vertices, storage_analysis_result):
 
     num_total_info = 0
     num_total_zeros = 0
+    num_total_zeros_nonconcrete = 0
     
     for block in vertices:
 
@@ -1423,7 +1424,9 @@ def get_complete_storage_analysis_info(vertices, storage_analysis_result):
                     first_elem.append("z")
                     if (str(i[1]).find("*") == -1):
                         num_total_zeros+=1
-
+                    else: 
+                        num_total_zeros_nonconcrete += 1
+ 
                 elif i[2] == "s" and i[3] == "nz":
                     first_elem.append("ukn")
                 
@@ -1436,6 +1439,7 @@ def get_complete_storage_analysis_info(vertices, storage_analysis_result):
         else:
             result = []
     print("ACCESSZERORES: TOTAL ACCESSES -> "+str(num_total_info))
-    print("ACCESSZERORES: TOTAL ZERO ACCESSES -> "+str(num_total_zeros))
+    print("ACCESSZERORES: TOTAL ZERO CONCRETE ACCESSES -> "+str(num_total_zeros))
+    print("ACCESSZERORES: TOTAL ZERO NON-CONCRETE ACCESSES -> "+str(num_total_zeros_nonconcrete))
     return result
 
