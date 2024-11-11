@@ -9,12 +9,11 @@ from timeit import default_timer as dtimer
 from storage.cold import compute_accesses as compute_accesses_cold, compute_stores, compute_stores_final
 import global_params_ethir
 
+## Computes the cost of the correction of sstore instructions
 def compute_sstore_cost(result, smt_option, initial_value):
 
-    if initial_value == "zero":
-        store_correction = 9950
-    else: 
-        store_correction = 1400
+    store_correction_lower = 1400
+    store_correction_upper = 9950
     warm_correction = 100
 
     try:
@@ -22,18 +21,21 @@ def compute_sstore_cost(result, smt_option, initial_value):
             a = compute_stores_final(result)
             if a == -1:
                 raise Exception()
-            cost = sympy.simplify(a * store_correction)
+            cost_lower = sympy.simplify(a * store_correction_lower)
+            cost_upper = sympy.simplify(a * store_correction_upper)
         elif smt_option == "complete":
             if str(result).find("['r',") != -1:
                 a = compute_stores_final(result)
                 if (a == -1):
                     raise Exception()
-                cost = sympy.simplify(a * store_correction)
+                cost_lower = sympy.simplify(a * store_correction_lower)
+                cost_upper = sympy.simplify(a * store_correction_upper)
             else:
                 (a, b) = compute_stores(result)
                 if (a == -1):
                     raise Exception()
-                cost = sympy.simplify(a * (store_correction+warm_correction) + b * store_correction)
+                cost_lower = sympy.simplify(a * (store_correction_lower+warm_correction) + b * store_correction_lower)
+                cost_upper = sympy.simplify(a * (store_correction_upper+warm_correction) + b * store_correction_upper)
         else:
             raise Exception("UNKNOWN option for sstore costs")
     
@@ -42,7 +44,7 @@ def compute_sstore_cost(result, smt_option, initial_value):
         a = b = 0
         cost = 0
         
-    return cost
+    return (cost_lower,cost_upper)
     
 
 
@@ -62,7 +64,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
     timeoutvalue = saco[3]      
-    initial_storage = saco[4]
+    initial_storage = saco[4] # It could be a list of non-zero acceses separated by ","
 
     print(f"Tengo initial storage a {initial_storage}")
 
@@ -136,7 +138,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                     try:
                         x = dtimer()
 
-                        cost_sstores = compute_sstore_cost(result,smt_option, initial_storage)
+                        (cost_sstores_lower,cost_sstores_upper) = compute_sstore_cost(result,smt_option, initial_storage)
 
                         y = dtimer()
 
@@ -150,8 +152,8 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                 else:
                     colds = 0 
                     warms = 0
-                    cost_sstores = 0
-
+                    cost_sstores_lower = 0
+                    cost_sstores_upper = 0
                     
             except Exception as e:
                 print("GASTAPERROR: Error in TRAVERSE")
@@ -171,8 +173,8 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
         
         # print("TENGO UB " + ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
         if allOK: 
-            final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
-            final_ub_aux = sympy.simplify(ub_info_aux.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
+            final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores_upper))
+            final_ub_aux = sympy.simplify(ub_info_aux.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores_lower))
         else: 
             final_ub = ub_info.gas_ub
             final_ub_aux = ub_info_aux.gas_ub

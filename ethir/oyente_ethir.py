@@ -582,7 +582,7 @@ def main():
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
     parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","final"], default= "final")
     parser.add_argument("-gastap-timeout","--gastap-timeout", help="Gastap invocation timeout", default= "60")
-    parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation", choices = ["zero","nonzero"], default= "zero")
+    parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
 
     args = parser.parse_args()
     # if args.root_path:
