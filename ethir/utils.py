@@ -1030,12 +1030,29 @@ def find_first_closing_parentheses(string):
 global solc_compiler
 solc_compiler = None
 
+def get_solidity_version_from_solc(): 
+    global solc_compiler
+    print(f"Solc compiler {solc_compiler}")
+    if not solc_compiler:
+        return "v8" ## The highest version 
+
+    if solc_compiler.find("0.4") != -1: 
+        return "v4"
+    if solc_compiler.find("0.5") != -1: 
+        return "v5"
+    if solc_compiler.find("0.6") != -1: 
+        return "v6"
+    if solc_compiler.find("0.7") != -1: 
+        return "v7"
+    if solc_compiler.find("0.8") != -1: 
+        return "v8"
+
 def set_solc_executable(solc_command):
     global solc_compiler
 
     if not os.path.isfile(solc_command): 
         raise Exception(f"Compiler {solc_command} not found")
-
+    print(f"Setting  solc compiler {solc_command}")
     solc_compiler = solc_command
 
 def get_solc_executable(version):

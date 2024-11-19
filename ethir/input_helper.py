@@ -9,7 +9,7 @@ import six
 import uuid
 from typing import List, Dict, Tuple
 from source_map import SourceMap
-from utils import run_command, get_solc_executable
+from utils import run_command, get_solc_executable, get_solidity_version_from_solc
 
 
 class InputHelper:
@@ -62,17 +62,17 @@ class InputHelper:
                 'compiled_contracts': [],
                 'solc_version': "v8",
                 'opt_options': {},
-                'tmp_path': global_params_ethir.tmp_path
+                'tmp_path': global_params_ethir.tmp_path, 
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
             val = kwargs.get(attr, default)
+            print(f"Using {attr}")
             if val == None:
                 raise Exception("'%s' attribute can't be None" % attr)
             else:
                 setattr(self, attr, val)
-
-        self.solc_version = self._get_solidity_version()
+       
         self.init_compiled_contracts = []
         self.aux_path = "ethir_" + uuid.uuid4().hex
         os.mkdir(global_params_ethir.tmp_path + self.aux_path)
@@ -462,7 +462,7 @@ class InputHelper:
         lines = f.readlines()
         pragma = [line for line in lines if not line.startswith("//") and "pragma solidity" in line]
         if pragma == []:
-            return "v4"  # Put here the highest version
+            return get_solidity_version_from_solc() #
 
         elif len(pragma) == 1:
             pragma_version = pragma[0].strip()

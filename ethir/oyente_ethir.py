@@ -453,6 +453,8 @@ def run_solidity_analysis_optimized(inp,hashes):
 def analyze_solidity(input_type='solidity'):
     global args
 
+    print("Entramos por aqui")
+
     x = dtimer()
     is_runtime = not(args.init)
 
@@ -462,9 +464,16 @@ def analyze_solidity(input_type='solidity'):
     compiler_opt["runs"] = args.run
     compiler_opt["via-ir"] = args.via_ir
 
+    if args.solc_compiler: 
+        set_solc_executable(args.solc_compiler)
+
     if input_type == 'solidity':
-        print(args)
-        helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
+        print(f"Args = {args}")
+        helper = InputHelper(InputHelper.SOLIDITY, 
+                             source=args.source,
+                             evm = args.evm,
+                             runtime=is_runtime,
+                             opt_options = compiler_opt, solc_compiler = args.solc_compiler)
     elif input_type == 'standard_json':
         helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
     elif input_type == 'standard_json_output':
@@ -472,9 +481,8 @@ def analyze_solidity(input_type='solidity'):
     inputs = helper.get_inputs()
 
     
+
     solc_version = helper.get_solidity_version()
-    if args.solc_compiler: 
-        set_solc_executable(args.solc_compiler)
 
     hashes = process_hashes(args.source,solc_version)
 
