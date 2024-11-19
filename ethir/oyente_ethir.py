@@ -11,7 +11,7 @@ import argparse
 import subprocess
 import global_params_ethir
 from timeit import default_timer as dtimer
-from utils import run_command, process_hashes
+from utils import run_command, process_hashes, set_solc_executable
 from input_helper import InputHelper
 import traceback
 
@@ -473,6 +473,8 @@ def analyze_solidity(input_type='solidity'):
 
     
     solc_version = helper.get_solidity_version()
+    if args.solc_compiler: 
+        set_solc_executable(args.solc_compiler)
 
     hashes = process_hashes(args.source,solc_version)
 
@@ -583,6 +585,7 @@ def main():
     parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","final"], default= "final")
     parser.add_argument("-gastap-timeout","--gastap-timeout", help="Gastap invocation timeout", default= "60")
     parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
+    parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
 
     args = parser.parse_args()
     # if args.root_path:
