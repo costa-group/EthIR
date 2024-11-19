@@ -1026,7 +1026,24 @@ def find_first_closing_parentheses(string):
                 filtered_string = filtered_string[closing_index+1:]
     raise ValueError("Parentheses are not consistent")
 
+## Set when the param names "solc-compiler" is received
+global solc_compiler
+solc_compiler = None
+
+def set_solc_executable(solc_command):
+    global solc_compiler
+
+    if not os.path.isfile(solc_command): 
+        raise Exception(f"Compiler {solc_command} not found")
+
+    solc_compiler = solc_command
+
 def get_solc_executable(version):
+    global solc_compiler
+    if solc_compiler: 
+        print (f"Compiling using {solc_compiler}")
+        return solc_compiler
+    
     if version == "v4":
         return "solc"
     elif version == "v5":
@@ -1119,9 +1136,9 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
 
         print ("TIMEOUT " + str(timeoutval))
         if storage_analysis:
-            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
+            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
         else:
-            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
+            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
