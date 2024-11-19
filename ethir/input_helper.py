@@ -67,12 +67,13 @@ class InputHelper:
 
         for (attr, default) in six.iteritems(attr_defaults):
             val = kwargs.get(attr, default)
-            print(f"Using {attr}")
             if val == None:
                 raise Exception("'%s' attribute can't be None" % attr)
             else:
                 setattr(self, attr, val)
-       
+
+        self.solc_version = self._get_solidity_version()
+
         self.init_compiled_contracts = []
         self.aux_path = "ethir_" + uuid.uuid4().hex
         os.mkdir(global_params_ethir.tmp_path + self.aux_path)

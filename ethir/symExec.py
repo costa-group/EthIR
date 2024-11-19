@@ -4480,8 +4480,8 @@ def run(disasm_file=None,
         else:
             print("*************************************************************")
         #gasol.print_methods(rbr_rules,source_map,cname)
-
-        get_complete_storage_analysis_info(vertices, storage_accesses)
+        if storage_analysis: 
+            get_complete_storage_analysis_info(vertices, storage_accesses)
         
         if saco[1]!= None and storage_analysis:
 
