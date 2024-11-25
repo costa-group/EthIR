@@ -594,6 +594,7 @@ def main():
     parser.add_argument("-gastap-timeout","--gastap-timeout", help="Gastap invocation timeout", default= "60")
     parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
     parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
+    parser.add_argument("-ub-filter","--ub-filter", help="String used to select the UBs to be computed",  type=str)
 
     args = parser.parse_args()
     # if args.root_path:

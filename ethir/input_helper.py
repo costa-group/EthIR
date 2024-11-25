@@ -523,7 +523,7 @@ class InputHelper:
         if compiler_opt["optimize"] and run == -1:
             opt = "--optimize"
         elif run != -1:
-            opt = "--optimize-run " + str(run)
+            opt = "--optimize-runs=" + str(run)
 
         if viaIr:
             if opt.find("optimize") != -1:
