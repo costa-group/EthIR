@@ -271,59 +271,24 @@ def run_solidity_analysis(inputs,hashes):
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
-        try:
-            result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
-                                              disasm_file_init = inp['disasm_file_init'], 
-                                              source_map=inp['source_map'], 
-                                              source_file=inp['source'],
-                                              cfg = args.control_flow_graph,
-                                              saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
-                                              execution = 0, 
-                                              cname = inp["c_name"],
-                                              hashes = function_names,
-                                              debug = args.debug,
-                                              evm_version = evm_version_modifications,
-                                              cfile = args.cfile,svc=svc_options,
-                                              go = c_translation_opt,
-                                              mem_abs = args.mem_interval,
-                                              sto=args.storage_arrays,
-                                              opt_bytecode = (args.optimize_run or args.via_ir), 
-                                              mem_analysis = args.mem_analysis, 
-                                              storage_analysis = args.storage_analysis, 
-                                              sra_analysis = args.sra_analysis, 
-                                              compact_clones = args.compact_clones)
-            
-        except Exception as e:
-            traceback.print_exc()
 
-            if len(e.args)>1:
-                return_code = e.args[1]
-            else:
-                return_code = 1
-            result = []
-            #return_code = -1
-            print ("\n Exception: "+str(return_code)+"\n")
-            exit_code = return_code
-            
-    elif len(inputs)>1 and r:
-        for inp in inputs:
-            #print hashes[inp["c_name"]]
-            function_names = hashes[inp["c_name"]]
-            #logging.info("contract %s:", inp['contract'])
-            try:            
+        contract_name = inp["c_name"]
+
+        if (args.ub_filter == None) or (contract_name.startswith(args.ub_filter)):
+        
+            try:
                 result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
                                                   disasm_file_init = inp['disasm_file_init'], 
                                                   source_map=inp['source_map'], 
                                                   source_file=inp['source'],
                                                   cfg = args.control_flow_graph,
                                                   saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
-                                                  execution = i,
+                                                  execution = 0, 
                                                   cname = inp["c_name"],
                                                   hashes = function_names,
                                                   debug = args.debug,
                                                   evm_version = evm_version_modifications,
-                                                  cfile = args.cfile,
-                                                  svc=svc_options,
+                                                  cfile = args.cfile,svc=svc_options,
                                                   go = c_translation_opt,
                                                   mem_abs = args.mem_interval,
                                                   sto=args.storage_arrays,
@@ -332,29 +297,72 @@ def run_solidity_analysis(inputs,hashes):
                                                   storage_analysis = args.storage_analysis, 
                                                   sra_analysis = args.sra_analysis, 
                                                   compact_clones = args.compact_clones)
-                
+            
             except Exception as e:
                 traceback.print_exc()
+
                 if len(e.args)>1:
                     return_code = e.args[1]
                 else:
                     return_code = 1
-                    
                 result = []
-                # return_code = -1
+                #return_code = -1
                 print ("\n Exception: "+str(return_code)+"\n")
-            # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
-            i+=1
-            returns.append(return_code)
-            try:
-                c_source = inp['c_source']
-                c_name = inp['c_name']
-                results[c_source][c_name] = result
-            except:
-                results[c_source] = {c_name: result}
+                exit_code = return_code
+            
+    elif len(inputs)>1 and r:
+        for inp in inputs:
+            #print hashes[inp["c_name"]]
+            function_names = hashes[inp["c_name"]]
+            #logging.info("contract %s:", inp['contract'])
+            contract_name = inp["c_name"]
+            if (contract_name == None) or (contract_name.startswith(args.ub_filter)):
 
-            if return_code == 1:
-                exit_code = 1
+                try:            
+                    result, return_code = symExec.run(disasm_file=inp['disasm_file'], 
+                                                      disasm_file_init = inp['disasm_file_init'], 
+                                                      source_map=inp['source_map'], 
+                                                      source_file=inp['source'],
+                                                      cfg = args.control_flow_graph,
+                                                      saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
+                                                      execution = i,
+                                                      cname = inp["c_name"],
+                                                      hashes = function_names,
+                                                      debug = args.debug,
+                                                      evm_version = evm_version_modifications,
+                                                      cfile = args.cfile,
+                                                      svc=svc_options,
+                                                      go = c_translation_opt,
+                                                      mem_abs = args.mem_interval,
+                                                      sto=args.storage_arrays,
+                                                      opt_bytecode = (args.optimize_run or args.via_ir), 
+                                                      mem_analysis = args.mem_analysis, 
+                                                      storage_analysis = args.storage_analysis, 
+                                                      sra_analysis = args.sra_analysis, 
+                                                      compact_clones = args.compact_clones)
+                
+                except Exception as e:
+                    traceback.print_exc()
+                    if len(e.args)>1:
+                        return_code = e.args[1]
+                    else:
+                        return_code = 1
+                    
+                    result = []
+                    # return_code = -1
+                    print ("\n Exception: "+str(return_code)+"\n")
+                    # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = i,cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
+                i+=1
+                returns.append(return_code)
+                try:
+                    c_source = inp['c_source']
+                    c_name = inp['c_name']
+                    results[c_source][c_name] = result
+                except:
+                    results[c_source] = {c_name: result}
+
+                if return_code == 1:
+                    exit_code = 1
     else:
         exit_code = 1
         print("Option Error: --verify option is only applied to c translation. Use -c flag\n")
@@ -594,7 +602,7 @@ def main():
     parser.add_argument("-gastap-timeout","--gastap-timeout", help="Gastap invocation timeout", default= "60")
     parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
     parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
-    parser.add_argument("-ub-filter","--ub-filter", help="String used to select the UBs to be computed",  type=str)
+    parser.add_argument("-ub-filter","--ub-filter", help="String used to select the UBs to be computed",  type=str, dest="ub_filter")
 
     args = parser.parse_args()
     # if args.root_path:
