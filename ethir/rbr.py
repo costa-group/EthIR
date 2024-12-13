@@ -169,6 +169,9 @@ def init_globals():
 
     global set_id
     set_id = 0
+
+    global current_state_var
+    current_state_var = ""
     
 '''
 Given a block it returns a list containingn the height of its
@@ -760,6 +763,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     global new_fid
     global forget_memory
     global memory_intervals
+    global current_state_var
     # global unknown_mstore
     
     if opcode == "POP":        
@@ -844,7 +848,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
 
             if var_name == "":
                 var_name = idx
-
+                
             instr = v1+" = " + "g(" + str(var_name) + ")"
             update_field_index(str(var_name),block)
         except ValueError:
@@ -864,6 +868,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
 
             if var_name == "":
                 var_name = idx
+                current_state_var = ""
+            else:
+                current_state_var = var_name
 
             instr = "g(" + str(var_name) + ") = " + v1
             update_field_index(str(var_name),block)
@@ -1230,6 +1237,7 @@ def compile_instr(rule,evm_opcode,
                   state_vars,
                   results_sto_analysis,
                   sstore_cost,
+                  nonzero_variables,
                   sccentries,
                   component_of):
 
@@ -1313,7 +1321,6 @@ def compile_instr(rule,evm_opcode,
             set_access = r.split("->")[-1].strip()[1:-1]
             set_identifier = get_set_identifier(set_access)
 
-            
             val = get_rule_id(rule)
             candidates = list(filter(lambda x:x in component_of[val], entry_functions_with_loops))
             
@@ -1546,7 +1553,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "", sccs = None, component_of = {}):
+def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "", nonzero_variables = [], sccs = None, component_of = {}):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1627,6 +1634,7 @@ def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "",
                                             state_vars,
                                             results_sto_analysis,
                                             sstore_cost,
+                                            nonzero_variables,
                                             sccentries,
                                             component_of)
             has_lm40 = has_lm40 or is_mload40(l_instr[cont])
@@ -1882,7 +1890,7 @@ def evm2rbr_compiler(blocks_input = None,
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
                 sstore_cost = (storage_analysis[1], storage_analysis[2])
-                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,scc,component_of)
+                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,nonzero_variables,scc,component_of)
 
                 if mem_result>0:
                     mem_creation.append((block.get_start_address(),mem_result))
