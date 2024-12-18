@@ -267,7 +267,7 @@ def run_solidity_analysis(inputs,hashes):
     c_translation_opt["gotos"] = args.goto
     c_translation_opt["args"] = args.args
 
-    nonzero_vars = args.sto_nonzero.split(",")
+    nonzero_vars = args.sto_nonzero.split(",") if args.sto_nonzero != "" else []
     
     if len(inputs) == 1 and r:
         inp = inputs[0]
