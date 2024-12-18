@@ -1890,6 +1890,7 @@ def evm2rbr_compiler(blocks_input = None,
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
                 sstore_cost = (storage_analysis[1], storage_analysis[2])
+                nonzero_variables = storage_analysis[-1]
                 rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,nonzero_variables,scc,component_of)
 
                 if mem_result>0:
