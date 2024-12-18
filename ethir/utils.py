@@ -1153,9 +1153,9 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
 
         print ("TIMEOUT " + str(timeoutval))
         if storage_analysis:
-            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
+            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
         else:
-            cmd = f"timeout {timeoutval}s sh /home/groman/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
+            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
             
         FNULL = open(os.devnull, 'w')
         print(cmd)
@@ -1477,3 +1477,14 @@ def get_complete_storage_analysis_info(vertices, storage_analysis_result):
     print("ACCESSZERORES: TOTAL ZERO NON-CONCRETE ACCESSES -> "+str(num_total_zeros_nonconcrete))
     return result
 
+
+def check_nonzero_property(access_list, sto_nonzero_variables):
+    same_prop = True
+        
+    for x in access_list:
+        if x not in sto_nonzero_variables:
+            same_prop = False
+            break
+
+    return same_prop
+        

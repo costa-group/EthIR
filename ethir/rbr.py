@@ -3,7 +3,7 @@
 from rbr_rule import RBRRule
 import opcodes
 from basicblock import Tree
-from utils import getKey, orderRBR, getLevel, store_times, get_rule_id
+from utils import getKey, orderRBR, getLevel, store_times, get_rule_id, check_nonzero_property
 import os
 import saco
 import c_translation
@@ -865,13 +865,12 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             else:
                 idx = value
             var_name = state_names.get(idx,idx)
+            current_state_var = idx
 
+            
             if var_name == "":
                 var_name = idx
-                current_state_var = ""
-            else:
-                current_state_var = var_name
-
+                
             instr = "g(" + str(var_name) + ") = " + v1
             update_field_index(str(var_name),block)
         except ValueError:
@@ -1314,20 +1313,40 @@ def compile_instr(rule,evm_opcode,
             sstore_suffix = "FINAL"
         else:
             raise Exception("ERROR. SSTORE cost option is nor recognized")
-        
-        if "*" in r:
-            new_opcode_name = opcode_name+"COLD"
-        else:
-            set_access = r.split("->")[-1].strip()[1:-1]
-            set_identifier = get_set_identifier(set_access)
 
+        set_access = r.split("->")[-1].strip()[1:-1]
+        set_access_list = set_access.split(",")        
+        nonzero_prop = check_nonzero_property(set_access_list, nonzero_variables)
+
+        if nonzero_variables != []:
+            if nonzero_prop:
+                cost = "RESET"
+            else:
+                cost = "SET"
+        else:
+            if sstore_cost == "nonzero":
+                cost = "RESET"
+            elif sstore_cost == "zero":
+                cost = "SET"
+            else:
+                cost = ""
+                
+        if "*" in r:                        
+            new_opcode_name = opcode_name+cost+"COLD"
+            
+        else:
+
+            set_identifier = get_set_identifier(set_access)
+            
             val = get_rule_id(rule)
             candidates = list(filter(lambda x:x in component_of[val], entry_functions_with_loops))
-            
+
             if sstore_suffix == "COMP" and candidates == []:
                 new_opcode_name = opcode_name+sstore_suffix+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
             else:
-                new_opcode_name = opcode_name+"FINAL"+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+"WARMSET"+str(set_identifier)
+                new_opcode_name = opcode_name+"FINAL"+cost+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+cost+"WARMSET"+str(set_identifier)
+
+        print(new_opcode_name)
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:
