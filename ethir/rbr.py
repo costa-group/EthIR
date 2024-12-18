@@ -1332,7 +1332,7 @@ def compile_instr(rule,evm_opcode,
                 cost = ""
                 
         if "*" in r:                        
-            new_opcode_name = opcode_name+"COLD" if nonzero_variables == [] else opcode_name+"SETCOLD" 
+            new_opcode_name = opcode_name+cost+"COLD" if nonzero_variables == [] else opcode_name+"SETCOLD" 
             
         else:
 
