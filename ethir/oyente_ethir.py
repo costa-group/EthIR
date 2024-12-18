@@ -267,6 +267,8 @@ def run_solidity_analysis(inputs,hashes):
     c_translation_opt["gotos"] = args.goto
     c_translation_opt["args"] = args.args
 
+    nonzero_vars = args.sto_nonzero.split(",")
+    
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
@@ -295,7 +297,8 @@ def run_solidity_analysis(inputs,hashes):
                                                   opt_bytecode = (args.optimize_run or args.via_ir), 
                                                   mem_analysis = args.mem_analysis, 
                                                   storage_analysis = args.storage_analysis, 
-                                                  sra_analysis = args.sra_analysis, 
+                                                  sra_analysis = args.sra_analysis,
+                                                  nonzero_variables = nonzero_vars,
                                                   compact_clones = args.compact_clones)
             
             except Exception as e:
@@ -338,7 +341,8 @@ def run_solidity_analysis(inputs,hashes):
                                                       opt_bytecode = (args.optimize_run or args.via_ir), 
                                                       mem_analysis = args.mem_analysis, 
                                                       storage_analysis = args.storage_analysis, 
-                                                      sra_analysis = args.sra_analysis, 
+                                                      sra_analysis = args.sra_analysis,
+                                                      nonzero_variables = nonzero_vars,
                                                       compact_clones = args.compact_clones)
                 
                 except Exception as e:
@@ -601,6 +605,7 @@ def main():
     parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","final"], default= "final")
     parser.add_argument("-gastap-timeout","--gastap-timeout", help="Gastap invocation timeout", default= "60")
     parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
+    parser.add_argument("-sto-nonzero","--sto-nonzero", help="Variables that are set to nonzero values initially for saco and storage analysis",  type=str , default= "")
     parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
     parser.add_argument("-ub-filter","--ub-filter", help="String used to select the UBs to be computed",  type=str, dest="ub_filter")
 
