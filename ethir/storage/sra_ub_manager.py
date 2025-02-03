@@ -166,12 +166,21 @@ class UB_info:
 
         sto_val_cc = "c(stofinalcost)"
         sto_val_cold_cc = "c(stocoldcost)"
+
+        sto_val_set_cc = "c(stofinalset)"
+        sto_val_reset_cc = "c(stofinalreset)"
+        sto_val_set_cold_cc = "c(storesetcoldcost)"
+        sto_val_reset_cold_cc = "c(storeresetcoldcost)"
         
         try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
             ub = ub.replace(sto_val_cc,"0")
             ub = ub.replace(sto_val_cold_cc, "0")
+            ub = ub.replace(sto_val_set_cc,"0")
+            ub = ub.replace(sto_val_set_cold_cc, "0")
+            ub = ub.replace(sto_val_reset_cc,"0")
+            ub = ub.replace(sto_val_reset_cold_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','1',ub)
             ub = re.sub('(c\(load.*?\))','0',ub)
@@ -205,11 +214,21 @@ class UB_info:
         sto_val_cc = "c(stofinalcost)"
         sto_val_cold_cc = "c(stocoldcost)"
         
+        sto_val_set_cc = "c(stofinalset)"
+        sto_val_reset_cc = "c(stofinalreset)"
+        sto_val_set_cold_cc = "c(storesetcoldcost)"
+        sto_val_reset_cold_cc = "c(storeresetcoldcost)"
+
+        
         try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
             ub = ub.replace(sto_val_cc,"0")
             ub = ub.replace(sto_val_cold_cc, "0")
+            ub = ub.replace(sto_val_set_cc,"0")
+            ub = ub.replace(sto_val_set_cold_cc, "0")
+            ub = ub.replace(sto_val_reset_cc,"0")
+            ub = ub.replace(sto_val_reset_cold_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','0',ub)
             ub = re.sub('(c\(load.*?\))','1',ub)
@@ -241,12 +260,21 @@ class UB_info:
 
         sto_val_cc = "c(stofinalcost)"
         sto_val_cold_cc = "c(stocoldcost)"
+
+        sto_val_set_cc = "c(stofinalset)"
+        sto_val_reset_cc = "c(stofinalreset)"
+        sto_val_set_cold_cc = "c(storesetcoldcost)"
+        sto_val_reset_cold_cc = "c(storeresetcoldcost)"
         
         try:
             ## Computing gas ub
             ub = origub.replace("c(g)","0")
             ub = ub.replace(sto_val_cc,"0")
             ub = ub.replace(sto_val_cold_cc, "0")
+            ub = ub.replace(sto_val_set_cc,"0")
+            ub = ub.replace(sto_val_set_cold_cc, "0")
+            ub = ub.replace(sto_val_reset_cc,"0")
+            ub = ub.replace(sto_val_reset_cold_cc, "0")
             ub = re.sub('(c\([ft].*?\))','0',ub)
             ub = re.sub('(c\(store.*?\))','0',ub)
             ub = re.sub('(c\(load.*?\))','0',ub)
@@ -275,19 +303,25 @@ class UB_info:
 
     def __eval_gas_ub (self, origub, params, function, sto_init_cost):
 
-        sto_val = "10050" if sto_init_cost == "zero" else "1500"
+        sto_val_set = "10050" 
+        sto_val_reset = "1500"
         # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
-        sto_val_cc = "c(stofinalcost)"
+        sto_val_set_cc = "c(stofinalset)"
+        sto_val_reset_cc = "c(stofinalreset)"
         
-        stocold_val = "22100" if sto_init_cost == "zero" else "3000"
+        stocold_val_set = "22100"
+        stocold_val_reset = "3000"
         # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
-        sto_val_cold_cc = "c(stocoldcost)"
+        sto_val_cold_set_cc = "c(storesetcoldcost)"
+        sto_val_cold_reset_cc = "c(storeresetcoldcost)"
         
         try:
             ## Computing gas ub
             ub = origub.replace("c(g)","1")
-            ub = ub.replace(sto_val_cc, sto_val)
-            ub = ub.replace(sto_val_cold_cc, stocold_val)
+            ub = ub.replace(sto_val_set_cc, sto_val_set)
+            ub = ub.replace(sto_val_reset_cc, sto_val_reset)
+            ub = ub.replace(sto_val_cold_set_cc, stocold_val_set)
+            ub = ub.replace(sto_val_cold_reset_cc, stocold_val_reset)
             ub = re.sub('(c\([fstl].*?\))','0',ub)
             ub = ub.replace("max", "mymax")
             ub = ub.replace("[","")
@@ -315,6 +349,9 @@ class UB_info:
         
         return ub
 
+    
+
+    
     def __eval_niter_ub(self, origub, params, scc, function, sto_init_cost): 
 
         # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
