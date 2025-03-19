@@ -4,7 +4,7 @@ import sympy
 from storage.traverse_cfg import traverse_cfg
 from storage.cold import compute_stores, compute_stores_final
 from storage.sra_ub_manager import SRA_UB_manager
-from utils import get_function_hash, run_gastap
+from utils import get_function_hash, run_gastap_all
 from timeit import default_timer as dtimer
 from storage.cold import compute_accesses as compute_accesses_cold, compute_stores, compute_stores_final
 import global_params_ethir
@@ -72,7 +72,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux, has_storage, component_of_blocks)
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
+    outputs, ubs, params, times = run_gastap_all(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
 
     items = list(function_block_map.items())
             
@@ -206,7 +206,7 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
     # input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     input_blocks = input_blocks_aux
     
-    outputs, ubs, params, times = run_gastap(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
+    outputs, ubs, params, times = run_gastap_all(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
     
     items = list(function_block_map.items())
     

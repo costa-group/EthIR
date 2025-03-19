@@ -1127,7 +1127,9 @@ def compute_gas(vertices):
     return gas
 
 
-def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 90, source_file = None,  sstore_cost = "zero"):
+
+
+def run_gastap_all(contract_name, entry_functions, storage_analysis = False, gastap_op = "all", timeoutval = 90, source_file = None,  sstore_cost = "zero"):
 
     outputs = []
     ubs = {}
@@ -1142,36 +1144,17 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
         ethir_mem_op = "yes"
     else:
         raise Exception("Unrecognized option for GASTAP")
+
+    sourceparam = ""
+    if source_file: 
+        sourceparam = "-solfilename " + str(source_file)
     
     for bl in entry_functions:
-        
-        # if contract_name != "BrunableCrowdsaleToken" or bl != "block3109":
-        #     continue
-        sourceparam = ""
-        if source_file: 
-            sourceparam = "-solfilename " + str(source_file)
-
-        print ("TIMEOUT " + str(timeoutval))
-        if storage_analysis:
-            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
-        else:
-            cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(bl) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
-            
-        FNULL = open(os.devnull, 'w')
-        print(cmd)
-
-        x = dtimer()
-        try: 
-            solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-            out = solc_p.communicate()[0].decode()
-
-            if solc_p.returncode == 124:
-                raise subprocess.TimeoutExpired("",str(timeoutval))
-            elif solc_p.returncode == 2:
-                raise Exception("execerror")
-            
+        try:
+            x = dtimer()
+            out = run_gastap(contract_name, bl,timeoutval, ethir_mem_op, storage_analysis, sourceparam, sstore_cost)
             y = dtimer()
-
+        
             times[bl] = y-x
 
             outputs.append(out)
@@ -1196,6 +1179,27 @@ def run_gastap(contract_name, entry_functions, storage_analysis = False, gastap_
     return outputs, ubs, ub_params, times
 
 
+def run_gastap(contract_name, block_id, timeoutval, ethir_mem_op, storage_analysis, sourceparam, sstore_cost):
+    print ("TIMEOUT " + str(timeoutval))
+    if storage_analysis:
+        cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
+    else:
+        cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
+            
+    FNULL = open(os.devnull, 'w')
+    print(cmd)
+
+
+    solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
+    out = solc_p.communicate()[0].decode()
+
+    if solc_p.returncode == 124:
+        raise subprocess.TimeoutExpired("",str(timeoutval))
+    elif solc_p.returncode == 2:
+        raise Exception("execerror")
+            
+    return out
+    
 # def filter_ub(out):
 #     res = re.search("Total UB for .*",out)    
 #     if res: 
