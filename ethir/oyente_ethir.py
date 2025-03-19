@@ -275,7 +275,6 @@ def run_solidity_analysis(inputs,hashes):
         # result, return_code = symExec.run(disasm_file=inp['disasm_file'], source_map=inp['source_map'], source_file=inp['source'],cfg = args.control_flow_graph,saco = args.saco,execution = 0, cname = inp["c_name"],hashes = function_names,debug = args.debug,evm_version = evm_version_modifications,cfile = args.cfile,svc=svc_options,go = args.goto)
 
         contract_name = inp["c_name"]
-
         if (args.ub_filter == None) or (contract_name.startswith(args.ub_filter)):
         
             try:
@@ -318,7 +317,9 @@ def run_solidity_analysis(inputs,hashes):
             #print hashes[inp["c_name"]]
             function_names = hashes[inp["c_name"]]
             #logging.info("contract %s:", inp['contract'])
+
             contract_name = inp["c_name"]
+
             if (contract_name == None) or (contract_name.startswith(args.ub_filter)):
 
                 try:            
@@ -607,7 +608,7 @@ def main():
     parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
     parser.add_argument("-sto-nonzero","--sto-nonzero", help="Variables that are set to nonzero values initially for saco and storage analysis",  type=str , default= "")
     parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
-    parser.add_argument("-ub-filter","--ub-filter", help="String used to select the UBs to be computed",  type=str, dest="ub_filter")
+    parser.add_argument("-ub-filter","--ub-filter", help="String used to select the UBs to be computed",  type=str, dest="ub_filter", default = "")
 
     args = parser.parse_args()
     # if args.root_path:
