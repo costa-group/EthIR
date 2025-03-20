@@ -169,8 +169,8 @@ class UB_info:
 
         sto_val_set_cc = "c(stofinalset)"
         sto_val_reset_cc = "c(stofinalreset)"
-        sto_val_set_cold_cc = "c(storesetcoldcost)"
-        sto_val_reset_cold_cc = "c(storeresetcoldcost)"
+        sto_val_set_cold_cc = "c(stosetcoldcost)"
+        sto_val_reset_cold_cc = "c(storesetcoldcost)"
         
         try:
             ## Computing gas ub
@@ -216,8 +216,8 @@ class UB_info:
         
         sto_val_set_cc = "c(stofinalset)"
         sto_val_reset_cc = "c(stofinalreset)"
-        sto_val_set_cold_cc = "c(storesetcoldcost)"
-        sto_val_reset_cold_cc = "c(storeresetcoldcost)"
+        sto_val_set_cold_cc = "c(stosetcoldcost)"
+        sto_val_reset_cold_cc = "c(storesetcoldcost)"
 
         
         try:
@@ -263,8 +263,8 @@ class UB_info:
 
         sto_val_set_cc = "c(stofinalset)"
         sto_val_reset_cc = "c(stofinalreset)"
-        sto_val_set_cold_cc = "c(storesetcoldcost)"
-        sto_val_reset_cold_cc = "c(storeresetcoldcost)"
+        sto_val_set_cold_cc = "c(stosetcoldcost)"
+        sto_val_reset_cold_cc = "c(storesetcoldcost)"
         
         try:
             ## Computing gas ub
@@ -312,8 +312,8 @@ class UB_info:
         stocold_val_set = "22100"
         stocold_val_reset = "3000"
         # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
-        sto_val_cold_set_cc = "c(storesetcoldcost)"
-        sto_val_cold_reset_cc = "c(storeresetcoldcost)"
+        sto_val_cold_set_cc = "c(stosetcoldcost)"
+        sto_val_cold_reset_cc = "c(storesetcoldcost)"
         
         try:
             ## Computing gas ub
