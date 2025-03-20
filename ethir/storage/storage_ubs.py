@@ -10,7 +10,7 @@ from storage.cold import compute_accesses as compute_accesses_cold, compute_stor
 import global_params_ethir
 
 ## Computes the cost of the correction of sstore instructions
-def compute_sstore_cost(result, smt_option, initial_value):
+def compute_sstore_cost(result, smt_option):
 
     store_correction_lower = 1400
     store_correction_upper = 9950
@@ -138,7 +138,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                     try:
                         x = dtimer()
 
-                        (cost_sstores_lower,cost_sstores_upper) = compute_sstore_cost(result,smt_option, initial_storage)
+                        (cost_sstores_lower,cost_sstores_upper) = compute_sstore_cost(result,smt_option)
 
                         y = dtimer()
 
