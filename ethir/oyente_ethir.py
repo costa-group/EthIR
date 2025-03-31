@@ -151,8 +151,8 @@ def check_optimize_dependencies():
 
 def check_standard_json_input():
     #It echsk that no optimization options are enabled when standard-json options has been selected
-
-    return args.optimize_run == None and args.run == None and args.via_ir == None
+    
+    return not args.optimize_run and args.run == -1 and not args.via_ir
     
 
 #Added by Pablo Gordillo 
@@ -573,12 +573,11 @@ def main():
 
     group.add_argument("-s",  "--source",    type=str, help="local source file name. Solidity by default. Use -b to process evm instead. Use stdin to read from stdin.")
     
-    parser.add_argument("-standard-json", "--standard-json", help="read standard json instead of solidity file", action="store", dest="standard_json")
     # parser.add_argument("--version", action="version", version="EthIR version 1.0.7 - Commonwealth")
     parser.add_argument("-glt", "--global-timeout", help="Timeout for symbolic execution", action="store", dest="global_timeout", type=int)
     parser.add_argument( "-e",   "--evm",                    help="Do not remove the .evm file.", action="store_true")
     parser.add_argument( "-b",   "--bytecode",               help="read bytecode in source instead of solidity file", action="store_true")
-    
+    parser.add_argument( "-standard-json", "--standard-json",                 help="read standard-json file instead of solidity file", action="store_true")
     #Added by Pablo Gordillo
     parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
     parser.add_argument( "-in", "--init",        help="Consider the initialization of the fields", action="store_true")
@@ -685,6 +684,7 @@ def main():
     elif args.standard_json:
         valid = check_standard_json_input()
         if not valid:
+            print("[ERROR]: Optimization options has to be specified in standard-json-format")
             exit(1)
         exit_code = analyze_solidity(input_type='standard_json')
     # elif args.standard_json_output:
