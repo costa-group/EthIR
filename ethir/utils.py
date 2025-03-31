@@ -1148,7 +1148,7 @@ def run_gastap_all(contract_name, entry_functions, storage_analysis = False, gas
     sourceparam = ""
     if source_file: 
         sourceparam = "-solfilename " + str(source_file)
-    
+
     for bl in entry_functions:
         try:
             x = dtimer()

@@ -472,8 +472,6 @@ def run_solidity_analysis_optimized(inp,hashes):
 def analyze_solidity(input_type='solidity'):
     global args
 
-    print("Entramos por aqui")
-
     x = dtimer()
     is_runtime = not(args.init)
 
