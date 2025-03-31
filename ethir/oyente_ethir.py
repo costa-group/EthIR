@@ -578,6 +578,8 @@ def main():
     parser.add_argument( "-e",   "--evm",                    help="Do not remove the .evm file.", action="store_true")
     parser.add_argument( "-b",   "--bytecode",               help="read bytecode in source instead of solidity file", action="store_true")
     parser.add_argument( "-standard-json", "--standard-json",                 help="read standard-json file instead of solidity file", action="store_true")
+    parser.add_argument( "-allow-paths", "--allow-paths",                 help="Allow a given path for imports in standard-json-mode", action="store", default = "")
+
     #Added by Pablo Gordillo
     parser.add_argument( "-disasm", "--disassembly",        help="Consider a dissasembly evm file directly", action="store_true")
     parser.add_argument( "-in", "--init",        help="Consider the initialization of the fields", action="store_true")
