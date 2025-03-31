@@ -149,6 +149,12 @@ def check_optimize_dependencies():
 
     return r
 
+def check_standard_json_input():
+    #It echsk that no optimization options are enabled when standard-json options has been selected
+
+    return args.optimize_run == None and args.run == None and args.via_ir == None
+    
+
 #Added by Pablo Gordillo 
 '''
 We believe that source is a dissasembly evm file
@@ -268,7 +274,7 @@ def run_solidity_analysis(inputs,hashes):
     c_translation_opt["args"] = args.args
 
     nonzero_vars = args.sto_nonzero.split(",") if args.sto_nonzero != "" else []
-    
+   
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
@@ -566,7 +572,8 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument("-s",  "--source",    type=str, help="local source file name. Solidity by default. Use -b to process evm instead. Use stdin to read from stdin.")
-
+    
+    parser.add_argument("-standard-json", "--standard-json", help="read standard json instead of solidity file", action="store", dest="standard_json")
     # parser.add_argument("--version", action="version", version="EthIR version 1.0.7 - Commonwealth")
     parser.add_argument("-glt", "--global-timeout", help="Timeout for symbolic execution", action="store", dest="global_timeout", type=int)
     parser.add_argument( "-e",   "--evm",                    help="Do not remove the .evm file.", action="store_true")
@@ -675,8 +682,11 @@ def main():
         exit_code = analyze_disasm_bytecode()
     elif args.bytecode:
         exit_code = analyze_bytecode()
-    # elif args.standard_json:
-    #     exit_code = analyze_solidity(input_type='standard_json')
+    elif args.standard_json:
+        valid = check_standard_json_input()
+        if not valid:
+            exit(1)
+        exit_code = analyze_solidity(input_type='standard_json')
     # elif args.standard_json_output:
     #     exit_code = analyze_solidity(input_type='standard_json_output')
     elif hashes_cond(args):
