@@ -91,7 +91,7 @@ class InputHelper:
                 inputs.append({'disasm_file': disasm_file})
         else:
             self.solc_version = self._get_solidity_version()
-
+            
             contracts = self._get_compiled_contracts()
             asm_json = self.asm_contracts
 
@@ -226,16 +226,19 @@ class InputHelper:
 
         solc = get_solc_executable(self.solc_version)
 
-        cmd = solc + " --allow-paths %s --standard-json" % self.allow_paths
-
+        # cmd = solc + " --allow-paths %s --standard-json" % self.allow_paths
+        cmd = solc + " --standard-json %s" % self.source
+        
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0]
+        print(out)
         with open('standard_json_output', 'w') as of:
             of.write(out)
 
-        return self._compile_standard_json_output('standard_json_output')
-
+        prueba = self._compile_standard_json_output('standard_json_output')
+        return prueba
+    
     def _compile_standard_json_output(self, json_output_file):
         with open(json_output_file, 'r') as f:
             out = f.read()
