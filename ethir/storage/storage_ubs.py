@@ -10,7 +10,7 @@ from storage.cold import compute_accesses as compute_accesses_cold, compute_stor
 import global_params_ethir
 
 ## Computes the cost of the correction of sstore instructions
-def compute_sstore_cost(result, smt_option):
+def compute_sstore_cost(result, smt_option, nonzero_variables):
 
     store_correction_lower = 1400
     store_correction_upper = 9950
@@ -18,20 +18,20 @@ def compute_sstore_cost(result, smt_option):
 
     try:
         if smt_option == "final":
-            a = compute_stores_final(result)
+            a = compute_stores_final(result, nonzero_vars = nonzero_variables)
             if a == -1:
                 raise Exception()
             cost_lower = sympy.simplify(a * store_correction_lower)
             cost_upper = sympy.simplify(a * store_correction_upper)
         elif smt_option == "complete":
             if str(result).find("['r',") != -1:
-                a = compute_stores_final(result)
+                a = compute_stores_final(result, nonzero_vars = nonzero_variables)
                 if (a == -1):
                     raise Exception()
                 cost_lower = sympy.simplify(a * store_correction_lower)
                 cost_upper = sympy.simplify(a * store_correction_upper)
             else:
-                (a, b) = compute_stores(result)
+                (a, b) = compute_stores(result, nonzero_vars = nonzero_variables)
                 if (a == -1):
                     raise Exception()
                 cost_lower = sympy.simplify(a * (store_correction_lower+warm_correction) + b * store_correction_lower)
@@ -59,7 +59,7 @@ def compute_entry_functions_with_storage_instructions(input_blocks_aux, has_stor
     input_blocks = sorted(list(input_blocks))
     return input_blocks
 
-def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes):
+def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function):
 
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
@@ -68,7 +68,10 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
 
     print(f"Tengo initial storage a {initial_storage}")
 
-    input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
+    if ub_filter_function != None:
+        input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(ub_filter_function)]
+    else:
+        input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
     input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux, has_storage, component_of_blocks)
     
@@ -138,7 +141,7 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
                     try:
                         x = dtimer()
 
-                        (cost_sstores_lower,cost_sstores_upper) = compute_sstore_cost(result,smt_option)
+                        (cost_sstores_lower,cost_sstores_upper) = compute_sstore_cost(result,smt_option, nonzero_variables)
 
                         y = dtimer()
 
@@ -196,13 +199,16 @@ def compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,s
             print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
 
 
-def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes):
+def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes, ub_filter_function):
     gastap_op = saco[1]
     timeoutvalue = saco[3]
 
+    if ub_filter_function != None:
+        input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(ub_filter_function)]
+    else:
+        input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
-    input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
-
+    
     # input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux)
     input_blocks = input_blocks_aux
     
