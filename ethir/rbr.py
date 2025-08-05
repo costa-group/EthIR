@@ -1318,15 +1318,17 @@ def compile_instr(rule,evm_opcode,
         set_access_list = set_access.split(",")        
         nonzero_prop = check_nonzero_property(set_access_list, nonzero_variables)
 
+        ssto_cost = sstore_cost[2]
+        
         if nonzero_variables != []:
             if nonzero_prop:
                 cost = "RESET"
             else:
                 cost = "SET"
         else:
-            if sstore_cost == "nonzero":
+            if ssto_cost == "nonzero":
                 cost = "RESET"
-            elif sstore_cost == "zero":
+            elif ssto_cost == "zero":
                 cost = "SET"
             else:
                 cost = ""
@@ -1908,7 +1910,7 @@ def evm2rbr_compiler(blocks_input = None,
 
             #if block.get_start_address() not in to_clone:
                 forget_memory = False
-                sstore_cost = (storage_analysis[1], storage_analysis[2])
+                sstore_cost = (storage_analysis[1], storage_analysis[2], storage_analysis[3])
                 nonzero_variables = storage_analysis[-1]
                 rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,nonzero_variables,scc,component_of)
 
