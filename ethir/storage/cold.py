@@ -881,7 +881,7 @@ def compute_accesses(spositions,verbose = False):
             print(os.path.basename(f),'Error')
         return (-1,0)
 
-def compute_stores(spositions,verbose = False):
+def compute_stores(spositions, nonzero_vars = [], verbose = False):
     assert(isinstance(spositions,list))
 
     ap = Access_Problem()
@@ -909,7 +909,7 @@ def compute_stores(spositions,verbose = False):
             print(os.path.basename(f),'Error')
         return (-1,0)
 
-def compute_stores_final(spositions,verbose = False):
+def compute_stores_final(spositions, nonzero_vars = [], verbose = False):
     assert(isinstance(spositions,list))
 
     ap = Access_Problem()
@@ -971,12 +971,12 @@ if __name__ == '__main__':
         myfile = open(f)
         spositions = json.load(myfile)
         if action == 'store':
-            compute_stores(spositions,True)
+            compute_stores(spositions,[], True)
 #            (s,es1) = compute_stores(spositions)
 #            es2 = compute_stores_final(spositions)
 #            print(os.path.basename(f),s,es1,es2)
         elif action == 'final':
-            compute_stores_final(spositions,True)
+            compute_stores_final(spositions,[],True)
         else:
             compute_accesses(spositions,True)
     exit(0)
