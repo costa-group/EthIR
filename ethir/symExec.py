@@ -3701,6 +3701,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
         
     else:
         log.debug("UNKNOWN INSTRUCTION: " + opcode)
+        print(opcode)
         print("UNKNOWN : "+source_n)
         raise Exception('UNKNOWN INSTRUCTION: ' + opcode)
 
@@ -4243,7 +4244,8 @@ def run(disasm_file=None,
         storage_analysis = None, 
         sra_analysis = None,
         nonzero_variables = [],
-        compact_clones = False):    
+        compact_clones = False,
+        ub_filter_function = None):    
     
     global g_disasm_file
     global g_source_file
@@ -4486,13 +4488,13 @@ def run(disasm_file=None,
         
         if saco[1]!= None and storage_analysis:
 
-            compute_cost_with_storage_analysis(saco,cname,source_file,storage_analysis,storage_accesses,scc,rel, function_block_map, has_storage,  component_of_blocks, vertices, f_hashes)
+            compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage,  component_of_blocks, vertices, f_hashes, ub_filter_function)
                 
             # raise Exception
 
         elif saco[1] != None: #without storage_analysis
 
-            compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes)
+            compute_cost_without_storage_analysis(cname, source_file, storage_analysis, saco, function_block_map, f_hashes, ub_filter_function)
             
         if opt!= None:
         # fields = ["field1","field2"]
