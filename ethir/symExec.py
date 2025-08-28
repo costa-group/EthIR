@@ -37,7 +37,7 @@ import rbr
 
 from clone import compute_cloning
 
-from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, compute_join_conditionals, get_blocks_per_function, get_function_hash, compute_gas, get_complete_storage_analysis_info
+from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fields, getLevel, update_sstore_map,correct_map_fields1, get_push_value, get_initial_block_address, check_graph_consistency, find_first_closing_parentheses, check_if_same_stack, is_integer, isReal, isAllReal, to_symbolic, isSymbolic, ceil32, custom_deepcopy, to_unsigned, get_uncalled_blocks, getKey,compute_stack_size, to_signed, compute_join_conditionals, get_blocks_per_function, get_function_hash, compute_gas, get_complete_storage_analysis_info, translate_nonzero_variables
 
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
@@ -4459,6 +4459,11 @@ def run(disasm_file=None,
         gas = compute_gas(vertices)
         print("GAS for " + str(cname) + ": " + str(gas))
         print("BLOCKS for " + str(cname) + ": " + str(len(vertices)))
+
+        if nonzero_variables != []:
+            nonzero_variables = translate_nonzero_variables(nonzero_variables, mapping_state_variables)
+
+        print(nonzero_variables)
         
         if not is_mem_analysis:
             storage_accesses = None

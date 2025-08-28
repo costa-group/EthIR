@@ -1492,3 +1492,16 @@ def check_nonzero_property(access_list, sto_nonzero_variables):
 
     return same_prop
         
+
+#nonzero_variables contains a list with the hexadecimal index of the state variable access
+# mapping_state_variables contains a dict that maps each index (decimal) with the name of the corresponding state variable
+def translate_nonzero_variables(nonzero_variables, mapping_state_variables):
+    new_list = []
+    for variable in nonzero_variables:
+        int_val = int(variable,16)
+
+        var_name = mapping_state_variables.get(str(int_val), int_val)
+
+        new_list.append(var_name)
+
+    return new_list
