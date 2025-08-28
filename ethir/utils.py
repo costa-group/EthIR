@@ -1183,6 +1183,7 @@ def run_gastap(contract_name, block_id, timeoutval, ethir_mem_op, storage_analys
     print ("TIMEOUT " + str(timeoutval))
     if storage_analysis:
         cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
+        #print(cmd)
     else:
         cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
             
@@ -1500,8 +1501,8 @@ def translate_nonzero_variables(nonzero_variables, mapping_state_variables):
     for variable in nonzero_variables:
         int_val = int(variable,16)
 
-        var_name = mapping_state_variables.get(str(int_val), int_val)
+        # var_name = mapping_state_variables.get(str(int_val), int_val)
 
-        new_list.append(var_name)
+        new_list.append(str(int_val))
 
     return new_list
