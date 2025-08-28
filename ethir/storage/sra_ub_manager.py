@@ -357,18 +357,22 @@ class UB_info:
         # sto_val_cc = "c(stofinalzero)" if sto_init_cost == "zero" else "c(stofinalnonzero)"
         # sto_val_cold_cc = "c(stocoldzero)" if sto_init_cost == "zero" else "c(stocoldnonzero)"
 
-        sto_val_cc = "c(stofinalcost)"
-        sto_val_cold_cc = "c(stocoldcost)"
-        
-        try:         
-            ntimesub = self.__eval_ub_cc(origub, params, "t_"+str(scc), sto_val_cc, sto_val_cold_cc, "-1")
-            ncallsub = self.__eval_ub_cc(origub, params, "f_"+str(scc), sto_val_cc, sto_val_cold_cc)
+        sto_val_set_cc = "c(stofinalset)"
+        sto_val_reset_cc = "c(stofinalreset)"
+        sto_val_cold_set_cc = "c(stosetcoldcost)"
+        sto_val_cold_reset_cc = "c(storesetcoldcost)"
+
+        try:
+            scc_rep = scc.replace("_","")
+            ntimesub = self.__eval_ub_cc(origub, params, "t_"+scc_rep, (sto_val_set_cc, sto_val_reset_cc), (sto_val_cold_set_cc, sto_val_cold_reset_cc), "-1")
+            ncallsub = self.__eval_ub_cc(origub, params, "f_"+scc_rep, (sto_val_set_cc, sto_val_reset_cc), (sto_val_cold_set_cc, sto_val_cold_reset_cc))
             params = symbols(self.__filter_variables(params))
             param_dict = {str(p): p for p in params}
             locals().update(param_dict)
 
             ub = "({})/({})".format(ntimesub,ncallsub)
-            # try:  
+            # try:
+            print(ub)
             ub = eval(ub)
             # except:
             #     print("GASTAPERROR: ERROR in eval ub")
@@ -382,8 +386,12 @@ class UB_info:
     def __eval_ub_cc(self,origub,params,cc, sto_val_cc, sto_val_cold_cc, addtoub=""): 
 #        try: 
         ub = origub.replace("c(g)","0")
-        ub = ub.replace(sto_val_cc, "0")
-        ub = ub.replace(sto_val_cold_cc, "0")
+        for cc_sto in sto_val_cc:
+            ub = ub.replace(cc_sto, "0")
+     
+        for cc_sto in sto_val_cold_cc:
+            ub = ub.replace(cc_sto, "0")
+
         ub = ub.replace("c(" + cc + ")","1")
         ub = re.sub('(c\([fstl].*?\))','0',ub)
 
