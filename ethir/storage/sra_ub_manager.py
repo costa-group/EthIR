@@ -116,8 +116,9 @@ class UB_info:
             self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function, sto_init_cost)
             self.sstore_accesses = self.__eval_sstore_ub(origub, params, function, sto_init_cost)
             self.sload_accesses = self.__eval_sload_ub(origub,params, function, sto_init_cost)
+            
             for scc in sccs:  
-                ub = self.__eval_niter_ub(origub, params, scc,function, sto_init_cost)
+                ub = self.__eval_niter_ub(origub, params, str(scc),function, sto_init_cost)
                 ub = ub.strip()
                 self.ubscc[scc] = ub
                 ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
@@ -372,12 +373,13 @@ class UB_info:
 
             ub = "({})/({})".format(ntimesub,ncallsub)
             # try:
-            print(ub)
+
             ub = eval(ub)
             # except:
             #     print("GASTAPERROR: ERROR in eval ub")
             #     ub = 0
         except:
+            traceback.print_exc()
             print(f"WARN: Error in evaluating UB (niter) of {function}: {origub}")
             ub = "unknown"
 
@@ -388,7 +390,9 @@ class UB_info:
         ub = origub.replace("c(g)","0")
         for cc_sto in sto_val_cc:
             ub = ub.replace(cc_sto, "0")
-     
+
+        print(ub)
+            
         for cc_sto in sto_val_cold_cc:
             ub = ub.replace(cc_sto, "0")
 
