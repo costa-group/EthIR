@@ -59,7 +59,7 @@ def compute_entry_functions_with_storage_instructions(input_blocks_aux, has_stor
     input_blocks = sorted(list(input_blocks))
     return input_blocks
 
-def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function):
+def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function_hash):
 
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
@@ -67,7 +67,12 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     initial_storage = saco[4] # It could be a list of non-zero acceses separated by ","
 
     print(f"Tengo initial storage a {initial_storage}")
-
+    
+    ub_filter_function = f_hashes.get(ub_filter_function_hash.strip("0x"), None)
+    
+    if ub_filter_function == None and ub_filter_function_hash != "":
+        raise Exception("Error in filter function")
+    
     if ub_filter_function != None:
         input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(ub_filter_function)]
     else:
