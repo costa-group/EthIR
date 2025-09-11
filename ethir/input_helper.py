@@ -10,7 +10,7 @@ import uuid
 from typing import List, Dict, Tuple
 from source_map import SourceMap
 from utils import run_command, get_solc_executable, get_solidity_version_from_solc
-
+from solc_compilation import select_and_set_solc_version
 
 class InputHelper:
     BYTECODE = 0
@@ -186,6 +186,9 @@ class InputHelper:
     def _compile_solidity_runtime(self):
         solc = get_solc_executable(self.solc_version)
 
+        select_and_set_solc_version(self.source)
+
+        
         options = ""
         options = self._get_optimize_options()
 

@@ -9,7 +9,7 @@ def get_available_versions():
     """
     Devuelve la lista de versiones instalables con solc-select.
     """
-    result = subprocess.run(["solc-select", "install", "--list"],
+    result = subprocess.run(["solc-select", "versions"],
                             capture_output=True, text=True, check=True)
     versions = []
     for line in result.stdout.splitlines():
@@ -67,7 +67,7 @@ def set_solc_version(version: str):
     print(f"Usando solc {version}")
 
 
-def compile_contract(contract_path: str):
+def select_and_set_solc_version(contract_path: str):
     """
     Compila un contrato usando solc.
     Devuelve ABI y bytecode.
@@ -75,12 +75,12 @@ def compile_contract(contract_path: str):
     version = get_solc_version(contract_path)
     set_solc_version(version)
 
-    result = subprocess.run(
-        ["solc", "--combined-json", "abi,bin", contract_path],
-        capture_output=True, text=True, check=True
-    )
+    # result = subprocess.run(
+    #     ["solc", "--combined-json", "abi,bin", contract_path],
+    #     capture_output=True, text=True, check=True
+    # )
 
-    return result.stdout
+    # return result.stdout
 
 
 if __name__ == "__main__":

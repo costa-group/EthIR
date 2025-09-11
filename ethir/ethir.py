@@ -616,6 +616,7 @@ def main():
     parser.add_argument("-initial-storage","--initial-storage", help="Initial value of storage locations for gas estimation",  type=str , default= "zero")
     parser.add_argument("-sto-nonzero","--sto-nonzero", help="Variables that are set to nonzero values initially for saco and storage analysis",  type=str , default= "")
     parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
+    parser.add_argument("-solc-select", "--solc-select",             help="It chooses solc-select to decide automatically which solc version works", action="store_true")
     parser.add_argument("-ub-filter-c","--ub-filter-contract", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_contract", default = "")
     parser.add_argument("-ub-filter-f","--ub-filter-fucntion", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_function", default = "")
     
