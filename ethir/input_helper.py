@@ -28,7 +28,8 @@ class InputHelper:
                 'runtime': True,
                 'solc_version': "v8",
                 'opt_options': {},
-                'tmp_path': global_params_ethir.tmp_path
+                'tmp_path': global_params_ethir.tmp_path,
+                'solc_select': False
             }
         elif input_type == InputHelper.SOLIDITY:
             attr_defaults = {
@@ -39,7 +40,8 @@ class InputHelper:
                 'compiled_contracts': [],
                 'solc_version': "v8",
                 'opt_options': {},
-                'tmp_path': global_params_ethir.tmp_path
+                'tmp_path': global_params_ethir.tmp_path,
+                'solc_select': False
             }
         elif input_type == InputHelper.STANDARD_JSON:
             attr_defaults = {
@@ -51,7 +53,8 @@ class InputHelper:
                 'compiled_contracts': [],
                 'solc_version': "v8",
                 'opt_options': {},
-                'tmp_path': global_params_ethir.tmp_path
+                'tmp_path': global_params_ethir.tmp_path,
+                'solc_select': False
             }
         elif input_type == InputHelper.STANDARD_JSON_OUTPUT:
             attr_defaults = {
@@ -62,7 +65,8 @@ class InputHelper:
                 'compiled_contracts': [],
                 'solc_version': "v8",
                 'opt_options': {},
-                'tmp_path': global_params_ethir.tmp_path, 
+                'tmp_path': global_params_ethir.tmp_path,
+                'solc_select': False 
             }
 
         for (attr, default) in six.iteritems(attr_defaults):
@@ -73,7 +77,7 @@ class InputHelper:
                 setattr(self, attr, val)
 
         self.solc_version = self._get_solidity_version()
-
+        
         self.init_compiled_contracts = []
         self.aux_path = "ethir_" + uuid.uuid4().hex
         os.mkdir(global_params_ethir.tmp_path + self.aux_path)
@@ -106,10 +110,10 @@ class InputHelper:
                 for contract_init, _ in contracts_init:
                     if self.input_type == InputHelper.SOLIDITY:
                         # AQUI
-                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.root_path,
+                        source_map_init = SourceMap(contract_init, self.source, 'solidity', self.solc_select, self.root_path,
                                                     self.solc_version)  # if self.solc_version != "v8" else None
                     else:
-                        source_map_init = SourceMap(contract_init, self.source, 'standard json', self.root_path)
+                        source_map_init = SourceMap(contract_init, self.source, 'standard json', self.solc_select, self.root_path)
 
             else:
                 source_map_init = None
@@ -119,11 +123,10 @@ class InputHelper:
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
                     # AQUI
-                    print(contract)
-                    source_map = SourceMap(contract, self.source, 'solidity', self.root_path,
+                    source_map = SourceMap(contract, self.source, 'solidity', self.solc_select, self.root_path,
                                            self.solc_version)  # if self.solc_version != "v8" else None
                 else:
-                    source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
+                    source_map = SourceMap(contract, self.source, 'standard json', self.solc_select, self.root_path)
 
                 disasm_file = self._get_temporary_files(contract)['disasm']
                 if not self.runtime:
@@ -184,16 +187,21 @@ class InputHelper:
         return self.compiled_contracts
 
     def _compile_solidity_runtime(self):
-        solc = get_solc_executable(self.solc_version)
+        
+        if self.solc_select:
+            version = select_and_set_solc_version(self.source)
+            self.sol_version = "v"+str(version)
+            solc = "solc"
 
-        select_and_set_solc_version(self.source)
-
+        else:
+            solc = get_solc_executable(self.solc_version)
+            
         
         options = ""
         options = self._get_optimize_options()
 
         cmd = solc + " --bin-runtime --asm-json " + options + " %s" % self.source
-        print(cmd)
+        #print(cmd)
 
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
@@ -205,8 +213,15 @@ class InputHelper:
 
     def _compile_solidity_init(self):
 
-        solc = get_solc_executable(self.solc_version)
+        if self.solc_select:
+            version = select_and_set_solc_version(self.source)
+            self.sol_version = "v"+str(version)
+            solc = "solc"
 
+        else:
+            solc = get_solc_executable(self.solc_version)
+
+                
         options = ""
 
         options = self._get_optimize_options()
@@ -227,7 +242,14 @@ class InputHelper:
         cmd = "cat %s" % self.source
         p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
 
-        solc = get_solc_executable(self.solc_version)
+        if self.solc_select:
+            version = select_and_set_solc_version(self.source)
+            self.sol_version = "v"+str(version)
+            solc = "solc"
+
+        else:
+            solc = get_solc_executable(self.solc_version)
+
 
         # cmd = solc + " --allow-paths %s --standard-json" % self.allow_paths
         cmd = solc + " --standard-json %s" % self.source
@@ -235,7 +257,7 @@ class InputHelper:
         p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
         p1.stdout.close()
         out = p2.communicate()[0]
-        print(out)
+
         with open('standard_json_output', 'w') as of:
             of.write(out)
 
@@ -352,7 +374,14 @@ class InputHelper:
             option += " --libraries %s:%s" % (lib, lib_address)
         FNULL = open(os.devnull, 'w')
 
-        solc = get_solc_executable(self.solc_version)
+        if self.solc_select:
+            version = select_and_set_solc_version(self.source)
+            self.sol_version = "v"+str(version)
+            solc = "solc"
+
+        else:
+            solc = get_solc_executable(self.solc_version)
+
 
         cmd = solc + " --bin-runtime --asm-json %s" % filename
 
