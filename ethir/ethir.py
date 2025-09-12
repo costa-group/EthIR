@@ -492,7 +492,7 @@ def analyze_solidity(input_type='solidity'):
                              source=args.source,
                              evm = args.evm,
                              runtime=is_runtime,
-                             opt_options = compiler_opt, solc_compiler = args.solc_compiler)
+                             opt_options = compiler_opt, solc_compiler = args.solc_compiler, solc_select = args.solc_select)
     elif input_type == 'standard_json':
         helper = InputHelper(InputHelper.STANDARD_JSON, source=args.source,evm=args.evm, allow_paths=args.allow_paths)
     elif input_type == 'standard_json_output':
