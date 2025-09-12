@@ -75,6 +75,7 @@ def select_and_set_solc_version(contract_path: str):
     version = get_solc_version(contract_path)
     set_solc_version(version)
 
+    return version.split(".")[1]
     # result = subprocess.run(
     #     ["solc", "--combined-json", "abi,bin", contract_path],
     #     capture_output=True, text=True, check=True
