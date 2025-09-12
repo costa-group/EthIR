@@ -34,22 +34,23 @@ class SourceMap:
     sources = {}
     ast_helper = None
     
-    def __init__(self, cname, parent_filename, input_type, root_path="",sol_version="",opt_options = ""):
+    def __init__(self, cname, parent_filename, input_type, solc_select, root_path="",sol_version="",opt_options = "" ):
         self.root_path = root_path
         self.cname = cname
         self.input_type = input_type
         #self.runtime = runtime
         self.solc_version = sol_version
         self.opt_options = opt_options
+        self.solc_select = solc_select
         if not SourceMap.parent_filename:
             SourceMap.parent_filename = parent_filename
             if input_type == "solidity":
-                SourceMap.position_groups = SourceMap._load_position_groups(self.solc_version,self.opt_options)
+                SourceMap.position_groups = SourceMap._load_position_groups(self.solc_version,self.opt_options, self.solc_select)
             elif input_type == "standard json":
-                SourceMap.position_groups = SourceMap._load_position_groups_standard_json()
+                SourceMap.position_groups = SourceMap._load_position_groups_standard_json(self.solc_select)
             else:
                 raise Exception("There is no such type of input")
-            SourceMap.ast_helper = AstHelper(SourceMap.parent_filename, input_type,self.solc_version)
+            SourceMap.ast_helper = AstHelper(SourceMap.parent_filename, input_type, self.solc_select, self.solc_version)
         self.source = self._get_source()
 
         self.positions = self._get_positions()
@@ -164,11 +165,15 @@ class SourceMap:
         return output["contracts"]
 
     @classmethod
-    def _load_position_groups(cls,solc_v,opt_options):
+    def _load_position_groups(cls,solc_v,opt_options, solc_select):
         #print solc_v
 
-        solc = get_solc_executable(solc_v)
+        if solc_select:
+            solc = "solc"
+        else:
+            solc = get_solc_executable(solc_v)
 
+        
         options = ""
         
         cmd = solc+" --combined-json asm "+opt_options+" %s" % cls.parent_filename

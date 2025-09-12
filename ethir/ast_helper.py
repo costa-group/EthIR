@@ -3,10 +3,11 @@ from ast_walker import AstWalker
 import json
 
 class AstHelper:
-    def __init__(self, filename, input_type,solidity_version=""):
+    def __init__(self, filename, input_type, solc_select, solidity_version=""):
         self.filename = filename
         self.input_type = input_type
         self.solc_version = solidity_version
+        self.solc_select = solc_select
         if input_type == "solidity":
             self.source_list = self.get_source_list(filename)
         elif input_type == "standard json":
@@ -31,7 +32,11 @@ class AstHelper:
 
     def get_source_list(self, filename):
         
-        solc = get_solc_executable(self.solc_version)
+        if self.solc_select:
+            solc = "solc"
+        else:
+            solc = get_solc_executable(self.solc_version)
+
 
         cmd = solc+" --combined-json ast %s" % filename
             
