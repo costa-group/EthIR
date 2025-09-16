@@ -338,15 +338,12 @@ class InputHelper:
         """
         Returns a dictionary with the assembly representation of each contract
         """
-        print(s)
-        print("A VER")
-        print(self.solc_version)
+
         if self.solc_version == "v8":
-            print("HOLA")
             # V8 appears the dict in a single line (unless pretty-json option is specified)
             asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:).*\n)*EVM assembly:\n(.*)"
             contracts = re.findall(asm_json_regex, s)
-            print(s)
+
         else:
             # V7 and before appears in multiple lines (similarly to pretty-json)
             contracts = self._match_assembly_json(s)
