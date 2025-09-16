@@ -190,7 +190,7 @@ class InputHelper:
         
         if self.solc_select:
             version = select_and_set_solc_version(self.source)
-            self.sol_version = "v"+str(version)
+            self.solc_version = "v"+str(version)
             solc = "solc"
 
         else:
@@ -201,7 +201,6 @@ class InputHelper:
         options = self._get_optimize_options()
 
         cmd = solc + " --bin-runtime --asm-json " + options + " %s" % self.source
-        #print(cmd)
 
         out = run_command(cmd)
         libs = re.findall(r"_+(.*?)_+", out)
@@ -215,7 +214,7 @@ class InputHelper:
 
         if self.solc_select:
             version = select_and_set_solc_version(self.source)
-            self.sol_version = "v"+str(version)
+            self.solc_version = "v"+str(version)
             solc = "solc"
 
         else:
@@ -244,7 +243,7 @@ class InputHelper:
 
         if self.solc_select:
             version = select_and_set_solc_version(self.source)
-            self.sol_version = "v"+str(version)
+            self.solc_version = "v"+str(version)
             solc = "solc"
 
         else:
@@ -339,17 +338,23 @@ class InputHelper:
         """
         Returns a dictionary with the assembly representation of each contract
         """
+        print(s)
+        print("A VER")
+        print(self.solc_version)
         if self.solc_version == "v8":
+            print("HOLA")
             # V8 appears the dict in a single line (unless pretty-json option is specified)
             asm_json_regex = r"======= (.*?) =======\n(?:(?!EVM assembly:).*\n)*EVM assembly:\n(.*)"
             contracts = re.findall(asm_json_regex, s)
+            print(s)
         else:
             # V7 and before appears in multiple lines (similarly to pretty-json)
             contracts = self._match_assembly_json(s)
 
         contracts = {contract[0]: json.loads(contract[1]) for contract in contracts if contract[1]}
         if not contracts:
-            logging.critical("ASM Json compilation failed")
+            print("[WARNING]: ASM Json compilation failed")
+            contracts = {}
             # print self.source
             if global_params_ethir.WEB:
                 six.print_({"error": "ASM JSON compilation failed"})
@@ -376,7 +381,7 @@ class InputHelper:
 
         if self.solc_select:
             version = select_and_set_solc_version(self.source)
-            self.sol_version = "v"+str(version)
+            self.solc_version = "v"+str(version)
             solc = "solc"
 
         else:
