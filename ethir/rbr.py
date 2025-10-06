@@ -1430,7 +1430,6 @@ def compile_instr(rule,evm_opcode,
             else:
                 new_opcode_name = opcode_name+"FINAL"+cost+"WARMSET"+str(set_identifier) if opcode_name.startswith("SSTORE") else opcode_name+cost+"WARMSET"+str(set_identifier)
 
-        print(new_opcode_name)
         rule.add_instr("nop("+new_opcode_name+")")
         
     else:
