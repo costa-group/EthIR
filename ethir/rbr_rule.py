@@ -28,6 +28,7 @@ class RBRRule:
         self.arg_input = 0
         self.arg_global = []
         self.arg_local = []
+        self.arg_transient = []
         self.guard=""
         self.instr=[]
         self.rbr_type = typeBlock
@@ -88,6 +89,17 @@ class RBRRule:
     def update_local_arg(self,l):
         self.arg_local = list(set(self.arg_local+l))
 
+
+    def get_args_transient(self):
+        return self.arg_transient
+
+    def set_args_transient(self,ts):
+        self.arg_transient = ts
+
+    def update_transient_arg(self,l):
+        self.arg_transient = list(set(self.arg_transient+l))
+
+        
     def set_global_vars(self,l):
         self.arg_global = sorted(l,key= toInt)[::-1]
         
@@ -232,6 +244,16 @@ class RBRRule:
             local_vars.append(var)
         return local_vars
 
+    def build_transient_vars(self):
+        local_vars = []
+        ordered = sorted(self.arg_transient)[::-1]
+        for i in ordered:
+            var = "l(ts"+str(i)+")"
+            local_vars.append(var)
+        return local_vars
+
+
+    
     def build_local_vars_memabs(self):
         local_vars = []
         ordered = sorted(self.arg_local)[::-1]
@@ -255,7 +277,7 @@ class RBRRule:
                 posBra = elem.find("(",posCall+5)
                 posInit = elem.find("global",0)
                 if self.call_to_info!=None:
-                    gv_aux, bc, local_vars = self.call_to_info #local_vars
+                    gv_aux, bc, local_vars, transient_vars = self.call_to_info #local_vars
                 else:
                     gv_aux = self.build_field_vars()
                     bc = self.vars_to_string("data")
@@ -263,10 +285,14 @@ class RBRRule:
                         local_vars = self.build_local_vars_memabs()
                     else:
                         local_vars = self.build_local_vars()
-                                                
+
+                    transient_vars = self.build_transient_vars()
+                        
                 gv = ", ".join(gv_aux)
                 local_vars_string = ", ".join(local_vars)
 
+                ts = ", ".join(transient_vars)
+                
                 if gv != "":
                     new_instr = elem[:posInit]+gv#+", "+local_vars_string#+", "+bc+"))"
                 else:
@@ -278,6 +304,12 @@ class RBRRule:
                         new_instr = new_instr+", "+local_vars_string
                     else:
                         new_instr = new_instr+local_vars_string
+
+                if ts != "":
+                    if new_instr[-1] != "(":
+                        new_instr = new_instr+", "+ts
+                    else:
+                        new_instr = new_instr+ts
                         
                 if bc != "":
                     if new_instr[-1] != "(":
@@ -346,6 +378,14 @@ class RBRRule:
                 string_vars = ""
             else:
                 string_vars = ", ".join(gv_aux)
+
+        elif types == "transient":
+            ts_aux = self.build_transient_vars()
+            if (len(ts_aux)==0):
+                string_vars = ""
+            else:
+                string_vars = ", ".join(ts_aux)
+
         else: #contract vars
             if len(self.bc) == 0:
                 string_vars = ""
@@ -390,6 +430,7 @@ class RBRRule:
         in_vars = self.vars_to_string("input")
         gv = self.vars_to_string("global")
         bc_input = self.vars_to_string("data")
+        ts = self.vars_to_string("transient")
         
         if (in_vars == ""):
             if(gv == ""):
@@ -405,7 +446,13 @@ class RBRRule:
             d_vars = ", ".join(local_vars)
         elif d_vars != "" and local_vars !=[]:
             d_vars = d_vars+", "+ ", ".join(local_vars)
-            
+
+        if d_vars != "" and ts != "":
+            d_vars = d_vars+", "+ts
+
+        elif d_vars == "" and ts !="":
+            d_vars = ts
+        
         if d_vars != "" and bc_input != "":
             d_vars = d_vars+", "+bc_input
 

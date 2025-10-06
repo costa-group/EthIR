@@ -44,16 +44,16 @@ def init_globals():
     opcodes30 = ["ADDRESS", "BALANCE", "ORIGIN", "CALLER",
                  "CALLVALUE", "CALLDATALOAD", "CALLDATASIZE",
                  "CALLDATACOPY", "CODESIZE", "CODECOPY", "GASPRICE",
-                 "EXTCODESIZE", "EXTCODECOPY", "MCOPY","EXTCODEHASH"]
+                 "EXTCODESIZE", "EXTCODECOPY","EXTCODEHASH"]
 
     global opcodes40
     opcodes40 = ["BLOCKHASH", "COINBASE", "TIMESTAMP", "NUMBER",
-                 "DIFFICULTY","PREVRANDAO", "GASLIMIT","SELFBALANCE","CHAINID","BASEFEE"]
+                 "DIFFICULTY","PREVRANDAO", "GASLIMIT","SELFBALANCE","CHAINID","BASEFEE","BLOBHASH","BLOBBASEFEE"]
 
     global opcodes50
     opcodes50 = ["POP", "MLOAD", "MSTORE", "MSTORE8", "SLOAD",
                  "SSTORE", "JUMP", "JUMPI", "PC", "MSIZE", "GAS", "JUMPDEST",
-                 "SLOADEXT", "SSTOREEXT", "SLOADBYTESEXT", "SSTOREBYTESEXT"]
+                 "SLOADEXT", "SSTOREEXT", "SLOADBYTESEXT", "SSTOREBYTESEXT","MCOPY", "TLOAD", "TSTORE"]
 
     global opcodes60
     opcodes60 = ["PUSH"]
@@ -109,6 +109,9 @@ def init_globals():
     global fields_per_block
     fields_per_block = {}
 
+    global transient_per_block
+    transient_per_block = {}
+
     global cloned_blocks
     cloned_blocks = []
 
@@ -134,6 +137,9 @@ def init_globals():
     global blockhash_cont
     blockhash_cont = 0
 
+    global blobhash_cont
+    blobhash_cont = 0
+    
     global extcodehash_cont
     extcodehash_cont = 0
 
@@ -307,6 +313,24 @@ def update_field_index(value,block):
         
     # if value not in max_field_list:
     #     max_field_list.append(value)
+
+
+'''
+It adds to the list max_field_list the index of the transient field used.
+-value: index_field. int.
+'''
+def update_transient_index(value,block):
+#    global max_field_list
+    global transient_per_block
+
+    if block not in transient_per_block:
+        transient_per_block[block]=[value]
+    elif value not in transient_per_block[block]:
+        transient_per_block[block].append(value)
+        
+    # if value not in max_field_list:
+    #     max_field_list.append(value)
+    
         
 '''
 It adds to the list bc_in_use the name of the contract variable used.
@@ -685,8 +709,6 @@ def translateOpcodes30(opcode, value, index_variables,block):
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         instr = ""
-    elif opcode == "MCOPY":
-        pass
     else:
         instr = "Error opcodes30: "+opcode
         updated_variables = index_variables
@@ -702,6 +724,7 @@ updated. It also updated the corresponding global variables.
 '''
 def translateOpcodes40(opcode, index_variables,block):
     global blockhash_cont
+    global blobhash_cont
     
     if opcode == "BLOCKHASH":
         v0, updated_variables = get_consume_variable(index_variables)
@@ -745,7 +768,19 @@ def translateOpcodes40(opcode, index_variables,block):
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = basefee"
         update_bc_in_use("basefee",block)
-
+        
+    elif opcode == "BLOBHASH":
+        v0, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        instr = v1+" = blobhash_"+str(blobhash_cont)
+        update_bc_in_use("blobhash_"+str(blobhash_cont),block)
+        blobhash_cont +=1
+        
+    elif opcode == "BLOBBASEFEE":
+        v1, updated_variables = get_new_variable(index_variables)
+        instr = v1+" = blobbasefee"
+        update_bc_in_use("blobbasefee",block)
+        
     else:
         instr = "Error opcodes40: "+opcode
         updated_variables = index_variables
@@ -876,6 +911,48 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         except ValueError:
             #instr = ["gs(1) = "+ v0, "gs(2) = "+v1,"FORGET STR"]
             instr = ["gs(1) = "+ v0, "gs(2) = "+v1]
+
+    elif opcode == "TLOAD":
+        _ , updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_new_variable(updated_variables)
+        try:
+
+            val = value.split("_")
+            if len(val)==1:
+                int(value)
+                idx = value
+            else:
+                idx = value
+
+            var_name = idx
+                
+            instr = v1+" = " + "l(ts" + str(var_name) + ")"
+            update_tansient_index(str(var_name),block)
+        except ValueError:
+            instr = ["utl = " + v1, v1 + " = fresh("+str(new_fid)+")"]
+            new_fid+=1
+
+    elif opcode == "TSTORE":
+        v0 , updated_variables = get_consume_variable(index_variables)
+        v1 , updated_variables = get_consume_variable(updated_variables)
+        try:
+            val = value.split("_")
+            if len(val)==1:
+                int(value)
+                idx = value
+            else:
+                idx = value
+    
+            current_state_var = idx
+            var_name = idx
+                
+            instr = "l(ts" + str(var_name) + ") = " + v1
+            update_transient_index(str(var_name),block)
+        except ValueError:
+            #instr = ["gs(1) = "+ v0, "gs(2) = "+v1,"FORGET STR"]
+            instr = ["uts(1) = "+ v0, "uts(2) = "+v1]
+
+            
     elif opcode == "JUMP":
         instr = ""
         updated_variables = index_variables
@@ -905,6 +982,11 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     #     pass
     # elif opcode == "SSTOREBYTESEXT":
     #     pass
+    elif opcode == "MCOPY":
+        _, updated_variables = get_consume_variable(index_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        _, updated_variables = get_consume_variable(updated_variables)
+        instr = ""
     else:
         instr = "Error opcodes50: "+ opcode
         updated_variables = index_variables
@@ -1742,12 +1824,13 @@ def write_rbr(rbr,executions,cname = None):
     f.close()
         
 def component_update_fields_block(block,data):
-    fields, bc, local = data #local
+    fields, bc, local, ts = data #local
     rule = rbr_blocks.get("block"+str(block),-1)
     if rule != -1:
         rule[0].update_global_arg(fields)
         rule[0].update_bc(bc)
         rule[0].update_local_arg(local)
+        rule[0].update_transient_arg(ts)
 
     rule = rbr_blocks.get("jump"+str(block),-1)
     if rule != -1:
@@ -1757,7 +1840,9 @@ def component_update_fields_block(block,data):
         rule[1].update_bc(bc)
         rule[0].update_local_arg(local)
         rule[1].update_local_arg(local)
-
+        rule[0].update_transient_arg(ts)
+        rule[1].update_transient_arg(ts)
+        
     
 def component_update_fields(rule,component):
     
@@ -1766,12 +1851,13 @@ def component_update_fields(rule,component):
     fields = fields_per_block.get(block,[])
     bc = bc_per_block.get(block,[])
     local = lvariables_per_block.get(block,[])
+    ts = transient_per_block.get(block, [])
     
-    if fields != [] or bc !=[] or local !=[]:
+    if fields != [] or bc !=[] or local !=[] or ts != []:
         rule.update_global_arg(fields)
         rule.update_bc(bc)
         rule.update_local_arg(local)
-        
+        rule.update_transient_arg(ts)
         # if rule.get_type() == "block":
         #         rule = rbr_blocks.get("jump"+str(block),-1)
         #         if rule != -1:
@@ -1781,7 +1867,7 @@ def component_update_fields(rule,component):
         # print "COMPONENT_OF"
         # print component[block]
         for elem_c in component[block]:
-            component_update_fields_block(elem_c,(fields,bc,local))#local)
+            component_update_fields_block(elem_c,(fields,bc,local,ts))#local)
 
 def forget_mem_variables():
     global new_fid
@@ -1952,7 +2038,9 @@ def evm2rbr_compiler(blocks_input = None,
                         else:
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
 
-                        r.set_call_to_info((f,bc,l))
+                        ts = rbr_blocks["block"+str(jumps_to)][0].build_transient_vars()
+                            
+                        r.set_call_to_info((f,bc,l,ts))
 
                     r.update_rule(saco_rbr,memory_intervals)
 
@@ -2081,7 +2169,10 @@ def evm2rbr_init(blocks_input = None, stack_info = None, block_unbuild = None, c
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars_memabs()
                         else:
                             l = rbr_blocks["block"+str(jumps_to)][0].build_local_vars()
-                        r.set_call_to_info((f,bc,l))
+
+                        ts = rbr_blocks["block"+str(jumps_to)][0].build_transient_vars()
+
+                        r.set_call_to_info((f,bc,l, ts))
 
                     r.update_rule(memory_intervals)
 
