@@ -453,8 +453,9 @@ class InputHelper:
                     ["evm", "disasm", evm_file], stdout=subprocess.PIPE)
             else:
                 disasm_p = subprocess.Popen(
-                    ["nohup", "evm1.12.0", "disasm", evm_file], stdout=subprocess.PIPE)
+                    ["nohup", "evm1.14.13", "disasm", evm_file], stdout=subprocess.PIPE)
 
+            cmd = "nohup evm1.14.13 disasm "+evm_file
             disasm_out = disasm_p.communicate()[0].decode()
 
         except:
