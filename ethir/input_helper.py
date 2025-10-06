@@ -510,6 +510,8 @@ class InputHelper:
                 solc_v = elem.split(".")[1].strip()
             else:
                 elem = pragma_version.split()[-1]
+                if elem.strip() == ";":
+                    elem = pragma_version.split()[-2]
                 solc_v = elem.split(".")[1].strip()
                 if solc_v > "8":
                     solc_v = "8"
