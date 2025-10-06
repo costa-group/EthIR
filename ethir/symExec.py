@@ -4602,7 +4602,7 @@ def run(disasm_file=None,
             if cfg == "all":
                 check_cfg_option(cfg+"_storage",cname,execution, storage_result)
             else:
-                print(storage_result)
+                #print(storage_result)
                 check_cfg_option(cfg,cname,execution, storage_result)        
 
 
