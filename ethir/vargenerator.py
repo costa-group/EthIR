@@ -33,6 +33,10 @@ class Generator:
     def gen_owner_store_var(self, position):
         return "Ia_store_" + str(position)
 
+    def gen_owner_tstore_var(self, position):
+        return "Ia_tran_store_" + str(position)
+
+    
     def gen_gas_var(self):
         self.count += 1
         return "gas_" + str(self.count)
