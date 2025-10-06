@@ -23,8 +23,9 @@ def perform_storage_analysis(vertices, debug):
     storage = Analysis(vertices,0,StorageOffsetAbstractState(0,{},{},debug))
     storage.analyze()
 
-    print("Accesses")
-    print(str(accesses))
+    if debug:
+        print("Accesses")
+        print(str(accesses))
    
     return storage, accesses
 
