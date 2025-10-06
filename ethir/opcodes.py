@@ -56,6 +56,8 @@ opcodes = {
     "CHAINID": [0x46,0,1],
     "SELFBALANCE": [0x47,0,1],
     "BASEFEE":[0x48,0,1],
+    "BLOBHASH":[0x49,1,1],
+    "BLOBBASEFEE":[0x4a,1,1],
     "POP": [0x50, 1, 0],
     "MLOAD": [0x51, 1, 1],
     "MSTORE": [0x52, 2, 0],
@@ -72,6 +74,9 @@ opcodes = {
     "SSTOREEXT": [0x5d, 3, 0],
     "SLOADBYTESEXT": [0x5c, 4, 0],
     "SSTOREBYTESEXT": [0x5d, 4, 0],
+    "TLOAD": [0x5c, 1, 1],
+    "TSTORE": [0x5d, 2, 0],
+    "MCOPY": [0x5e, 3, 0],
     "LOG0": [0xa0, 2, 0],
     "LOG1": [0xa1, 3, 0],
     "LOG2": [0xa2, 4, 0],
@@ -147,11 +152,11 @@ Wzero = ("STOP", "RETURN", "REVERT", "ASSERTFAIL","INVALID")
 Wbase = ("ADDRESS", "ORIGIN", "CALLER", "CALLVALUE", "CALLDATASIZE",
          "CODESIZE", "GASPRICE", "COINBASE", "TIMESTAMP", "NUMBER",
          "DIFFICULTY","PREVRANDAO", "GASLIMIT", "POP", "PC", "MSIZE",
-         "GAS","CHAINID","PUSH0","BASEFEE","RETURNDATASIZE")
+         "GAS","CHAINID","PUSH0","BASEFEE","RETURNDATASIZE", "BLOBBASEFEE")
 
 Wverylow = ("ADD", "SUB", "NOT", "LT", "GT", "SLT", "SGT", "EQ",
             "ISZERO", "AND", "OR", "XOR", "BYTE", "CALLDATALOAD",
-            "MLOAD", "MSTORE", "MSTORE8", "PUSH", "DUP", "SWAP","SHR","SHL","SAR")
+            "MLOAD", "MSTORE", "MSTORE8", "PUSH", "DUP", "SWAP","SHR","SHL","SAR", "BLOBHASH")
 
 Wlow = ("MUL", "DIV", "SDIV", "MOD", "SMOD", "SIGNEXTEND","SELFBALANCE")
 
@@ -245,6 +250,13 @@ def get_ins_cost(opcode):
         return GCOST["Gblockhash"]
     elif opcode == "SSTORE":
         return 20000
+    elif opcode == "MCOPY":
+        return 3
+    elif opcode == "TLOAD":
+        return 100
+    elif opcode == "TSTORE":
+        return 100
     else:
+        print(opcode)
         print("WARNING COST 0")
         return 0
