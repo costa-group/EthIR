@@ -216,7 +216,7 @@ def initGlobalVars():
     blocks_to_create =[]
 
     global ls_cont #load store cont 
-    ls_cont = [0,0,0,0] #[mload, mstore, sload, sstore]
+    ls_cont = [0,0,0,0,0,0] #[mload, mstore, sload, sstore, tload, tstore]
 
     global f_hashes
     f_hashes = None
@@ -448,6 +448,7 @@ def build_cfg_and_analyze(evm_version):
     count_daos()
     with open(g_disasm_file, 'r') as disasm_file:
         disasm_file.readline()  # Remove first line
+
         tokens = tokenize.generate_tokens(disasm_file.readline)
         collect_vertices(tokens)
         construct_bb()
@@ -633,13 +634,9 @@ def collect_vertices(tokens):
     current_line_content = ""
     wait_for_push = False
     is_new_block = False
-
-    # for t in tokens:
-    #     print(t)
-        
-    # raise Exception
-
+    
     for tok_type, tok_string, (srow, scol), _, line_number in tokens:
+        
         if wait_for_push is True:
             push_val = ""
             for ptok_type, ptok_string, _, _, _ in tokens:
@@ -914,6 +911,10 @@ def get_init_global_state(path_conditions_and_vars):
     # the state of the current current contract
     if "Ia" not in global_state:
         global_state["Ia"] = {}
+
+    if "Ts" not in global_state:
+        global_state["Ts"] = {}
+        
     global_state["miu_i"] = 0
     global_state["value"] = deposited_value
     global_state["sender_address"] = sender_address
@@ -3260,6 +3261,132 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     #
     #  60s & 70s: Push Operations
     #
+
+
+    elif opcode == "TLOAD":
+        if len(stack) > 0:
+            global_state["pc"] = global_state["pc"] + 1
+            
+            position = stack.pop(0)
+            first_sym = stack_sym.pop(0)
+
+            stack_sym.insert(0,"TLOAD("+first_sym+")")
+            
+            position = get_push_value(position)
+
+
+            vertices[block].add_ls_value("tload",ls_cont[4],position)
+            
+            if isReal(position) and position in global_state["Ts"]:
+                value = global_state["Ts"][position]
+                stack.insert(0, value)
+                
+            else:
+                if str(position) in global_state["Ts"]:
+                    value = global_state["Ts"][str(position)]
+                    stack.insert(0, value)
+
+                else:
+                
+                    new_var_name = gen.gen_owner_tstore_var(position)
+                    statevar_name = new_var_name
+                        
+                    stack.insert(0, new_var_name)
+
+                    if isReal(position):
+                        global_state["Ts"][position] = new_var_name
+                    else:
+                        global_state["Ts"][str(position)] = new_var_name
+                    
+        else:
+            raise ValueError('STACK underflow')
+
+
+    elif opcode == "TSTORE":
+        if len(stack) > 1:
+            for call_pc in calls:
+                calls_affect_state[call_pc] = True
+            global_state["pc"] = global_state["pc"] + 1
+            stored_address = stack.pop(0)
+            stored_value = stack.pop(0)
+
+            first_sym = stack_sym.pop(0)
+            second_sym = stack_sym.pop(0)
+            
+            stored_address = get_push_value(stored_address)
+            stored_value = get_push_value(stored_value)
+            
+            vertices[block].add_ls_value("tstore",ls_cont[5],stored_address)
+
+
+            ls_cont[3]+=1
+
+            if isReal(stored_address):
+                # note that the stored_value could be unknown
+                global_state["Ts"][stored_address] = stored_value
+            else:
+                # note that the stored_value could be unknown
+                global_state["Ts"][str(stored_address)] = stored_value
+        else:
+            raise ValueError('STACK underflow')
+        
+    elif opcode == "MCOPY":
+        if len(stack) > 2:
+           
+            global_state["pc"] = global_state["pc"] + 1
+            mem_location = stack.pop(0)
+            code_from = stack.pop(0) #calldata to copy
+            no_bytes = stack.pop(0)
+
+            first_sym = stack_sym.pop(0)
+            second_sym = stack_sym.pop(0)
+            third_sym = stack_sym.pop(0)
+
+            
+            mem_location = get_push_value(mem_location)
+            code_from = get_push_value(code_from)
+            no_bytes = get_push_value(no_bytes)
+            
+            if isAllReal(mem_location, code_from, no_bytes):
+                # if six.PY2:
+                #     temp = long(math.ceil((mem_location + no_bytes) / float(32)))
+                # else:
+                #     temp = int(math.ceil((mem_location + no_bytes) / float(32)))
+                if six.PY2:
+                    temp = math.ceil((mem_location + no_bytes) / float(32))
+                else:
+                    temp = int(math.ceil((mem_location + no_bytes) / float(32)))
+
+                # if temp > current_miu_i:
+                #     current_miu_i = temp
+
+                if g_disasm_file.endswith('.disasm'):
+                    evm_file_name = g_disasm_file[:-7]
+                else:
+                    evm_file_name = g_disasm_file
+                with open(evm_file_name, 'r') as evm_file:
+                    evm = evm_file.read()[:-1]
+                    start = code_from * 2
+                    end = start + no_bytes * 2
+                    code = evm[start: end]
+
+                if code != '':
+                    mem[mem_location] = int(code, 16)
+            else:
+                new_var_name = gen.gen_code_var("Ia", code_from, no_bytes)
+                if new_var_name in path_conditions_and_vars:
+                    new_var = path_conditions_and_vars[new_var_name]
+                else:
+                    new_var = new_var_name
+                    path_conditions_and_vars[new_var_name] = new_var
+
+                mem.clear() # very conservative
+                mem[str(mem_location)] = new_var
+
+        else:
+            raise ValueError('STACK underflow')
+
+    
     elif opcode == "PUSH0":
         global_state["pc"] = global_state["pc"] + 1
         stack.insert(0, (0,block))
@@ -3680,7 +3807,29 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
         stack_sym.insert(0,"BASEFEE")
 
+
+    elif opcode == "BLOBHASH":  # information from versioned hashed
+        if len(stack) > 0:
+            global_state["pc"] = global_state["pc"] + 1
+            stack.pop(0)
+            new_var_name = "IH_blobhash"
+            if new_var_name in path_conditions_and_vars:
+                new_var = path_conditions_and_vars[new_var_name]
+            else:
+                new_var = new_var_name
+                path_conditions_and_vars[new_var_name] = new_var
+            stack.insert(0, new_var)
+            stack_sym.insert(0,"BLOBHASH")
+        else:
+            raise ValueError('STACK underflow')
         
+    elif opcode == "BLOBBASEFEE":
+        global_state["pc"] = global_state["pc"] + 1
+        new_var_name = gen.gen_basefee_var()
+        stack.insert(0, new_var_name)
+
+        stack_sym.insert(0,"BLOBBASEFEE")
+
 
     elif opcode == "EXTCODEHASH":
         if len(stack) > 0:
@@ -4170,7 +4319,7 @@ def check_cfg_option(cfg,cname,execution, memory_analysis = None, cloned = False
         if cname == None:
             write_cfg(execution,vertices)
             cfg_dot(execution,vertices)
-
+            
         else:
             write_cfg(execution,vertices,name = cname)
             cfg_dot(execution,vertices,name = cname)
@@ -4382,6 +4531,8 @@ def run(disasm_file=None,
         
         optimizer = OptimizerConnector(vertices, cname, debug_info)
 
+        check_cfg_option(cfg,cname,execution, memory_result)
+        
         if mem_analysis != None:
         
             begin = dtimer()
@@ -4464,7 +4615,7 @@ def run(disasm_file=None,
             nonzero_variables = translate_nonzero_variables(nonzero_variables, mapping_state_variables)
 
         print(nonzero_variables)
-        
+
         if not is_mem_analysis:
             storage_accesses = None
             check_cfg_option(cfg,cname,execution)
