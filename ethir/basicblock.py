@@ -21,6 +21,8 @@ class BasicBlock:
         self.mstore_values = {}
         self.sload_values = {}
         self.sstore_values = {}
+        self.tload_values = {}
+        self.tstore_values = {}
         self.calldatavalues = []
         self.and_values = []
         self.stack_info = []
@@ -182,10 +184,16 @@ class BasicBlock:
             result = self.sload_values
         elif type_value == "sstore":
             result = self.sstore_values
+        elif type_value == "tload":
+            result = self.tload_values
+        elif type_value == "tstore":
+            result = self.tstore_values
         else:
             result = "Error"
         return result
 
+
+    
     def get_num_memory_ins(self):
         return len(list(filter(lambda x: x.find("MLOAD")!=-1 or (x.find("MSTORE")!=-1 and x.find("MSTORE8") ==-1), self.instructions)))
 
@@ -204,6 +212,13 @@ class BasicBlock:
     def _set_sstore_values(self,val):
         self.sstore_values = val
 
+    def _set_tload_values(self,val):
+        self.tload_values = val
+
+    def _set_tstore_values(self,val):
+        self.tstore_values = val
+
+        
     def add_ls_value(self,type_value,key,val):
         if type_value == "mload":
             l = self.mload_values.get(key,-1)
@@ -227,6 +242,18 @@ class BasicBlock:
             l = self.sstore_values.get(key,-1)
             if l == -1:
                 self.sstore_values[key] = [val]
+            else:
+                l.append(val)
+        elif type_value == "tload":
+            l = self.tload_values.get(key,-1)
+            if l == -1:
+                self.tload_values[key] = [val]
+            else:
+                l.append(val)
+        elif type_value == "tstore":
+            l = self.tstore_values.get(key,-1)
+            if l == -1:
+                self.tstore_values[key] = [val]
             else:
                 l.append(val)
         else:
@@ -297,8 +324,22 @@ class BasicBlock:
             else:
                 val = self._check_same_elem(l[1:],str(l[0]))
 
-        else:    #sstore 
+        elif type_value == "sstore":    #sstore 
             l = self.sstore_values.get(cont,[-1])
+            if len(l) == 1:
+                val = self._is_numerical(l[0])
+            else:
+                val = self._check_same_elem(l[1:],str(l[0]))
+
+        elif type_value == "tload":
+            l = self.tload_values.get(cont,[-1])
+            if len(l) == 1:
+                val = self._is_numerical(l[0])
+            else:
+                val = self._check_same_elem(l[1:],str(l[0]))
+
+        elif type_value == "tstore":    #tstore 
+            l = self.tstore_values.get(cont,[-1])
             if len(l) == 1:
                 val = self._is_numerical(l[0])
             else:
@@ -332,7 +373,8 @@ class BasicBlock:
         mstore = 0
         sstore = 0
         sload = 0
-
+        tload = 0
+        tstore = 0
         
         and_idx = 0
         for instr in self.instructions:
@@ -354,6 +396,12 @@ class BasicBlock:
             elif instr == "SSTORE":
                 new_instr = instr + " " + self._get_concrete_value("sstore",sstore)
                 sstore+=1
+            elif instr == "TLOAD":
+                new_instr = instr + " " + self._get_concrete_value("tload",tload)
+                tload+=1
+            elif instr == "TSTORE":
+                new_instr = instr + " " + self._get_concrete_value("tstore",tstore)
+                tstore+=1
             elif instr == "AND" and mem_analysis:
                 # print("AQUI")
                 # print(self.start)
@@ -501,6 +549,8 @@ class BasicBlock:
         new_obj._set_mstore_values({})
         new_obj._set_sload_values({})
         new_obj._set_sstore_values({})
+        new_obj._set_tload_values({})
+        new_obj._set_tstore_values({})
         new_obj.set_calldataload_values(list(self.calldatavalues))
         new_obj.set_and_values([])
         new_obj.set_comes_from([])
