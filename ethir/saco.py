@@ -59,7 +59,10 @@ def build_head(rule):
         gv = ", ".join(gv_aux)
     else:
         gv = ""
-    
+
+    ts = rule.build_transient_vars()
+    ts_vars_string = ", ".join(ts)
+        
     cv_aux = get_contract_vars(rule)
     if(len(cv_aux)>0):
         cv = ", ".join(cv_aux)
@@ -80,7 +83,12 @@ def build_head(rule):
         d_vars = local_vars_string
     elif d_vars != "" and local_vars_string != "":
         d_vars = d_vars+", "+local_vars_string
-    
+
+    if d_vars != "" and ts_vars_string != "":
+        d_vars = d_vars+", "+ts_vars_string
+    elif d_vars == "" and ts_vars_string != "":
+        d_vars = ts_vars_string
+        
     if d_vars != "" and cv != "":
         d_vars = d_vars+", "+cv
     elif d_vars == "" and cv != "":
@@ -251,6 +259,12 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         pos = instr.find("=")
         new = "l("+instr[:pos].strip()+") "+instr[pos:]
     elif instr.find("gl =",0)!=-1:
+        pos = instr.find("=")
+        new = "l("+instr[:pos].strip()+") "+instr[pos:]
+    elif instr.find("uts(",0)!=-1:
+        pos = instr.find("=")
+        new = "l("+instr[:pos].strip()+") "+instr[pos:]
+    elif instr.find("utl =",0)!=-1:
         pos = instr.find("=")
         new = "l("+instr[:pos].strip()+") "+instr[pos:]
     elif instr.find("ls(",0)!=-1:
@@ -447,6 +461,24 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
             new = "'$release'(noncu)"
             new_instructions.append(new)
             new = instr
+    elif instr.find("nop(MCOPY)")!=-1:
+        top = new_instructions[-3]
+        val = top.split("=")[0].strip()
+        if val.startswith("s("):
+            num = val.split("(")[1].strip(")")
+            num_var = int(num)
+            exp = "s("+str(num_var-2)+")+"+val
+            new = "'$acquire'(noncu,("+exp+")/32)"
+            new_instructions.append(new)
+            new = "'$release'(noncu)"
+            new_instructions.append(new)
+            exp = "s("+str(num_var-1)+")+s("+str(num_var-2)+")"
+            new = "'$acquire'(noncu,("+exp+")/32)"
+            new_instructions.append(new)
+            new = "'$release'(noncu)"
+            new_instructions.append(new)
+            new = instr
+        
     elif instr.find("nop(EXTCODECOPY)")!=-1:
         top = new_instructions[-3]
         val = top.split("=")[0].strip()
