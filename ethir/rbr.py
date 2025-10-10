@@ -872,10 +872,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
-
+            int(value)
             val = value.split("_")
             if len(val)==1:
-                int(value)
                 idx = value
             else:
                 idx = value
@@ -893,9 +892,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
+            int(value)
             val = value.split("_")
             if len(val)==1:
-                int(value)
                 idx = value
             else:
                 idx = value
@@ -916,10 +915,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
-
+            int(value)
             val = value.split("_")
             if len(val)==1:
-                int(value)
                 idx = value
             else:
                 idx = value
@@ -936,9 +934,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
         try:
+            int(value)
             val = value.split("_")
             if len(val)==1:
-                int(value)
                 idx = value
             else:
                 idx = value
