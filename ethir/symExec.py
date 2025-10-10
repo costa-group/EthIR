@@ -363,6 +363,9 @@ def initGlobalVars():
     #Blocks that contian a storage instruction
     global has_storage
     has_storage = []
+
+    global max_storage_idx
+    max_storage_idx = -1
     
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
@@ -458,7 +461,7 @@ def build_cfg_and_analyze(evm_version):
         construct_static_edges()
         #print_cfg()
         full_sym_exec()  # jump targets are constructed on the fly
-
+        
     #print mapping_state_variables
     if g_src_map and g_src_map.var_names !=[]:
         correct_map_fields1(mapping_state_variables,g_src_map._get_var_names())
@@ -1008,7 +1011,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call,level,path):
     global maintain_variable
     global involved_variable
     global potential_variable
-
+    global max_storage_idx
     # print(vertices[block].display())
     
     visited = params.visited
@@ -1509,6 +1512,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
     global store_useless_block
     global useless_blocks
     global has_storage
+    global max_storage_idx
     
     stack = params.stack
     stack_sym = params.stack_sym
@@ -3007,6 +3011,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
             #Added by PG
             try:    
                 val = int(position)
+                max_storage_idx = max(max_storage_idx, val)
                 if g_src_map:
                     p = g_src_map._get_var_names()
                     statevar_name_original =  p[val]
@@ -3152,6 +3157,7 @@ def sym_exec_ins(params, block, instr, func_call,stack_first,instr_index):
 
             try:
                 val = int(stored_address)
+                max_storage_idx = max(max_storage_idx,val)
                 statevar_name_original =  p[val]
                 
             except:
@@ -4632,6 +4638,7 @@ def run(disasm_file=None,
                                              gotos = go,
                                              fbm = f2blocks, 
                                              source_info = source_info,
+                                             max_sto_idx = max_storage_idx,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
                                              sto = sto, 
                                              storage_analysis = (storage_accesses, saco[2], get_functions_with_loop(scc), saco[4], nonzero_variables)) #saco[2] constains the smt option to translate cost of sstores
