@@ -799,6 +799,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     global forget_memory
     global memory_intervals
     global current_state_var
+    global max_storage_idx
     # global unknown_mstore
     
     if opcode == "POP":        
@@ -872,13 +873,20 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         _ , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
-            int(value)
+            
             val = value.split("_")
             if len(val)==1:
+                int(value)
                 idx = value
+                var_name = state_names.get(idx,idx)
             else:
                 idx = value
-            var_name = state_names.get(idx,idx)
+                var_name = state_names.get(idx,max_storage_idx)
+                if var_name == max_storage_idx:
+                    var_name+=1
+                    state_names[idx] = str(var_name)
+                    max_storage_idx+=1
+
 
             if var_name == "":
                 var_name = idx
@@ -891,16 +899,24 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     elif opcode == "SSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
         v1 , updated_variables = get_consume_variable(updated_variables)
+
+        
         try:
-            int(value)
+
             val = value.split("_")
             if len(val)==1:
+                int(value)
                 idx = value
+                var_name = state_names.get(idx,idx)
             else:
                 idx = value
-            var_name = state_names.get(idx,idx)
-            current_state_var = idx
+                var_name = state_names.get(idx,max_storage_idx)
+                if var_name == max_storage_idx:
+                    var_name+=1
+                    state_names[idx] = str(var_name)
+                    max_storage_idx+=1
 
+            current_state_var = idx
             
             if var_name == "":
                 var_name = idx
@@ -1933,6 +1949,7 @@ def evm2rbr_compiler(blocks_input = None,
                      svc_labels = None,
                      gotos=None,fbm = [], 
                      source_info = None,
+                     max_sto_idx = -1,
                      mem_abs = None,
                      sto = None,
                      storage_analysis = None):
@@ -1947,7 +1964,7 @@ def evm2rbr_compiler(blocks_input = None,
     global storage_arrays    
     global sha3_blocks_arr
     global val_mem40
-
+    global max_storage_idx
     # print("SCCS': " + str(scc))
 
     init_globals()
@@ -1962,6 +1979,9 @@ def evm2rbr_compiler(blocks_input = None,
 
     mapping_state_variables = source_info["name_state_variables"]
 
+
+    max_storage_idx = max_sto_idx
+    
     memory_intervals = mem_abs[0]
     storage_arrays["ids"] = mem_abs[1]
 
