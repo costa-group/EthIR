@@ -7,7 +7,7 @@ import semantic_version
 
 def get_available_versions():
     """
-    Devuelve la lista de versiones instalables con solc-select.
+    Returns the list of installable versions via solc-select.
     """
     result = subprocess.run(["solc-select", "versions"],
                             capture_output=True, text=True, check=True)
@@ -23,28 +23,25 @@ def get_available_versions():
 
 def get_solc_version(contract_path: str) -> str:
     """
-    Extrae la versión/rango del pragma solidity y elige la más nueva compatible.
+    Extracts the pragma solidity version/range and selects the newest compatible version.
     """
     with open(contract_path, "r") as f:
         content = f.read()
 
     match = re.search(r"pragma\s+solidity\s+([^;]+);", content)
     if not match:
-        raise ValueError("No se encontró la directiva pragma solidity")
+        raise ValueError("pragma solidity directive not found")
 
     raw_version = match.group(1).strip()
-    print(f" Detectado pragma: {raw_version}")
+    print(f" Detected pragma: {raw_version}")
     
     available_versions = get_available_versions()
 
-    # --- Caso ^ ---
+    # --- ^ case ---
     if raw_version.startswith("^"):
         base_version = semantic_version.Version(re.sub(r"[^\d.]", "", raw_version))
-        # if base_version.major == 0:
-        #     # ^0.x.y -> >=0.x.y <0.(minor+1).0
-        #     upper_bound = f"<0.{base_version.minor+1}.0"
-        # else:
-        #     # ^x.y.z -> >=x.y.z <(major+1).0.0
+
+        # ^x.y.z -> >=x.y.z <(major+1).0.0
         upper_bound = f"<{base_version.major+1}.0.0"
         
         spec_str = f">={base_version},{upper_bound}"
@@ -52,37 +49,30 @@ def get_solc_version(contract_path: str) -> str:
 
         compatible = [v for v in available_versions if v in spec]
         if not compatible:
-            raise ValueError(f"No hay versiones compatibles con {raw_version}")
+            raise ValueError(f"No compatible versions found for {raw_version}")
         return str(max(compatible))
 
-    # --- Caso >= ---
+    # --- >= case ---
     elif raw_version.startswith(">="):
         base_version = semantic_version.Version(re.sub(r"[^\d.]", "", raw_version))
-        # if base_version.major == 0:
-        #     # Caso especial para Solidity <1.0: quedarse en la misma rama 0.minor
-        #     same_minor = [v for v in available_versions 
-        #                   if v.major == 0 and v.minor == base_version.minor and v >= base_version]
-        #     if not same_minor:
-        #         raise ValueError(f"No hay versiones compatibles con {raw_version}")
-        #     return str(max(same_minor))
-        # else:
-            # Para majors >=1 se podría permitir avanzar, pero mejor quedarse en el mismo major
+
+        # For major >=1, stay within the same major version
         same_major = [v for v in available_versions 
                       if v.major == base_version.major and v >= base_version]
         if not same_major:
-            raise ValueError(f"No hay versiones compatibles con {raw_version}")
+            raise ValueError(f"No compatible versions found for {raw_version}")
         return str(max(same_major))
         
-    # --- Otros casos ---
+    # --- Other cases ---
     else:
         try:
             spec = semantic_version.SimpleSpec(raw_version)
             compatible = [v for v in available_versions if v in spec]
             if not compatible:
-                raise ValueError(f"No hay versiones compatibles con {raw_version}")
+                raise ValueError(f"No compatible versions found for {raw_version}")
             return str(max(compatible))
         except ValueError:
-            # Si no se reconoce el rango, lo tratamos como versión fija
+            # If the range is not recognized, treat it as a fixed version
             cleaned = re.sub(r"[^\d.]", "", raw_version)
             parts = cleaned.split(".")
             while len(parts) < 3:
@@ -93,46 +83,38 @@ def get_solc_version(contract_path: str) -> str:
 
 def set_solc_version(version: str):
     """
-    Activa la versión con solc-select.
+    Activates the selected version via solc-select.
     """
     try:
         subprocess.run(["solc-select", "install", version], check=True)
     except subprocess.CalledProcessError:
-        print(f"No se pudo instalar {version}, puede que ya esté instalada.")
+        print(f"Could not install {version}, it might already be installed.")
 
     subprocess.run(["solc-select", "use", version], check=True)
-    print(f"Usando solc {version}")
+    print(f"Using solc {version}")
 
 
 def select_and_set_solc_version(contract_path: str):
     """
-    Compila un contrato usando solc.
-    Devuelve ABI y bytecode.
+    Selects and activates the correct solc version based on a contract.
+    Returns the minor version.
     """
     version = get_solc_version(contract_path)
     set_solc_version(version)
 
-
-    print(version)
     return version.split(".")[1]
-    # result = subprocess.run(
-    #     ["solc", "--combined-json", "abi,bin", contract_path],
-    #     capture_output=True, text=True, check=True
-    # )
-
-    # return result.stdout
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Uso: python compile_contract.py <ruta_al_contrato.sol>")
+        print("Usage: python compile_contract.py <path_to_contract.sol>")
         sys.exit(1)
 
     contract_path = sys.argv[1]
     if not Path(contract_path).exists():
-        print(f"El archivo {contract_path} no existe.")
+        print(f"File {contract_path} does not exist.")
         sys.exit(1)
 
     compiled_json = compile_contract(contract_path)
-    print("\n Resultado de compilación:")
+    print("\n Compilation result:")
     print(compiled_json)
