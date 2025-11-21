@@ -40,15 +40,16 @@ def get_solc_version(contract_path: str) -> str:
     # --- Caso ^ ---
     if raw_version.startswith("^"):
         base_version = semantic_version.Version(re.sub(r"[^\d.]", "", raw_version))
-
+        print(raw_version)
         # if base_version.major == 0:
         #     # ^0.x.y -> >=0.x.y <0.(minor+1).0
         #     upper_bound = f"<0.{base_version.minor+1}.0"
         # else:
         #     # ^x.y.z -> >=x.y.z <(major+1).0.0
-        upper_bound = f"<{base_version.major+1}.0.0"
-
-        spec_str = f">={base_version} {upper_bound}"
+        print(base_version.minor)
+        upper_bound = f"<{base_version.major}.{base_version.minor+1}.0"
+        
+        spec_str = f">={base_version},{upper_bound}"
         spec = semantic_version.SimpleSpec(spec_str)
 
         compatible = [v for v in available_versions if v in spec]
