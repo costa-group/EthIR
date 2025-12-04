@@ -15,14 +15,14 @@ import os
 # if a == -1 means the result is not valid
 # othewise
 # a is the number of cold acceses
-# b is the number of does access that are a store
+# b is the number of thoses access that are a store
 # Assuming sloads have been assigned cost 100 (warmaccess) and sstores cost 0 or 10050 ((sset+reset2)/2, i.e. (sset+warmaccess)/2)
 # Therefore sload have already payed 100 and sstores nothing as part of the access
 # total additional cost for accesses: a * 2000 + b * 100
 #
 
 #
-# Use calling directly print(f"POS[0][2]: {pos[0][2]} {type(pos[0][2])}")the funcition that compute total sstore cost (the result may be wrong if there are loops)
+# Use calling directly the funcition that compute total sstore cost (the result may be wrong if there are loops)
 # with a list of lists like the contents of the json file
 # (a,b) = compute_stores(ojson)
 # if a == -1 means the result is not valid
@@ -36,13 +36,14 @@ import os
 #
 # Use calling directly the funcition that compute final cost of sstores (it means only the odd stores)
 # with a list of lists like the contents of the json file
-# a = compute_stores_final(ojson)
-# if a == -1 means the result is not valid
+# (az,an) = compute_stores_final(ojson)
+# if az == -1 means the result is not valid
 # othewise
-# a is the number of odd store accesses
-# Assuming sstores have been assigned cost 10050 
-# total additional cost for sstores: a * 9950
-#
+# az is the number of odd store accesses with cost 20000
+# an is the number of odd store accesses with cost 2900
+# Assuming expensive sstores have been assigned cost 10050 
+# Assuming cheap sstores have been assigned cost 1500 
+# total additional cost for sstores: az * 9950 + an * 1400
 
 
 def var (i):
@@ -192,7 +193,7 @@ def evalue_if_num(e):
         if isinstance(aux,str):
             return [aux]
         else:
-            # assert(isinstance(aux,str))
+            assert(isinstance(aux,str))
             return aux
     if e[0] == '-':
         assert(len(e) <= 3)
@@ -539,15 +540,21 @@ class Access_Problem:
 #        self.uvars = 0
         self.pvars = 0
 
+        self.fvars = 0
+        #first time order execution times vars
+
         self.pos2storevars ={}
         self.pos2vars = {}
+        self.dependecies = {} #between operations
         self.posvars = []
         self.boolvars = []
+        self.boolvars2pos = {}
         self.optionvars = []
         self.origvars = [];
         self.timesvars = [];
 #        self.usedvars = []
         self.parityvars = []
+        self.firstvars = []
 
     def get_var(self):
         self.posvars.append(Bool(var(self.nvars)))
@@ -588,6 +595,11 @@ class Access_Problem:
         self.pvars += 1
         return self.parityvars[-1]
 
+    def get_first_var(self):
+        self.firstvars.append(Int(tvar(self.fvars)))
+        self.fvars += 1
+        return self.firstvars[-1]
+    
     def get_expression(self,exp):
         if isinstance(exp,int):
             return IntVal(exp)
@@ -787,14 +799,178 @@ class Access_Problem:
         else:
             return (-1,0)
         
-    def get_worse_case_store_final(self,lins):
+    def get_worse_case_store_final(self,lins, non_zero_pos):
         self.generate_sequence_store(IntVal(1),lins)
         for v in self.pos2vars:
             suma = addsum(self.pos2vars[v])
             k = self.get_parity_var()
             b = self.get_bool_var()
+            self.boolvars2pos[b] = v 
             self.s.add( b == (suma == 2*k + 1) )
-            self.s.add_soft( b, 1 )
+            if v in non_zero_pos:
+                self.s.add_soft( b, 140 )
+            else:
+                self.s.add_soft( b, 995 )
+        for v in self.posvars:
+            self.s.add( v >= 0 )
+        for v in self.parityvars:
+            self.s.add(v >= 0)
+        for v in self.origvars:
+            self.s.add(v >= 0)
+        for v in self.timesvars:
+            self.s.add(v >= 0)
+        res = self.s.check()
+        #print(self.s.statistics())
+        #print(res)
+        #print(self.s.model())
+        if res == sat:
+            sets = 0
+            nsets = 0
+            for x in self.boolvars: #check parity
+                if self.s.model().eval(x) == True:
+                    if self.boolvars2pos[x] in non_zero_pos:
+                        nsets += 1
+                    else:
+                        sets += 1
+            return sets, nsets
+        else:
+            return -1, 0
+
+#*************
+
+    def addalldifferent(self,times_vars,first_vars):
+        assert(len(times_vars)==len(first_vars))
+        for i in range(len(times_vars)):
+            for j in range(i):
+                self.add(Or(times_vars[i] <= 0,times_vars[j] <= 0,first_vars[i] != first_vars[j]))
+
+    def addallordered(self,fpair,mylast,all_init_firsts,all_last_firsts):
+        assert(len(all_init_firsts)==len(all_last_firsts))
+        t = fpair[0]
+        f = fpair[1]
+        for i in range(len(all_init_firsts)):
+            And_fl_i_j_less_f = []
+            And_fl_j_less_fi_i =[]
+            for fl_i_j in all_last_firsts[i]:
+                And_fl_i_j_less_f.append(fl_i_j < f)
+            for fl_j in mylast:
+                And_fl_i_j_less_f.append(fl_j < all_init_firsts[i][1])
+            self.s.add(Or(t <= 0, all_init_firsts[i][0] <= 0 , addforall(And_fl_i_j_less_f), addforall(And_fl_j_less_fi_i)))
+        
+    def poslist_cold_store(self,sl,poslist):
+        myvars = []
+        times_first = []
+        for e in poslist:
+            v = self.get_times_var()
+            f = self.get_first_var()
+            if e in self.pos2vars:
+                self.pos2vars[e].append((v,f))
+            else:
+                self.pos2vars[e] = [(v,f)]
+            if sl == 's':
+                if e in self.pos2storevars:
+                    self.pos2storevars[e].append((v,f))
+                else:
+                    self.pos2storevars[e] = [(v,f)]
+            myvars.append(v)
+            firsts.append(f)
+            times_first.append((v,f))
+            self.addalldifferent(myvars,times_first)
+            return (addsum(myvars),times_first)
+
+
+    def generate_sequence_cold_store(self,f,v,seq):
+        last = []
+        fp = f
+        for e in seq:
+            if e[0][0] == "r":
+                last = self.generate_repetition_store(fp,v,e)
+            elif e[0][0] == "c":
+                last = self.generate_conditional_store(fp,v,e)
+            else:
+                assert(e[0][0] == "a")
+                last = self.generate_access_store(fp,v,e)
+            fn = self.get_first_var()
+            for (k,fl) in last:
+                self.s.add(Or(k <= 0,fl < fn))
+            fp = fn
+        return last
+    
+    def generate_conditional_cold_store(self,f,v,cond):
+        assert(cond[0][1] == 1)
+        #times = self.get_expression(cond[0][1]) * v
+        times = v
+        tlist = []
+        last = []
+        all_init_firsts = []
+        all_last_firsts = []
+        for c in cond[1]:
+            fc  = self.get_first_var()
+            k = self.get_times_var()
+            self.s.add(Or(k <= 0, f < fc))
+            tlist.append(k)
+            mylast = self.generate_sequence_cold_store(fc,k,c)
+            fmylast = list(map(lambda x: x[1],mylast)) #takes only firsts of last
+            # compare (k,fc) and mylast with all in all_init_firsts and all_last_firsts
+            self.addallordered((k,fc),fmylast,all_init_firsts,all_last_firsts)
+            last += mylast
+            all_init_firsts.append((k,fc))
+            all_last_firsts.append(fmylast)
+        suma = addsum(tlist)
+        self.s.add( suma == times)
+        return last
+
+    def generate_repetition_cold_store(self,f,v,rep):
+        times = self.get_expression(rep[0][2]) * v
+        fr  = self.get_first_var()
+        self.s.add(f < fr)
+#        sizef = len(self.fvars)
+#        sizek = len(self.tvars)
+        last =  self.generate_sequence_store(times,rep[1])
+        return last
+
+    def generate_access_cold_store(self,v,acc):
+        assert(acc[0][1] == 1)
+        #times = self.get_expression(acc[0][1]) * v
+        times = v
+        (suma,timesfirst_list) = self.poslist_cold_store(acc[0][2],acc[1])
+        self.s.add( suma == times)
+        return timesfirst_list
+
+    def get_worse_case_cold_and_store_final(self,lins, non_zero_pos):
+        #o0 = self.get_option_var()
+        #self.s.add(o0)
+        #self.generate_sequence_cold_store(o0,IntVal(1),lins)
+        self.generate_sequence_cold_store(IntVal(0),IntVal(1),lins)
+        #starts at moment 0 and 1 times
+        
+        for p in self.pos2vars:
+            ors = addexists(self.pos2vars[p])
+            b = self.get_bool_var()
+            self.s.add( b == ors )
+            if p in non_zero_pos:
+                self.s.add_soft( b, 290)
+            else:
+                self.s.add_soft( b, 2000)
+
+        for p in self.pos2storevars:
+            for  v in self.pos2storevars[p]:
+                i = self.pos2vars[p].index(v)
+                if i == 0:
+                    self.s.add_soft( v, 210 )
+                else:
+                    self.s.add_soft(And(Not(addexists(self.pos2vars[p][:i])),v),10)
+
+        for v in self.pos2vars:
+            suma = addsum(self.pos2vars[v])
+            k = self.get_parity_var()
+            b = self.get_bool_var()
+            self.boolvars2pos[b] = v 
+            self.s.add( b == (suma == 2*k + 1) )
+            if v in non_zero_pos:
+                self.s.add_soft( b, 140 )                
+            else:
+                self.s.add_soft( b, 995 )
         for v in self.posvars:
             self.s.add( v >= 0 )
         for v in self.parityvars:
@@ -808,12 +984,16 @@ class Access_Problem:
         #print(res)
         if res == sat:
             sets = 0
+            nsets = 0
             for x in self.boolvars: #check parity
                 if self.s.model().eval(x) == True:
-                    sets += 1
-            return sets 
+                    if self.boolvars2pos[x] in non_zero_pos:
+                        nsets += 1
+                    else:
+                        sets += 1
+            return sets, nsets
         else:
-            return -1
+            return -1, 0
 
 ################################################
 # Preprocess functions to replace postion string names by numbered positions
@@ -837,7 +1017,7 @@ def get_numbered_positions(pos,spos2npos):
         return [pos[0],lc]
     else:
         assert(pos[0][0] == 'r')
-        e = evalue_if_num(pos[0][2])
+        e = evalue_if_num(pos[0][1])
         return [[pos[0][0],pos[0][1],e],get_numbered_positions_list(pos[1],spos2npos)]
     
 def get_numbered_positions_list(pos,spos2npos):
@@ -867,7 +1047,6 @@ def compute_accesses(spositions,verbose = False):
     #smpos = check_multipos(sim_pos)
     #print(sim_pos,new_maxseq)
     #print(len(spos2npos),maxseq,new_maxseq)
-    #(c,sc) = ap.get_worse_case_cold(sim_pos)
     try:
         (c,sc) = ap.get_worse_case_cold(sim_pos)
         if verbose:
@@ -881,7 +1060,7 @@ def compute_accesses(spositions,verbose = False):
             print(os.path.basename(f),'Error')
         return (-1,0)
 
-def compute_stores(spositions, nonzero_vars = [], verbose = False):
+def compute_stores(spositions,verbose = False):
     assert(isinstance(spositions,list))
 
     ap = Access_Problem()
@@ -909,25 +1088,26 @@ def compute_stores(spositions, nonzero_vars = [], verbose = False):
             print(os.path.basename(f),'Error')
         return (-1,0)
 
-def compute_stores_final(spositions, nonzero_vars = [], verbose = False):
+def compute_stores_final(spositions, snon_zero_pos ,verbose = False):
     assert(isinstance(spositions,list))
 
     ap = Access_Problem()
     spos2npos = {}
     positions = get_numbered_positions_list(spositions,spos2npos)
-    #print(sys.argv[1])
-    #print(spositions)
+    non_zero_pos = list(map(lambda x: spos2npos[x] if x in spos2npos else x, snon_zero_pos))
     #print(positions,maxseq)
     #opositions = positions.copy()
     sim_pos = simplify_positions_store(positions) #initially the continuations are empty
+    new_maxseq = longest_seq_store_list(sim_pos)
+    smpos = check_stores(sim_pos)
     #print(sim_pos,es)
     try:
-        es = ap.get_worse_case_store_final(sim_pos)
+        (es,nes) = ap.get_worse_case_store_final(sim_pos, non_zero_pos)
         if verbose:
             res = ''
             if es >= 0 :
                 res = 'sat'
-            print(os.path.basename(f),es,res)
+            print(os.path.basename(f),new_maxseq,smpos,es,nes,res)
         return es
     except:
         if verbose:
@@ -951,10 +1131,16 @@ if __name__ == '__main__':
         assert(False,'The first argument must be an existing file name or a folder name')
 
     action = 'cold'
-    if len(sys.argv) == 3:
+    if len(sys.argv) >= 3:
         action = sys.argv[2]
 
     assert action in ['cold','store','final'], 'the second argument can only be cold (default), store or final'
+    
+    lnon_zero_pos = []
+    if len(sys.argv) == 4:
+        assert(action == 'final')
+        if sys.argv[3] != '[]':
+            lnon_zero_pos = list(map(lambda x:int(x),list(sys.argv[3][1:-1].split(','))))
 
     myfiles = []
     if os.path.isdir(name):
@@ -968,15 +1154,15 @@ if __name__ == '__main__':
     #print(len(myfiles))
 
     for f in myfiles: 
-        myfile = open(f)
-        spositions = json.load(myfile)
-        if action == 'store':
-            compute_stores(spositions,[], True)
-#            (s,es1) = compute_stores(spositions)
-#            es2 = compute_stores_final(spositions)
-#            print(os.path.basename(f),s,es1,es2)
-        elif action == 'final':
-            compute_stores_final(spositions,[],True)
-        else:
-            compute_accesses(spositions,True)
+        try:
+            myfile = open(f)
+            spositions = json.load(myfile)
+            if action == 'store':
+                compute_stores(spositions,True)
+            elif action == 'final':
+                compute_stores_final(spositions,lnon_zero_pos,True)
+            else:
+                compute_accesses(spositions,True)
+        except:
+            print(os.path.basename(f),'Error before SAT')
     exit(0)
