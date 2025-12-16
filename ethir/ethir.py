@@ -274,7 +274,9 @@ def run_solidity_analysis(inputs,hashes):
     c_translation_opt["args"] = args.args
 
     nonzero_vars = args.sto_nonzero.split(",") if args.sto_nonzero != "" else []
-   
+
+    ub_filter_functions = args.ub_filter_function.split(",") if args.ub_filter_function != "" else []
+    
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
@@ -305,7 +307,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   sra_analysis = args.sra_analysis,
                                                   nonzero_variables = nonzero_vars,
                                                   compact_clones = args.compact_clones,
-                                                  ub_filter_function = args.ub_filter_function)
+                                                  ub_filter_function = ub_filter_functions)
             
             except Exception as e:
                 traceback.print_exc()
@@ -352,7 +354,7 @@ def run_solidity_analysis(inputs,hashes):
                                                       sra_analysis = args.sra_analysis,
                                                       nonzero_variables = nonzero_vars,
                                                       compact_clones = args.compact_clones,
-                                                      ub_filter_function = args.ub_filter_function)
+                                                      ub_filter_function = ub_filter_functions)
                 
                 except Exception as e:
                     traceback.print_exc()
