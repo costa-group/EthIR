@@ -275,7 +275,7 @@ def run_solidity_analysis(inputs,hashes):
 
     nonzero_vars = args.sto_nonzero.split(",") if args.sto_nonzero != "" else []
 
-    ub_filter_functions = args.ub_filter_function.split(",") if args.ub_filter_function != "" else []
+    ub_filter_functions = args.ub_filter_function.split(":") if args.ub_filter_function != "" else []
     
     if len(inputs) == 1 and r:
         inp = inputs[0]
@@ -620,7 +620,7 @@ def main():
     parser.add_argument("-solc-compiler","--solc-compiler", help="Executable path of the solc compiler to be used",  type=str)
     parser.add_argument("-solc-select", "--solc-select",             help="It chooses solc-select to decide automatically which solc version works", action="store_true")
     parser.add_argument("-ub-filter-c","--ub-filter-contract", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_contract", default = "")
-    parser.add_argument("-ub-filter-f","--ub-filter-fucntion", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_function", default = "")
+    parser.add_argument("-ub-filter-f","--ub-filter-function", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_function", default = "")
     
     args = parser.parse_args()
     # if args.root_path:
