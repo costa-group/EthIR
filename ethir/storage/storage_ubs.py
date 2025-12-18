@@ -92,8 +92,8 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     #             function_name = i[0]
             
     # set_identifiers = list(rbr.set_identifiers.keys())
-
-    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks, initial_storage)
+    
+    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks, initial_storage, gastap_op)
 
     result_sat = {}
     for i in input_blocks:
