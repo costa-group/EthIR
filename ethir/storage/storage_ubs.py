@@ -65,15 +65,17 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     timeoutvalue = saco[3]      
     initial_storage = saco[4] # It could be a list of non-zero acceses separated by ","
 
-    print(f"Tengo initial storage a {initial_storage}")
-    
-    ub_filter_function = f_hashes.get(ub_filter_function_hash.strip("0x"), None)
-    
-    if ub_filter_function == None and ub_filter_function_hash != "":
+    ub_filter_functions = []
+    for ub_hash in ub_filter_function_hash:
+        ub_filter_function = f_hashes.get(ub_hash.strip("0x"), None)
+        if ub_filter_function != None:
+            ub_filter_functions.append(ub_filter_function)
+        
+    if ub_filter_functions == [] and ub_filter_function_hash != []:
         raise Exception("Error in filter function")
     
-    if ub_filter_function != None:
-        input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(ub_filter_function)]
+    if ub_filter_functions != []:
+        input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(tuple(ub_filter_functions))]
     else:
         input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
@@ -89,8 +91,8 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     #             function_name = i[0]
             
     # set_identifiers = list(rbr.set_identifiers.keys())
-
-    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks, initial_storage)
+    
+    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks, initial_storage, gastap_op)
 
     result_sat = {}
     for i in input_blocks:
@@ -207,8 +209,15 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
     gastap_op = saco[1]
     timeoutvalue = saco[3]
 
-    if ub_filter_function != None:
-        input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(ub_filter_function)]
+
+    ub_filter_functions = []
+    for ub_hash in ub_filter_function_hash:
+        ub_filter_function = f_hashes.get(ub_filter_function_hash.strip("0x"), None)
+        if ub_filter_function != None:
+            ub_filter_functions.append(ub_filter_function)
+    
+    if ub_filter_function != []:
+        input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(tuple(ub_filter_functions))]
     else:
         input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
