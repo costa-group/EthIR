@@ -113,27 +113,28 @@ class UB_info:
             self.allOK = False
             return
 
-        try: 
-            self.gas_ub = self.__eval_gas_ub(origub, params, function, sto_init_cost)
-            self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function, sto_init_cost)
-            self.sstore_accesses = self.__eval_sstore_ub(origub, params, function, sto_init_cost)
-            self.sload_accesses = self.__eval_sload_ub(origub,params, function, sto_init_cost)
+        if gastap_params != "mem":
+            try: 
+                self.gas_ub = self.__eval_gas_ub(origub, params, function, sto_init_cost)
+                self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function, sto_init_cost)
+                self.sstore_accesses = self.__eval_sstore_ub(origub, params, function, sto_init_cost)
+                self.sload_accesses = self.__eval_sload_ub(origub,params, function, sto_init_cost)
             
-            for scc in sccs:  
-                ub = self.__eval_niter_ub(origub, params, str(scc),function, sto_init_cost)
-                ub = ub.strip()
-                self.ubscc[scc] = ub
-                ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
-                if not isinstance(ub_as_list,list):
-                    try:
-                        ub_as_list = [int(float(ub_as_list))]
-                    except:
-                        ub_as_list = [ub_as_list]
+                for scc in sccs:  
+                    ub = self.__eval_niter_ub(origub, params, str(scc),function, sto_init_cost)
+                    ub = ub.strip()
+                    self.ubscc[scc] = ub
+                    ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
+                    if not isinstance(ub_as_list,list):
+                        try:
+                            ub_as_list = [int(float(ub_as_list))]
+                        except:
+                            ub_as_list = [ub_as_list]
 
-                self.ubscclist[scc] = ub_as_list
-        except Exception as exc: 
-            self.allOK = False
-            print(f"WARN: Error processing SCC {scc} with UB -> {str(exc)}") 
+                    self.ubscclist[scc] = ub_as_list
+            except Exception as exc: 
+                self.allOK = False
+                print(f"WARN: Error processing SCC {scc} with UB -> {str(exc)}") 
 
     def __compute(self,expr):
         match expr:
