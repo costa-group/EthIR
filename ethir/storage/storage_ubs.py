@@ -177,7 +177,7 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
         else:
             opposite_initial_storage = "zero"
 
-        ubmanager_aux = SRA_UB_manager(ubs, params, scc, component_of_blocks, opposite_initial_storage)
+        ubmanager_aux = SRA_UB_manager(ubs, params, scc, component_of_blocks, opposite_initial_storage,  gastap_op)
         ub_info_aux = ubmanager_aux.get_ub_info(i)
         
         # print("TENGO UB " + ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
