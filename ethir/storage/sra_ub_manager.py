@@ -14,7 +14,7 @@ class SRA_UB_manager:
 
         self.sccs = sccs
         self.ubs_info = {}
-        self.__compute_ubs(sto_init_cost)
+        self.__compute_ubs(sto_init_cost, gastap_params)
 
         print(str(self))
 
