@@ -73,39 +73,41 @@ class UB_info:
         origub = origub[1]
         
         #Some special cases treatment
-        if origub.find("execerror") != -1 and gastap_params != "memory":
+        if origub.find("execerror") != -1 and gastap_params != "mem":
             print("UB WARN: Error running costabs " + str(function))
             self.gas_ub = "execerror"
             self.allOK = False
             return
 
-        if origub.find("maximize_failed") != -1 and gastap_params != "memory":
+        if origub.find("maximize_failed") != -1 and gastap_params != "mem":
             print("UB Warn: Non maximixed expression ")
             self.gas_ub = "maximize_failed"
             self.allOK = False
             return
 
-        if origub.find("no_rf") != -1 and gastap_params != "memory": 
+        if origub.find("no_rf") != -1 and gastap_params != "mem": 
             failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
             print("UB WARN Non terminating loop found: " + str(failed))
             self.gas_ub = "nontermin"
             self.allOK = False
             return
 
-        if origub.find("cover_point") != -1 and gastap_params != "memory": 
+        if origub.find("cover_point") != -1 and gastap_params != "mem": 
             failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
             print("UB WARN No cover point found: " + str(failed))
             self.gas_ub = "nocoverpoint"
             self.allOK = False
             return
 
-        if origub.find("unknown") != -1 and gastap_params != "memory": 
+
+        print(gastap_params)
+        if origub.find("unknown") != -1 and gastap_params != "mem": 
             print("UB WARN:** Unknown UB for function " + str(function))
             self.gas_ub = "unknown"
             self.allOK = False
             return
 
-        if origub.find("timeout") != -1 and gastap_params != "memory": 
+        if origub.find("timeout") != -1 and gastap_params != "mem": 
             print("UB WARN: Timeout UB for function " + str(function))
             self.gas_ub = "timeout"
             self.allOK = False
