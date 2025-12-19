@@ -2,7 +2,6 @@ import json
 import traceback
 import sympy
 from storage.traverse_cfg import traverse_cfg
-from storage.cold import compute_stores, compute_stores_final
 from storage.sra_ub_manager import SRA_UB_manager
 from utils import get_function_hash, run_gastap_all
 from timeit import default_timer as dtimer
