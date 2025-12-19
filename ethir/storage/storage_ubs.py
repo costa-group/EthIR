@@ -67,8 +67,11 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     initial_storage = saco[4] # It could be a list of non-zero acceses separated by ","
 
     ub_filter_functions = []
+
     for ub_hash in ub_filter_function_hash:
-        ub_filter_function = f_hashes.get(ub_hash.strip("0x"), None)
+        print(ub_hash)
+        print(ub_hash.removeprefix("0x"))
+        ub_filter_function = f_hashes.get(ub_hash.removeprefix("0x"), None)
         if ub_filter_function != None:
             ub_filter_functions.append(ub_filter_function)
         
@@ -215,8 +218,9 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
 
 
     ub_filter_functions = []
+  
     for ub_hash in ub_filter_function_hash:
-        ub_filter_function = f_hashes.get(ub_filter_function_hash.strip("0x"), None)
+        ub_filter_function = f_hashes.get(ub_filter_function_hash.removeprefix("0x"), None)
         if ub_filter_function != None:
             ub_filter_functions.append(ub_filter_function)
     
