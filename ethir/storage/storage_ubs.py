@@ -63,7 +63,7 @@ def compute_entry_functions_with_storage_instructions(input_blocks_aux, has_stor
     input_blocks = sorted(list(input_blocks))
     return input_blocks
 
-def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function_hash):
+def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function_hash, nonzero_input):
 
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
@@ -210,13 +210,69 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
         else:
             memory_ub = 0
 
+        print("INITIAL STORAGE: "+str(initial_storage))
+
         if allOK:
             if gastap_op == "mem":
-                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("ok")+";"+str("noub")+";"+str("noub")+";"+str("noub")+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_hash)+";"+
+                      str(source_file)+";"+
+                      str(cname)+";"+ 
+                      str(function_name)+";" + 
+                      "0x"+str(function_hash)+";" + 
+                      "block"+str(i)+";"+
+                      str("ok")+";"+
+                      str("noub")+";"+
+                      str("noub")+";"+
+                      str("noub")+";"+
+                      str(memory_ub)+";"+
+                      str(ub_info.sstore_accesses)+";"+
+                      str(ub_info.sload_accesses)+";"+
+                      str(colds*2000+warms*100)+";"+
+                      str(cost_sstores)+";"+
+                      str(round(times[i],3))+";"+
+                      str(round(cold_time,3))+";"+
+                      str(round(storage_time,3))+";"+ 
+                      str(nonzero_input))
             else:
-                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("ok")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(final_ub_mix)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_hash)+";"+
+                      str(source_file)+";"+
+                      str(cname)+";"+
+                      str(function_name)+
+                      ";0x"+str(function_hash)+";" + 
+                      "block"+str(i)+";"+
+                      str("ok")+";"+
+                      str(final_ub)+";"+
+                      str(final_ub_aux)+";"+
+                      str(final_ub_mix)+";"+
+                      str(memory_ub)+";"+
+                      str(ub_info.sstore_accesses)+";"+
+                      str(ub_info.sload_accesses)+";"+
+                      str(colds*2000+warms*100)+";"+
+                      str(cost_sstores)+";"+
+                      str(round(times[i],3))+";"+
+                      str(round(cold_time,3))+";"+
+                      str(round(storage_time,3))+";"+ 
+                      str(nonzero_input))
         else: 
-            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(final_ub_mix)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_hash)+";"+
+                  str(source_file)+";"+
+                  str(cname)+";"+ 
+                  str(function_name)+";" + 
+                  "0x"+str(function_hash)+";" + 
+                  "block"+str(i)+";"+
+                  str("uberror")+";"+
+                  str(final_ub)+";"+
+                  str(final_ub_aux)+";"+
+                  str(final_ub_mix)+";"+
+                  str(memory_ub)+";"+
+                  str(ub_info.sstore_accesses)+";"+
+                  str(ub_info.sload_accesses)+";"+
+                  str(colds)+";"+
+                  str(cost_sstores)+";"+
+                  str(round(times[i],3))+";"+
+                  str(round(cold_time,3))+";"+
+                  str(round(storage_time,3)) + ";" +
+                  str(nonzero_input))
 
 
 def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes, ub_filter_function):
