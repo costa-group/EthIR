@@ -17,7 +17,7 @@ def compute_sstore_cost(result, smt_option, nonzero_variables):
 
     try:
         if smt_option == "final":
-            az, an = compute_stores_final(result, nonzero_vars = nonzero_variables)
+            az, an = compute_stores_final(result, nonzero_variables)
             if az == -1:
                 raise Exception()
             cost_lower = sympy.simplify(az * store_correction_lower)
@@ -42,6 +42,7 @@ def compute_sstore_cost(result, smt_option, nonzero_variables):
             raise Exception("UNKNOWN option for sstore costs")
     
     except Exception as e:
+        traceback.print_exc()
         print("GASTAPERROR: Error in sstore cost")
         a = b = 0
         cost_lower = 0
