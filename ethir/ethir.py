@@ -556,6 +556,10 @@ def process_fields(src_map):
     return fields
 
 def generate_saco_hashes_file(dicc):
+    if "costabs" not in os.listdir(global_params_ethir.costabs_path):
+        os.mkdir(global_params_ethir.costabs_path+"/costabs")
+
+    
     with open(global_params_ethir.costabs_path+"/costabs/"+"solidity_functions.txt", "w") as f:
         for name in dicc:
             f_names = dicc[name].values()
