@@ -276,7 +276,7 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
                   str(nonzero_input))
 
 
-def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes, ub_filter_function):
+def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes,  ub_filter_function_hash):
     gastap_op = saco[1]
     timeoutvalue = saco[3]
 
@@ -288,7 +288,7 @@ def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,sac
         if ub_filter_function != None:
             ub_filter_functions.append(ub_filter_function)
     
-    if ub_filter_function != []:
+    if ub_filter_functions != []:
         input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(tuple(ub_filter_functions))]
     else:
         input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
