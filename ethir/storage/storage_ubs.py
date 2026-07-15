@@ -2,7 +2,6 @@ import json
 import traceback
 import sympy
 from storage.traverse_cfg import traverse_cfg
-from storage.cold import compute_stores, compute_stores_final
 from storage.sra_ub_manager import SRA_UB_manager
 from utils import get_function_hash, run_gastap_all
 from timeit import default_timer as dtimer
@@ -18,33 +17,39 @@ def compute_sstore_cost(result, smt_option, nonzero_variables):
 
     try:
         if smt_option == "final":
-            a = compute_stores_final(result, nonzero_vars = nonzero_variables)
-            if a == -1:
+            az, an = compute_stores_final(result, nonzero_variables)
+            if az == -1:
                 raise Exception()
-            cost_lower = sympy.simplify(a * store_correction_lower)
-            cost_upper = sympy.simplify(a * store_correction_upper)
+            cost_lower = sympy.simplify(az * store_correction_lower)
+            cost_upper = sympy.simplify(az * store_correction_upper)
+            cost_mix = sympy.simplify( az*store_correction_upper+an*store_correction_lower)
         elif smt_option == "complete":
             if str(result).find("['r',") != -1:
-                a = compute_stores_final(result, nonzero_vars = nonzero_variables)
-                if (a == -1):
+                az, an = compute_stores_final(result, nonzero_vars = nonzero_variables)
+                if (az == -1):
                     raise Exception()
-                cost_lower = sympy.simplify(a * store_correction_lower)
-                cost_upper = sympy.simplify(a * store_correction_upper)
+                cost_lower = sympy.simplify(az * store_correction_lower)
+                cost_upper = sympy.simplify(az * store_correction_upper)
+                cost_mix = sympy.simplify( az*store_correction_upper+an*store_correction_lower)
             else:
                 (a, b) = compute_stores(result, nonzero_vars = nonzero_variables)
                 if (a == -1):
                     raise Exception()
                 cost_lower = sympy.simplify(a * (store_correction_lower+warm_correction) + b * store_correction_lower)
                 cost_upper = sympy.simplify(a * (store_correction_upper+warm_correction) + b * store_correction_upper)
+                cost_mix = 0
         else:
             raise Exception("UNKNOWN option for sstore costs")
     
     except Exception as e:
+        traceback.print_exc()
         print("GASTAPERROR: Error in sstore cost")
         a = b = 0
-        cost = 0
+        cost_lower = 0
+        cost_upper = 0
+        cost_mix = 0
         
-    return (cost_lower,cost_upper)
+    return (cost_lower,cost_upper, cost_mix)
     
 
 
@@ -59,18 +64,19 @@ def compute_entry_functions_with_storage_instructions(input_blocks_aux, has_stor
     input_blocks = sorted(list(input_blocks))
     return input_blocks
 
-def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function_hash):
+def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage, component_of_blocks, vertices, f_hashes, ub_filter_function_hash, nonzero_input):
 
     gastap_op = saco[1]
     smt_option = saco[2] # it could be complete or final
     timeoutvalue = saco[3]      
     initial_storage = saco[4] # It could be a list of non-zero acceses separated by ","
 
-    print(f"Tengo initial storage a {initial_storage}")
-
     ub_filter_functions = []
+
     for ub_hash in ub_filter_function_hash:
-        ub_filter_function = f_hashes.get(ub_filter_function_hash.strip("0x"), None)
+        print(ub_hash)
+        print(ub_hash.removeprefix("0x"))
+        ub_filter_function = f_hashes.get(ub_hash.removeprefix("0x"), None)
         if ub_filter_function != None:
             ub_filter_functions.append(ub_filter_function)
         
@@ -94,8 +100,8 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     #             function_name = i[0]
             
     # set_identifiers = list(rbr.set_identifiers.keys())
-
-    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks, initial_storage)
+    
+    ubmanager = SRA_UB_manager(ubs, params, scc, component_of_blocks, initial_storage, gastap_op)
 
     result_sat = {}
     for i in input_blocks:
@@ -150,7 +156,7 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
                     try:
                         x = dtimer()
 
-                        (cost_sstores_lower,cost_sstores_upper) = compute_sstore_cost(result,smt_option, nonzero_variables)
+                        (cost_sstores_lower,cost_sstores_upper, cost_sstores_mix) = compute_sstore_cost(result,smt_option, nonzero_variables)
 
                         y = dtimer()
 
@@ -166,6 +172,7 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
                     warms = 0
                     cost_sstores_lower = 0
                     cost_sstores_upper = 0
+                    cost_sstores_mix = 0
                     
             except Exception as e:
                 print("GASTAPERROR: Error in TRAVERSE")
@@ -180,46 +187,108 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
         else:
             opposite_initial_storage = "zero"
 
-        ubmanager_aux = SRA_UB_manager(ubs, params, scc, component_of_blocks, opposite_initial_storage)
+        ubmanager_aux = SRA_UB_manager(ubs, params, scc, component_of_blocks, opposite_initial_storage,  gastap_op)
         ub_info_aux = ubmanager_aux.get_ub_info(i)
         
         # print("TENGO UB " + ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores))
         if allOK: 
             final_ub = sympy.simplify(ub_info.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores_upper))
             final_ub_aux = sympy.simplify(ub_info_aux.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores_lower))
+            final_ub_mix = sympy.simplify(ub_info_aux.gas_ub+" +"+str(colds*2000+warms*100)+" +"+str(cost_sstores_mix))
         else: 
             final_ub = ub_info.gas_ub
             final_ub_aux = ub_info_aux.gas_ub
-
+            final_ub_mix = ub_info_aux.gas_ub
+            
         # else:
         #     final_ub = ub_info.gas_ub
         #     colds = 0 
         #     warms = 0 
         #     cost_sstores = 0
 
-        if gastap_op == "all":
+        if gastap_op == "all" or gastap_op == "mem":
             memory_ub = ub_info.memory_ub.strip()
         else:
             memory_ub = 0
 
-        if allOK:     
-            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("ok")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds*2000+warms*100)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+        print("INITIAL STORAGE: "+str(initial_storage))
+
+        if allOK:
+            if gastap_op == "mem":
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_hash)+";"+
+                      str(source_file)+";"+
+                      str(cname)+";"+ 
+                      str(function_name)+";" + 
+                      "0x"+str(function_hash)+";" + 
+                      "block"+str(i)+";"+
+                      str("ok")+";"+
+                      str("noub")+";"+
+                      str("noub")+";"+
+                      str("noub")+";"+
+                      str(memory_ub)+";"+
+                      str(ub_info.sstore_accesses)+";"+
+                      str(ub_info.sload_accesses)+";"+
+                      str(colds*2000+warms*100)+";"+
+                      str(cost_sstores)+";"+
+                      str(round(times[i],3))+";"+
+                      str(round(cold_time,3))+";"+
+                      str(round(storage_time,3))+";"+ 
+                      str(nonzero_input))
+            else:
+                print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_hash)+";"+
+                      str(source_file)+";"+
+                      str(cname)+";"+
+                      str(function_name)+
+                      ";0x"+str(function_hash)+";" + 
+                      "block"+str(i)+";"+
+                      str("ok")+";"+
+                      str(final_ub)+";"+
+                      str(final_ub_aux)+";"+
+                      str(final_ub_mix)+";"+
+                      str(memory_ub)+";"+
+                      str(ub_info.sstore_accesses)+";"+
+                      str(ub_info.sload_accesses)+";"+
+                      str(colds*2000+warms*100)+";"+
+                      str(cost_sstores)+";"+
+                      str(round(times[i],3))+";"+
+                      str(round(cold_time,3))+";"+
+                      str(round(storage_time,3))+";"+ 
+                      str(nonzero_input))
         else: 
-            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_name)+";"+str(source_file)+";"+str(cname)+";"+ str(function_name)+";0x"+str(function_hash)+";block"+str(i)+";"+str("uberror")+";"+str(final_ub)+";"+str(final_ub_aux)+";"+str(memory_ub)+";"+str(ub_info.sstore_accesses)+";"+str(ub_info.sload_accesses)+";"+str(colds)+";"+str(cost_sstores)+";"+str(round(times[i],3))+";"+str(round(cold_time,3))+";"+str(round(storage_time,3)))
+            print("GASTAPRES: "+str(source_file)+"_"+str(cname)+"_"+ str(function_hash)+";"+
+                  str(source_file)+";"+
+                  str(cname)+";"+ 
+                  str(function_name)+";" + 
+                  "0x"+str(function_hash)+";" + 
+                  "block"+str(i)+";"+
+                  str("uberror")+";"+
+                  str(final_ub)+";"+
+                  str(final_ub_aux)+";"+
+                  str(final_ub_mix)+";"+
+                  str(memory_ub)+";"+
+                  str(ub_info.sstore_accesses)+";"+
+                  str(ub_info.sload_accesses)+";"+
+                  str(colds)+";"+
+                  str(cost_sstores)+";"+
+                  str(round(times[i],3))+";"+
+                  str(round(cold_time,3))+";"+
+                  str(round(storage_time,3)) + ";" +
+                  str(nonzero_input))
 
 
-def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes, ub_filter_function):
+def compute_cost_without_storage_analysis(cname,source_file,storage_analysis,saco, function_block_map, f_hashes,  ub_filter_function_hash):
     gastap_op = saco[1]
     timeoutvalue = saco[3]
 
 
     ub_filter_functions = []
+  
     for ub_hash in ub_filter_function_hash:
-        ub_filter_function = f_hashes.get(ub_filter_function_hash.strip("0x"), None)
+        ub_filter_function = f_hashes.get(ub_filter_function_hash.removeprefix("0x"), None)
         if ub_filter_function != None:
             ub_filter_functions.append(ub_filter_function)
     
-    if ub_filter_function != []:
+    if ub_filter_functions != []:
         input_blocks_aux = [function_block_map[x][0] for x in function_block_map.keys() if x.startswith(tuple(ub_filter_functions))]
     else:
         input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))

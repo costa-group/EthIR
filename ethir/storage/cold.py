@@ -1108,7 +1108,7 @@ def compute_stores_final(spositions, snon_zero_pos ,verbose = False):
             if es >= 0 :
                 res = 'sat'
             print(os.path.basename(f),new_maxseq,smpos,es,nes,res)
-        return es
+        return es, nes
     except:
         if verbose:
             print(os.path.basename(f),'Error')

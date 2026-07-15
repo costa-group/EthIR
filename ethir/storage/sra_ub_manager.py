@@ -6,7 +6,7 @@ from sympy import Function, symbols
 
 class SRA_UB_manager: 
     
-    def __init__(self, ubs, params, sccs, come_from, sto_init_cost) -> None:
+    def __init__(self, ubs, params, sccs, come_from, sto_init_cost, gastap_params) -> None:
         ## Ubs per public function identified by block id
         self.ubs = ubs
         self.params = params
@@ -14,11 +14,11 @@ class SRA_UB_manager:
 
         self.sccs = sccs
         self.ubs_info = {}
-        self.__compute_ubs(sto_init_cost)
+        self.__compute_ubs(sto_init_cost, gastap_params)
 
         print(str(self))
 
-    def __compute_ubs(self, sto_init_cost): 
+    def __compute_ubs(self, sto_init_cost, gastap_params): 
         for function in self.ubs: 
             ubinfo = UB_info()
 
@@ -29,7 +29,7 @@ class SRA_UB_manager:
                         continue
                     sccsfun.append(scc)
 
-            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun, function, sto_init_cost)
+            ubinfo.process_ubs(self.ubs[function], self.params[function], sccsfun, function, sto_init_cost, gastap_params)
 
             self.ubs_info[function] = ubinfo
 
@@ -67,71 +67,74 @@ class UB_info:
         self.ubscc = {}
         self.ubscclist = {}
 
-    def process_ubs(self,origub,params,sccs, function, sto_init_cost): 
+    def process_ubs(self,origub,params,sccs, function, sto_init_cost, gastap_params): 
         
         self.memory_ub = origub[0]
         origub = origub[1]
         
         #Some special cases treatment
-        if origub.find("execerror") != -1:
+        if origub.find("execerror") != -1 and gastap_params != "mem":
             print("UB WARN: Error running costabs " + str(function))
             self.gas_ub = "execerror"
             self.allOK = False
             return
 
-        if origub.find("maximize_failed") != -1:
+        if origub.find("maximize_failed") != -1 and gastap_params != "mem":
             print("UB Warn: Non maximixed expression ")
             self.gas_ub = "maximize_failed"
             self.allOK = False
             return
 
-        if origub.find("no_rf") != -1: 
+        if origub.find("no_rf") != -1 and gastap_params != "mem": 
             failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
             print("UB WARN Non terminating loop found: " + str(failed))
             self.gas_ub = "nontermin"
             self.allOK = False
             return
 
-        if origub.find("cover_point") != -1: 
+        if origub.find("cover_point") != -1 and gastap_params != "mem": 
             failed = re.search(r'\(failed(.*?)\)',origub).group(1)[1:]
             print("UB WARN No cover point found: " + str(failed))
             self.gas_ub = "nocoverpoint"
             self.allOK = False
             return
 
-        if origub.find("unknown") != -1: 
+
+        print(gastap_params)
+        if origub.find("unknown") != -1 and gastap_params != "mem": 
             print("UB WARN:** Unknown UB for function " + str(function))
             self.gas_ub = "unknown"
             self.allOK = False
             return
 
-        if origub.find("timeout") != -1: 
+        if origub.find("timeout") != -1 and gastap_params != "mem": 
             print("UB WARN: Timeout UB for function " + str(function))
             self.gas_ub = "timeout"
             self.allOK = False
             return
 
-        try: 
-            self.gas_ub = self.__eval_gas_ub(origub, params, function, sto_init_cost)
-            self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function, sto_init_cost)
-            self.sstore_accesses = self.__eval_sstore_ub(origub, params, function, sto_init_cost)
-            self.sload_accesses = self.__eval_sload_ub(origub,params, function, sto_init_cost)
+        if gastap_params != "mem":
+            try: 
+                self.gas_ub = self.__eval_gas_ub(origub, params, function, sto_init_cost)
+                self.storage_accesses = self.__eval_stoacceses_ub(origub, params, function, sto_init_cost)
+                self.sstore_accesses = self.__eval_sstore_ub(origub, params, function, sto_init_cost)
+                self.sload_accesses = self.__eval_sload_ub(origub,params, function, sto_init_cost)
             
-            for scc in sccs:  
-                ub = self.__eval_niter_ub(origub, params, str(scc),function, sto_init_cost)
-                ub = ub.strip()
-                self.ubscc[scc] = ub
-                ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
-                if not isinstance(ub_as_list,list):
-                    try:
-                        ub_as_list = [int(float(ub_as_list))]
-                    except:
-                        ub_as_list = [ub_as_list]
+                for scc in sccs:  
+                    ub = self.__eval_niter_ub(origub, params, str(scc),function, sto_init_cost)
+                    ub = ub.strip()
+                    self.ubscc[scc] = ub
+                    ub_as_list = self.__compute(ast.parse(ub, mode="eval").body)
+                    if not isinstance(ub_as_list,list):
+                        try:
+                            ub_as_list = [int(float(ub_as_list))]
+                        except:
+                            ub_as_list = [ub_as_list]
 
-                self.ubscclist[scc] = ub_as_list
-        except Exception as exc: 
-            self.allOK = False
-            print(f"WARN: Error processing SCC {scc} with UB -> {str(exc)}") 
+                    self.ubscclist[scc] = ub_as_list
+            except Exception as exc: 
+                self.allOK = False
+                print(f"WARN: Error processing SCC {scc} with UB -> {str(exc)}") 
 
     def __compute(self,expr):
         match expr:

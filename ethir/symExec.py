@@ -4617,10 +4617,10 @@ def run(disasm_file=None,
         print("GAS for " + str(cname) + ": " + str(gas))
         print("BLOCKS for " + str(cname) + ": " + str(len(vertices)))
 
+        nonzero_input = nonzero_variables
+        nonzero_variables = nonzero_variables.split(":") if nonzero_variables != "" else []
         if nonzero_variables != []:
             nonzero_variables = translate_nonzero_variables(nonzero_variables, mapping_state_variables)
-
-        print(nonzero_variables)
 
         if not is_mem_analysis:
             storage_accesses = None
@@ -4651,7 +4651,7 @@ def run(disasm_file=None,
         
         if saco[1]!= None and storage_analysis:
 
-            compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage,  component_of_blocks, vertices, f_hashes, ub_filter_function)
+            compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysis, storage_accesses, nonzero_variables, scc, rel, function_block_map, has_storage,  component_of_blocks, vertices, f_hashes, ub_filter_function, nonzero_input)
                 
             # raise Exception
 
