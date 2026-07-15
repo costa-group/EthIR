@@ -307,7 +307,8 @@ def run_solidity_analysis(inputs,hashes):
                                                   sra_analysis = args.sra_analysis,
                                                   nonzero_variables = nonzero_vars,
                                                   compact_clones = args.compact_clones,
-                                                  ub_filter_function = ub_filter_functions)
+                                                  ub_filter_function = ub_filter_functions,
+                                                  test_cases = args.test_cases)
             
             except Exception as e:
                 traceback.print_exc()
@@ -354,7 +355,8 @@ def run_solidity_analysis(inputs,hashes):
                                                       sra_analysis = args.sra_analysis,
                                                       nonzero_variables = nonzero_vars,
                                                       compact_clones = args.compact_clones,
-                                                      ub_filter_function = ub_filter_functions)
+                                                      ub_filter_function = ub_filter_functions,
+                                                      test_cases = args.test_cases)
                 
                 except Exception as e:
                     traceback.print_exc()
@@ -625,6 +627,7 @@ def main():
     parser.add_argument("-solc-select", "--solc-select",             help="It chooses solc-select to decide automatically which solc version works", action="store_true")
     parser.add_argument("-ub-filter-c","--ub-filter-contract", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_contract", default = "")
     parser.add_argument("-ub-filter-f","--ub-filter-function", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_function", default = "")
+    parser.add_argument("-test-cases","--test-cases", help="Filename with the information of test cases for each function",  type=str, dest="test_cases", default = "")
     
     args = parser.parse_args()
     # if args.root_path:

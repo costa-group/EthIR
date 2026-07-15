@@ -25,7 +25,7 @@ pattern = ["PUSH1",
 
 global st_vars
 
-def rbr2saco(rbr,execution,cname):
+def rbr2saco(rbr,execution,cname,test_cases):
     global st_vars
 
     begin = dtimer()
@@ -38,6 +38,9 @@ def rbr2saco(rbr,execution,cname):
                 new_rule = process_rule_saco(rule)
                 new_rules.append(new_rule)
 
+        if test_cases != None and test_cases != "":
+            pass
+                
         write(new_rules,execution,cname)
         end = dtimer()
         print("SACO RBR: "+str(end-begin)+"s")

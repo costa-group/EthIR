@@ -4400,7 +4400,8 @@ def run(disasm_file=None,
         sra_analysis = None,
         nonzero_variables = [],
         compact_clones = False,
-        ub_filter_function = None):    
+        ub_filter_function = None,
+        test_cases = None):    
     
     global g_disasm_file
     global g_source_file
@@ -4641,7 +4642,8 @@ def run(disasm_file=None,
                                              max_sto_idx = max_storage_idx,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
                                              sto = sto, 
-                                             storage_analysis = (storage_accesses, saco[2], get_functions_with_loop(scc), saco[4], nonzero_variables)) #saco[2] constains the smt option to translate cost of sstores
+                                             storage_analysis = (storage_accesses, saco[2], get_functions_with_loop(scc), saco[4], nonzero_variables),
+                                             test_cases = test_cases) #saco[2] constains the smt option to translate cost of sstores
 
         else:
             print("*************************************************************")
