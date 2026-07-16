@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 
 import sympy
 
@@ -14,11 +15,20 @@ _FLIPPED_OP = {
     "<=": ">=",
     ">": "<",
     ">=": "<=",
-    "=": "=",
+    "=": "!=",
+    "!=": "="
 }
 
+_OP_SACO = {
+    "<": "lt",
+    "<=": "leq",
+    ">": "gt",
+    ">=": "geq",
+    "=": "eq",
+    "!=": "neq"
+    }
 
-def load_example(path):
+def load_file(path):
     with open(path, "r") as f:
         return json.load(f)
 
@@ -95,13 +105,41 @@ def unify_constraint(constraint):
     return "{}{}{}".format(positive, op, negative)
 
 
-def get_unified_constraints(test_case):
-    return [unify_constraint(constraint) for constraint in test_case.get("constraints_clpq", [])]
+def replace_state_variables(constraint, state_variables_fields):
+    """Replace every occurrence of a state variable name in constraint with
+    its field(gN) representation, longest names first so that no variable
+    name is replaced as a substring of another."""
+    for variable in sorted(state_variables_fields, key=len, reverse=True):
+        pattern = r"\b{}\b".format(re.escape(variable))
+        constraint = re.sub(pattern, state_variables_fields[variable], constraint)
+    return constraint
 
 
-def summarize(data):
+def to_saco_constraint(constraint):
+    """Rewrite 'left OP right' as the SACO predicate 'opname(left,right)',
+    using _OP_SACO for the operator name. Longer operators are matched
+    before their single-character prefixes ("!=" before "=", ">=" before
+    ">", etc)."""
+    constraint = constraint.strip()
+    for op in ("!=", ">=", "<=", "=", ">", "<"):
+        idx = constraint.find(op)
+        if idx != -1:
+            left = constraint[:idx].strip()
+            right = constraint[idx + len(op):].strip()
+            return "{}({},{})".format(_OP_SACO[op], left, right)
+    return constraint
+
+
+def get_unified_constraints(test_case, state_variables_fields):
+    unified = [unify_constraint(constraint) for constraint in test_case.get("constraints_clpq", [])]
+    substituted = [replace_state_variables(constraint, state_variables_fields) for constraint in unified]
+    return [to_saco_constraint(constraint) for constraint in substituted]
+
+
+def summarize_test_cases(data):
     """Build a dict per function with its identifier, test cases and the
     unified clpq constraints for each of them."""
+    state_variables_fields = get_state_variables_fields(data)
     result = []
     for function in data.get("functions", []):
         function_summary = {
@@ -113,17 +151,17 @@ def summarize(data):
             function_summary["test_cases"].append({
                 "id": test_case.get("id"),
                 "kind": test_case.get("kind"),
-                "constraints_clpq": get_unified_constraints(test_case),
+                "constraints_clpq": get_unified_constraints(test_case, state_variables_fields),
             })
         result.append(function_summary)
     return result
 
 
 if __name__ == "__main__":
-    data = load_example(os.path.join(os.path.dirname(__file__), "example.json"))
+    data = load_file(sys.argv[1])
 
     print("Function identifiers:", get_function_identifiers(data))
     print("State variables fields:", get_state_variables_fields(data))
 
-    for function_summary in summarize(data):
+    for function_summary in summarize_test_cases(data):
         print(function_summary)
