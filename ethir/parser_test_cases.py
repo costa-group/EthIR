@@ -146,13 +146,15 @@ def get_unified_constraints(test_case, state_variables_fields):
 
 
 def summarize_test_cases(data):
-    """Build a dict per function with its identifier, test cases and the
-    unified clpq constraints for each of them."""
+    """Build a dict associating each function's identifier with its
+    summarized info: params and the unified clpq constraints for each of
+    its test cases."""
     state_variables_fields = get_state_variables_fields(data)
-    result = []
+    result = {}
     for function in data.get("functions", []):
+        identifier = _normalize_int_types(function["signature"])
         function_summary = {
-            "identifier": _normalize_int_types(function["signature"]),
+            "identifier": identifier,
             "params": function.get("params", []),
             "test_cases": [],
         }
@@ -162,7 +164,7 @@ def summarize_test_cases(data):
                 "kind": test_case.get("kind"),
                 "constraints_clpq": get_unified_constraints(test_case, state_variables_fields),
             })
-        result.append(function_summary)
+        result[identifier] = function_summary
     return result
 
 
@@ -172,5 +174,5 @@ if __name__ == "__main__":
     print("Function identifiers:", get_function_identifiers(data))
     print("State variables fields:", get_state_variables_fields(data))
 
-    for function_summary in summarize_test_cases(data):
-        print(function_summary)
+    for identifier, function_summary in summarize_test_cases(data).items():
+        print(identifier, function_summary)
