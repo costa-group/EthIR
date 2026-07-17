@@ -33,9 +33,18 @@ def load_file(path):
         return json.load(f)
 
 
+def _normalize_int_types(signature):
+    """Expand the bare 'uint'/'int' type aliases to their explicit 256-bit
+    form ('uint256'/'int256'), leaving sized variants (uint8, int128, ...)
+    untouched."""
+    signature = re.sub(r"\buint\b", "uint256", signature)
+    signature = re.sub(r"\bint\b", "int256", signature)
+    return signature
+
+
 def get_function_identifiers(data):
     """Return the identifier (signature) of every function in the file."""
-    return [function["signature"] for function in data.get("functions", [])]
+    return [_normalize_int_types(function["signature"]) for function in data.get("functions", [])]
 
 
 def get_state_variables_fields(data):
@@ -143,7 +152,7 @@ def summarize_test_cases(data):
     result = []
     for function in data.get("functions", []):
         function_summary = {
-            "identifier": function["signature"],
+            "identifier": _normalize_int_types(function["signature"]),
             "params": function.get("params", []),
             "test_cases": [],
         }
