@@ -39,8 +39,16 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_cases):
         print(function_block_map)
         if test_cases != None and test_cases != "":
             test_cases_json = load_file(test_cases)
-            x = summarize_test_cases(test_cases_json)
-            print(x)
+            tests_info = summarize_test_cases(test_cases_json)
+            tests_info_block = {}
+
+            for f in function_block_map.keys():
+                block = function_block_map[f]
+                if f in tests_info:
+                    test = tests_info[f]
+                    tests_info_block[block[0]] = test
+            print(tests_info)
+            print(tests_info_block)
 
 
         for rules in rbr:
