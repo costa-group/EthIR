@@ -366,7 +366,12 @@ def initGlobalVars():
 
     global max_storage_idx
     max_storage_idx = -1
-    
+
+    #Maps each function signature to the ordered list of blocks (belonging
+    #to that function) that contain a CALLDATALOAD instruction
+    global function_calldataload_blocks
+    function_calldataload_blocks = {}
+
 def change_format(evm_version):
     with open(g_disasm_file) as disasm_file:
         file_contents = disasm_file.readlines()
@@ -4239,7 +4244,28 @@ def component_of_aux(block,visited):
             visited.append(elem)
             component_of_aux(elem,visited)
     return visited
-            
+
+#Added by Pablo Gordillo
+#Associates each function signature in function_block_map with the list of
+#blocks (belonging to that function) that contain a CALLDATALOAD instruction.
+#Blocks are taken from visited_blocks, which already stores them in their
+#order of appearance during the CFG traversal performed by sym_exec_block,
+#so there's no need to traverse the CFG again here.
+def compute_function_calldataload_blocks():
+    global function_calldataload_blocks
+
+    function_calldataload_blocks = {}
+    for signature, entry in function_block_map.items():
+        entry_block = entry[0]
+        blocks_with_calldataload = []
+        for b in visited_blocks:
+            belongs_to_function = b == entry_block or entry_block in component_of_blocks.get(b, [])
+            if belongs_to_function and calldataload_values.get(b):
+                blocks_with_calldataload.append(b)
+        function_calldataload_blocks[signature] = blocks_with_calldataload
+
+    return function_calldataload_blocks
+
 def generate_saco_config_file(cname):
     if "costabs" not in os.listdir(global_params_ethir.costabs_path):
         os.mkdir(global_params_ethir.costabs_path+"/costabs")
@@ -4475,7 +4501,11 @@ def run(disasm_file=None,
 
 
     compute_component_of_cfg()
-    
+    compute_function_calldataload_blocks()
+
+    # print(component_of_blocks)
+    # print("FUNCTION CALLDATALOAD BLOCKS")
+    # print(function_calldataload_blocks)
 
     scc = {}
     # if go:
@@ -4637,7 +4667,7 @@ def run(disasm_file=None,
                                              component = component_of_blocks,
                                              scc = scc,svc_labels = svc,
                                              gotos = go,
-                                             fbm = f2blocks, 
+                                             fbm = (function_block_map, f2blocks, function_calldataload_blocks), 
                                              source_info = source_info,
                                              max_sto_idx = max_storage_idx,
                                              mem_abs = (mem_abs,storage_arrays,mapping_address_sto,val_mem40),
@@ -4719,8 +4749,9 @@ def analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_ver
     blocks2clone = sorted(blocks_to_clone, key = getLevel)
 
     compute_component_of_cfg()
+    compute_function_calldataload_blocks()
 
-    
+
     if function_block_map != {}:
         val = function_block_map.values()
         f2blocks = list(map(lambda x: x[0],val))
@@ -4730,7 +4761,7 @@ def analyze_init(disasm_file_init,source_file,source_map_init,source_map,evm_ver
     try:
         source_info["source_map"] = source_map
         source_info["name_state_variables"] = mapping_state_variables
-        
+
         rbr.evm2rbr_init(blocks_input = vertices, stack_info = stack_h, block_unbuild = blocks_to_create, component = component_of_blocks,source_info = source_info)
 
     except Exception as e:

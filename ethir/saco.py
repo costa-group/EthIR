@@ -25,7 +25,7 @@ pattern = ["PUSH1",
 
 global st_vars
 
-def rbr2saco(rbr,execution,cname,test_cases):
+def rbr2saco(rbr,execution,cname,function_block_info,test_cases):
     global st_vars
 
     begin = dtimer()
@@ -33,7 +33,10 @@ def rbr2saco(rbr,execution,cname,test_cases):
     st_vars = rbr[0][0].get_all_state_vars()
     new_rules = []
     try:
+        function_block_map = function_block_info[0]
+        function_calldataload_blocks = function_block_info[1]
         
+        print(function_block_map)
         if test_cases != None and test_cases != "":
             test_cases_json = load_file(test_cases)
             x = summarize_test_cases(test_cases_json)
