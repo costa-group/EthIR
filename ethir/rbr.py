@@ -2098,7 +2098,7 @@ def evm2rbr_compiler(blocks_input = None,
             if fbm != []:
                 function_block_map = fbm[0]
                 f2blocks = fbm[1]
-                function_calldataload_blocks = fmb[2]
+                function_calldataload_blocks = fbm[2]
             
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name,(function_block_map, function_calldataload_blocks),test_cases)
