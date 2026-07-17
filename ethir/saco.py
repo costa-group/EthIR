@@ -33,15 +33,17 @@ def rbr2saco(rbr,execution,cname,test_cases):
     st_vars = rbr[0][0].get_all_state_vars()
     new_rules = []
     try:
-        for rules in rbr:
-            for rule in rules:
-                new_rule = process_rule_saco(rule)
-                new_rules.append(new_rule)
-
+        
         if test_cases != None and test_cases != "":
             test_cases_json = load_file(test_cases)
             x = summarize_test_cases(test_cases_json)
             print(x)
+
+
+        for rules in rbr:
+            for rule in rules:
+                new_rule = process_rule_saco(rule)
+                new_rules.append(new_rule)
             
         write(new_rules,execution,cname)
         end = dtimer()
