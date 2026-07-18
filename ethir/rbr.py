@@ -618,7 +618,7 @@ generates variables depending on the bytecode and returns the
 corresponding translated instruction and the variables's index
 updated. It also updated the corresponding global variables.
 '''
-def translateOpcodes30(opcode, value, index_variables,block):
+def translateOpcodes30(opcode, value, index_variables,block, blocks_with_calldataload):
     global extcodehash_cont
     
     if opcode == "ADDRESS":
@@ -646,24 +646,35 @@ def translateOpcodes30(opcode, value, index_variables,block):
         v0, updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         val = str(value).split("_")
-        if val[0] == "Id" or value == "":
-            instr = v1+" = calldataload"
-            update_bc_in_use("calldataload",block)
-        elif str(value).startswith("/*"):
-            val = str(value).strip("/*").strip("*/")
-            instr = v1+" = "+val
-            update_bc_in_use(val,block)
+      
+        candidates = [x for x in blocks_with_calldataload.values() if block in x]
+        print(candidates)
+        if len(candidates) != 0:
+            val = candidates[0].index(block)
+            print(val)
+            instr = v1+" = calldataload"+str(val)
+            update_bc_in_use("calldataload"+str(val),block)
         else:
-            if not c_trans:
-                instr = v1+" = "+str(value).strip("_")
-                update_bc_in_use(str(value).strip("_"),block)
+            if val[0] == "Id" or value == "":
+                instr = v1+" = calldataload"
+                update_bc_in_use("calldataload",block)
+            
+            elif str(value).startswith("/*"):
+                val = str(value).strip("/*").strip("*/")
+                instr = v1+" = "+val
+                update_bc_in_use(val,block)
             else:
-                if str(value) in c_words:
-                    val_end = str(value)+"_sol"
+                if not c_trans:
+                    instr = v1+" = "+str(value).strip("_")
+                    update_bc_in_use(str(value).strip("_"),block)
                 else:
-                    val_end = str(value)
-                instr = v1+" = "+val_end
-                update_bc_in_use(val_end,block)
+                    if str(value) in c_words:
+                        val_end = str(value)+"_sol"
+                    else:
+                        val_end = str(value)
+                    instr = v1+" = "+val_end
+                    update_bc_in_use(val_end,block)
+                    
     elif opcode == "CALLDATASIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = calldatasize"
@@ -1334,7 +1345,7 @@ def compile_instr(rule,evm_opcode,
                   sstore_cost,
                   nonzero_variables,
                   sccentries,
-                  component_of):
+                  component_of, blocks_with_calldataload):
 
     opcode = evm_opcode.split(" ")
     opcode_name = opcode[0]
@@ -1354,7 +1365,7 @@ def compile_instr(rule,evm_opcode,
         value, index_variables = translateOpcodes20(opcode_name, variables,rule.get_Id())
         rule.add_instr(value)
     elif opcode_name in opcodes30:
-        value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables,rule.get_Id())
+        value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables,rule.get_Id(), blocks_with_calldataload)
         rule.add_instr(value)
     elif opcode_name in opcodes40:
         value, index_variables = translateOpcodes40(opcode_name,variables,rule.get_Id())
@@ -1669,7 +1680,7 @@ It generates the rbr rules corresponding to a block from the CFG.
 index_variables points to the corresponding top stack index.
 The stack could be reconstructed as [s(ith)...s(0)].
 '''
-def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "", nonzero_variables = [], sccs = None, component_of = {}):
+def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "", nonzero_variables = [], sccs = None, component_of = {}, function_calldataload_blocks = {}):
     global rbr_blocks
     global top_index
     global new_fid
@@ -1752,7 +1763,7 @@ def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "",
                                             sstore_cost,
                                             nonzero_variables,
                                             sccentries,
-                                            component_of)
+                                            component_of,function_calldataload_blocks)
             has_lm40 = has_lm40 or is_mload40(l_instr[cont])
             has_sm40 = has_sm40 or is_mstore40(l_instr[cont])
             
@@ -2000,6 +2011,16 @@ def evm2rbr_compiler(blocks_input = None,
             invalid_options = "all"
     else:
         invalid_options = False
+
+        
+    function_calldataload_blocks = {}
+    if fbm != []:
+        function_block_map = fbm[0]
+        f2blocks = fbm[1]
+        function_calldataload_blocks = fbm[2]
+
+
+
         
     try:
         if blocks_dict and stack_info:
@@ -2016,7 +2037,7 @@ def evm2rbr_compiler(blocks_input = None,
                 forget_memory = False
                 sstore_cost = (storage_analysis[1], storage_analysis[2], storage_analysis[3])
                 nonzero_variables = storage_analysis[-1]
-                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,nonzero_variables,scc,component_of)
+                rule, mem_result = compile_block(block,mapping_state_variables,results_sto_analysis,sstore_cost,nonzero_variables,scc,component_of,function_calldataload_blocks)
 
                 if mem_result>0:
                     mem_creation.append((block.get_start_address(),mem_result))
@@ -2094,11 +2115,7 @@ def evm2rbr_compiler(blocks_input = None,
             
             # print "********************************************"
             # print storage_arrays
-
-            if fbm != []:
-                function_block_map = fbm[0]
-                f2blocks = fbm[1]
-                function_calldataload_blocks = fbm[2]
+            
             
             if saco_rbr:
                 saco.rbr2saco(rbr,exe,contract_name,(function_block_map, function_calldataload_blocks),test_cases)

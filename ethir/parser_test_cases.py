@@ -54,6 +54,12 @@ def get_state_variables_fields(data):
     return {variable: "field(g{})".format(i) for i, variable in enumerate(state_variables)}
 
 
+def get_params_fields(params):
+    """Map each function param to l(calldataloadN), where N is its position
+    (0-indexed) in the params list."""
+    return {param: "l(calldataload{})".format(i) for i, param in enumerate(params)}
+
+
 def _split_operator(constraint):
     for op in _OPERATORS:
         idx = constraint.find(op)
@@ -114,13 +120,13 @@ def unify_constraint(constraint):
     return "{}{}{}".format(positive, op, negative)
 
 
-def replace_state_variables(constraint, state_variables_fields):
-    """Replace every occurrence of a state variable name in constraint with
-    its field(gN) representation, longest names first so that no variable
-    name is replaced as a substring of another."""
-    for variable in sorted(state_variables_fields, key=len, reverse=True):
-        pattern = r"\b{}\b".format(re.escape(variable))
-        constraint = re.sub(pattern, state_variables_fields[variable], constraint)
+def replace_identifiers(constraint, identifiers_mapping):
+    """Replace every occurrence of a name in constraint with its mapped
+    representation, longest names first so that no name is replaced as a
+    substring of another."""
+    for name in sorted(identifiers_mapping, key=len, reverse=True):
+        pattern = r"\b{}\b".format(re.escape(name))
+        constraint = re.sub(pattern, identifiers_mapping[name], constraint)
     return constraint
 
 
@@ -139,30 +145,38 @@ def to_saco_constraint(constraint):
     return constraint
 
 
-def get_unified_constraints(test_case, state_variables_fields):
+def get_unified_constraints(test_case, identifiers_mapping):
     unified = [unify_constraint(constraint) for constraint in test_case.get("constraints_clpq", [])]
-    substituted = [replace_state_variables(constraint, state_variables_fields) for constraint in unified]
+    substituted = [replace_identifiers(constraint, identifiers_mapping) for constraint in unified]
     return [to_saco_constraint(constraint) for constraint in substituted]
+
+
+def get_concrete_values(test_case, identifiers_mapping):
+    return [replace_identifiers(value, identifiers_mapping) for value in test_case.get("concrete_values", [])]
 
 
 def summarize_test_cases(data):
     """Build a dict associating each function's identifier with its
-    summarized info: params and the unified clpq constraints for each of
-    its test cases."""
+    summarized info: params (renamed to l(calldataloadN) by position) and the
+    unified clpq constraints for each of its test cases."""
     state_variables_fields = get_state_variables_fields(data)
     result = {}
     for function in data.get("functions", []):
         identifier = _normalize_int_types(function["signature"])
+        params = function.get("params", [])
+        params_fields = get_params_fields(params)
+        identifiers_mapping = {**state_variables_fields, **params_fields}
         function_summary = {
             "identifier": identifier,
-            "params": function.get("params", []),
+            "params": [params_fields[param] for param in params],
             "test_cases": [],
         }
         for test_case in function.get("test_cases", []):
             function_summary["test_cases"].append({
                 "id": test_case.get("id"),
                 "kind": test_case.get("kind"),
-                "constraints_clpq": get_unified_constraints(test_case, state_variables_fields),
+                "concrete_values": get_concrete_values(test_case, identifiers_mapping),
+                "constraints_clpq": get_unified_constraints(test_case, identifiers_mapping),
             })
         result[identifier] = function_summary
     return result
