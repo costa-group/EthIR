@@ -152,7 +152,10 @@ def get_unified_constraints(test_case, identifiers_mapping):
 
 
 def get_concrete_values(test_case, identifiers_mapping):
-    return [replace_identifiers(value, identifiers_mapping) for value in test_case.get("concrete_values", [])]
+    """Concrete values are assignments ('name == value' in the input), so
+    "==" is rewritten to "=" rather than kept as an equality test."""
+    values = [replace_identifiers(value, identifiers_mapping) for value in test_case.get("concrete_values", [])]
+    return [value.replace("==", "=") for value in values]
 
 
 def summarize_test_cases(data):
