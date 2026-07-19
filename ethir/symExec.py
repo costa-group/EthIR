@@ -4503,9 +4503,10 @@ def run(disasm_file=None,
     compute_component_of_cfg()
     compute_function_calldataload_blocks()
 
-    # print(component_of_blocks)
-    # print("FUNCTION CALLDATALOAD BLOCKS")
-    # print(function_calldataload_blocks)
+    if debug_info:
+        print(component_of_blocks)
+        print("FUNCTION CALLDATALOAD BLOCKS")
+        print(function_calldataload_blocks)
 
     scc = {}
     # if go:
