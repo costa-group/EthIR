@@ -37,10 +37,11 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_cases):
         function_calldataload_blocks = function_block_info[1]
         
         print(function_block_map)
+        tests_info_block = {}
         if test_cases != None and test_cases != "":
             test_cases_json = load_file(test_cases)
             tests_info = summarize_test_cases(test_cases_json)
-            tests_info_block = {}
+
 
             for f in function_block_map.keys():
                 block = function_block_map[f]
@@ -53,7 +54,7 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_cases):
 
         for rules in rbr:
             for rule in rules:
-                new_rule = process_rule_saco(rule)
+                new_rule = process_rule_saco(rule, function_block_map, function_calldataload_blocks, tests_info_block)
                 new_rules.append(new_rule)
             
         write(new_rules,execution,cname)
@@ -116,14 +117,14 @@ def build_head(rule):
 
 
 
-def process_rule_saco(rule):
+def process_rule_saco(rule, function_block_map, functions_calldataload_blocks, test_cases_info):
     new_rule = ""
     head = build_head(rule)
     new_rule = new_rule+head+"\n"
     if rule.get_guard()!="":
         new_rule = new_rule+"\t"+rule.get_guard()+"\n"
 
-    instr_aux = process_instructions(rule)
+    instr_aux = process_instructions(rule, function_block_map, functions_calldataload_blocks, test_cases_info)
     instr = list(filter(lambda x: x !="",instr_aux))
     for ins in instr:
         new_rule = new_rule+"\t"+ins+"\n"
@@ -182,7 +183,7 @@ def call_instruction(instr):
     new_instr = instr[:pos_head+1]+new_vars_string+"))"
     return new_instr
     
-def process_instructions(rule):
+def process_instructions(rule, function_block_map, functions_calldataload_blocks, test_cases_info):
     cont = rule.get_fresh_index()+1
     contract_vars = rule.get_bc()
     instructions = rule.get_instructions()
@@ -190,6 +191,25 @@ def process_instructions(rule):
     has_string_pattern = rule.get_string_getter()
     idx_loop = 0
     len_ins = len(instructions)
+
+    if test_cases_info != {} and test_cases_info != None:
+        rule_id = rule.get_Id()
+        candidates = [x for x in functions_calldataload_blocks.keys() if rule_id in functions_calldataload_blocks[x]]
+        if len(candidates) == 1:
+            call_function_block = function_block_map.get(candidates[0], None)
+            if call_function_block != None:
+                test_info = test_cases_info.get(call_function_block[0],{}).get("test_cases",{})[0]
+                print(test_info)
+                new_instructions+=test_info.get("concrete_values",[]) 
+                new_instructions+=test_info.get("constraints_clpq",[])
+                # print(new_instructions)
+
+                # print("*********")
+                # print(candidates)
+                # print(test_cases_info)
+                # print(rule_id)
+                # raise Exception
+            
     
     while(idx_loop<len_ins):
         instr = instructions[idx_loop]
