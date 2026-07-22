@@ -28,6 +28,19 @@ _OP_SACO = {
     "!=": "neq"
     }
 
+# Ordered so "!=" is matched before the bare "=" it contains, and multi
+# character operators before their single-character prefixes.
+_COMPARE_OPERATORS = ["!=", ">=", "<=", "=", ">", "<"]
+
+_COMPARE_FUNCS = {
+    "=": sympy.Eq,
+    "!=": sympy.Ne,
+    ">": sympy.Gt,
+    ">=": sympy.Ge,
+    "<": sympy.Lt,
+    "<=": sympy.Le,
+}
+
 def load_file(path):
     with open(path, "r") as f:
         return json.load(f)
@@ -130,25 +143,89 @@ def replace_identifiers(constraint, identifiers_mapping):
     return constraint
 
 
-def to_saco_constraint(constraint):
-    """Rewrite 'left OP right' as the SACO predicate 'opname(left,right)',
-    using _OP_SACO for the operator name. Longer operators are matched
-    before their single-character prefixes ("!=" before "=", ">=" before
-    ">", etc)."""
-    constraint = constraint.strip()
-    for op in ("!=", ">=", "<=", "=", ">", "<"):
+def _split_comparison(constraint):
+    """Split 'left OP right' into (left, op, right), matching operators in
+    _COMPARE_OPERATORS order so "!=" isn't mistaken for "=" followed by a
+    stray "!"."""
+    for op in _COMPARE_OPERATORS:
         idx = constraint.find(op)
         if idx != -1:
-            left = constraint[:idx].strip()
-            right = constraint[idx + len(op):].strip()
-            return "{}({},{})".format(_OP_SACO[op], left, right)
-    return constraint
+            return constraint[:idx].strip(), op, constraint[idx + len(op):].strip()
+    return None
 
 
-def get_unified_constraints(test_case, identifiers_mapping):
-    unified = [unify_constraint(constraint) for constraint in test_case.get("constraints_clpq", [])]
+def to_saco_constraint(constraint):
+    """Rewrite 'left OP right' as the SACO predicate 'opname(left,right)',
+    using _OP_SACO for the operator name."""
+    constraint = constraint.strip()
+    split = _split_comparison(constraint)
+    if split is None:
+        return constraint
+    left, op, right = split
+    return "{}({},{})".format(_OP_SACO[op], left, right)
+
+
+def _parse_concrete_assignments(test_case):
+    """Parse concrete_values ('name == value') into {name: sympy value}."""
+    assignments = {}
+    for value in test_case.get("concrete_values", []):
+        name, val = value.split("==")
+        assignments[name.strip()] = _to_sympy_expr(val.strip())
+    return assignments
+
+
+def _evaluate_against_concrete_values(constraint, assignments):
+    """Substitute every variable constraint references with its
+    concrete_values assignment and evaluate the resulting comparison.
+    Returns True/False when it reduces to a definite numeric truth value, or
+    None when it can't be evaluated (e.g. it references a variable with no
+    concrete value)."""
+    split = _split_comparison(constraint)
+    if split is None:
+        return None
+
+    lhs, op, rhs = split
+    names = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", constraint))
+    if not names <= assignments.keys():
+        return None
+
+    try:
+        lhs_val = _to_sympy_expr(lhs).subs(assignments)
+        rhs_val = _to_sympy_expr(rhs).subs(assignments)
+        return bool(_COMPARE_FUNCS[op](lhs_val, rhs_val))
+    except (sympy.SympifyError, TypeError):
+        return None
+
+
+def _process_constraints(constraints, identifiers_mapping):
+    unified = [unify_constraint(constraint) for constraint in constraints]
     substituted = [replace_identifiers(constraint, identifiers_mapping) for constraint in unified]
     return [to_saco_constraint(constraint) for constraint in substituted]
+
+
+def partition_constraints(test_case, identifiers_mapping):
+    """Split constraints_clpq against the test case's concrete_values into:
+    - constraints already guaranteed by concrete_values, which are dropped
+      (they carry no extra information);
+    - constraints contradicted by concrete_values, returned as
+      constraints_clpq_unfeasible;
+    - everything else, returned as constraints_clpq.
+    """
+    assignments = _parse_concrete_assignments(test_case)
+    feasible, unfeasible = [], []
+    for constraint in test_case.get("constraints_clpq", []):
+        verdict = _evaluate_against_concrete_values(constraint, assignments)
+        if verdict is True:
+            continue
+        elif verdict is False:
+            unfeasible.append(constraint)
+        else:
+            feasible.append(constraint)
+
+    return (
+        _process_constraints(feasible, identifiers_mapping),
+        _process_constraints(unfeasible, identifiers_mapping),
+    )
 
 
 def get_concrete_values(test_case, identifiers_mapping):
@@ -175,11 +252,13 @@ def summarize_test_cases(data):
             "test_cases": [],
         }
         for test_case in function.get("test_cases", []):
+            constraints_clpq, constraints_clpq_unfeasible = partition_constraints(test_case, identifiers_mapping)
             function_summary["test_cases"].append({
                 "id": test_case.get("id"),
                 "kind": test_case.get("kind"),
                 "concrete_values": get_concrete_values(test_case, identifiers_mapping),
-                "constraints_clpq": get_unified_constraints(test_case, identifiers_mapping),
+                "constraints_clpq": constraints_clpq,
+                "constraints_clpq_unfeasible": constraints_clpq_unfeasible,
             })
         result[identifier] = function_summary
     return result
