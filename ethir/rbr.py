@@ -2018,10 +2018,6 @@ def evm2rbr_compiler(blocks_input = None,
         function_block_map = fbm[0]
         f2blocks = fbm[1]
         function_calldataload_blocks = fbm[2]
-
-
-
-        
     try:
         if blocks_dict and stack_info:
             blocks = sorted(blocks_dict.values(), key = getKey)
