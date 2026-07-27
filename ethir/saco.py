@@ -856,6 +856,24 @@ def _parse_saco_rule(text, index):
                 assignments=assignments, call_name=call_name, call_args=call_args)
 
 
+def _reachable_names(entry_name, clauses_by_name):
+    """Names reachable from entry_name by following every call, ignoring
+    guards entirely (i.e. as if every clause were feasible). Used as a
+    baseline to tell 'orphaned by this test's pruning' apart from 'was never
+    part of this entry's call graph to begin with' (e.g. another function)."""
+    seen = set()
+    stack = [entry_name]
+    while stack:
+        name = stack.pop()
+        if name in seen or name not in clauses_by_name:
+            continue
+        seen.add(name)
+        for clause in clauses_by_name[name]:
+            if clause["call_name"] is not None:
+                stack.append(clause["call_name"])
+    return seen
+
+
 def prune_infeasible_rules(new_rules, entry_name, concrete_values):
     """Drop the SACO rules whose guard is provably False for one specific
     test case, given the concrete calldata values already injected for that
@@ -937,4 +955,30 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
 
     if not to_remove:
         return new_rules
-    return [text for i, text in enumerate(new_rules) if i not in to_remove]
+
+    # Dropping an infeasible clause can leave its callee (and everything
+    # only reachable through it, e.g. block104/block127/block302 in the
+    # switch/assert example) with no surviving caller at all. Those orphaned
+    # rules are still textually present in new_rules, and PUBS still folds
+    # their cost in when computing the entry's upper bound (795 instead of
+    # the true 708 for this test - verified against costabs_shell directly).
+    #
+    # 'visited' is exactly the set of names still reachable once infeasible
+    # clauses are taken into account. But a name that was never part of
+    # entry_name's call graph to begin with (e.g. it belongs to a different
+    # function entirely) also never ends up in 'visited', and must NOT be
+    # removed on that basis alone - only names that were reachable *before*
+    # this test's pruning and became unreachable *because* of it should go.
+    reachable_before = _reachable_names(entry_name, clauses_by_name)
+    orphaned = reachable_before - visited
+
+    def is_kept(i, p):
+        if i in to_remove:
+            return False
+        if p is None:
+            # Couldn't parse it - leave it untouched rather than risk
+            # dropping something load-bearing we don't understand.
+            return True
+        return p["name"] not in orphaned
+
+    return [text for i, (text, p) in enumerate(zip(new_rules, parsed)) if is_kept(i, p)]
