@@ -7,12 +7,13 @@ import sympy
 
 # Operators ordered so that multi-character operators are matched before
 # their single-character prefixes (">=" before "=", etc). clpq uses "="
-# for equality, not "==".
-_OPERATORS = [">=", "<=", "=", ">", "<"]
+# for equality, not "==", and "=<" (not "<=") for less-or-equal.
+_OPERATORS = [">=", "<=", "=<", "=", ">", "<"]
 
 _FLIPPED_OP = {
     "<": ">",
     "<=": ">=",
+    "=<": ">=",
     ">": "<",
     ">=": "<=",
     "=": "!=",
@@ -22,6 +23,7 @@ _FLIPPED_OP = {
 _OP_SACO = {
     "<": "lt",
     "<=": "leq",
+    "=<": "leq",
     ">": "gt",
     ">=": "geq",
     "=": "eq",
@@ -30,7 +32,7 @@ _OP_SACO = {
 
 # Ordered so "!=" is matched before the bare "=" it contains, and multi
 # character operators before their single-character prefixes.
-_COMPARE_OPERATORS = ["!=", ">=", "<=", "=", ">", "<"]
+_COMPARE_OPERATORS = ["!=", ">=", "<=", "=<", "=", ">", "<"]
 
 _COMPARE_FUNCS = {
     "=": sympy.Eq,
@@ -39,6 +41,7 @@ _COMPARE_FUNCS = {
     ">=": sympy.Ge,
     "<": sympy.Lt,
     "<=": sympy.Le,
+    "=<": sympy.Le,
 }
 
 def load_file(path):
