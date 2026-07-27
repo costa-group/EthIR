@@ -1607,7 +1607,7 @@ def create_cond_jumpBlock(block_id,l_instr,variables,jumps,falls_to,guard):
     else:
         _ , index_variables = get_consume_variable(variables)
         v1, index_variables = get_consume_variable(index_variables)
-        guard = "eq("+v1+", 1 )"
+        guard = "neq("+v1+", 0 )"
         
     for elem in l_instr[1:]:
         if elem == "ISZERO":
