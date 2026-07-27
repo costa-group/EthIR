@@ -1,5 +1,8 @@
 import rbr_rule
 import os
+import re
+import ast
+import operator
 from timeit import default_timer as dtimer
 import global_params_ethir
 import traceback
@@ -61,7 +64,14 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
             for rule in rules:
                 new_rule = process_rule_saco(rule, function_block_map, function_calldataload_blocks, (tests_info_block, test_id))
                 new_rules.append(new_rule)
-            
+
+        for entry_block, function_summary in tests_info_block.items():
+            all_tests = function_summary.get("test_cases", [])
+            if len(all_tests) <= test_id:
+                continue
+            concrete_values = all_tests[test_id].get("concrete_values", [])
+            new_rules = prune_infeasible_rules(new_rules, "block"+str(entry_block), concrete_values)
+
         write(new_rules,execution,cname)
         end = dtimer()
         print("SACO RBR: "+str(end-begin)+"s")
@@ -670,3 +680,261 @@ def write(rules,execution,cname):
             f.write(rule+"\n")
 
     f.close()
+
+# ---------------------------------------------------------------------------
+# Branch pruning for test-driven runs.
+#
+# When a specific test case drives the RBR generation, its concrete calldata
+# values are already injected into the generated rules above (see the
+# "concrete_values"/"constraints_clpq" insertion in process_instructions).
+# But costabs' solver (PUBS) computes upper bounds per predicate, bottom-up
+# and independently of the caller's context, so a jump-style dispatch rule
+# several calls downstream of the calldataload point (e.g. the guard chain
+# behind a switch/assert) still gets handed every alternative clause, and
+# PUBS maximizes over all of them even when the concrete test already makes
+# one of them infeasible.
+#
+# This pass follows the same call chain a concrete execution of that test
+# would take, propagates the known calldata values through the plain
+# "lhs = rhs" assignments emitted for each rule, and drops whichever clause
+# of a multi-clause (jump-style) rule is provably unreachable for this
+# specific test - so PUBS has nothing left to maximize over at that choice
+# point, without requiring any change on the PUBS/costabs side.
+# ---------------------------------------------------------------------------
+
+_GUARD_OPS = {
+    "eq": operator.eq,
+    "neq": operator.ne,
+    "lt": operator.lt,
+    "leq": operator.le,
+    "gt": operator.gt,
+    "geq": operator.ge,
+}
+
+_VAR_TOKEN_RE = re.compile(r"s\(\d+\)|l\([\w\d]+\)|field\([\w\d]+\)")
+_ARITH_ALLOWED_RE = re.compile(r"^[\d\s\+\-\*/\(\)\.]+$")
+_HEAD_RE = re.compile(r"^(\w+)\((.*)\)=>$")
+_CALL_RE = re.compile(r"^call\((\w+)\((.*)\)\)$")
+
+
+def _split_top_level_args(args_text):
+    """Split 'a, f(b, c), d' into ['a', 'f(b, c)', 'd'], respecting nested
+    parentheses so an argument that is itself a call isn't cut in half."""
+    args, depth, current = [], 0, ""
+    for ch in args_text:
+        if ch == "," and depth == 0:
+            args.append(current.strip())
+            current = ""
+            continue
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        current += ch
+    if current.strip():
+        args.append(current.strip())
+    return args
+
+
+def _safe_eval_arithmetic(expr):
+    """Evaluate a purely numeric +,-,*,/ expression (no variables, no calls)
+    without resorting to eval(). Returns None if expr isn't purely numeric
+    or uses anything beyond the four basic operators."""
+    if not _ARITH_ALLOWED_RE.match(expr):
+        return None
+    try:
+        node = ast.parse(expr, mode="eval")
+    except SyntaxError:
+        return None
+
+    def _eval(n):
+        if isinstance(n, ast.Expression):
+            return _eval(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)):
+            return n.value
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub):
+            return -_eval(n.operand)
+        if isinstance(n, ast.BinOp):
+            left, right = _eval(n.left), _eval(n.right)
+            if isinstance(n.op, ast.Add):
+                return left + right
+            if isinstance(n.op, ast.Sub):
+                return left - right
+            if isinstance(n.op, ast.Mult):
+                return left * right
+            if isinstance(n.op, ast.Div):
+                return left / right
+        raise ValueError("unsupported expression: " + expr)
+
+    try:
+        return _eval(node)
+    except Exception:
+        return None
+
+
+def _resolve_expr(expr, env):
+    """Substitute every s(N)/l(name)/field(name) token in expr with its
+    concrete value from env and evaluate it. Returns a number, or None if
+    expr references at least one variable that isn't known yet."""
+    expr = expr.strip()
+    for token in sorted(set(_VAR_TOKEN_RE.findall(expr)), key=len, reverse=True):
+        if token not in env:
+            return None
+        expr = expr.replace(token, "("+str(env[token])+")")
+    return _safe_eval_arithmetic(expr)
+
+
+def evaluate_guard_against_concrete_values(guard_text, env):
+    """Evaluate a SACO guard predicate (e.g. 'leq(s(7), s(6))') against a
+    dict mapping already-known stack/local variables (e.g. 's(6)', 'l(l0)')
+    to their concrete numeric value.
+
+    Returns True/False when both operands resolve to concrete numbers, or
+    None when the guard can't be decided yet (some operand is still
+    symbolic). This is a fresh implementation, independent of
+    parser_test_cases._evaluate_against_concrete_values: that one matches
+    constraints expressed over source-level identifiers (function params,
+    state variables), while this one matches the RBR's own stack-slot and
+    local-variable names, which only line up with the source-level ones at
+    the exact block where a CALLDATALOAD happens.
+    """
+    match = re.match(r"^(\w+)\((.*)\)$", guard_text.strip())
+    if match is None:
+        return None
+    op_name, args_text = match.groups()
+    op = _GUARD_OPS.get(op_name)
+    if op is None:
+        return None
+
+    args = _split_top_level_args(args_text)
+    if len(args) != 2:
+        return None
+
+    left = _resolve_expr(args[0], env)
+    right = _resolve_expr(args[1], env)
+    if left is None or right is None:
+        return None
+    return bool(op(left, right))
+
+
+def _parse_saco_rule(text, index):
+    """Parse one rendered SACO rule (as produced by process_rule_saco) back
+    into its structural pieces: name, formal params, guard (if any), plain
+    assignments and the single outgoing call (if any)."""
+    lines = [l for l in text.rstrip("\n").split("\n") if l.strip() != ""]
+    if not lines:
+        return None
+    head_match = _HEAD_RE.match(lines[0].strip())
+    if head_match is None:
+        return None
+    name, params_text = head_match.groups()
+    params = _split_top_level_args(params_text)
+    body = [l.strip() for l in lines[1:]]
+
+    guard = None
+    if body:
+        first_call = re.match(r"^(\w+)\(", body[0])
+        if first_call and first_call.group(1) in _GUARD_OPS:
+            guard = body[0]
+            body = body[1:]
+
+    call_name, call_args = None, None
+    assignments = []
+    for line in body:
+        call_match = _CALL_RE.match(line)
+        if call_match:
+            call_name, call_args_text = call_match.groups()
+            call_args = _split_top_level_args(call_args_text)
+            continue
+        if line.startswith("nop(") or line.startswith("'$"):
+            continue
+        if "=" in line:
+            lhs, rhs = line.split("=", 1)
+            assignments.append((lhs.strip(), rhs.strip()))
+
+    return dict(index=index, name=name, params=params, guard=guard,
+                assignments=assignments, call_name=call_name, call_args=call_args)
+
+
+def prune_infeasible_rules(new_rules, entry_name, concrete_values):
+    """Drop the SACO rules whose guard is provably False for one specific
+    test case, given the concrete calldata values already injected for that
+    test (e.g. 'l(calldataload0) = 1').
+
+    Without this, a test-driven run still hands PUBS every alternative of
+    every jump-style dispatch rule (e.g. both branches of a switch/assert
+    chain), so its per-predicate, bottom-up cost computation maximizes over
+    branches the concrete input can never take. Removing the infeasible
+    clause here means there is nothing left to maximize over at that point.
+
+    Returns a new list (new_rules is not mutated). Rules that can't be
+    parsed, or that aren't reached while propagating concrete_values (e.g.
+    because they belong to an unrelated function, or the propagation hits a
+    variable it can't resolve), are left untouched - this pass only ever
+    removes a clause it can positively prove infeasible.
+    """
+    if not concrete_values:
+        return new_rules
+
+    parsed = [_parse_saco_rule(text, i) for i, text in enumerate(new_rules)]
+    clauses_by_name = {}
+    for p in parsed:
+        if p is not None:
+            clauses_by_name.setdefault(p["name"], []).append(p)
+
+    env0 = {}
+    for value in concrete_values:
+        if "=" not in value:
+            continue
+        lhs, rhs = value.split("=", 1)
+        resolved = _resolve_expr(rhs, {})
+        if resolved is not None:
+            env0[lhs.strip()] = resolved
+
+    to_remove = set()
+    visited = set()
+
+    def continue_clause(clause, env):
+        local_env = dict(env)
+        for lhs, rhs in clause["assignments"]:
+            value = _resolve_expr(rhs, local_env)
+            if value is not None:
+                local_env[lhs] = value
+            else:
+                # The new value can't be resolved (e.g. it depends on
+                # something not fixed by concrete_values, like
+                # calldatasize) - drop any stale concrete value lhs held
+                # from an earlier assignment, instead of silently keeping
+                # it around as if it were still valid.
+                local_env.pop(lhs, None)
+        if clause["call_name"] is None:
+            return
+        callee_clauses = clauses_by_name.get(clause["call_name"])
+        if not callee_clauses:
+            return
+        callee_params = callee_clauses[0]["params"]
+        callee_env = {}
+        for param, arg_expr in zip(callee_params, clause["call_args"] or []):
+            value = _resolve_expr(arg_expr, local_env)
+            if value is not None:
+                callee_env[param] = value
+        propagate(clause["call_name"], callee_env)
+
+    def propagate(name, env):
+        if name in visited or name not in clauses_by_name:
+            return
+        visited.add(name)
+        for clause in clauses_by_name[name]:
+            verdict = None
+            if clause["guard"] is not None:
+                verdict = evaluate_guard_against_concrete_values(clause["guard"], env)
+            if verdict is False:
+                to_remove.add(clause["index"])
+            else:
+                continue_clause(clause, env)
+
+    propagate(entry_name, env0)
+
+    if not to_remove:
+        return new_rules
+    return [text for i, text in enumerate(new_rules) if i not in to_remove]
