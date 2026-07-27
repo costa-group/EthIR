@@ -763,7 +763,9 @@ def _safe_eval_arithmetic(expr):
             if isinstance(n.op, ast.Mult):
                 return left * right
             if isinstance(n.op, ast.Div):
-                return left / right
+                # EVM DIV is unsigned integer division, truncating, and
+                # defined as 0 for division by zero (never raises).
+                return 0 if right == 0 else left // right
         raise ValueError("unsupported expression: " + expr)
 
     try:
@@ -772,16 +774,31 @@ def _safe_eval_arithmetic(expr):
         return None
 
 
+_UINT256_MOD = 2 ** 256
+
+
 def _resolve_expr(expr, env):
     """Substitute every s(N)/l(name)/field(name) token in expr with its
     concrete value from env and evaluate it. Returns a number, or None if
-    expr references at least one variable that isn't known yet."""
+    expr references at least one variable that isn't known yet.
+
+    The result is reduced modulo 2**256: every RBR assignment corresponds to
+    one EVM opcode operating on 256-bit words, so plain (unbounded) Python
+    arithmetic would get e.g. a SUB that underflows, or an ADD that
+    overflows, wrong relative to real EVM semantics - and a negative
+    concrete_values literal (used to denote a value near 2**256, e.g.
+    'newOwner == -1' for 2**256-1) needs this same reduction to mean what it
+    was meant to mean.
+    """
     expr = expr.strip()
     for token in sorted(set(_VAR_TOKEN_RE.findall(expr)), key=len, reverse=True):
         if token not in env:
             return None
         expr = expr.replace(token, "("+str(env[token])+")")
-    return _safe_eval_arithmetic(expr)
+    value = _safe_eval_arithmetic(expr)
+    if value is None:
+        return None
+    return value % _UINT256_MOD
 
 
 def evaluate_guard_against_concrete_values(guard_text, env):
@@ -874,22 +891,93 @@ def _reachable_names(entry_name, clauses_by_name):
     return seen
 
 
-def prune_infeasible_rules(new_rules, entry_name, concrete_values):
-    """Drop the SACO rules whose guard is provably False for one specific
-    test case, given the concrete calldata values already injected for that
-    test (e.g. 'l(calldataload0) = 1').
+def _find_looping_names(clauses_by_name):
+    """Predicate names that are part of a cycle in the call graph - i.e.
+    genuinely called again, directly or through other predicates, while
+    still 'inside' themselves (a Yul/assembly for-loop, typically).
 
-    Without this, a test-driven run still hands PUBS every alternative of
-    every jump-style dispatch rule (e.g. both branches of a switch/assert
-    chain), so its per-predicate, bottom-up cost computation maximizes over
-    branches the concrete input can never take. Removing the infeasible
-    clause here means there is nothing left to maximize over at that point.
+    Pruning a clause commits to whatever the guard evaluates to the FIRST
+    time that predicate is visited (propagate()'s 'visited' set is
+    permanent), which is fine for straight-line code reached exactly once,
+    but wrong for a predicate that's re-entered on every loop iteration with
+    a different environment (e.g. the loop counter): the decision made for
+    iteration 0 would get frozen and wrongly applied to every later
+    iteration too. Names in a cycle are therefore never pruned at all,
+    regardless of what concrete_values would otherwise decide.
+    """
+    edges = {}
+    for name, clauses in clauses_by_name.items():
+        edges[name] = {c["call_name"] for c in clauses if c["call_name"] is not None}
+
+    looping = set()
+    for start in edges:
+        stack = list(edges.get(start, ()))
+        seen = set()
+        while stack:
+            node = stack.pop()
+            if node == start:
+                looping.add(start)
+                break
+            if node in seen or node not in edges:
+                continue
+            seen.add(node)
+            stack.extend(edges.get(node, ()))
+    return looping
+
+
+def _referenced_vars(expr):
+    """The set of s(N)/l(name)/field(gN) tokens an expression mentions."""
+    return set(_VAR_TOKEN_RE.findall(expr))
+
+
+def _guard_args(guard_text):
+    """Split a guard predicate 'op(left, right)' into (left, right), or
+    (None, None) if it doesn't parse as one."""
+    match = re.match(r"^(\w+)\((.*)\)$", guard_text.strip())
+    if match is None:
+        return None, None
+    args = _split_top_level_args(match.group(2))
+    if len(args) != 2:
+        return None, None
+    return args[0], args[1]
+
+
+def prune_infeasible_rules(new_rules, entry_name, concrete_values):
+    """Drop the SACO rules whose guard is provably False *because of* one
+    specific test case's concrete calldata values (e.g. 'l(calldataload0) =
+    1') - not because of some unrelated, generically-true constant already
+    in the RBR (e.g. a loop counter's own 'i := 0' initialization, which
+    makes its first bounds check decidable regardless of any test).
+
+    Without the first part, a test-driven run still hands PUBS every
+    alternative of every jump-style dispatch rule (e.g. both branches of a
+    switch/assert chain), so its per-predicate, bottom-up cost computation
+    maximizes over branches the concrete input can never take. Removing the
+    infeasible clause here means there is nothing left to maximize over at
+    that point.
+
+    The taint check exists because that same propagation also resolves
+    plenty of guards that have nothing to do with the test at all (constant
+    folding that would be equally valid on the generic, test-less run) -
+    pruning those here would make test-driven output diverge from generic
+    output for reasons unrelated to the test, which is exactly what this is
+    meant to avoid. A guard is only pruned when at least one of its two
+    operands' value is tainted, i.e. depends (through some chain of plain
+    assignments) on at least one of concrete_values - never on RBR-local
+    constants alone.
+
+    Predicates that are part of a cycle in the call graph (i.e. a real
+    loop, re-entered on every iteration with a different environment) are
+    never pruned at all, even when a guard looks tainted and decidable -
+    see _find_looping_names for why freezing a decision made on one
+    iteration is unsound for the others.
 
     Returns a new list (new_rules is not mutated). Rules that can't be
     parsed, or that aren't reached while propagating concrete_values (e.g.
     because they belong to an unrelated function, or the propagation hits a
     variable it can't resolve), are left untouched - this pass only ever
-    removes a clause it can positively prove infeasible.
+    removes a clause it can positively prove infeasible using the test's
+    own values.
     """
     if not concrete_values:
         return new_rules
@@ -900,24 +988,47 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         if p is not None:
             clauses_by_name.setdefault(p["name"], []).append(p)
 
+    looping_names = _find_looping_names(clauses_by_name)
+
     env0 = {}
+    injected_pairs = set()
     for value in concrete_values:
         if "=" not in value:
             continue
         lhs, rhs = value.split("=", 1)
+        lhs, rhs = lhs.strip(), rhs.strip()
+        injected_pairs.add((lhs, rhs))
         resolved = _resolve_expr(rhs, {})
         if resolved is not None:
-            env0[lhs.strip()] = resolved
+            env0[lhs] = resolved
+    tainted0 = set(env0)
 
     to_remove = set()
     visited = set()
 
-    def continue_clause(clause, env):
+    def continue_clause(clause, env, tainted):
         local_env = dict(env)
+        local_tainted = set(tainted)
         for lhs, rhs in clause["assignments"]:
             value = _resolve_expr(rhs, local_env)
             if value is not None:
                 local_env[lhs] = value
+                # lhs is tainted iff its new definition reads at least one
+                # already-tainted variable - a pure-constant rhs (or one
+                # built only from untainted locals) yields an untainted lhs,
+                # even though the concrete value happens to be known.
+                #
+                # Exception: process_instructions injects concrete_values
+                # verbatim as plain assignment lines (e.g.
+                # "l(calldataload0) = -1") directly in whichever block
+                # first needs them. Read literally, that rhs is a bare
+                # constant referencing nothing, so the rule above would
+                # untaint it right where it's introduced. Recognize these
+                # exact (lhs, rhs) pairs as taint sources instead.
+                if (lhs, rhs) in injected_pairs or (_referenced_vars(rhs) & local_tainted):
+                    local_tainted.add(lhs)
+                else:
+                    local_tainted.discard(lhs)
             else:
                 # The new value can't be resolved (e.g. it depends on
                 # something not fixed by concrete_values, like
@@ -925,6 +1036,7 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
                 # from an earlier assignment, instead of silently keeping
                 # it around as if it were still valid.
                 local_env.pop(lhs, None)
+                local_tainted.discard(lhs)
         if clause["call_name"] is None:
             return
         callee_clauses = clauses_by_name.get(clause["call_name"])
@@ -932,26 +1044,35 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
             return
         callee_params = callee_clauses[0]["params"]
         callee_env = {}
+        callee_tainted = set()
         for param, arg_expr in zip(callee_params, clause["call_args"] or []):
             value = _resolve_expr(arg_expr, local_env)
             if value is not None:
                 callee_env[param] = value
-        propagate(clause["call_name"], callee_env)
+                if _referenced_vars(arg_expr) & local_tainted:
+                    callee_tainted.add(param)
+        propagate(clause["call_name"], callee_env, callee_tainted)
 
-    def propagate(name, env):
+    def propagate(name, env, tainted):
         if name in visited or name not in clauses_by_name:
             return
         visited.add(name)
+        in_loop = name in looping_names
         for clause in clauses_by_name[name]:
-            verdict = None
-            if clause["guard"] is not None:
+            should_remove = False
+            if not in_loop and clause["guard"] is not None:
                 verdict = evaluate_guard_against_concrete_values(clause["guard"], env)
-            if verdict is False:
+                if verdict is False:
+                    left, right = _guard_args(clause["guard"])
+                    guard_vars = _referenced_vars(left or "") | _referenced_vars(right or "")
+                    if guard_vars & tainted:
+                        should_remove = True
+            if should_remove:
                 to_remove.add(clause["index"])
             else:
-                continue_clause(clause, env)
+                continue_clause(clause, env, tainted)
 
-    propagate(entry_name, env0)
+    propagate(entry_name, env0, tainted0)
 
     if not to_remove:
         return new_rules
