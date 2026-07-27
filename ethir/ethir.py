@@ -276,7 +276,7 @@ def run_solidity_analysis(inputs,hashes):
     nonzero_vars = args.sto_nonzero
 
     ub_filter_functions = args.ub_filter_function.split(":") if args.ub_filter_function != "" else []
-    
+
     if len(inputs) == 1 and r:
         inp = inputs[0]
         function_names = hashes[inp["c_name"]]
@@ -308,7 +308,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   nonzero_variables = nonzero_vars,
                                                   compact_clones = args.compact_clones,
                                                   ub_filter_function = ub_filter_functions,
-                                                  test_cases = args.test_cases)
+                                                  test_cases = (args.test_cases, args.test_number))
             
             except Exception as e:
                 traceback.print_exc()
@@ -356,7 +356,7 @@ def run_solidity_analysis(inputs,hashes):
                                                       nonzero_variables = nonzero_vars,
                                                       compact_clones = args.compact_clones,
                                                       ub_filter_function = ub_filter_functions,
-                                                      test_cases = args.test_cases)
+                                                      test_cases = (args.test_cases, args.test_number))
                 
                 except Exception as e:
                     traceback.print_exc()
@@ -628,7 +628,7 @@ def main():
     parser.add_argument("-ub-filter-c","--ub-filter-contract", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_contract", default = "")
     parser.add_argument("-ub-filter-f","--ub-filter-function", help="String used to select the UBs to be computed",  type=str, dest="ub_filter_function", default = "")
     parser.add_argument("-test-cases","--test-cases", help="Filename with the information of test cases for each function",  type=str, dest="test_cases", default = "")
-    
+    parser.add_argument("-test-number","--test-case-number", help="Concrete test case to generate",  type=int, dest="test_number", default = -1)
     args = parser.parse_args()
     # if args.root_path:
     #     if args.root_path[-1] != '/':
