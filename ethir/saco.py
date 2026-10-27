@@ -702,6 +702,14 @@ def write(rules,execution,cname):
 # point, without requiring any change on the PUBS/costabs side.
 # ---------------------------------------------------------------------------
 
+def _signed(op):
+    """Lift a comparison to EVM signed (two's complement) words, as the
+    values are kept reduced modulo 2**256 (see _resolve_expr)."""
+    def to_int(v):
+        return v - _UINT256_MOD if v >= 2 ** 255 else v
+    return lambda a, b: op(to_int(a), to_int(b))
+
+
 _GUARD_OPS = {
     "eq": operator.eq,
     "neq": operator.ne,
@@ -709,6 +717,10 @@ _GUARD_OPS = {
     "leq": operator.le,
     "gt": operator.gt,
     "geq": operator.ge,
+    "slt": _signed(operator.lt),
+    "sleq": _signed(operator.le),
+    "sgt": _signed(operator.gt),
+    "sgeq": _signed(operator.ge),
 }
 
 _VAR_TOKEN_RE = re.compile(r"s\(\d+\)|l\([\w\d]+\)|field\([\w\d]+\)")
