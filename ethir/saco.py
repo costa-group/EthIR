@@ -790,15 +790,22 @@ def _resolve_expr(expr, env):
     'newOwner == -1' for 2**256-1) needs this same reduction to mean what it
     was meant to mean.
     """
+    value = _resolve_expr_unbounded(expr, env)
+    if value is None:
+        return None
+    return value % _UINT256_MOD
+
+
+def _resolve_expr_unbounded(expr, env):
+    """Same as _resolve_expr, but without the reduction modulo 2**256, i.e.
+    the value the size analysis gives to expr, as it treats the RBR
+    arithmetic as unbounded integer arithmetic."""
     expr = expr.strip()
     for token in sorted(set(_VAR_TOKEN_RE.findall(expr)), key=len, reverse=True):
         if token not in env:
             return None
         expr = expr.replace(token, "("+str(env[token])+")")
-    value = _safe_eval_arithmetic(expr)
-    if value is None:
-        return None
-    return value % _UINT256_MOD
+    return _safe_eval_arithmetic(expr)
 
 
 def evaluate_guard_against_concrete_values(guard_text, env):
@@ -857,6 +864,8 @@ def _parse_saco_rule(text, index):
 
     call_name, call_args = None, None
     assignments = []
+    assignment_lines = []
+    raw_lines = text.split("\n")
     for line in body:
         call_match = _CALL_RE.match(line)
         if call_match:
@@ -868,9 +877,15 @@ def _parse_saco_rule(text, index):
         if "=" in line:
             lhs, rhs = line.split("=", 1)
             assignments.append((lhs.strip(), rhs.strip()))
+            # Index of this assignment in text.split("\n"), skipping the
+            # lines already taken by earlier (possibly identical) ones.
+            start = assignment_lines[-1] + 1 if assignment_lines else 1
+            assignment_lines.append(next(i for i in range(start, len(raw_lines))
+                                         if raw_lines[i].strip() == line))
 
     return dict(index=index, name=name, params=params, guard=guard,
-                assignments=assignments, call_name=call_name, call_args=call_args)
+                assignments=assignments, assignment_lines=assignment_lines,
+                call_name=call_name, call_args=call_args)
 
 
 def _reachable_names(entry_name, clauses_by_name):
@@ -1005,13 +1020,29 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
 
     to_remove = set()
     visited = set()
+    # rule index -> {line index: concrete value}, see continue_clause
+    to_rewrite = {}
 
     def continue_clause(clause, env, tainted):
         local_env = dict(env)
         local_tainted = set(tainted)
-        for lhs, rhs in clause["assignments"]:
+        for k, (lhs, rhs) in enumerate(clause["assignments"]):
             value = _resolve_expr(rhs, local_env)
             if value is not None:
+                # The assignment wraps around (e.g. a SUB that underflows
+                # in an unchecked/assembly block): the size analysis would
+                # take the unbounded value (y-x < 0 for y < x) and may then
+                # discard the path the EVM actually follows, giving a bound
+                # below the real cost. Replace the expression by its
+                # concrete EVM value, as long as it is due to the test
+                # (tainted) and the rule is not re-entered in a loop with
+                # other values.
+                if (_resolve_expr_unbounded(rhs, local_env) != value
+                        and clause["name"] not in looping_names
+                        and ((lhs, rhs) in injected_pairs
+                             or _referenced_vars(rhs) & local_tainted)):
+                    line = clause["assignment_lines"][k]
+                    to_rewrite.setdefault(clause["index"], {})[line] = value
                 local_env[lhs] = value
                 # lhs is tainted iff its new definition reads at least one
                 # already-tainted variable - a pure-constant rhs (or one
@@ -1073,6 +1104,15 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
                 continue_clause(clause, env, tainted)
 
     propagate(entry_name, env0, tainted0)
+
+    if to_rewrite:
+        new_rules = list(new_rules)
+        for i, lines_values in to_rewrite.items():
+            lines = new_rules[i].split("\n")
+            for line, value in lines_values.items():
+                lhs = lines[line].split("=", 1)[0].rstrip()
+                lines[line] = lhs + " = " + str(value)
+            new_rules[i] = "\n".join(lines)
 
     if not to_remove:
         return new_rules
