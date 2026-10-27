@@ -1308,10 +1308,17 @@ def get_opposite_guard(guard):
         opposite = "leq"+guard[2:]
     elif guard[:3] == "geq":
         opposite = "lt"+guard[3:]
+    # The opposite of a signed comparison is also signed: rendering it as
+    # the unsigned geq/leq would make it disagree with the original guard
+    # on negative (two's complement) values.
     elif guard[:3] == "slt":
-        opposite = "geq"+guard[3:]
+        opposite = "sgeq"+guard[3:]
     elif guard[:3] == "sgt":
-        opposite = "leq"+guard[3:]
+        opposite = "sleq"+guard[3:]
+    elif guard[:4] == "sgeq":
+        opposite = "slt"+guard[4:]
+    elif guard[:4] == "sleq":
+        opposite = "sgt"+guard[4:]
     elif guard[:2] == "eq":
         opposite = "neq"+guard[2:]
     elif guard[:3] == "neq":
