@@ -35,6 +35,7 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
 
     st_vars = rbr[0][0].get_all_state_vars()
     new_rules = []
+    _VALUE_COMPARISONS.clear()
     try:
         function_block_map = function_block_info[0]
         function_calldataload_blocks = function_block_info[1]
@@ -242,7 +243,13 @@ def process_instructions(rule, function_block_map, functions_calldataload_blocks
         elif instr.find("/")!=-1:
             idx_loop = check_mul_div_pattern(new_instructions,instructions,idx_loop)
         else:
+            comparison = _VALUE_COMPARISON_RE.match(instr.strip())
+            fresh = "s("+str(cont)+")"
             cont = process_single_instruction(instr,new_instructions,contract_vars,cont)
+            if comparison is not None and new_instructions and new_instructions[-1].split("=",1)[-1].strip() == fresh:
+                op, args = comparison.group(1), _split_top_level_args(comparison.group(2))
+                if len(args) == 2:
+                    _VALUE_COMPARISONS[(rule.get_rule_name(), fresh)] = (op, args[0], args[1])
             idx_loop = idx_loop+1
             
     return new_instructions
@@ -723,6 +730,15 @@ _GUARD_OPS = {
     "sgeq": _signed(operator.ge),
 }
 
+# A comparison whose result is used as a value (e.g. 's(6) = gt(s(7), s(6))',
+# as for the selector of a Yul switch) is replaced by a fresh variable in
+# the SACO rules, as the size analysis cannot represent it. The original
+# comparison is kept here, keyed by (rule name, fresh variable), so that
+# prune_infeasible_rules can still compute its 0/1 value from the
+# concrete values of a test.
+_VALUE_COMPARISON_RE = re.compile(r"^s\(\d+\)\s*=\s*(eq|lt|gt)\((.*)\)$")
+_VALUE_COMPARISONS = {}
+
 _VAR_TOKEN_RE = re.compile(r"s\(\d+\)|l\([\w\d]+\)|field\([\w\d]+\)")
 _ARITH_ALLOWED_RE = re.compile(r"^[\d\s\+\-\*/\(\)\.]+$")
 _HEAD_RE = re.compile(r"^(\w+)\((.*)\)=>$")
@@ -1039,6 +1055,17 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         local_env = dict(env)
         local_tainted = set(tainted)
         for k, (lhs, rhs) in enumerate(clause["assignments"]):
+            comparison = _VALUE_COMPARISONS.get((clause["name"], rhs))
+            if comparison is not None:
+                op, left, right = comparison
+                left_v, right_v = _resolve_expr(left, local_env), _resolve_expr(right, local_env)
+                if left_v is not None and right_v is not None:
+                    local_env[lhs] = int(_GUARD_OPS[op](left_v, right_v))
+                    if (_referenced_vars(left) | _referenced_vars(right)) & local_tainted:
+                        local_tainted.add(lhs)
+                    else:
+                        local_tainted.discard(lhs)
+                    continue
             value = _resolve_expr(rhs, local_env)
             if value is not None:
                 # The assignment wraps around (e.g. a SUB that underflows
