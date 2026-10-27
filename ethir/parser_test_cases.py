@@ -93,6 +93,32 @@ def _to_sympy_expr(expr_str):
     return sympy.sympify(expr_str, locals=local_dict)
 
 
+# SWI-Prolog rational literal (e.g. "1r4" for 1/4), as printed by clpq.
+# The lookbehind avoids matching inside identifiers such as "a1r2".
+_RATIONAL_RE = re.compile(r"(?<![\w.])(\d+)r(\d+)\b")
+
+
+def clear_rationals(constraint):
+    """Rewrite a clpq constraint with rational coefficients ('chunk=1r4*amount')
+    as an equivalent one with integer coefficients ('-amount+4*chunk=0'), by
+    multiplying it by the (positive) lcm of the denominators, since SACO does
+    not accept the SWI-Prolog rational syntax. Constraints without rationals
+    are returned unchanged."""
+    constraint = constraint.strip()
+    if not _RATIONAL_RE.search(constraint):
+        return constraint
+    split = _split_comparison(constraint)
+    if split is None:
+        return constraint
+    lhs, op, rhs = split
+    lhs = _RATIONAL_RE.sub(r"(\1/\2)", lhs)
+    rhs = _RATIONAL_RE.sub(r"(\1/\2)", rhs)
+    expr = sympy.expand(_to_sympy_expr(lhs) - _to_sympy_expr(rhs))
+    # The content is a positive rational, so dividing by it keeps op.
+    _, primitive = expr.as_content_primitive()
+    return "{}{}0".format(str(primitive).replace(" ", ""), op)
+
+
 def unify_constraint(constraint):
     """Rewrite a clpq constraint that expresses 'a - b > 0' (or the
     equivalent addition form '-a + b > 0') as 'a > b', unifying both
@@ -217,6 +243,7 @@ def partition_constraints(test_case, identifiers_mapping):
     assignments = _parse_concrete_assignments(test_case)
     feasible, unfeasible = [], []
     for constraint in test_case.get("constraints_clpq", []):
+        constraint = clear_rationals(constraint)
         verdict = _evaluate_against_concrete_values(constraint, assignments)
         if verdict is True:
             continue
