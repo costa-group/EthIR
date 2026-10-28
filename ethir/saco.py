@@ -36,6 +36,7 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
     st_vars = rbr[0][0].get_all_state_vars()
     new_rules = []
     _VALUE_COMPARISONS.clear()
+    TEST_PRUNED_RULES.clear()
     try:
         function_block_map = function_block_info[0]
         function_calldataload_blocks = function_block_info[1]
@@ -71,7 +72,9 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
             if len(all_tests) <= test_id:
                 continue
             concrete_values = all_tests[test_id].get("concrete_values", [])
+            names_before = _rule_names(new_rules)
             new_rules = prune_infeasible_rules(new_rules, "block"+str(entry_block), concrete_values)
+            TEST_PRUNED_RULES.update(names_before - _rule_names(new_rules))
 
         write(new_rules,execution,cname)
         end = dtimer()
@@ -739,6 +742,12 @@ _GUARD_OPS = {
 _VALUE_COMPARISON_RE = re.compile(r"^s\(\d+\)\s*=\s*(eq|lt|gt)\((.*)\)$")
 _VALUE_COMPARISONS = {}
 
+# Names of the rules (e.g. "block586_0") made unreachable by the pruning of
+# the test case, so that the storage analysis does not take their accesses
+# into account (see storage/traverse_cfg.py).
+TEST_PRUNED_RULES = set()
+_CALLDATA_ARG_RE = re.compile(r"^l\(calldataload\d*\)$")
+
 _VAR_TOKEN_RE = re.compile(r"s\(\d+\)|l\([\w\d]+\)|field\([\w\d]+\)")
 _ARITH_ALLOWED_RE = re.compile(r"^[\d\s\+\-\*/\(\)\.]+$")
 _HEAD_RE = re.compile(r"^(\w+)\((.*)\)=>$")
@@ -914,6 +923,10 @@ def _parse_saco_rule(text, index):
     return dict(index=index, name=name, params=params, guard=guard,
                 assignments=assignments, assignment_lines=assignment_lines,
                 call_name=call_name, call_args=call_args)
+
+
+def _rule_names(rules):
+    return {p["name"] for p in (_parse_saco_rule(text, i) for i, text in enumerate(rules)) if p is not None}
 
 
 def _reachable_names(entry_name, clauses_by_name):
@@ -1115,7 +1128,15 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         callee_params = callee_clauses[0]["params"]
         callee_env = {}
         callee_tainted = set()
+        # The environment of a loop is the one of its first iteration (each
+        # predicate is visited once), so the values it passes on are only
+        # valid for the variables a loop cannot modify, i.e. the function
+        # arguments. Otherwise the code after the loop would be pruned with
+        # the values of the first iteration (e.g. an accumulator still 0).
+        leaves_loop = clause["name"] in looping_names
         for param, arg_expr in zip(callee_params, clause["call_args"] or []):
+            if leaves_loop and not _CALLDATA_ARG_RE.match(param):
+                continue
             value = _resolve_expr(arg_expr, local_env)
             if value is not None:
                 callee_env[param] = value
