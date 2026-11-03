@@ -74,6 +74,9 @@ class RBRRule:
     def get_rule_name(self):
         return self.rule_name
 
+    def set_rule_name(self, name):
+        self.rule_name = name
+
     def get_index_invars(self):
         return self.arg_input
 
