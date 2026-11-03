@@ -1,6 +1,13 @@
 
 
+from saco import TEST_PRUNED_RULES
+
 def traverse_cfg(entry_point, scc_components, join_relation, vertices, property_information, result, repetitions, end_points):
+
+    # Blocks discarded by the test case are never executed, so their
+    # storage accesses are not added to the result
+    if "block"+str(entry_point) in TEST_PRUNED_RULES:
+        return
 
     if entry_point in scc_components["unary"]:
          r1 = translate_block_property(entry_point, property_information)

@@ -3,6 +3,11 @@ import ast
 import traceback
 from  utils import isReal
 from sympy import Function, symbols
+import sympy
+
+# PUBS writes log(b,x) for ceil(log_b(x)), used when evaluating the bounds
+def log(b, x):
+    return sympy.ceiling(sympy.log(sympy.nsimplify(x), b))
 
 class SRA_UB_manager: 
     

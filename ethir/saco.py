@@ -36,6 +36,8 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
 
     st_vars = rbr[0][0].get_all_state_vars()
     new_rules = []
+    _VALUE_COMPARISONS.clear()
+    TEST_PRUNED_RULES.clear()
     try:
         function_block_map = function_block_info[0]
         function_calldataload_blocks = function_block_info[1]
@@ -71,7 +73,9 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
             if len(all_tests) <= test_id:
                 continue
             concrete_values = all_tests[test_id].get("concrete_values", [])
+            names_before = _rule_names(new_rules)
             new_rules = prune_infeasible_rules(new_rules, "block"+str(entry_block), concrete_values)
+            TEST_PRUNED_RULES.update(names_before - _rule_names(new_rules))
 
         write(new_rules,execution,cname)
         end = dtimer()
@@ -353,7 +357,13 @@ def process_instructions(rule, function_block_map, functions_calldataload_blocks
         elif instr.find("/")!=-1:
             idx_loop = check_mul_div_pattern(new_instructions,instructions,idx_loop)
         else:
+            comparison = _VALUE_COMPARISON_RE.match(instr.strip())
+            fresh = "s("+str(cont)+")"
             cont = process_single_instruction(instr,new_instructions,contract_vars,cont)
+            if comparison is not None and new_instructions and new_instructions[-1].split("=",1)[-1].strip() == fresh:
+                op, args = comparison.group(1), _split_top_level_args(comparison.group(2))
+                if len(args) == 2:
+                    _VALUE_COMPARISONS[(rule.get_rule_name(), fresh)] = (op, args[0], args[1])
             idx_loop = idx_loop+1
             
     return new_instructions
@@ -815,6 +825,14 @@ def write(rules,execution,cname):
 # point, without requiring any change on the PUBS/costabs side.
 # ---------------------------------------------------------------------------
 
+def _signed(op):
+    """Lift a comparison to EVM signed (two's complement) words, as the
+    values are kept reduced modulo 2**256 (see _resolve_expr)."""
+    def to_int(v):
+        return v - _UINT256_MOD if v >= 2 ** 255 else v
+    return lambda a, b: op(to_int(a), to_int(b))
+
+
 _GUARD_OPS = {
     "eq": operator.eq,
     "neq": operator.ne,
@@ -822,7 +840,26 @@ _GUARD_OPS = {
     "leq": operator.le,
     "gt": operator.gt,
     "geq": operator.ge,
+    "slt": _signed(operator.lt),
+    "sleq": _signed(operator.le),
+    "sgt": _signed(operator.gt),
+    "sgeq": _signed(operator.ge),
 }
+
+# A comparison whose result is used as a value (e.g. 's(6) = gt(s(7), s(6))',
+# as for the selector of a Yul switch) is replaced by a fresh variable in
+# the SACO rules, as the size analysis cannot represent it. The original
+# comparison is kept here, keyed by (rule name, fresh variable), so that
+# prune_infeasible_rules can still compute its 0/1 value from the
+# concrete values of a test.
+_VALUE_COMPARISON_RE = re.compile(r"^s\(\d+\)\s*=\s*(eq|lt|gt)\((.*)\)$")
+_VALUE_COMPARISONS = {}
+
+# Names of the rules (e.g. "block586_0") made unreachable by the pruning of
+# the test case, so that the storage analysis does not take their accesses
+# into account (see storage/traverse_cfg.py).
+TEST_PRUNED_RULES = set()
+_CALLDATA_ARG_RE = re.compile(r"^l\(calldataload\d*\)$")
 
 _VAR_TOKEN_RE = re.compile(r"s\(\d+\)|l\([\w\d]+\)|field\([\w\d]+\)")
 _ARITH_ALLOWED_RE = re.compile(r"^[\d\s\+\-\*/\(\)\.]+$")
@@ -903,15 +940,22 @@ def _resolve_expr(expr, env):
     'newOwner == -1' for 2**256-1) needs this same reduction to mean what it
     was meant to mean.
     """
+    value = _resolve_expr_unbounded(expr, env)
+    if value is None:
+        return None
+    return value % _UINT256_MOD
+
+
+def _resolve_expr_unbounded(expr, env):
+    """Same as _resolve_expr, but without the reduction modulo 2**256, i.e.
+    the value the size analysis gives to expr, as it treats the RBR
+    arithmetic as unbounded integer arithmetic."""
     expr = expr.strip()
     for token in sorted(set(_VAR_TOKEN_RE.findall(expr)), key=len, reverse=True):
         if token not in env:
             return None
         expr = expr.replace(token, "("+str(env[token])+")")
-    value = _safe_eval_arithmetic(expr)
-    if value is None:
-        return None
-    return value % _UINT256_MOD
+    return _safe_eval_arithmetic(expr)
 
 
 def evaluate_guard_against_concrete_values(guard_text, env):
@@ -970,6 +1014,8 @@ def _parse_saco_rule(text, index):
 
     call_name, call_args = None, None
     assignments = []
+    assignment_lines = []
+    raw_lines = text.split("\n")
     for line in body:
         call_match = _CALL_RE.match(line)
         if call_match:
@@ -981,9 +1027,19 @@ def _parse_saco_rule(text, index):
         if "=" in line:
             lhs, rhs = line.split("=", 1)
             assignments.append((lhs.strip(), rhs.strip()))
+            # Index of this assignment in text.split("\n"), skipping the
+            # lines already taken by earlier (possibly identical) ones.
+            start = assignment_lines[-1] + 1 if assignment_lines else 1
+            assignment_lines.append(next(i for i in range(start, len(raw_lines))
+                                         if raw_lines[i].strip() == line))
 
     return dict(index=index, name=name, params=params, guard=guard,
-                assignments=assignments, call_name=call_name, call_args=call_args)
+                assignments=assignments, assignment_lines=assignment_lines,
+                call_name=call_name, call_args=call_args)
+
+
+def _rule_names(rules):
+    return {p["name"] for p in (_parse_saco_rule(text, i) for i, text in enumerate(rules)) if p is not None}
 
 
 def _reachable_names(entry_name, clauses_by_name):
@@ -1118,13 +1174,40 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
 
     to_remove = set()
     visited = set()
+    # rule index -> {line index: concrete value}, see continue_clause
+    to_rewrite = {}
 
     def continue_clause(clause, env, tainted):
         local_env = dict(env)
         local_tainted = set(tainted)
-        for lhs, rhs in clause["assignments"]:
+        for k, (lhs, rhs) in enumerate(clause["assignments"]):
+            comparison = _VALUE_COMPARISONS.get((clause["name"], rhs))
+            if comparison is not None:
+                op, left, right = comparison
+                left_v, right_v = _resolve_expr(left, local_env), _resolve_expr(right, local_env)
+                if left_v is not None and right_v is not None:
+                    local_env[lhs] = int(_GUARD_OPS[op](left_v, right_v))
+                    if (_referenced_vars(left) | _referenced_vars(right)) & local_tainted:
+                        local_tainted.add(lhs)
+                    else:
+                        local_tainted.discard(lhs)
+                    continue
             value = _resolve_expr(rhs, local_env)
             if value is not None:
+                # The assignment wraps around (e.g. a SUB that underflows
+                # in an unchecked/assembly block): the size analysis would
+                # take the unbounded value (y-x < 0 for y < x) and may then
+                # discard the path the EVM actually follows, giving a bound
+                # below the real cost. Replace the expression by its
+                # concrete EVM value, as long as it is due to the test
+                # (tainted) and the rule is not re-entered in a loop with
+                # other values.
+                if (_resolve_expr_unbounded(rhs, local_env) != value
+                        and clause["name"] not in looping_names
+                        and ((lhs, rhs) in injected_pairs
+                             or _referenced_vars(rhs) & local_tainted)):
+                    line = clause["assignment_lines"][k]
+                    to_rewrite.setdefault(clause["index"], {})[line] = value
                 local_env[lhs] = value
                 # lhs is tainted iff its new definition reads at least one
                 # already-tainted variable - a pure-constant rhs (or one
@@ -1158,7 +1241,15 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         callee_params = callee_clauses[0]["params"]
         callee_env = {}
         callee_tainted = set()
+        # The environment of a loop is the one of its first iteration (each
+        # predicate is visited once), so the values it passes on are only
+        # valid for the variables a loop cannot modify, i.e. the function
+        # arguments. Otherwise the code after the loop would be pruned with
+        # the values of the first iteration (e.g. an accumulator still 0).
+        leaves_loop = clause["name"] in looping_names
         for param, arg_expr in zip(callee_params, clause["call_args"] or []):
+            if leaves_loop and not _CALLDATA_ARG_RE.match(param):
+                continue
             value = _resolve_expr(arg_expr, local_env)
             if value is not None:
                 callee_env[param] = value
@@ -1186,6 +1277,15 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
                 continue_clause(clause, env, tainted)
 
     propagate(entry_name, env0, tainted0)
+
+    if to_rewrite:
+        new_rules = list(new_rules)
+        for i, lines_values in to_rewrite.items():
+            lines = new_rules[i].split("\n")
+            for line, value in lines_values.items():
+                lhs = lines[line].split("=", 1)[0].rstrip()
+                lines[line] = lhs + " = " + str(value)
+            new_rules[i] = "\n".join(lines)
 
     if not to_remove:
         return new_rules

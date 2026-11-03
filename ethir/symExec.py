@@ -7,6 +7,7 @@ import math
 import sys
 import atexit
 import json
+import copy
 import traceback
 import signal
 from timeit import default_timer as dtimer
@@ -308,6 +309,11 @@ def initGlobalVars():
 
     global repeated
     repeated = []
+
+    # Stack of (edges, back_edge) for the loop bodies being re-executed
+    # (see analyze_next_block).
+    global loop_replay
+    loop_replay = []
     
     global val_mem40
     val_mem40 = ""
@@ -3873,9 +3879,27 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
     global memory_unknown
     global repeated
     global memory_usage
+    global loop_replay
     # print(block)
     # print(successor)
     # print("--------")
+
+    # While re-executing a loop body only the edges of that body are
+    # followed, each of them once more, and the graph is not modified.
+    if loop_replay:
+        body_edges, back_edge = loop_replay[-1]
+        edge = (block, successor)
+        if edge != back_edge and edge in body_edges and path.count(edge) < 2:
+            path.append(edge)
+            old_mem = dict(memory_usage)
+            try:
+                sym_exec_block(new_params, successor, block, depth, func_call,current_level+1,path)
+            except (ValueError, RuntimeError):
+                if debug_info:
+                    print("Unfeasible path")
+            memory_usage = old_mem
+            path.pop()
+        return
     
     if successor in visited_blocks:
         
@@ -3913,6 +3937,37 @@ def analyze_next_block(block, successor, stack, path, func_call, depth, current_
                         x = list(filter(lambda x: x[0] == block and x[1] == block,path))
                         if len(x)<3:
                             sym_exec_block(new_params, same_stack_successors[0], block, depth, func_call,current_level+1,path)
+                    else:
+                        # Back edge of a loop: the body is executed once more
+                        # with the stack of the second iteration, so that the
+                        # loads and stores whose key changes between
+                        # iterations record two different keys and are
+                        # annotated as unknown, instead of keeping the key
+                        # of the first iteration.
+                        header = same_stack_successors[0]
+                        idx = next((i for i, e in enumerate(path[:-1]) if e[1] == header), None)
+                        if idx is not None:
+                            # Executing JUMP/JUMPI resets the targets and
+                            # edges of the body blocks to the original
+                            # addresses, so they are restored afterwards.
+                            body = set(path[idx:])
+                            saved = {}
+                            for b in set(x for e in body for x in e):
+                                saved[b] = (vertices[b].get_jump_target(), vertices[b].get_falls_to(),
+                                            list(edges[b]), copy.deepcopy(push_jump_relations.get(b)))
+                            loop_replay.append((body, path[-1]))
+                            try:
+                                sym_exec_block(new_params, header, block, depth, func_call,current_level+1,path)
+                            finally:
+                                loop_replay.pop()
+                                for b, (jt, ft, ed, pj) in saved.items():
+                                    vertices[b].set_jump_target(jt, True)
+                                    vertices[b].set_falls_to(ft, True)
+                                    edges[b] = ed
+                                    if pj is None:
+                                        push_jump_relations.pop(b, None)
+                                    else:
+                                        push_jump_relations[b] = pj
                 except (ValueError, RuntimeError):
                     if debug_info:
                         print("Unfeasible path")
