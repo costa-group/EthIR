@@ -113,7 +113,8 @@ class InputHelper:
                         source_map_init = SourceMap(contract_init, self.source, 'solidity', self.solc_select, self.root_path,
                                                     self.solc_version)  # if self.solc_version != "v8" else None
                     else:
-                        source_map_init = SourceMap(contract_init, self.source, 'standard json', self.solc_select, self.root_path)
+                        source_map_init = SourceMap(contract_init, self.source, 'standard json', self.solc_select, self.root_path,
+                                                    self.solc_version)
 
             else:
                 source_map_init = None
@@ -126,7 +127,8 @@ class InputHelper:
                     source_map = SourceMap(contract, self.source, 'solidity', self.solc_select, self.root_path,
                                            self.solc_version)  # if self.solc_version != "v8" else None
                 else:
-                    source_map = SourceMap(contract, self.source, 'standard json', self.solc_select, self.root_path)
+                    source_map = SourceMap(contract, self.source, 'standard json', self.solc_select, self.root_path,
+                                           self.solc_version)
 
                 disasm_file = self._get_temporary_files(contract)['disasm']
                 if not self.runtime:
@@ -237,10 +239,6 @@ class InputHelper:
             return self._extract_bin_str_init(out)
 
     def _compile_standard_json(self):
-        FNULL = open(os.devnull, 'w')
-        cmd = "cat %s" % self.source
-        p1 = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
-
         if self.solc_select:
             version = select_and_set_solc_version(self.source)
             self.solc_version = "v"+str(version)
@@ -249,30 +247,60 @@ class InputHelper:
         else:
             solc = get_solc_executable(self.solc_version)
 
+        with open(self.source, 'r') as f:
+            standard_input = self._add_required_outputs(json.load(f))
 
+        # The input is passed through stdin, which is supported by every
+        # version of solc (the input file as argument is not)
         # cmd = solc + " --allow-paths %s --standard-json" % self.allow_paths
-        cmd = solc + " --standard-json %s" % self.source
-        
-        p2 = subprocess.Popen(shlex.split(cmd), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=FNULL)
-        p1.stdout.close()
-        out = p2.communicate()[0]
+        cmd = solc + " --standard-json"
+        FNULL = open(os.devnull, 'w')
+        p = subprocess.Popen(shlex.split(cmd), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=FNULL)
+        out = p.communicate(json.dumps(standard_input).encode())[0].decode()
 
         with open('standard_json_output', 'w') as of:
             of.write(out)
 
+        errors = [e for e in json.loads(out).get('errors', []) if e.get('severity') == 'error']
+        if errors:
+            logging.critical("Solidity compilation failed: " + errors[0].get('formattedMessage', errors[0].get('message', '')))
+            if global_params_ethir.WEB:
+                six.print_({"error": "Solidity compilation failed"})
+            exit(1)
+
         prueba = self._compile_standard_json_output('standard_json_output')
         return prueba
-    
+
+    def _add_required_outputs(self, standard_input):
+        """Request in outputSelection the outputs used by EthIR, whatever the
+        input asks for: the runtime bytecode, the assembly (legacyAssembly,
+        the --asm-json of the command line), the function selectors and the
+        AST. Before solc 0.8.0 the AST used by AstHelper is legacyAST, which
+        no longer exists from 0.8.0 on, where it is replaced by ast."""
+        selection = standard_input.setdefault('settings', {}).setdefault('outputSelection', {})
+        contract_outputs = selection.setdefault('*', {}).setdefault('*', [])
+        for output in ['evm.deployedBytecode.object', 'evm.legacyAssembly', 'evm.methodIdentifiers']:
+            if output not in contract_outputs:
+                contract_outputs.append(output)
+        ast_output = 'ast' if self.solc_version == "v8" else 'legacyAST'
+        source_outputs = selection['*'].setdefault('', [])
+        if ast_output not in source_outputs:
+            source_outputs.append(ast_output)
+        return standard_input
+
     def _compile_standard_json_output(self, json_output_file):
         with open(json_output_file, 'r') as f:
             out = f.read()
         j = json.loads(out)
         contracts = []
+        self.asm_contracts = {}
         for source in j['sources']:
-            for contract in j['contracts'][source]:
+            # Sources without contracts (e.g. only imports) have no entry
+            for contract in j.get('contracts', {}).get(source, {}):
                 cname = source + ":" + contract
-                evm = j['contracts'][source][contract]['evm']['deployedBytecode']['object']
-                contracts.append((cname, evm))
+                evm = j['contracts'][source][contract]['evm']
+                contracts.append((cname, evm['deployedBytecode']['object']))
+                self.asm_contracts[cname] = evm.get('legacyAssembly')
         return contracts
 
     def _removeSwarmHash(self, evm):
@@ -498,7 +526,12 @@ class InputHelper:
 
     def _get_solidity_version(self):
         f = open(self.source, "r")
-        lines = f.readlines()
+        if self.input_type == InputHelper.STANDARD_JSON:
+            # The sources are inside the json, each one in a single line
+            sources = json.load(f).get("sources", {}).values()
+            lines = [l + "\n" for s in sources for l in s.get("content", "").split("\n")]
+        else:
+            lines = f.readlines()
         pragma = [line for line in lines if not line.startswith("//") and "pragma solidity" in line]
         if pragma == []:
             return get_solidity_version_from_solc() #
