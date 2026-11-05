@@ -37,48 +37,27 @@ def get_solc_version(contract_path: str) -> str:
     
     available_versions = get_available_versions()
 
-    # --- ^ case ---
-    if raw_version.startswith("^"):
-        base_version = semantic_version.Version(re.sub(r"[^\d.]", "", raw_version))
+    # The pragma uses the npm semver ranges (^x.y.z, >=a <b, x.y.z...). For
+    # 0.x versions ^0.4.24 means >=0.4.24 <0.5.0 (not <1.0.0), which NpmSpec
+    # implements
+    try:
+        spec = semantic_version.NpmSpec(raw_version)
+    except ValueError:
+        spec = None
 
-        # ^x.y.z -> >=x.y.z <(major+1).0.0
-        upper_bound = f"<{base_version.major+1}.0.0"
-        
-        spec_str = f">={base_version},{upper_bound}"
-        spec = semantic_version.SimpleSpec(spec_str)
-
+    if spec is not None:
         compatible = [v for v in available_versions if v in spec]
         if not compatible:
             raise ValueError(f"No compatible versions found for {raw_version}")
         return str(max(compatible))
 
-    # --- >= case ---
-    elif raw_version.startswith(">="):
-        base_version = semantic_version.Version(re.sub(r"[^\d.]", "", raw_version))
-
-        # For major >=1, stay within the same major version
-        same_major = [v for v in available_versions 
-                      if v.major == base_version.major and v >= base_version]
-        if not same_major:
-            raise ValueError(f"No compatible versions found for {raw_version}")
-        return str(max(same_major))
-        
-    # --- Other cases ---
-    else:
-        try:
-            spec = semantic_version.SimpleSpec(raw_version)
-            compatible = [v for v in available_versions if v in spec]
-            if not compatible:
-                raise ValueError(f"No compatible versions found for {raw_version}")
-            return str(max(compatible))
-        except ValueError:
-            # If the range is not recognized, treat it as a fixed version
-            cleaned = re.sub(r"[^\d.]", "", raw_version)
-            parts = cleaned.split(".")
-            while len(parts) < 3:
-                parts.append("0")
-            version = ".".join(parts[:3])
-            return version
+    # If the range is not recognized, treat it as a fixed version
+    cleaned = re.sub(r"[^\d.]", "", raw_version)
+    parts = cleaned.split(".")
+    while len(parts) < 3:
+        parts.append("0")
+    version = ".".join(parts[:3])
+    return version
 
 
 def set_solc_version(version: str):
