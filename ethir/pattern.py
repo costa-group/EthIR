@@ -14,7 +14,17 @@ sub_pattern = ["PUSH1 0x01",
                "SWAP1",
                "DIV"]
 
-pattern1_str_v8 = ["JUMPDEST","PUSH0","PUSH1 0x02","DUP3","DIV","SWAP1","POP","PUSH","DUP3","AND","DUP1","PUSH","JUMPI"]
+# Signature that follows sub_pattern in the setter of a storage string
+# (solc < 0.8): keccak256(slot) + (oldLength + 31)/32, i.e. the end of the
+# old content, which is the end of the range of slots cleared after the copy.
+# KECCAK256 is called SHA3 in solc 0.4
+str_setter_signature = ["SWAP1","PUSH1 0x00","MSTORE","PUSH1 0x20","PUSH1 0x00",("SHA3","KECCAK256"),
+                        "SWAP1","PUSH1 0x1f","ADD","PUSH1 0x20","SWAP1","DIV","DUP2","ADD"]
+
+# Position in sub_pattern of the AND that computes and(mask, data)
+sub_pattern_and_idx = 8
+
+pattern1_str_v8 =["JUMPDEST","PUSH0","PUSH1 0x02","DUP3","DIV","SWAP1","POP","PUSH","DUP3","AND","DUP1","PUSH","JUMPI"]
 pattern2_str_v8 = ["PUSH1 0x7f","DUP3","AND","SWAP2","POP"]
 
 pattern_mem_str_v8 = ["JUMPDEST","PUSH0","PUSH1 0x1f","NOT","PUSH1 0x1f","DUP4","ADD","AND","SWAP1","POP","SWAP2","SWAP1","POP","JUMP"]
@@ -72,6 +82,29 @@ def look_for_str_mem_pattern(block):
 
 ## String Pattern
     
+'''
+It returns the positions, in the instructions of block, of the AND of
+sub_pattern (the length of a storage string, solc < 0.8) that is followed
+by str_setter_signature, i.e. the old length in the setter of the string.
+That AND is translated as its data operand (see rbr.py): the result
+data/2 >= length is an upper bound of the length, which is safe there
+because it is only used as the end of the slots that are cleared.
+'''
+def look_for_str_setter_pattern(block):
+    ins = list(map(lambda x: x.strip(), block.get_instructions()))
+    sequence = sub_pattern + str_setter_signature
+    positions = []
+    for i in range(len(ins) - len(sequence) + 1):
+        matches = True
+        for j, expected in enumerate(sequence):
+            options = expected if isinstance(expected, tuple) else (expected,)
+            if ins[i+j] not in options:
+                matches = False
+                break
+        if matches:
+            positions.append(i + sub_pattern_and_idx)
+    return positions
+
 def look_for_string_pattern(block):
     ins_aux = block.get_instructions()[:-2]
     if len(ins_aux)>=len(pattern):
