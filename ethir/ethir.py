@@ -11,7 +11,7 @@ import argparse
 import subprocess
 import global_params_ethir
 from timeit import default_timer as dtimer
-from utils import run_command, process_hashes, set_solc_executable
+from utils import run_command, process_hashes, process_hashes_standard_json, set_solc_executable
 from input_helper import InputHelper
 import traceback
 
@@ -507,7 +507,10 @@ def analyze_solidity(input_type='solidity'):
 
     solc_version = helper.get_solidity_version()
 
-    hashes = process_hashes(args.source,solc_version)
+    if input_type == 'standard_json':
+        hashes = process_hashes_standard_json('standard_json_output')
+    else:
+        hashes = process_hashes(args.source,solc_version)
 
     global_params_ethir.costabs_path = global_params_ethir.tmp_path+helper.aux_path
     
