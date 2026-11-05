@@ -344,9 +344,16 @@ class RBRRule:
     def include_string_getter(self,mem_abs):
         #Patter defined in symExec.py
         #Pattern identified by Oyente
-        evm = list(filter(lambda x: x.split("(")[0] != "nop",self.instr))
-        instr1 = evm[-17] #by definition of the pattern. It corresponds to s(x) = g(y)
-        instr2_aux = evm[-22] #by definition of the pattern. It corresponds to l(z) = s(w)
+        evm = list(filter(lambda x: x.split("(")[0] not in ["nop", "mem_read", "mem_write"],self.instr))
+        # They are located by their content and not by their position, so
+        # that other instructions (e.g. mem_read/mem_write) do not move them:
+        # instr1 is the last SLOAD of the string field, s(x) = g(y), and
+        # instr2_aux the last MSTORE before it, l(z) = s(w), which stores
+        # the length of the string in memory
+        idx1 = max(i for i, x in enumerate(evm) if "=" in x and x.split("=")[1].strip().startswith("g("))
+        idx2 = max(i for i, x in enumerate(evm[:idx1]) if "=" in x and x.split("=")[0].strip().startswith("l("))
+        instr1 = evm[idx1]
+        instr2_aux = evm[idx2]
         field = instr1.split("=")[1].strip()
 
         # print instr1
