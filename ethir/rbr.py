@@ -16,6 +16,10 @@ import traceback
 
 init_fields = []
 
+# Position, in the instructions of the block being translated, of the
+# current opcode (see compile_block)
+instr_position = -1
+
 '''
 It initialize the globals variables. 
 -List opcodeX contains the evm bytecodes from set X.
@@ -215,6 +219,17 @@ def get_consume_variable(index_variables):
         current = current-1
         
     return  variable, current
+
+'''
+It returns the instruction that records the memory region [offset,
+offset+size) accessed by an opcode: kind is "mem_read" for the opcodes
+that read memory (RETURN, REVERT, LOG, SHA3, CREATE, the arguments of a
+call...) and "mem_write" for those that write it (CALLDATACOPY, CODECOPY,
+the return data of a call...). The translation to SACO uses it to model
+the memory expansion with the actual stack variables of the operands.
+'''
+def mem_access(kind, offset, size):
+    return kind + "(" + offset + ", " + size + ")"
 
 
 '''
@@ -518,6 +533,11 @@ def translateOpcodes10(opcode, index_variables,cond, block):
 
             if(vertices[block].get_and_str_pattern()):
                 instr = v3+" = "+v1
+            elif instr_position in vertices[block].get_str_setter_ands():
+                # and(mask, data) of the old length of a storage string in its
+                # setter: it is approximated by data, an upper bound (see
+                # pattern.look_for_str_setter_pattern)
+                instr = v3+" = "+v2
             else:
                 instr = v3+" = and(" + v1 + ", " + v2+")"
 
@@ -587,9 +607,9 @@ def translateOpcodes20(opcode, index_variables,block):
         blocks_sha3 = list(map(lambda x: x[1],sha3_blocks_arr.values()))
 
         if block in blocks_sha3:
-            instr = v3+" = 0"
+            instr = [mem_access("mem_read", v1, v2), v3+" = 0"]
         else:
-            instr = v3+" = sha3("+ v1+", "+v2+")"
+            instr = [mem_access("mem_read", v1, v2), v3+" = sha3("+ v1+", "+v2+")"]
 
     elif opcode == "KECCAK256":
         
@@ -600,9 +620,9 @@ def translateOpcodes20(opcode, index_variables,block):
         blocks_sha3 = list(map(lambda x: x[1],sha3_blocks_arr.values()))
 
         if block in blocks_sha3:
-            instr = v3+" = 0"
+            instr = [mem_access("mem_read", v1, v2), v3+" = 0"]
         else:
-            instr = v3+" = keccak256("+ v1+", "+v2+")"
+            instr = [mem_access("mem_read", v1, v2), v3+" = keccak256("+ v1+", "+v2+")"]
 
             
         
@@ -680,19 +700,19 @@ def translateOpcodes30(opcode, value, index_variables,block, blocks_with_calldat
         instr = v1+" = calldatasize"
         update_bc_in_use("calldatasize",block)
     elif opcode == "CALLDATACOPY":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v3, updated_variables = get_consume_variable(updated_variables)
+        instr = mem_access("mem_write", v1, v3)
     elif opcode == "CODESIZE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = codesize"
         update_bc_in_use("codesize",block)
     elif opcode == "CODECOPY":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v3, updated_variables = get_consume_variable(updated_variables)
+        instr = mem_access("mem_write", v1, v3)
     elif opcode == "GASPRICE":
         v1, updated_variables = get_new_variable(index_variables)
         instr = v1+" = gasprice"
@@ -716,10 +736,10 @@ def translateOpcodes30(opcode, value, index_variables,block, blocks_with_calldat
         
     elif opcode == "EXTCODECOPY":
         _, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v4, updated_variables = get_consume_variable(updated_variables)
+        instr = mem_access("mem_write", v2, v4)
     else:
         instr = "Error opcodes30: "+opcode
         updated_variables = index_variables
@@ -817,7 +837,7 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         v1, updated_variables = get_consume_variable(index_variables)
         instr=""
     elif opcode == "MLOAD":        
-        _ , updated_variables = get_consume_variable(index_variables)
+        offset , updated_variables = get_consume_variable(index_variables)
         v1, updated_variables = get_new_variable(updated_variables)
         try:
 
@@ -843,6 +863,9 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
         except ValueError:
             instr = ["ll = " + v1, v1 + " = fresh("+str(new_fid)+")"]
             new_fid+=1
+
+        # It goes before the assignment, which overwrites the offset
+        instr = [mem_access("mem_read", offset, "32")] + (instr if type(instr) is list else [instr])
              
     elif opcode == "MSTORE":
         v0 , updated_variables = get_consume_variable(index_variables)
@@ -863,6 +886,8 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
                 # if vertices[block].is_mstore_unknown():
                 #     unknown_mstore = True
+
+        instr = [mem_access("mem_write", v0, "32")] + (instr if type(instr) is list else [instr])
             
     elif opcode == "MSTORE8":
         v0 , updated_variables = get_consume_variable(index_variables)
@@ -879,6 +904,8 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
             #forget_memory = True
             #instr = ["FORGET MEM","ls(1) = "+ v1, "ls(2) = "+v0]
             instr = ["ls(1) = "+ v1, "ls(2) = "+v0]
+
+        instr = [mem_access("mem_write", v0, "1")] + (instr if type(instr) is list else [instr])
             
     elif opcode == "SLOAD":
         _ , updated_variables = get_consume_variable(index_variables)
@@ -1008,10 +1035,10 @@ def translateOpcodes50(opcode, value, index_variables,block,state_names):
     # elif opcode == "SSTOREBYTESEXT":
     #     pass
     elif opcode == "MCOPY":
-        _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        v3, updated_variables = get_consume_variable(updated_variables)
+        instr = [mem_access("mem_read", v2, v3), mem_access("mem_write", v1, v3)]
     else:
         instr = "Error opcodes50: "+ opcode
         updated_variables = index_variables
@@ -1027,36 +1054,36 @@ They corresponds to LOGS opcodes.
 def translateOpcodesA(opcode, index_variables):
 
     if opcode == "LOG0":
-        _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        instr = mem_access("mem_read", v1, v2)
     elif opcode == "LOG1":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        instr = mem_access("mem_read", v1, v2)
     elif opcode == "LOG2":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        instr = mem_access("mem_read", v1, v2)
     elif opcode == "LOG3":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        instr = mem_access("mem_read", v1, v2)
         
     elif opcode == "LOG4":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        instr = mem_access("mem_read", v1, v2)
         
     else:
         instr = "Error opcodesA: "+ opcode
@@ -1075,27 +1102,27 @@ def translateOpcodesF(opcode, index_variables, addr,block):
 
     if opcode == "CREATE":
         _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        offset, updated_variables = get_consume_variable(updated_variables)
+        size, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
 
         val = "c_address"+str(c_address)
         
-        instr = v1+" = "+val
+        instr = [mem_access("mem_read", offset, size), v1+" = "+val]
         c_address+=1
         update_bc_in_use(val,block)
 
 
     elif opcode == "CREATE2":
         _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        offset, updated_variables = get_consume_variable(updated_variables)
+        size, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
 
         val = "c_address"+str(c_address)
         
-        instr = v1+" = "+val
+        instr = [mem_access("mem_read", offset, size), v1+" = "+val]
         c_address+=1
         update_bc_in_use(val,block)
 
@@ -1103,54 +1130,62 @@ def translateOpcodesF(opcode, index_variables, addr,block):
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        args_offset, updated_variables = get_consume_variable(updated_variables)
+        args_size, updated_variables = get_consume_variable(updated_variables)
+        ret_offset, updated_variables = get_consume_variable(updated_variables)
+        ret_size, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1 +" = 1"
+        instr = [mem_access("mem_read", args_offset, args_size),
+                 mem_access("mem_write", ret_offset, ret_size),
+                 v1 +" = 1"]
     elif opcode == "CALLCODE":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        args_offset, updated_variables = get_consume_variable(updated_variables)
+        args_size, updated_variables = get_consume_variable(updated_variables)
+        ret_offset, updated_variables = get_consume_variable(updated_variables)
+        ret_size, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1 +" = 1" 
+        instr = [mem_access("mem_read", args_offset, args_size),
+                 mem_access("mem_write", ret_offset, ret_size),
+                 v1 +" = 1"] 
     elif opcode == "RETURN":
         # var = get_local_variable(addr)
-        _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
         # instr = "r "+var
-        instr = ""
+        instr = mem_access("mem_read", v1, v2)
     elif opcode == "REVERT":
-        _, updated_variables = get_consume_variable(index_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v1, updated_variables = get_consume_variable(index_variables)
+        v2, updated_variables = get_consume_variable(updated_variables)
+        instr = mem_access("mem_read", v1, v2)
     elif opcode == "ASSERTFAIL":
         instr = ""
         updated_variables = index_variables
     elif opcode == "DELEGATECALL":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        args_offset, updated_variables = get_consume_variable(updated_variables)
+        args_size, updated_variables = get_consume_variable(updated_variables)
+        ret_offset, updated_variables = get_consume_variable(updated_variables)
+        ret_size, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1 +" = 1"
+        instr = [mem_access("mem_read", args_offset, args_size),
+                 mem_access("mem_write", ret_offset, ret_size),
+                 v1 +" = 1"]
 
     elif opcode == "STATICCALL":
         _, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
+        args_offset, updated_variables = get_consume_variable(updated_variables)
+        args_size, updated_variables = get_consume_variable(updated_variables)
+        ret_offset, updated_variables = get_consume_variable(updated_variables)
+        ret_size, updated_variables = get_consume_variable(updated_variables)
         v1, updated_variables = get_new_variable(updated_variables)
-        instr = v1 +" = 1"
+        instr = [mem_access("mem_read", args_offset, args_size),
+                 mem_access("mem_write", ret_offset, ret_size),
+                 v1 +" = 1"]
 
     # elif opcode == "BREAKPOINT":
     #     pass
@@ -1264,10 +1299,10 @@ def translateOpcodesZ(opcode, index_variables,block):
         instr = v1+" = returndatasize"
         update_bc_in_use("returndatasize",block)
     elif opcode == "RETURNDATACOPY":
-        _, updated_variables = get_consume_variable(index_variables)
+        v1, updated_variables = get_consume_variable(index_variables)
         _, updated_variables = get_consume_variable(updated_variables)
-        _, updated_variables = get_consume_variable(updated_variables)
-        instr = ""
+        v3, updated_variables = get_consume_variable(updated_variables)
+        instr = mem_access("mem_write", v1, v3)
     else:
         instr = "Error opcodesZ: "+opcode
 
@@ -1343,6 +1378,18 @@ They are remove when displaying.
 -nop is True when generating nop annotations with the opcode. False otherwise.
 -index_variables refers to the top stack index. int.
 '''
+'''
+Adds to rule the translation of an opcode, that may be a single
+instruction or a list of them (e.g. the mem_read/mem_write of a CALL
+followed by the assignment of its result).
+'''
+def add_instructions(rule, value):
+    if type(value) is list:
+        for ins in value:
+            rule.add_instr(ins)
+    else:
+        rule.add_instr(value)
+
 def compile_instr(rule,evm_opcode,
                   variables,
                   list_jumps,
@@ -1370,10 +1417,10 @@ def compile_instr(rule,evm_opcode,
         rule.add_instr(value)
     elif opcode_name in opcodes20:
         value, index_variables = translateOpcodes20(opcode_name, variables,rule.get_Id())
-        rule.add_instr(value)
+        add_instructions(rule, value)
     elif opcode_name in opcodes30:
         value, index_variables = translateOpcodes30(opcode_name,opcode_rest,variables,rule.get_Id(), blocks_with_calldataload)
-        rule.add_instr(value)
+        add_instructions(rule, value)
     elif opcode_name in opcodes40:
         value, index_variables = translateOpcodes40(opcode_name,variables,rule.get_Id())
         rule.add_instr(value)
@@ -1398,14 +1445,14 @@ def compile_instr(rule,evm_opcode,
             
     elif opcode_name in opcodesA:
         value, index_variables = translateOpcodesA(opcode_name, variables)
-        rule.add_instr(value)
+        add_instructions(rule, value)
     elif opcode_name in opcodesF:
         value, index_variables = translateOpcodesF(opcode_name,variables,opcode_rest,rule.get_Id())
         #RETURN
-        rule.add_instr(value)
+        add_instructions(rule, value)
     elif opcode_name in opcodesZ:
         value, index_variables = translateOpcodesZ(opcode_name,variables,rule.get_Id())
-        rule.add_instr(value)
+        add_instructions(rule, value)
     else:
         value = "Error. No opcode matchs"
         index_variables = variables
@@ -1693,6 +1740,7 @@ def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "",
     global new_fid
     global forget_memory_blocks
     global str_arr
+    global instr_position
 
     str_arr = False
     
@@ -1761,6 +1809,7 @@ def compile_block(block,state_vars, results_sto_analysis = [], sstore_cost = "",
             rule.add_instr("nop(JUMP)")
 
         else:
+            instr_position = cont
             index_variables = compile_instr(rule,l_instr[cont],
                                             index_variables,
                                             block.get_list_jumps(),
