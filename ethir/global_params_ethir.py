@@ -1,3 +1,4 @@
+import os
 import uuid
 
 # enable reporting of the result
@@ -64,3 +65,11 @@ tmp_path = "/tmp/"
 #gastap_folder = "gastap_" + uuid.uuid4().hex
 
 costabs_path = ""
+
+# Executable of costabs used to run GASTAP (see utils.run_gastap). It is
+# taken, in this order, from the environment variable COSTABS_SHELL (path of
+# the executable), from COSTA_HOME (root folder of costa), or from the
+# default location ~/Systems/costa, so that it does not depend on the machine
+COSTA_HOME = os.environ.get("COSTA_HOME", os.path.expanduser("~/Systems/costa"))
+COSTABS_SHELL = os.environ.get("COSTABS_SHELL",
+                               os.path.join(COSTA_HOME, "costabs", "src", "interfaces", "shell", "costabs_shell"))
