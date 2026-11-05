@@ -47,6 +47,9 @@ class BasicBlock:
         self.potential_storage_val = []
         self.div_str_pattern = False
         self.and_str_pattern = False
+        # positions of the ANDs that compute the old length of a storage
+        # string in its setter (see pattern.look_for_str_setter_pattern)
+        self.str_setter_ands = []
         self.div_str_pattern_value = []
         
         
@@ -534,6 +537,12 @@ class BasicBlock:
     def set_and_str_pattern(self, val):
         self.and_str_pattern = val
 
+    def get_str_setter_ands(self):
+        return self.str_setter_ands
+
+    def set_str_setter_ands(self, positions):
+        self.str_setter_ands = positions
+
     
     def copy(self):
         
@@ -568,6 +577,7 @@ class BasicBlock:
 
         new_obj.set_div_str_pattern(self.div_str_pattern)
         new_obj.set_and_str_pattern(self.and_str_pattern)
+        new_obj.set_str_setter_ands(list(self.str_setter_ands))
         
         #AHC: When we copy, we just forget about old stacks
         new_obj.set_stacks([])
