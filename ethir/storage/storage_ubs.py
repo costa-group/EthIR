@@ -88,7 +88,13 @@ def compute_cost_with_storage_analysis(saco, cname, source_file, storage_analysi
     else:
         input_blocks_aux = list(map(lambda x: function_block_map[x][0], function_block_map.keys()))
 
-    input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux, has_storage, component_of_blocks)
+    # All the functions are analyzed, unless only those that access the
+    # storage are requested (option -storage-only-functions)
+    only_storage_functions = saco[5] if len(saco) > 5 else False
+    if only_storage_functions:
+        input_blocks = compute_entry_functions_with_storage_instructions(input_blocks_aux, has_storage, component_of_blocks)
+    else:
+        input_blocks = sorted(set(input_blocks_aux))
     
     outputs, ubs, params, times = run_gastap_all(cname, input_blocks, storage_analysis, gastap_op, source_file=source_file, timeoutval=timeoutvalue)
 
