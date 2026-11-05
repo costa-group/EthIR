@@ -265,6 +265,23 @@ def get_concrete_values(test_case, identifiers_mapping):
     return [value.replace("==", "=") for value in values]
 
 
+def get_nonzero_state_variables(data, test_number):
+    """Names of the state variables whose concrete value is not 0 in the
+    test case at position test_number of any function. Their storage slots
+    are not zero at the beginning of the transaction, which determines the
+    cost of the SSTOREs in the storage analysis (see -sto-nonzero)."""
+    state_variables = set(data.get("stateVariables", []))
+    nonzero = set()
+    for function in data.get("functions", []):
+        tests = function.get("test_cases", [])
+        if not 0 <= test_number < len(tests):
+            continue
+        for name, value in _parse_concrete_assignments(tests[test_number]).items():
+            if name in state_variables and value != 0:
+                nonzero.add(name)
+    return nonzero
+
+
 def summarize_test_cases(data):
     """Build a dict associating each function's identifier with its
     summarized info: params (renamed to l(calldataloadN) by position) and the

@@ -1177,7 +1177,7 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
     # rule index -> {line index: concrete value}, see continue_clause
     to_rewrite = {}
 
-    def continue_clause(clause, env, tainted):
+    def continue_clause(clause, env, tainted, guard_tainted=False):
         local_env = dict(env)
         local_tainted = set(tainted)
         for k, (lhs, rhs) in enumerate(clause["assignments"]):
@@ -1221,7 +1221,16 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
                 # constant referencing nothing, so the rule above would
                 # untaint it right where it's introduced. Recognize these
                 # exact (lhs, rhs) pairs as taint sources instead.
-                if (lhs, rhs) in injected_pairs or (_referenced_vars(rhs) & local_tainted):
+                #
+                # Control dependence: in a clause whose guard reads tainted
+                # variables, even a constant assignment depends on the test.
+                # E.g. 'jump166_c0 => leq(s(5), s(4)); s(4) = 0' (see
+                # split_boolean_comparisons): s(4) is 0 only because the test
+                # makes the comparison false, and the later jump on s(4) must
+                # be pruned accordingly. PUBS discards that jump by itself,
+                # but the storage counter CRS of -storage-analysis does not.
+                if (guard_tainted or (lhs, rhs) in injected_pairs
+                        or (_referenced_vars(rhs) & local_tainted)):
                     local_tainted.add(lhs)
                 else:
                     local_tainted.discard(lhs)
@@ -1264,17 +1273,18 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         in_loop = name in looping_names
         for clause in clauses_by_name[name]:
             should_remove = False
+            guard_tainted = False
             if not in_loop and clause["guard"] is not None:
                 verdict = evaluate_guard_against_concrete_values(clause["guard"], env)
-                if verdict is False:
-                    left, right = _guard_args(clause["guard"])
-                    guard_vars = _referenced_vars(left or "") | _referenced_vars(right or "")
-                    if guard_vars & tainted:
-                        should_remove = True
+                left, right = _guard_args(clause["guard"])
+                guard_vars = _referenced_vars(left or "") | _referenced_vars(right or "")
+                if verdict is False and guard_vars & tainted:
+                    should_remove = True
+                guard_tainted = verdict is True and bool(guard_vars & tainted)
             if should_remove:
                 to_remove.add(clause["index"])
             else:
-                continue_clause(clause, env, tainted)
+                continue_clause(clause, env, tainted, guard_tainted)
 
     propagate(entry_name, env0, tainted0)
 
