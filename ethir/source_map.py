@@ -9,9 +9,11 @@ from ast_helper import AstHelper
 
 
 class Source:
-    def __init__(self, filename):
+    def __init__(self, filename, content=None):
         self.filename = filename
-        self.content = self._load_content()
+        # With standard-json the content comes inside the input json and the
+        # file does not need to exist
+        self.content = content if content is not None else self._load_content()
         self.line_break_positions = self._load_line_break_positions()
 
     def _load_content(self):
@@ -138,7 +140,11 @@ class SourceMap:
         if fname in SourceMap.sources:
             return SourceMap.sources[fname]
         else:
-            SourceMap.sources[fname] = Source(fname)
+            content = None
+            if self.input_type == "standard json":
+                with open(SourceMap.parent_filename, 'r') as f:
+                    content = json.load(f).get("sources", {}).get(fname, {}).get("content")
+            SourceMap.sources[fname] = Source(fname, content)
             return SourceMap.sources[fname]
 
     def _get_callee_src_pairs(self):
@@ -158,7 +164,7 @@ class SourceMap:
         return func_call_names
 
     @classmethod
-    def _load_position_groups_standard_json(cls):
+    def _load_position_groups_standard_json(cls, solc_select):
         with open('standard_json_output', 'r') as f:
             output = f.read()
         output = json.loads(output)
