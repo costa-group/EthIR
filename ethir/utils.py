@@ -367,9 +367,25 @@ def get_function_names(i,lineas):
 It returns a map that for each contract, it returns a list of pairs (hash, name_function).
 Solidity file is a string that contains the name of the solidity file that is going to be analized.
 '''
-def process_hashes(solidity_file,solidity_version):
+def process_hashes_standard_json(json_output_file):
+    """Same as process_hashes for a standard-json input, which is not a
+    Solidity file: the selectors are taken from the methodIdentifiers of the
+    solc output ({signature: hash}) instead of from solc --hashes."""
+    with open(json_output_file, 'r') as f:
+        contracts = json.load(f).get('contracts', {})
+    m = {}
+    for source in contracts.values():
+        for cname, contract in source.items():
+            identifiers = contract.get('evm', {}).get('methodIdentifiers', {})
+            m[cname] = {hash_code: fun_name for fun_name, hash_code in identifiers.items()}
+    return m
+
+def process_hashes(solidity_file,solidity_version,solc_select=False):
     
-    solc = get_solc_executable(solidity_version)
+    if solc_select:
+        solc = "solc"
+    else:
+        solc = get_solc_executable(solidity_version)
 
     cmd = solc+" --hashes "+str(solidity_file)
         
@@ -1181,11 +1197,15 @@ def run_gastap_all(contract_name, entry_functions, storage_analysis = False, gas
 
 def run_gastap(contract_name, block_id, timeoutval, ethir_mem_op, storage_analysis, sourceparam, sstore_cost):
     print ("TIMEOUT " + str(timeoutval))
+    costabs_shell = global_params_ethir.COSTABS_SHELL
+    if not os.path.isfile(costabs_shell):
+        raise Exception("costabs not found at "+costabs_shell+". Set the environment variable COSTA_HOME "
+                        "(root folder of costa) or COSTABS_SHELL (path of costabs_shell)")
     if storage_analysis:
-        cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost 
+        cmd = f"timeout {timeoutval}s sh {costabs_shell} "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes -evmcc star " + sourceparam + " -sto_init_cost "+sstore_cost
         #print(cmd)
     else:
-        cmd = f"timeout {timeoutval}s sh /home/pablo/Systems/costa/costabs/src/interfaces/shell/costabs_shell "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam 
+        cmd = f"timeout {timeoutval}s sh {costabs_shell} "+global_params_ethir.costabs_path+"/costabs/"+contract_name+"_saco.rbr"+ " -entries "+"block"+str(block_id) +" -ethir yes -ethir_mem " +ethir_mem_op+ " -cost_model gas -custom_out_path yes " + sourceparam
             
     FNULL = open(os.devnull, 'w')
     print(cmd)
