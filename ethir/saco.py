@@ -37,6 +37,7 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
     st_vars = rbr[0][0].get_all_state_vars()
     new_rules = []
     _VALUE_COMPARISONS.clear()
+    _CONSTANT_DIVISIONS.clear()
     TEST_PRUNED_RULES.clear()
     try:
         function_block_map = function_block_info[0]
@@ -348,14 +349,22 @@ def process_instructions(rule, function_block_map, functions_calldataload_blocks
                 # raise Exception
             
     
+    # Stack variables with a known constant value in the rule (e.g. the 2 of
+    # PUSH1 0x02 moved by a SWAP), used to recognize divisions by a constant
+    constants = {}
+
     while(idx_loop<len_ins):
         instr = instructions[idx_loop]
 
         if idx_loop == 8 and has_string_pattern:
             new_instructions = compute_string_pattern(new_instructions)
             idx_loop = idx_loop+26
+            constants = {}
         elif instr.find("/")!=-1:
-            idx_loop = check_mul_div_pattern(new_instructions,instructions,idx_loop)
+            start = idx_loop
+            idx_loop, cont = check_mul_div_pattern(new_instructions,instructions,idx_loop,constants,cont,rule.get_rule_name())
+            for i in range(start, idx_loop):
+                update_constants(instructions[i], constants)
         else:
             comparison = _VALUE_COMPARISON_RE.match(instr.strip())
             fresh = "s("+str(cont)+")"
@@ -364,13 +373,22 @@ def process_instructions(rule, function_block_map, functions_calldataload_blocks
                 op, args = comparison.group(1), _split_top_level_args(comparison.group(2))
                 if len(args) == 2:
                     _VALUE_COMPARISONS[(rule.get_rule_name(), fresh)] = (op, args[0], args[1])
+            update_constants(instr, constants)
             idx_loop = idx_loop+1
             
     return new_instructions
 
             
-def process_single_instruction(instr,new_instructions,contract_vars,cont):        
-    if instr.find("call(",0)!=-1:
+def process_single_instruction(instr,new_instructions,contract_vars,cont):
+    if instr.startswith("mem_read(") or instr.startswith("mem_write("):
+        # Memory region [offset, offset+size) read or written by an opcode
+        # (see rbr.mem_access): its expansion is modeled by acquiring the
+        # words up to its end, with the stack variables given by rbr.py
+        args = instr[instr.find("(")+1:instr.rfind(")")]
+        offset, size = args.split(",", 1)
+        new_instructions.append("'$acquire'(noncu,("+offset.strip()+"+"+size.strip()+")/32)")
+        new = "'$release'(noncu)"
+    elif instr.find("call(",0)!=-1:
         new = call_instruction(instr)
     elif instr.find("and(",0)!=-1:
         # nop_top = new_instructions[-1]
@@ -539,205 +557,6 @@ def process_single_instruction(instr,new_instructions,contract_vars,cont):
         new = instr[:pos+1]+" s("+str(cont)+")"
         cont+=1
         
-    elif instr.find("nop(MLOAD)")!=-1:
-        top = new_instructions.pop()
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            new = "'$acquire'(noncu,("+val+"+32)/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-    elif instr.find("nop(MSTORE)")!=-1:
-        top = new_instructions.pop()
-        val = top.split("=")
-        val_1 = val[0].strip()
-        val_2 = val[1].strip()
-        if val_1.startswith("l(ls") and val_2.startswith("s("):
-            new = "'$acquire'(noncu,("+val_2+"+32)/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-        elif not val_1.startswith("l(ls"):
-            index = new_instructions[-2]
-            val = index.split("=")[0].strip()
-            new = "'$acquire'(noncu,("+val+"+32)/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-    elif instr.find("nop(MSTORE8)")!=-1:
-        top = new_instructions.pop()
-        val = top.split("=")
-        val_1 = val[0].strip()
-        val_2 = val[1].strip()
-        if val_1.startswith("l(ls") and val_2.startswith("s("):
-            new = "'$acquire'(noncu,("+val_2+"+1)/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-        elif not val_1.startswith("l(ls"):
-            index = new_instructions[-2]
-            val = index.split("=")[0].strip()
-            new = "'$acquire'(noncu,("+val+"+1)/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-    elif instr.find("nop(SHA3)")!=-1 or instr.find("nop(KECCAK")!=-1:
-        top = new_instructions.pop()
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var+1)+")+"+val
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-    elif instr.find("nop(CREATE)")!=-1:
-        top = new_instructions.pop()
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var+1)+")+"+val
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-
-    elif instr.find("nop(CREATE2)")!=-1:
-        top = new_instructions.pop()
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var+1)+")+s("+str(num_var+2)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(top)
-            new = instr
-            
-    elif instr.find("nop(CALLDATACOPY)")!=-1 or instr.find("nop(CODECOPY)")!=-1 or instr.find("nop(RETURNDATACOPY)")!=-1:
-        top = new_instructions[-3]
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-2)+")+"+val
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new = instr
-    elif instr.find("nop(MCOPY)")!=-1:
-        top = new_instructions[-3]
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-2)+")+"+val
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            exp = "s("+str(num_var-1)+")+s("+str(num_var-2)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new = instr
-        
-    elif instr.find("nop(EXTCODECOPY)")!=-1:
-        top = new_instructions[-3]
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-1)+")+"+"s("+str(num_var-3)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new = instr
-    elif instr.find("nop(LOG1)")!=-1 or instr.find("nop(LOG2)")!=-1 or instr.find("nop(LOG3)")!=-1 or instr.find("nop(LOG4)")!=-1:
-        top = new_instructions[-3]
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-1)+")+"+val
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new = instr
-    elif instr.find("nop(RETURN)")!=-1 or instr.find("nop(REVERT)")!=-1:
-        top = new_instructions[-3]
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-1)+")+"+val
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new = instr
-    elif instr.find("nop(CALL)")!=-1 or instr.find("nop(CALLCODE")!=-1:
-        top = new_instructions[-3]
-        last = new_instructions.pop()
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-3)+")+"+"s("+str(num_var-4)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            exp = "s("+str(num_var-5)+")+"+"s("+str(num_var-6)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(last)
-            new = instr
-
-    elif instr.find("nop(STATICCALL")!=-1 or instr.find("nop(DELEGATECALL")!=-1:
-        top = new_instructions[-3]
-        last = new_instructions.pop()
-        val = top.split("=")[0].strip()
-        if val.startswith("s("):
-            num = val.split("(")[1].strip(")")
-            num_var = int(num)
-            exp = "s("+str(num_var-2)+")+"+"s("+str(num_var-3)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            exp = "s("+str(num_var-4)+")+"+"s("+str(num_var-5)+")"
-            new = "'$acquire'(noncu,("+exp+")/32)"
-            new_instructions.append(new)
-            new = "'$release'(noncu)"
-            new_instructions.append(new)
-            new_instructions.append(last)
-            new = instr
-
     elif len(instr.split("=")) > 1:
         slices = instr.split("=")
         name = slices[1].strip()
@@ -765,7 +584,50 @@ def compute_string_pattern(new_instructions):
     return new_instructions
 
 #pattern PUSH1 DUP1 SWAP2 DIV MUL
-def check_mul_div_pattern(new_instructions,instructions,idx):
+def update_constants(instr, constants):
+    """Updates the stack variables with a known constant value after the
+    EthIR instruction instr: s(k) = N sets it, s(k) = s(j) copies the value
+    of s(j) (if any), and any other assignment to s(k) removes it."""
+    if "=" not in instr or instr.startswith(("call(", "nop(", "mem_read(", "mem_write(")):
+        return
+    lhs, rhs = instr.split("=", 1)
+    lhs, rhs = lhs.strip(), rhs.strip()
+    if not lhs.startswith("s("):
+        return
+    if rhs.isdigit():
+        constants[lhs] = int(rhs)
+    elif rhs in constants:
+        constants[lhs] = constants[rhs]
+    else:
+        constants.pop(lhs, None)
+
+def translate_constant_division(instr, next_instr, new_instructions, constants, cont, rule_name):
+    """Translates a = b/c, a DIV whose divisor c has a known constant value C,
+    as a fresh value constrained by C*a =< b =< C*a+C-1, which is exactly
+    the integer division of the EVM (unsigned, rounded down). The size
+    analysis cannot represent b/c, and would take a as an unknown value.
+    b is copied first, as a may be the same variable. SDIV is not translated,
+    as it rounds towards zero for negative values. It returns the new fresh
+    index, or None if instr is not such a division."""
+    if next_instr != "nop(DIV)" or instr.count("=") != 1 or instr.count("/") != 1:
+        return None
+    lhs, rhs = instr.split("=")
+    dividend, divisor = rhs.split("/")
+    lhs, dividend, divisor = lhs.strip(), dividend.strip(), divisor.strip()
+    value = int(divisor) if divisor.isdigit() else constants.get(divisor)
+    if not lhs.startswith("s(") or value is None or value <= 0:
+        return None
+    copy = "s("+str(cont)+")"
+    fresh = "s("+str(cont+1)+")"
+    new_instructions.append(copy+" = "+dividend)
+    new_instructions.append(lhs+" = "+fresh)
+    new_instructions.append("geq("+copy+", "+str(value)+"*"+lhs+")")
+    new_instructions.append("geq("+str(value)+"*"+lhs+"+"+str(value-1)+", "+copy+")")
+    _CONSTANT_DIVISIONS[(rule_name, fresh)] = (copy, value)
+    return cont+2
+
+def check_mul_div_pattern(new_instructions,instructions,idx,constants,cont,rule_name):
+    next_instr = instructions[idx+1].strip() if idx+1 < len(instructions) else ""
     if len(new_instructions)>=7:
         swap2 = new_instructions[-1]
         dup1 = new_instructions[-5]
@@ -780,12 +642,20 @@ def check_mul_div_pattern(new_instructions,instructions,idx):
             new_instructions.append(mul)
             idx = idx+4
         else:
-            new_instructions.append(instructions[idx])
+            new_cont = translate_constant_division(instructions[idx], next_instr, new_instructions, constants, cont, rule_name)
+            if new_cont is None:
+                new_instructions.append(instructions[idx])
+            else:
+                cont = new_cont
             idx = idx+1
     else:
-        new_instructions.append(instructions[idx])
+        new_cont = translate_constant_division(instructions[idx], next_instr, new_instructions, constants, cont, rule_name)
+        if new_cont is None:
+            new_instructions.append(instructions[idx])
+        else:
+            cont = new_cont
         idx = idx+1
-    return idx
+    return idx, cont
 
 def write(rules,execution,cname):
     
@@ -854,6 +724,12 @@ _GUARD_OPS = {
 # concrete values of a test.
 _VALUE_COMPARISON_RE = re.compile(r"^s\(\d+\)\s*=\s*(eq|lt|gt)\((.*)\)$")
 _VALUE_COMPARISONS = {}
+
+# A division by a constant, a = b/C, is translated as a fresh value constrained
+# by C*a =< b =< C*a+C-1 (see translate_constant_division). As with the
+# comparisons, the division is kept here, keyed by (rule name, fresh
+# variable), so that prune_infeasible_rules can still compute its value.
+_CONSTANT_DIVISIONS = {}
 
 # Names of the rules (e.g. "block586_0") made unreachable by the pruning of
 # the test case, so that the storage analysis does not take their accesses
@@ -1181,6 +1057,17 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         local_env = dict(env)
         local_tainted = set(tainted)
         for k, (lhs, rhs) in enumerate(clause["assignments"]):
+            division = _CONSTANT_DIVISIONS.get((clause["name"], rhs))
+            if division is not None:
+                dividend, divisor = division
+                dividend_v = _resolve_expr(dividend, local_env)
+                if dividend_v is not None:
+                    local_env[lhs] = dividend_v // divisor
+                    if dividend in local_tainted:
+                        local_tainted.add(lhs)
+                    else:
+                        local_tainted.discard(lhs)
+                    continue
             comparison = _VALUE_COMPARISONS.get((clause["name"], rhs))
             if comparison is not None:
                 op, left, right = comparison
