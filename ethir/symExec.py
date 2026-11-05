@@ -43,7 +43,7 @@ from utils import cfg_dot,cfg_memory_dot, write_cfg, update_map, get_public_fiel
 from opcodes import get_opcode
 from graph_scc import Graph_SCC, get_entry_all,filter_nested_scc
 
-from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment, look_for_str_pattern1, look_for_str_pattern2, look_for_str_mem_pattern
+from pattern import look_for_string_pattern,check_sload_fragment_pattern,sstore_fragment, look_for_str_pattern1, look_for_str_pattern2, look_for_str_mem_pattern, look_for_str_setter_pattern
 
 
 log = logging.getLogger(__name__)
@@ -760,6 +760,7 @@ def construct_bb():
         vertices[key] = block
         edges[key] = []
         look_for_string_pattern(block)
+        block.set_str_setter_ands(look_for_str_setter_pattern(block))
 
 def check_div_invalid_pattern(block,path):
     div_pattern = ["DUP2","ISZERO","ISZERO","PUSH","JUMPI"]
