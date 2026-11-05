@@ -38,6 +38,7 @@ def rbr2saco(rbr,execution,cname,function_block_info,test_info):
     new_rules = []
     _VALUE_COMPARISONS.clear()
     _CONSTANT_DIVISIONS.clear()
+    _ROUND_DOWN_ANDS.clear()
     TEST_PRUNED_RULES.clear()
     try:
         function_block_map = function_block_info[0]
@@ -365,6 +366,10 @@ def process_instructions(rule, function_block_map, functions_calldataload_blocks
             idx_loop, cont = check_mul_div_pattern(new_instructions,instructions,idx_loop,constants,cont,rule.get_rule_name())
             for i in range(start, idx_loop):
                 update_constants(instructions[i], constants)
+        elif translate_round_down_and(instr, new_instructions, constants, cont, rule.get_rule_name()) is not None:
+            cont = cont+2
+            update_constants(instr, constants)
+            idx_loop = idx_loop+1
         else:
             comparison = _VALUE_COMPARISON_RE.match(instr.strip())
             fresh = "s("+str(cont)+")"
@@ -596,6 +601,8 @@ def update_constants(instr, constants):
         return
     if rhs.isdigit():
         constants[lhs] = int(rhs)
+    elif rhs.startswith("not(") and rhs[4:-1].strip() in constants:
+        constants[lhs] = 2**256 - 1 - constants[rhs[4:-1].strip()]
     elif rhs in constants:
         constants[lhs] = constants[rhs]
     else:
@@ -624,6 +631,36 @@ def translate_constant_division(instr, next_instr, new_instructions, constants, 
     new_instructions.append("geq("+copy+", "+str(value)+"*"+lhs+")")
     new_instructions.append("geq("+str(value)+"*"+lhs+"+"+str(value-1)+", "+copy+")")
     _CONSTANT_DIVISIONS[(rule_name, fresh)] = (copy, value)
+    return cont+2
+
+def translate_round_down_and(instr, new_instructions, constants, cont, rule_name):
+    """Translates a = and(x, M), where M has the known constant value
+    not(31), as a fresh value constrained by x-31 =< a =< x, which is exact
+    for x >= 0 (a is x rounded down to a multiple of 32). Otherwise the AND
+    is taken as an unknown value, which loses e.g. the end of the loop that
+    copies a string to storage. x is copied first, as a may be the same
+    variable. It returns the new fresh index, or None if instr is not such
+    an AND."""
+    if "= and(" not in instr:
+        return None
+    lhs, rhs = instr.split("=", 1)
+    lhs = lhs.strip()
+    args = _split_top_level_args(rhs.strip()[4:-1])
+    if not lhs.startswith("s(") or len(args) != 2:
+        return None
+    if constants.get(args[1]) == _NOT_31:
+        value = args[0]
+    elif constants.get(args[0]) == _NOT_31:
+        value = args[1]
+    else:
+        return None
+    copy = "s("+str(cont)+")"
+    fresh = "s("+str(cont+1)+")"
+    new_instructions.append(copy+" = "+value)
+    new_instructions.append(lhs+" = "+fresh)
+    new_instructions.append("geq("+copy+", "+lhs+")")
+    new_instructions.append("geq("+lhs+"+31, "+copy+")")
+    _ROUND_DOWN_ANDS[(rule_name, fresh)] = copy
     return cont+2
 
 def check_mul_div_pattern(new_instructions,instructions,idx,constants,cont,rule_name):
@@ -730,6 +767,13 @@ _VALUE_COMPARISONS = {}
 # comparisons, the division is kept here, keyed by (rule name, fresh
 # variable), so that prune_infeasible_rules can still compute its value.
 _CONSTANT_DIVISIONS = {}
+
+# Same for and(x, not(31)), i.e. x rounded down to a multiple of 32 (e.g. the
+# loopEnd of the copy of a string to storage, solc >= 0.8), translated as a
+# fresh value constrained by x-31 =< a =< x (see translate_round_down_and)
+_ROUND_DOWN_ANDS = {}
+
+_NOT_31 = 2**256 - 32
 
 # Names of the rules (e.g. "block586_0") made unreachable by the pruning of
 # the test case, so that the storage analysis does not take their accesses
@@ -1057,6 +1101,16 @@ def prune_infeasible_rules(new_rules, entry_name, concrete_values):
         local_env = dict(env)
         local_tainted = set(tainted)
         for k, (lhs, rhs) in enumerate(clause["assignments"]):
+            masked = _ROUND_DOWN_ANDS.get((clause["name"], rhs))
+            if masked is not None:
+                masked_v = _resolve_expr(masked, local_env)
+                if masked_v is not None:
+                    local_env[lhs] = masked_v & _NOT_31
+                    if masked in local_tainted:
+                        local_tainted.add(lhs)
+                    else:
+                        local_tainted.discard(lhs)
+                    continue
             division = _CONSTANT_DIVISIONS.get((clause["name"], rhs))
             if division is not None:
                 dividend, divisor = division
