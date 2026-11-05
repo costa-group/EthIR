@@ -510,7 +510,7 @@ def analyze_solidity(input_type='solidity'):
     if input_type == 'standard_json':
         hashes = process_hashes_standard_json('standard_json_output')
     else:
-        hashes = process_hashes(args.source,solc_version)
+        hashes = process_hashes(args.source,solc_version,args.solc_select)
 
     global_params_ethir.costabs_path = global_params_ethir.tmp_path+helper.aux_path
     
@@ -717,7 +717,7 @@ def main():
         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
         solc_version = helper.get_solidity_version()
                 
-        mp = process_hashes(args.source, solc_version)
+        mp = process_hashes(args.source, solc_version, args.solc_select)
         generate_saco_hashes_file(mp)
         exit_code = 0
         
