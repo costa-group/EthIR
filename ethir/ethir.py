@@ -149,6 +149,16 @@ def check_optimize_dependencies():
 
     return r
 
+'''
+The flag -storage-only-functions has to be used with the storage analysis
+(-storage-analysis) or with -gastap
+'''
+def check_storage_only_functions_dependency():
+    if args.storage_only_functions:
+        return args.storage_analysis or args.gastap != None
+    else:
+        return True
+
 def check_standard_json_input():
     #It echsk that no optimization options are enabled when standard-json options has been selected
     
@@ -291,7 +301,7 @@ def run_solidity_analysis(inputs,hashes):
                                                   source_map=inp['source_map'], 
                                                   source_file=inp['source'],
                                                   cfg = args.control_flow_graph,
-                                                  saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
+                                                  saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage, args.storage_only_functions),
                                                   execution = 0, 
                                                   cname = inp["c_name"],
                                                   hashes = function_names,
@@ -338,7 +348,7 @@ def run_solidity_analysis(inputs,hashes):
                                                       source_map=inp['source_map'], 
                                                       source_file=inp['source'],
                                                       cfg = args.control_flow_graph,
-                                                      saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage),
+                                                      saco = (args.saco,args.gastap, args.smt_stores, args.gastap_timeout, args.initial_storage, args.storage_only_functions),
                                                       execution = i,
                                                       cname = inp["c_name"],
                                                       hashes = function_names,
@@ -619,7 +629,9 @@ def main():
     parser.add_argument( "-hashes", "--hashes",             help="Generate a file that contains the functions of the solidity file", action="store_true")
     parser.add_argument( "-out", "--out",             help="Generate a file that contains the functions of the solidity file", action="store", dest="path_out",type=str)
     parser.add_argument("-mem-analysis", "--mem-analysis",             help="Executes memory analysis. baseref runs the basic analysis where it only identifies the base refences. Offset runs baseref+offset option", choices = ["baseref","offset"])
-    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis", action="store_true")
+    parser.add_argument("-storage-analysis", "--storage-analysis",             help="Executes storage analysis. It runs by default with -gastap (see --no-storage-analysis)", action="store_true")
+    parser.add_argument("-no-storage-analysis", "--no-storage-analysis",             help="Does not execute the storage analysis that runs by default with -gastap", action="store_true")
+    parser.add_argument("-storage-only-functions", "--storage-only-functions",             help="With the storage analysis, computes only the bounds of the functions that access the storage (by default, all of them)", action="store_true")
     parser.add_argument("-sra-analysis", "--sra-analysis",             help="Executes storage analysis", choices = ["nopaths","allpaths","smtsolver"])
     parser.add_argument("-compact-clones", "--compact-clones",             help="Intersect blocks cloned before invoking GASOL superoptimizer", action="store_true")
     parser.add_argument("-smt-stores","--smt-stores", help="SMT function to be executed for the cost bound to an sstore", choices = ["complete","final"], default= "final")
@@ -633,6 +645,10 @@ def main():
     parser.add_argument("-test-cases","--test-cases", help="Filename with the information of test cases for each function",  type=str, dest="test_cases", default = "")
     parser.add_argument("-test-number","--test-case-number", help="Concrete test case to generate",  type=int, dest="test_number", default = -1)
     args = parser.parse_args()
+
+    # When GASTAP is executed, the storage analysis runs by default
+    if args.gastap and not args.no_storage_analysis:
+        args.storage_analysis = True
     # if args.root_path:
     #     if args.root_path[-1] != '/':
     #         args.root_path += '/'
@@ -691,6 +707,10 @@ def main():
     # exit_code = 0
 
     #clean_dir()
+
+    if not check_storage_only_functions_dependency():
+        print("[ERROR]: -storage-only-functions has to be used with -storage-analysis or -gastap")
+        exit(1)
 
     #Added by Pablo Gordillo
     if args.disassembly:
