@@ -55,7 +55,8 @@ class AstHelper:
             if self.input_type == "solidity":
                 ast = sourcesList[k]["AST"]
             else:
-                ast = sourcesList[k]["legacyAST"]
+                # legacyAST only exists before solc 0.8.0, from then on it is ast
+                ast = sourcesList[k].get("legacyAST", sourcesList[k].get("ast"))
             nodes = []
             walker.walk(ast, {"name": "ContractDefinition"}, nodes)
             for node in nodes:
