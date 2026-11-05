@@ -1445,6 +1445,11 @@ def process_instruction(rule_id,instr,new_instructions,vars_to_declare,cont,mem_
     global mem_vars_per_block
     global non_interval_memvars
     
+    # mem_read/mem_write only describe the memory accessed by an opcode
+    # (see rbr.mem_access), they have no translation into C
+    if instr.startswith("mem_read(") or instr.startswith("mem_write("):
+        return cont
+
     if instr.find("nop(SIGNEXTEND")!=-1:
         pre_instr = new_instructions.pop()
         args = pre_instr.split("=")
@@ -2994,7 +2999,7 @@ def process_blocks_ethirui_recur(rbr,new_rule):
         # print(body)
         # print(rbr_instructions)
 
-        new_rbr_instructions = list(filter(lambda x: x !="" and not x.startswith("nop("),rbr_instructions))
+        new_rbr_instructions = list(filter(lambda x: x !="" and not x.startswith("nop(") and not x.startswith("mem_"),rbr_instructions))
         # print(new_rbr_instructions)
         if goto == "local" or goto == "mix":
             i = 0

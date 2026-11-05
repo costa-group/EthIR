@@ -1312,6 +1312,11 @@ def process_instr_nop(instr,new_instructions,op):
 
 def process_instruction(instr,new_instructions,vars_to_declare,cont):
 
+    # mem_read/mem_write only describe the memory accessed by an opcode
+    # (see rbr.mem_access), they have no translation into C
+    if instr.startswith("mem_read(") or instr.startswith("mem_write("):
+        return cont
+
     if instr.find("nop(SGT")!=-1:
         pre_instr = new_instructions.pop() 
 
