@@ -736,7 +736,8 @@ def main():
         compiler_opt["via-ir"] = args.via_ir
         helper = InputHelper(InputHelper.SOLIDITY, source=args.source,evm =args.evm,runtime=is_runtime,opt_options = compiler_opt)
         solc_version = helper.get_solidity_version()
-                
+        global_params_ethir.costabs_path = global_params_ethir.tmp_path+helper.aux_path
+
         mp = process_hashes(args.source, solc_version, args.solc_select)
         generate_saco_hashes_file(mp)
         exit_code = 0
